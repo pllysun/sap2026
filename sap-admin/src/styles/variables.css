@@ -1,0 +1,59 @@
+/* ============================================
+ * 禅意设计系统 - CSS 变量
+ * 所有颜色、字体、间距、阴影等设计令牌
+ * ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+:root {
+  /* 禅意色彩 */
+  --zen-bg: #fafaf8;
+  --zen-bg-warm: #f5f3f0;
+  --zen-dark: #0b0e0d;
+  --zen-text: #222222;
+  --zen-text-secondary: #666666;
+  --zen-text-muted: #999999;
+  --zen-gray: #737373;
+  --zen-gray-dark: #525252;
+  --zen-border: #e8e6e3;
+  --zen-border-light: #f0eeeb;
+  --zen-card: #ffffff;
+  --zen-card-hover: #fdfcfb;
+  --zen-accent: #8b7355;
+  --zen-accent-light: #a89279;
+  --zen-accent-bg: rgba(139, 115, 85, 0.06);
+  --zen-success: #5c8a5e;
+  --zen-success-bg: rgba(92, 138, 94, 0.08);
+  --zen-warning: #c49b5c;
+  --zen-warning-bg: rgba(196, 155, 92, 0.08);
+  --zen-danger: #a65a5a;
+  --zen-danger-bg: rgba(166, 90, 90, 0.08);
+  --zen-info: #6b8fa3;
+
+  /* 字体 */
+  --zen-font-serif: 'Noto Serif SC', 'Source Han Serif CN', 'SimSun', serif;
+  --zen-font-sans: 'Noto Sans SC', 'Source Han Sans CN', 'Microsoft YaHei', sans-serif;
+
+  /* 间距 */
+  --zen-spacing-xs: 4px;
+  --zen-spacing-sm: 8px;
+  --zen-spacing-md: 16px;
+  --zen-spacing-lg: 24px;
+  --zen-spacing-xl: 32px;
+  --zen-spacing-2xl: 48px;
+
+  /* 圆角 */
+  --zen-radius-sm: 4px;
+  --zen-radius-md: 8px;
+  --zen-radius-lg: 12px;
+  --zen-radius-xl: 16px;
+
+  /* 阴影 */
+  --zen-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --zen-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --zen-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+  /* 动效 */
+  --zen-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --zen-transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}

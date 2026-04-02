@@ -1,0 +1,169 @@
+/* ============================================
+ * AdminLayout - 管理端布局
+ * ============================================ */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--zen-bg);
+}
+
+/* 侧边栏 */
+.sidebar {
+  width: 220px;
+  background: var(--zen-card);
+  border-right: 1px solid var(--zen-border-light);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+.sidebar.collapsed {
+  width: 64px;
+}
+
+.sidebar-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--zen-border-light);
+}
+
+.logo-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.logo-info {
+  display: flex;
+  flex-direction: column;
+}
+.logo-text {
+  font-family: var(--zen-font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--zen-text);
+  letter-spacing: 4px;
+  line-height: 1.3;
+}
+.logo-sub {
+  font-size: 10px;
+  color: var(--zen-text-muted);
+  letter-spacing: 4px;
+  margin-top: 1px;
+}
+.logo-icon {
+  font-family: var(--zen-font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--zen-accent);
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 12px 0;
+}
+.sidebar-menu .el-menu-item {
+  height: 44px;
+  line-height: 44px;
+  margin: 2px 8px;
+  border-radius: var(--zen-radius-md);
+}
+
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--zen-border-light);
+}
+.collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: var(--zen-radius-md);
+  cursor: pointer;
+  color: var(--zen-text-muted);
+  transition: var(--zen-transition);
+}
+.collapse-btn:hover {
+  background: var(--zen-accent-bg);
+  color: var(--zen-accent);
+}
+
+/* 主区域 */
+.main-area {
+  flex: 1;
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+}
+.sidebar.collapsed + .main-area,
+.sidebar.collapsed ~ .main-area {
+  margin-left: 64px;
+}
+
+.top-bar {
+  height: 56px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--zen-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.current-title {
+  font-family: var(--zen-font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--zen-text);
+  letter-spacing: 2px;
+}
+
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-name {
+  font-size: 13px;
+  color: var(--zen-text-secondary);
+}
+.avatar-wrap {
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 2px;
+  border: 1px solid var(--zen-border);
+  transition: var(--zen-transition);
+}
+.avatar-wrap:hover {
+  border-color: var(--zen-accent);
+}
+
+.content-area {
+  flex: 1;
+  padding: 28px 32px;
+}
+
+/* 页面切换动画 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}

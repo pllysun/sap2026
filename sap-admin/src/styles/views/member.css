@@ -1,0 +1,310 @@
+/* MemberView 样式 */
+
+.member-page .zen-card {
+  padding: 24px;
+}
+
+/* ===== 换届卡片双列网格 ===== */
+.term-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.term-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--zen-bg-warm, #faf9f7);
+  border: 1px solid var(--zen-border-light, #eee);
+  border-radius: 12px;
+  transition: box-shadow 0.25s, transform 0.2s, border-color 0.2s;
+}
+
+.term-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  border-color: rgba(196, 154, 108, 0.3);
+}
+
+.term-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.term-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #c9a96e, #8b7355);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.term-info {
+  min-width: 0;
+}
+
+.term-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zen-text, #2d2a24);
+  line-height: 1.4;
+}
+
+.term-sid {
+  font-size: 12px;
+  color: var(--zen-text-muted, #a09e96);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.term-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.term-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* ===== 换届弹窗 ===== */
+.changeover-header {
+  margin-bottom: 24px;
+}
+
+.grade-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.grade-box {
+  padding: 10px 28px;
+  border-radius: var(--zen-radius-md);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.grade-box.current {
+  background: var(--zen-accent-bg);
+  color: var(--zen-text-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.grade-box.next {
+  background: linear-gradient(135deg, #f5ebe0, #eedcca);
+  color: #8b5e3c;
+  font-weight: 700;
+  border: 1px solid #dcc8ae;
+}
+
+.grade-arrow {
+  font-size: 22px;
+  color: var(--zen-text-muted);
+  font-weight: 300;
+}
+
+.changeover-hint {
+  text-align: center;
+  color: var(--zen-text-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* ===== 选人表单 ===== */
+.changeover-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.pos-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--zen-radius-md);
+  background: var(--zen-accent-bg);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s;
+}
+
+.pos-row:hover {
+  border-color: rgba(196, 154, 108, 0.3);
+}
+
+.pos-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pos-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--zen-text);
+}
+
+.pos-limit {
+  font-size: 12px;
+  color: var(--zen-text-muted);
+}
+
+.pos-limit-num {
+  font-weight: 600;
+  color: var(--zen-primary);
+  font-size: 13px;
+}
+
+/* ===== 用户选项双栏 ===== */
+.user-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--zen-text);
+}
+
+.user-sid {
+  font-size: 12px;
+  color: var(--zen-text-muted);
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== 滚动条美化 ===== */
+.changeover-form::-webkit-scrollbar {
+  width: 4px;
+}
+
+.changeover-form::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+}
+
+.changeover-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Tabs */
+.member-tabs { margin-top: -8px; }
+.member-tabs .el-tabs__header { margin-bottom: 16px; }
+
+/* 优秀成员卡片网格 */
+.outstanding-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.om-card {
+  background: var(--zen-bg-warm, #faf9f7);
+  border: 1px solid var(--zen-border-light, #eee);
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.om-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+.om-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 12px;
+  background: linear-gradient(135deg, rgba(201,169,110,0.06), rgba(139,115,85,0.03));
+}
+
+.om-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c9a96e, #8b7355);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.om-header-info { flex: 1; }
+.om-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--zen-text, #2d2a24);
+  margin-bottom: 4px;
+}
+.om-tags { display: flex; gap: 6px; }
+
+.om-card-body { padding: 12px 20px; }
+.om-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--zen-text-secondary, #7c7a72);
+}
+.om-field-icon { font-size: 14px; }
+.om-field-text { display: flex; align-items: center; flex-wrap: wrap; }
+
+.om-bio {
+  font-size: 13px;
+  color: var(--zen-text-muted, #a09e96);
+  line-height: 1.7;
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.03);
+  min-height: 42px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.om-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 16px 12px;
+  border-top: 1px solid rgba(0,0,0,0.03);
+}

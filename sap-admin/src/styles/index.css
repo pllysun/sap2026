@@ -1,0 +1,35 @@
+/* ============================================
+ * 禅意设计系统 - 样式入口
+ * 通过 @import 聚合所有样式模块
+ * 
+ * 导入顺序：变量 → 重置 → Element覆盖 → 动画 → 工具类 → 布局 → 页面
+ * ============================================ */
+
+/* 1. 设计令牌（变量、字体） */
+@import './variables.css';
+
+/* 2. 全局重置 */
+@import './reset.css';
+
+/* 3. Element Plus 主题覆盖 */
+@import './element-overrides.css';
+
+/* 4. 动画 */
+@import './animations.css';
+
+/* 5. 工具类 */
+@import './utilities.css';
+
+/* 6. 布局 */
+@import './layout/admin.css';
+
+/* 7. 页面样式 */
+@import './views/login.css';
+@import './views/dashboard.css';
+@import './views/member.css';
+@import './views/activity.css';
+@import './views/finance.css';
+@import './views/study.css';
+@import './views/settings.css';
+@import './views/join.css';
+@import './views/log.css';
