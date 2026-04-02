@@ -1,0 +1,259 @@
+/* SettingsView 样式 */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.settings-page .section-title {
+  font-family: var(--zen-font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--zen-border-light);
+}
+
+.setting-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--zen-border-light);
+}
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.setting-key {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: monospace;
+  color: var(--zen-text);
+}
+.setting-desc {
+  font-size: 12px;
+  color: var(--zen-text-muted);
+}
+.setting-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.add-setting {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--zen-border-light);
+}
+
+/* COS config card */
+.cos-config-card {
+  margin-bottom: 20px;
+}
+
+.cos-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cos-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--zen-text-secondary);
+  margin-bottom: 6px;
+}
+
+.cos-secret-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cos-secret-row .secret-display {
+  flex: 1;
+  font-family: monospace;
+}
+
+.cos-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--zen-border-light);
+}
+
+.cos-test-result {
+  font-size: 13px;
+  font-weight: 500;
+}
+.cos-test-result.success {
+  color: var(--zen-success);
+}
+.cos-test-result.fail {
+  color: var(--zen-danger);
+}
+
+/* 年级横幅 */
+.settings-page .grade-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(183,145,103,0.08) 0%, rgba(183,145,103,0.03) 100%);
+  border: 1px solid rgba(183,145,103,0.2);
+  border-radius: 14px;
+  padding: 20px 28px;
+  margin-bottom: 24px;
+}
+.settings-page .grade-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.settings-page .grade-banner__icon {
+  font-size: 2.2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--zen-accent, #b79167), var(--zen-accent-dark, #a07850));
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(183,145,103,0.25);
+}
+.settings-page .grade-banner__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-page .grade-banner__label {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--zen-text, #333);
+}
+.settings-page .grade-banner__desc {
+  font-size: 0.8rem;
+  color: var(--zen-text-muted, #999);
+}
+.settings-page .grade-banner__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-page .grade-banner__value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--zen-accent, #b79167);
+  letter-spacing: -0.02em;
+}
+
+/* 两列布局 */
+.settings-page .settings-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.settings-page .settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 卡片头部 */
+.settings-page .card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--zen-border, #eee);
+}
+.settings-page .card-header__icon {
+  font-size: 1.25rem;
+}
+.settings-page .card-header__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--zen-text, #333);
+}
+
+/* 空提示 */
+.settings-page .empty-hint {
+  text-align: center;
+  padding: 20px;
+  color: var(--zen-text-muted, #aaa);
+  font-size: 0.85rem;
+}
+
+/* 页脚配置 */
+.settings-page .footer-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+.settings-page .footer-field label {
+  display: block;
+  font-size: 12px;
+  color: var(--zen-text-secondary, #888);
+  margin-bottom: 4px;
+}
+.settings-page .qr-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.settings-page .qr-card {
+  border: 1px solid var(--zen-border, #eee);
+  border-radius: 8px;
+  padding: 16px;
+}
+.settings-page .qr-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+.settings-page .qr-preview {
+  width: 120px;
+  height: 120px;
+  border: 1px dashed var(--zen-border, #ddd);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  overflow: hidden;
+  background: var(--zen-bg-light, #fafafa);
+}
+.settings-page .qr-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.settings-page .qr-placeholder {
+  font-size: 12px;
+  color: var(--zen-text-muted, #aaa);
+}
+.settings-page .qr-upload-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .settings-page .settings-layout {
+    grid-template-columns: 1fr;
+  }
+}

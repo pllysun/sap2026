@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.git
+**/.idea
+**/.vscode
+**/target
+**/*.log
+**/*.iml
+**/test-cos-integration.ps1
+**/query_old_db.js
+logo.png

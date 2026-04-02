@@ -1,0 +1,64 @@
+# ==============================================
+# SAP 项目根目录 .gitignore
+# ==============================================
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Node.js =====
+**/node_modules/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Java / Maven =====
+**/target/
+*.class
+*.jar
+!.mvn/wrapper/*.jar
+*.war
+
+# ===== 前端构建产物 =====
+sap-admin/dist/
+sap-user/dist/
+**/dist-ssr/
+
+# ===== 敏感配置文件 =====
+# 真实环境配置包含数据库密码等信息，不提交到仓库
+# 请复制 .example 文件并重命名后使用
+sap-backend/src/main/resources/application-dev.yml
+sap-backend/src/main/resources/application-prod.yml
+
+# ===== 测试文件 =====
+# 测试代码含数据迁移脚本等敏感内容，不提交
+sap-backend/src/test/
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== 测试 / 工具脚本 =====
+**/test-cos-integration.ps1
+**/query_old_db.js
+
+# ===== Docker 数据 =====
+**/data/
+**/uploads/
+
+# ===== Gemini AI =====
+.gemini/

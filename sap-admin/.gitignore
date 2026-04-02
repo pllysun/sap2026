@@ -1,0 +1,6 @@
+# ===== sap-admin 专属 =====
+# 根目录 .gitignore 已覆盖通用规则 (node_modules, dist, IDE 等)
+# 此处仅保留 sap-admin 特有的忽略规则
+
+dist/
+dist-ssr/
