@@ -15,6 +15,7 @@
         <router-link to="/home" class="nav__link" :class="{ active: $route.path === '/home' }">首页</router-link>
         <router-link v-if="!isGuest" to="/study" class="nav__link" :class="{ active: $route.path.startsWith('/study') }">学习小组</router-link>
         <router-link to="/activities" class="nav__link" :class="{ active: $route.path === '/activities' }">软协活动</router-link>
+        <router-link to="/notes" class="nav__link" :class="{ active: $route.path.startsWith('/notes') }">软协笔记</router-link>
         <router-link to="/message-board" class="nav__link" :class="{ active: $route.path === '/message-board' }">留言板</router-link>
       </div>
 
@@ -45,6 +46,7 @@
             <router-link to="/home" class="mobile-drawer__link" :class="{ active: $route.path === '/home' }" @click="drawerOpen = false">🏠 首页</router-link>
             <router-link v-if="!isGuest" to="/study" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/study') }" @click="drawerOpen = false">📚 学习小组</router-link>
             <router-link to="/activities" class="mobile-drawer__link" :class="{ active: $route.path === '/activities' }" @click="drawerOpen = false">🎉 软协活动</router-link>
+            <router-link to="/notes" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/notes') }" @click="drawerOpen = false">📝 软协笔记</router-link>
             <router-link to="/message-board" class="mobile-drawer__link" :class="{ active: $route.path === '/message-board' }" @click="drawerOpen = false">💬 留言板</router-link>
           </div>
           <div class="mobile-drawer__user">

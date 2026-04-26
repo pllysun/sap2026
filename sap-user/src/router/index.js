@@ -32,6 +32,16 @@ const routes = [
         component: () => import('@/views/Activities.vue')
       },
       {
+        path: 'notes',
+        name: 'NoteList',
+        component: () => import('@/views/NoteList.vue')
+      },
+      {
+        path: 'notes/:id',
+        name: 'NoteDetail',
+        component: () => import('@/views/NoteDetail.vue')
+      },
+      {
         path: 'message-board',
         name: 'MessageBoard',
         component: () => import('@/views/MessageBoard.vue')
