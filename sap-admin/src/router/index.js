@@ -43,6 +43,12 @@ const routes = [
         meta: { title: '学习小组' }
       },
       {
+        path: 'note',
+        name: 'Note',
+        component: () => import('../views/NoteView.vue'),
+        meta: { title: '软协笔记' }
+      },
+      {
         path: 'settings',
         name: 'Settings',
         component: () => import('../views/SettingsView.vue'),

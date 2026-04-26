@@ -7,7 +7,7 @@
       </div>
       <div v-if="isLeader || isManager">
         <el-button type="primary" plain @click="$router.push('/settings')">
-          <span style="margin-right: 4px;">🛠️</span> 去设置配置招新群
+          <span style="margin-right: 4px;">🛠️</span> 点击配置正式群信息
         </el-button>
       </div>
     </div>

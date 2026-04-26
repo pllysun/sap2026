@@ -31,6 +31,10 @@
           <el-icon><Reading /></el-icon>
           <span>学习小组</span>
         </el-menu-item>
+        <el-menu-item index="/note">
+          <el-icon><Notebook /></el-icon>
+          <span>软协笔记</span>
+        </el-menu-item>
         <el-menu-item index="/activity">
           <el-icon><Calendar /></el-icon>
           <span>活动管理</span>

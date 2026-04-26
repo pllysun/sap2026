@@ -111,3 +111,15 @@ export const uploadManagerQr = (data) => request.post('/api/join/manager/qr', da
 export const getJoinApplications = (params) => request.get('/api/join/applications', { params })
 export const approveJoinApplication = (id) => request.post(`/api/join/approve/${id}`)
 export const directUpgradeMember = (studentId) => request.post('/api/join/direct-upgrade', { studentId })
+
+// ===== 软协笔记 =====
+export const getNoteList = (params) => request.get('/api/note/list', { params })
+export const getNoteDetail = (id) => request.get(`/api/note/${id}`)
+export const addNote = (data) => request.post('/api/note', data)
+export const uploadNote = (formData) => request.post('/api/note/upload', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+export const updateNote = (id, data) => request.put(`/api/note/${id}`, data)
+export const deleteNote = (id) => request.delete(`/api/note/${id}`)
+export const getNoteStats = (id) => request.get(`/api/note/${id}/stats`)
+export const recordNoteDownload = (id) => request.post(`/api/note/${id}/download`)

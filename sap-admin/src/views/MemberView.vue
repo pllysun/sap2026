@@ -39,11 +39,13 @@
           <div class="term-pagination" v-if="termTotal > 0">
             <el-pagination
               v-model:current-page="termPage"
-              :page-size="40"
+              :page-size="termPageSize"
+              :page-sizes="[40, 100, 200, 500]"
               :total="termTotal"
-              layout="total, prev, pager, next"
+              layout="total, sizes, prev, pager, next"
               background
               @current-change="loadTerms"
+              @size-change="onTermSizeChange"
             />
           </div>
         </div>
@@ -248,6 +250,7 @@ const nextGradeValue = ref('')
 const grades = ref([])
 const termList = ref([])
 const termPage = ref(1)
+const termPageSize = ref(200)
 const termTotal = ref(0)
 const userList = ref([])
 const memberList = ref([])
@@ -333,10 +336,16 @@ const loadGrades = async () => {
 const loadTerms = async () => {
   if (!currentGrade.value) return
   try {
-    const res = await getTermList({ grade: currentGrade.value, current: termPage.value, size: 40 })
+    const res = await getTermList({ grade: currentGrade.value, current: termPage.value, size: termPageSize.value })
     termList.value = res.data?.records || []
     termTotal.value = res.data?.total || 0
   } catch (e) {}
+}
+
+const onTermSizeChange = (newSize) => {
+  termPageSize.value = newSize
+  termPage.value = 1
+  loadTerms()
 }
 
 const onGradeChange = () => {
