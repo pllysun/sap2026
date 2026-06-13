@@ -14,180 +14,200 @@
 
     <!-- ========== TAB: 学习任务 ========== -->
     <div v-if="activeTab === 'task'" class="tab-content" :key="'task'">
-      <div v-if="taskLoading" class="loading"><div class="loading__spinner"></div></div>
-
-      <div v-else-if="!status.hasActivity" class="empty">
-        <div class="empty__text">当前暂无进行中的学习活动</div>
-        <p class="t-caption mt-2">请等待管理员创建新的学习活动</p>
+      <!-- 游客提示 -->
+      <div v-if="isGuest" class="guest-block anim-in">
+        <div class="guest-block__icon">🔒</div>
+        <h3 class="guest-block__title">成为正式成员后可使用</h3>
+        <p class="guest-block__desc">学习任务、提交作业等功能仅对正式成员开放，<br/>请先加入协会成为正式成员。</p>
+        <router-link to="/join" class="btn btn--primary btn--pill">🌟 加入协会</router-link>
       </div>
 
       <template v-else>
-        <div class="status-banner mb-4 anim-in">
-          <div>
-            <div class="status-banner__title">
-              第{{ status.activity.activeWeek }}周匹配周期
-              <span class="badge badge--gradient" style="margin-left:8px;">进行中</span>
-            </div>
-            <div class="status-banner__desc">{{ status.activity.title || `第${status.activity.seqNum}次学习活动` }}</div>
-          </div>
-          <button v-if="!status.joined" class="btn btn--primary btn--pill" @click="joinActivity" :disabled="joining">
-            {{ joining ? '加入中…' : '＋ 加入学习小组' }}
-          </button>
+        <div v-if="taskLoading" class="loading"><div class="loading__spinner"></div></div>
+
+        <div v-else-if="!status.hasActivity" class="empty">
+          <div class="empty__text">当前暂无进行中的学习活动</div>
+          <p class="t-caption mt-2">请等待管理员创建新的学习活动</p>
         </div>
 
-        <div v-if="joinError" class="error-text mb-3">{{ joinError }}</div>
-
-        <template v-if="status.joined">
-          <div class="card anim-in" style="animation-delay:0.05s;">
-            <h3 class="t-heading mb-3">学习任务与作业管理</h3>
-            <div class="hw-grid">
-              <!-- 左栏：本周学习任务 -->
-              <div class="hw-col">
-                <div class="split__title">📄 本周学习任务</div>
-                <div v-if="status.homework" class="card card--gradient hw-file-card">
-                  <div class="flex gap-2" style="align-items:center;">
-                    <div class="hw-icon" style="background:rgba(59,130,246,0.1);">📘</div>
-                    <div style="flex:1; min-width:0;">
-                      <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ status.homework.title || status.homework.fileName || '学习资料' }}</div>
-                      <div class="t-caption" v-if="status.homework.createdAt">{{ formatTime(status.homework.createdAt) }}</div>
-                    </div>
-                  </div>
-                  <a
-                    v-if="status.homework.fileUrl"
-                    :href="'/api/file/download?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
-                    target="_blank"
-                    class="btn btn--primary btn--full btn--sm btn--pill mt-3"
-                  >↓ 下载文件</a>
-                </div>
-                <p v-else class="t-caption" style="color:var(--ink-400); padding: var(--s6) 0; text-align: center;">本周暂无学习任务</p>
+        <template v-else>
+          <div class="status-banner mb-4 anim-in">
+            <div>
+              <div class="status-banner__title">
+                第{{ status.activity.activeWeek }}周匹配周期
+                <span class="badge badge--gradient" style="margin-left:8px;">进行中</span>
               </div>
+              <div class="status-banner__desc">{{ status.activity.title || `第${status.activity.seqNum}次学习活动` }}</div>
+            </div>
+            <button v-if="!status.joined" class="btn btn--primary btn--pill" @click="joinActivity" :disabled="joining">
+              {{ joining ? '加入中…' : '＋ 加入学习小组' }}
+            </button>
+          </div>
 
-              <!-- 右栏：我的作业 -->
-              <div class="hw-col">
-                <div class="split__title">⬆ 我的作业</div>
-                <!-- 已提交：文件卡 + 下载/替换/删除 -->
-                <div v-if="status.submitted && status.submissions && status.submissions.length">
-                  <div v-for="s in status.submissions" :key="s.id" class="card card--gradient hw-file-card">
+          <div v-if="joinError" class="error-text mb-3">{{ joinError }}</div>
+
+          <template v-if="status.joined">
+            <div class="card anim-in" style="animation-delay:0.05s;">
+              <h3 class="t-heading mb-3">学习任务与作业管理</h3>
+              <div class="hw-grid">
+                <!-- 左栏：本周学习任务 -->
+                <div class="hw-col">
+                  <div class="split__title">📄 本周学习任务</div>
+                  <div v-if="status.homework" class="card card--gradient hw-file-card">
                     <div class="flex gap-2" style="align-items:center;">
-                      <div class="hw-icon" style="background:rgba(34,197,94,0.1);">📎</div>
+                      <div class="hw-icon" style="background:rgba(59,130,246,0.1);">📘</div>
                       <div style="flex:1; min-width:0;">
-                        <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.fileName }}</div>
-                        <div class="t-caption">{{ formatTime(s.createdAt) }}</div>
+                        <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ status.homework.title || status.homework.fileName || '学习资料' }}</div>
+                        <div class="t-caption" v-if="status.homework.createdAt">{{ formatTime(status.homework.createdAt) }}</div>
                       </div>
-                      <span class="badge badge--success" style="flex-shrink:0;">已提交</span>
                     </div>
-                    <div class="flex gap-1 mt-3" style="flex-wrap: wrap;">
-                      <a
-                        :href="'/api/file/download?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
-                        target="_blank"
-                        class="btn btn--primary btn--sm btn--pill"
-                      >↓ 下载</a>
-                      <template v-if="!status.weekScore">
-                        <label class="btn btn--secondary btn--sm btn--pill" style="cursor:pointer;">
-                          🔄 替换
-                          <input type="file" @change="replaceHomework($event, s)" style="display:none;" />
-                        </label>
-                        <button class="btn btn--danger btn--sm btn--pill" @click="deleteHomework(s)" :disabled="deleting">
-                          🗑 删除
-                        </button>
-                      </template>
-                    </div>
+                    <a
+                      v-if="status.homework.fileUrl"
+                      :href="'/api/file/download?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
+                      target="_blank"
+                      class="btn btn--primary btn--full btn--sm btn--pill mt-3"
+                    >↓ 下载文件</a>
                   </div>
-
-                  <!-- 评分结果 -->
-                  <div v-if="status.weekScore" class="card mt-3" style="padding: var(--s4); border-left: 4px solid var(--success);">
-                    <div class="flex-between mb-2">
-                      <span class="t-heading" style="font-size: 0.9rem;">📊 本周评分</span>
-                      <span class="badge" :class="status.weekScore.score >= 7 ? 'badge--success' : status.weekScore.score >= 4 ? 'badge--warning' : 'badge--error'">
-                        {{ status.weekScore.score }} 分
-                      </span>
-                    </div>
-                    <p class="t-body" v-if="status.weekScore.comment" style="font-size: 0.85rem; color: var(--ink-600);">{{ status.weekScore.comment }}</p>
-                    <p class="t-caption mt-1">评分人：{{ status.weekScore.leaderName }}</p>
-                  </div>
-
-                  <div v-if="submitError" class="error-text mt-1">{{ submitError }}</div>
-                  <div v-if="submitSuccess" class="success-text mt-1">{{ submitSuccess }}</div>
+                  <p v-else class="t-caption" style="color:var(--ink-400); padding: var(--s6) 0; text-align: center;">本周暂无学习任务</p>
                 </div>
-                <!-- 未提交：上传区域 -->
-                <div v-else>
-                  <div class="upload-zone" :class="{ 'upload-zone--active': isDragOver }"
-                    @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false"
-                    @drop.prevent="handleDrop($event)">
-                    <div v-if="selectedFile" style="text-align:center;">
-                      <div style="font-size:2rem; margin-bottom: var(--s2);">📄</div>
-                      <div class="t-body" style="font-weight:600;">{{ selectedFile.name }}</div>
-                      <div class="t-caption">{{ (selectedFile.size / 1024).toFixed(1) }} KB</div>
-                      <button class="btn btn--ghost btn--sm mt-2" @click="clearFile">✕ 移除</button>
+
+                <!-- 右栏：我的作业 -->
+                <div class="hw-col">
+                  <div class="split__title">⬆ 我的作业</div>
+                  <!-- 已提交：文件卡 + 下载/替换/删除 -->
+                  <div v-if="status.submitted && status.submissions && status.submissions.length">
+                    <div v-for="s in status.submissions" :key="s.id" class="card card--gradient hw-file-card">
+                      <div class="flex gap-2" style="align-items:center;">
+                        <div class="hw-icon" style="background:rgba(34,197,94,0.1);">📎</div>
+                        <div style="flex:1; min-width:0;">
+                          <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.fileName }}</div>
+                          <div class="t-caption">{{ formatTime(s.createdAt) }}</div>
+                        </div>
+                        <span class="badge badge--success" style="flex-shrink:0;">已提交</span>
+                      </div>
+                      <div class="flex gap-1 mt-3" style="flex-wrap: wrap;">
+                        <a
+                          :href="'/api/file/download?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
+                          target="_blank"
+                          class="btn btn--primary btn--sm btn--pill"
+                        >↓ 下载</a>
+                        <template v-if="!status.weekScore">
+                          <label class="btn btn--secondary btn--sm btn--pill" style="cursor:pointer;">
+                            🔄 替换
+                            <input type="file" @change="replaceHomework($event, s)" style="display:none;" />
+                          </label>
+                          <button class="btn btn--danger btn--sm btn--pill" @click="deleteHomework(s)" :disabled="deleting">
+                            🗑 删除
+                          </button>
+                        </template>
+                      </div>
                     </div>
-                    <div v-else style="text-align:center;">
-                      <div style="font-size:2rem; margin-bottom: var(--s2); opacity:0.5;">📂</div>
-                      <p class="t-body" style="color:var(--ink-500);">拖拽文件到此处，或
-                        <label style="color:var(--primary);font-weight:600;cursor:pointer;">
-                          点击选择
-                          <input type="file" ref="fileInput" @change="handleFileSelect" style="display:none;" />
-                        </label>
-                      </p>
+
+                    <!-- 评分结果 -->
+                    <div v-if="status.weekScore" class="card mt-3" style="padding: var(--s4); border-left: 4px solid var(--success);">
+                      <div class="flex-between mb-2">
+                        <span class="t-heading" style="font-size: 0.9rem;">📊 本周评分</span>
+                        <span class="badge" :class="status.weekScore.score >= 7 ? 'badge--success' : status.weekScore.score >= 4 ? 'badge--warning' : 'badge--error'">
+                          {{ status.weekScore.score }} 分
+                        </span>
+                      </div>
+                      <p class="t-body" v-if="status.weekScore.comment" style="font-size: 0.85rem; color: var(--ink-600);">{{ status.weekScore.comment }}</p>
+                      <p class="t-caption mt-1">评分人：{{ status.weekScore.leaderName }}</p>
                     </div>
+
+                    <div v-if="submitError" class="error-text mt-1">{{ submitError }}</div>
+                    <div v-if="submitSuccess" class="success-text mt-1">{{ submitSuccess }}</div>
                   </div>
-                  <button class="btn btn--primary btn--full btn--pill mt-3" @click="submitHomework" :disabled="submitting || !selectedFile">
-                    {{ submitting ? '提交中…' : '📤 提交作业' }}
-                  </button>
-                  <div v-if="submitError" class="error-text mt-1">{{ submitError }}</div>
-                  <div v-if="submitSuccess" class="success-text mt-1">{{ submitSuccess }}</div>
+                  <!-- 未提交：上传区域 -->
+                  <div v-else>
+                    <div class="upload-zone" :class="{ 'upload-zone--active': isDragOver }"
+                      @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false"
+                      @drop.prevent="handleDrop($event)">
+                      <div v-if="selectedFile" style="text-align:center;">
+                        <div style="font-size:2rem; margin-bottom: var(--s2);">📄</div>
+                        <div class="t-body" style="font-weight:600;">{{ selectedFile.name }}</div>
+                        <div class="t-caption">{{ (selectedFile.size / 1024).toFixed(1) }} KB</div>
+                        <button class="btn btn--ghost btn--sm mt-2" @click="clearFile">✕ 移除</button>
+                      </div>
+                      <div v-else style="text-align:center;">
+                        <div style="font-size:2rem; margin-bottom: var(--s2); opacity:0.5;">📂</div>
+                        <p class="t-body" style="color:var(--ink-500);">拖拽文件到此处，或
+                          <label style="color:var(--primary);font-weight:600;cursor:pointer;">
+                            点击选择
+                            <input type="file" ref="fileInput" @change="handleFileSelect" style="display:none;" />
+                          </label>
+                        </p>
+                      </div>
+                    </div>
+                    <button class="btn btn--primary btn--full btn--pill mt-3" @click="submitHomework" :disabled="submitting || !selectedFile">
+                      {{ submitting ? '提交中…' : '📤 提交作业' }}
+                    </button>
+                    <div v-if="submitError" class="error-text mt-1">{{ submitError }}</div>
+                    <div v-if="submitSuccess" class="success-text mt-1">{{ submitSuccess }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </template>
         </template>
       </template>
     </div>
 
     <!-- ========== TAB: 我的成绩 ========== -->
     <div v-if="activeTab === 'scores'" class="tab-content" :key="'scores'">
-      <div v-if="scoresLoading" class="loading"><div class="loading__spinner"></div></div>
-
-      <div v-else-if="activities.length === 0" class="empty">
-        <div class="empty__text">还没有成绩记录</div>
-        <p class="t-caption mt-2">参加学习活动后即可在此查看成绩</p>
+      <!-- 游客提示 -->
+      <div v-if="isGuest" class="guest-block anim-in">
+        <div class="guest-block__icon">🔒</div>
+        <h3 class="guest-block__title">成为正式成员后可查看</h3>
+        <p class="guest-block__desc">我的成绩功能仅对正式成员开放，<br/>请先加入协会成为正式成员。</p>
+        <router-link to="/join" class="btn btn--primary btn--pill">🌟 加入协会</router-link>
       </div>
 
       <template v-else>
-        <div class="filter-bar mb-4 anim-in">
-          <div class="form-group" style="margin-bottom:0; min-width:120px;">
-            <select v-model="selectedIdx" class="select">
-              <option v-for="(a, i) in activities" :key="i" :value="i">
-                {{ a.title || `第${a.seqNum}次` }} ({{ a.grade }})
-              </option>
-            </select>
-          </div>
+        <div v-if="scoresLoading" class="loading"><div class="loading__spinner"></div></div>
+
+        <div v-else-if="activities.length === 0" class="empty">
+          <div class="empty__text">还没有成绩记录</div>
+          <p class="t-caption mt-2">参加学习活动后即可在此查看成绩</p>
         </div>
 
-        <div v-if="currentActivity" class="card mb-4 anim-in">
-          <div class="flex-between mb-3">
-            <h3 class="t-heading">{{ currentActivity.title || `第${currentActivity.seqNum}次学习活动` }}</h3>
-            <div class="flex gap-1">
-              <span class="badge badge--primary">总分 {{ currentActivity.totalScore }}</span>
-              <span class="badge badge--gradient">第 {{ currentActivity.rank }} 名</span>
+        <template v-else>
+          <div class="filter-bar mb-4 anim-in">
+            <div class="form-group" style="margin-bottom:0; min-width:120px;">
+              <select v-model="selectedIdx" class="select">
+                <option v-for="(a, i) in activities" :key="i" :value="i">
+                  {{ a.title || `第${a.seqNum}次` }} ({{ a.grade }})
+                </option>
+              </select>
             </div>
           </div>
 
-          <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">⏱ 成绩时间线</div>
-
-          <div v-if="currentActivity.scores.length > 0">
-            <div v-for="(s, idx) in currentActivity.scores" :key="idx"
-              class="card card--gradient mb-2 anim-in"
-              :style="{ animationDelay: (idx * 0.05) + 's', padding: 'var(--s4)' }">
-              <div class="flex-between">
-                <span class="t-heading">第 {{ s.week }} 周</span>
-                <span class="badge" :class="s.score >= 7 ? 'badge--success' : s.score >= 4 ? 'badge--warning' : 'badge--error'">{{ s.score }} 分</span>
+          <div v-if="currentActivity" class="card mb-4 anim-in">
+            <div class="flex-between mb-3">
+              <h3 class="t-heading">{{ currentActivity.title || `第${currentActivity.seqNum}次学习活动` }}</h3>
+              <div class="flex gap-1">
+                <span class="badge badge--primary">总分 {{ currentActivity.totalScore }}</span>
+                <span class="badge badge--gradient">第 {{ currentActivity.rank }} 名</span>
               </div>
-              <p class="t-body mt-1" v-if="s.comment">{{ s.comment }}</p>
-              <p class="t-caption mt-1">评分人：{{ s.leaderName }}</p>
             </div>
+
+            <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">⏱ 成绩时间线</div>
+
+            <div v-if="currentActivity.scores.length > 0">
+              <div v-for="(s, idx) in currentActivity.scores" :key="idx"
+                class="card card--gradient mb-2 anim-in"
+                :style="{ animationDelay: (idx * 0.05) + 's', padding: 'var(--s4)' }">
+                <div class="flex-between">
+                  <span class="t-heading">第 {{ s.week }} 周</span>
+                  <span class="badge" :class="s.score >= 7 ? 'badge--success' : s.score >= 4 ? 'badge--warning' : 'badge--error'">{{ s.score }} 分</span>
+                </div>
+                <p class="t-body mt-1" v-if="s.comment">{{ s.comment }}</p>
+                <p class="t-caption mt-1">评分人：{{ s.leaderName }}</p>
+              </div>
+            </div>
+            <div v-else class="empty" style="padding: var(--s6);"><div class="empty__text">暂无成绩记录</div></div>
           </div>
-          <div v-else class="empty" style="padding: var(--s6);"><div class="empty__text">暂无成绩记录</div></div>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -285,6 +305,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import request from '@/utils/request'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isGuest = computed(() => {
+  const roles = userStore.roles || []
+  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
+})
 
 const activeTab = ref('task')
 
@@ -392,14 +419,45 @@ const scoresLoaded = ref(false)
 const rankingLoaded = ref(false)
 
 watch(activeTab, (tab) => {
-  if (tab === 'scores' && !scoresLoaded.value) { scoresLoaded.value = true; loadScores() }
+  if (tab === 'scores' && !scoresLoaded.value && !isGuest.value) { scoresLoaded.value = true; loadScores() }
   if (tab === 'ranking' && !rankingLoaded.value) { rankingLoaded.value = true; loadAllActivities() }
 })
 
-onMounted(() => { loadStatus() })
+onMounted(() => { if (!isGuest.value) loadStatus() })
 </script>
 
 <style scoped>
+/* 游客权限提示块 */
+.guest-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--s8) var(--s6);
+  background: var(--bg-card);
+  border: 1px dashed var(--ink-200);
+  border-radius: var(--r-xl);
+  min-height: 300px;
+}
+.guest-block__icon {
+  font-size: 3rem;
+  margin-bottom: var(--s4);
+  opacity: 0.6;
+}
+.guest-block__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink-700);
+  margin-bottom: var(--s3);
+}
+.guest-block__desc {
+  font-size: 0.9rem;
+  color: var(--ink-400);
+  line-height: 1.7;
+  margin-bottom: var(--s5);
+}
+
 .hw-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
