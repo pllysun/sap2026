@@ -52,11 +52,12 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { adminLogin } from '../api'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const formRef = ref(null)
 const loading = ref(false)
 
@@ -81,7 +82,8 @@ const handleLogin = async () => {
     localStorage.setItem('sap-token', res.data.token)
     localStorage.setItem('sap-user', JSON.stringify(res.data.user))
     ElMessage.success('欢迎回来')
-    router.push('/')
+    const redirect = route.query.redirect
+    router.push(typeof redirect === 'string' ? redirect : '/')
   } catch (e) {
     // handled by interceptor
   } finally {

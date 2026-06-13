@@ -105,8 +105,12 @@ public class BillService {
         }
     }
 
+    @Transactional
     public void deleteBill(Long id) {
         billMapper.deleteById(id);
+        billImageMapper.delete(
+                new LambdaQueryWrapper<BillImage>().eq(BillImage::getBillId, id)
+        );
     }
 
     /**
@@ -146,29 +150,30 @@ public class BillService {
                         .orderByDesc(Bill::getBillTime)
         );
 
-        Workbook wb = new XSSFWorkbook();
-        Sheet sheet = wb.createSheet("财务记录");
-        Row header = sheet.createRow(0);
-        String[] headers = {"类型", "内容", "金额", "时间", "备注", "年级"};
-        for (int i = 0; i < headers.length; i++) {
-            header.createCell(i).setCellValue(headers[i]);
-        }
+        // try-with-resources 确保异常时 Workbook / 流也能关闭，避免资源泄露
+        try (Workbook wb = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("财务记录");
+            Row header = sheet.createRow(0);
+            String[] headers = {"类型", "内容", "金额", "时间", "备注", "年级"};
+            for (int i = 0; i < headers.length; i++) {
+                header.createCell(i).setCellValue(headers[i]);
+            }
 
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        for (int i = 0; i < bills.size(); i++) {
-            Bill b = bills.get(i);
-            Row row = sheet.createRow(i + 1);
-            row.createCell(0).setCellValue(b.getBillType() == 0 ? "支出" : "收入");
-            row.createCell(1).setCellValue(b.getContent());
-            row.createCell(2).setCellValue(b.getAmount().doubleValue());
-            row.createCell(3).setCellValue(b.getBillTime() != null ? b.getBillTime().format(fmt) : "");
-            row.createCell(4).setCellValue(b.getRemark() != null ? b.getRemark() : "");
-            row.createCell(5).setCellValue(b.getGrade() != null ? b.getGrade() : "");
-        }
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            for (int i = 0; i < bills.size(); i++) {
+                Bill b = bills.get(i);
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(b.getBillType() == 0 ? "支出" : "收入");
+                row.createCell(1).setCellValue(b.getContent());
+                row.createCell(2).setCellValue(b.getAmount() != null ? b.getAmount().doubleValue() : 0d);
+                row.createCell(3).setCellValue(b.getBillTime() != null ? b.getBillTime().format(fmt) : "");
+                row.createCell(4).setCellValue(b.getRemark() != null ? b.getRemark() : "");
+                row.createCell(5).setCellValue(b.getGrade() != null ? b.getGrade() : "");
+            }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        wb.write(out);
-        wb.close();
-        return out.toByteArray();
+            wb.write(out);
+            return out.toByteArray();
+        }
     }
 }

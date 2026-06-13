@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.entity.Activity;
@@ -31,6 +33,7 @@ public class ActivityController {
 
     @PostMapping
     @OperationLog("新增活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> add(@RequestBody Map<String, Object> params) {
         Activity activity = new Activity();
         activity.setGrade((String) params.get("grade"));
@@ -43,6 +46,7 @@ public class ActivityController {
 
     @PutMapping("/{id}")
     @OperationLog("修改活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> params) {
         Activity activity = new Activity();
         activity.setTitle((String) params.get("title"));
@@ -54,6 +58,7 @@ public class ActivityController {
 
     @DeleteMapping("/{id}")
     @OperationLog("删除活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> delete(@PathVariable Long id) {
         activityService.deleteActivity(id);
         return Result.ok("删除成功");

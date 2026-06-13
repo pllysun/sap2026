@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import cn.dev33.satoken.stp.StpUtil;
 import com.sap.annotation.OperationLog;
 import com.sap.common.BusinessException;
@@ -26,6 +28,7 @@ public class JoinController {
     /** 开关入会通道 */
     @PostMapping("/toggle")
     @OperationLog("切换入会通道")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> toggle(@RequestBody Map<String, Object> body) {
         boolean enabled = Boolean.parseBoolean(String.valueOf(body.get("enabled")));
         joinService.toggleJoin(enabled);
@@ -44,6 +47,7 @@ public class JoinController {
     /** 添加负责人 */
     @PostMapping("/manager")
     @OperationLog("添加负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> addManager(@RequestBody Map<String, Object> body) {
         Long userId = Long.parseLong(String.valueOf(body.get("userId")));
         joinService.addManager(userId);
@@ -53,6 +57,7 @@ public class JoinController {
     /** 移除负责人 */
     @DeleteMapping("/manager/{id}")
     @OperationLog("移除负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> removeManager(@PathVariable Long id) {
         joinService.removeManager(id);
         return Result.ok("移除成功");
@@ -125,6 +130,7 @@ public class JoinController {
     /** 直接升级会员 */
     @PostMapping("/direct-upgrade")
     @OperationLog("直接升级会员")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> directUpgrade(@RequestBody Map<String, Object> body) {
         String studentId = (String) body.get("studentId");
         if (studentId == null || studentId.isEmpty()) throw new BusinessException("学号不能为空");

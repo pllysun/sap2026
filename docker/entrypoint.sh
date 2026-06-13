@@ -9,16 +9,19 @@ echo "========================================="
 mkdir -p /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
 
 # ===== 数据库模式检测 =====
+# 非敏感配置仍走命令行参数；数据源连接信息（含密码）改为通过环境变量传递，
+# 避免出现在进程列表 (ps) 与命令行参数中。Spring 的 relaxed binding 会自动
+# 将 SPRING_DATASOURCE_* 映射到 spring.datasource.* 属性。
 JAVA_OPTS=""
 
 if [ -n "$MYSQL_URL" ]; then
     echo "[DB] 使用外部 MySQL 数据库"
     echo "[DB] URL: $MYSQL_URL"
-    JAVA_OPTS="$JAVA_OPTS --spring.datasource.url=$MYSQL_URL"
-    JAVA_OPTS="$JAVA_OPTS --spring.datasource.username=${MYSQL_USER:-root}"
-    JAVA_OPTS="$JAVA_OPTS --spring.datasource.password=${MYSQL_PASSWORD:-}"
-    JAVA_OPTS="$JAVA_OPTS --spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver"
-    JAVA_OPTS="$JAVA_OPTS --spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect"
+    export SPRING_DATASOURCE_URL="$MYSQL_URL"
+    export SPRING_DATASOURCE_USERNAME="${MYSQL_USER:-root}"
+    export SPRING_DATASOURCE_PASSWORD="${MYSQL_PASSWORD:-}"
+    export SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver"
+    export SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT="org.hibernate.dialect.MySQLDialect"
 else
     echo "[DB] 使用内置 H2 数据库 (MySQL 兼容模式)"
     echo "[DB] 数据文件: /app/data/sap.mv.db"
@@ -107,9 +110,19 @@ generate_https_config() {
         # HSTS
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
+        # 安全响应头
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
         # /admin 精确匹配 → 301 重定向到 /admin/
         location = /admin {
             return 301 /admin/;
+        }
+
+        # 屏蔽 API 文档与调试端点
+        location ~ ^/api/(doc\.html|swagger-ui|v3/api-docs|webjars|swagger-resources) {
+            return 404;
         }
 
         # 用户端 SPA
@@ -143,7 +156,7 @@ generate_https_config() {
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
-            client_max_body_size 100M;
+            client_max_body_size 50M;
         }
     }
 SSLEOF
@@ -189,6 +202,11 @@ http {
         listen 80;
         server_name $DOMAIN;
 
+        # 安全响应头
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
         # Let's Encrypt ACME 验证
         location /.well-known/acme-challenge/ {
             root /app/ssl/webroot;
@@ -216,8 +234,18 @@ http {
 
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
+        # 安全响应头
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
         location = /admin {
             return 301 /admin/;
+        }
+
+        # 屏蔽 API 文档与调试端点
+        location ~ ^/api/(doc\.html|swagger-ui|v3/api-docs|webjars|swagger-resources) {
+            return 404;
         }
 
         location / {
@@ -248,7 +276,7 @@ http {
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto https;
-            client_max_body_size 100M;
+            client_max_body_size 50M;
         }
     }
 }
@@ -282,8 +310,19 @@ sleep 1
 nginx
 
 # ===== 启动 Spring Boot =====
+# 敏感的数据源连接信息通过 SPRING_DATASOURCE_* 环境变量传入（见上），
+# 不再拼进命令行，避免泄露到进程列表。
 echo "[APP] 启动 Spring Boot..."
-exec java -jar /app/app.jar \
-    --spring.profiles.active=docker \
-    --file.upload.path=/app/uploads/ \
-    $JAVA_OPTS
+# JAVA_OPTS 仅承载非敏感的额外 JVM/Spring 参数；为空时不传入空参数。
+if [ -n "$JAVA_OPTS" ]; then
+    # 此处依赖按空白拆分以传递多个参数，故 JAVA_OPTS 不加引号。
+    # shellcheck disable=SC2086
+    exec java -jar /app/app.jar \
+        --spring.profiles.active=docker \
+        --file.upload.path=/app/uploads/ \
+        $JAVA_OPTS
+else
+    exec java -jar /app/app.jar \
+        --spring.profiles.active=docker \
+        --file.upload.path=/app/uploads/
+fi

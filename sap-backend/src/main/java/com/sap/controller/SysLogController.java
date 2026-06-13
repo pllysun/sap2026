@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.service.SysLogService;
@@ -15,6 +17,7 @@ public class SysLogController {
 
     @GetMapping("/list")
     @OperationLog("查询操作日志")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> list(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "20") int size,
@@ -26,6 +29,7 @@ public class SysLogController {
 
     @GetMapping("/stats")
     @OperationLog("查询日志统计")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> stats(@RequestParam(defaultValue = "7") int days) {
         return Result.ok(sysLogService.getStats(days));
     }
@@ -34,6 +38,7 @@ public class SysLogController {
      * 日历热力图数据（近一年每日操作次数）
      */
     @GetMapping("/calendar")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> calendar(@RequestParam(defaultValue = "365") int days) {
         return Result.ok(sysLogService.getDailyCalendar(days));
     }

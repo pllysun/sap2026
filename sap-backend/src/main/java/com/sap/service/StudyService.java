@@ -600,6 +600,29 @@ public class StudyService {
         if (studyScore.getComment() == null || studyScore.getComment().length() < 10) {
             throw new BusinessException("评语不得少于10个字");
         }
+
+        // 权限校验：评分人必须是该活动的负责人，且只能给分配给自己的成员评分
+        StudyLeader leader = studyLeaderMapper.selectOne(
+                new LambdaQueryWrapper<StudyLeader>()
+                        .eq(StudyLeader::getActivityId, studyScore.getActivityId())
+                        .eq(StudyLeader::getUserId, studyScore.getLeaderUserId())
+                        .last("LIMIT 1"));
+        if (leader == null) {
+            throw new BusinessException("无权评分：您不是该学习活动的负责人");
+        }
+        StudyMember member = studyMemberMapper.selectOne(
+                new LambdaQueryWrapper<StudyMember>()
+                        .eq(StudyMember::getActivityId, studyScore.getActivityId())
+                        .eq(StudyMember::getUserId, studyScore.getMemberUserId())
+                        .eq(StudyMember::getWeek, studyScore.getWeek())
+                        .last("LIMIT 1"));
+        if (member == null) {
+            throw new BusinessException("该成员本周期不在学习名单中");
+        }
+        if (member.getLeaderId() != null && !member.getLeaderId().equals(leader.getId())) {
+            throw new BusinessException("无权评分：该成员未分配给您");
+        }
+
         LambdaQueryWrapper<StudyScore> check = new LambdaQueryWrapper<>();
         check.eq(StudyScore::getActivityId, studyScore.getActivityId())
                 .eq(StudyScore::getWeek, studyScore.getWeek())
@@ -607,7 +630,12 @@ public class StudyService {
         if (studyScoreMapper.selectCount(check) > 0) {
             throw new BusinessException("该成员本周期已评分");
         }
-        studyScoreMapper.insert(studyScore);
+        try {
+            studyScoreMapper.insert(studyScore);
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 并发评分：唯一约束 uk_activity_week_member 兜底
+            throw new BusinessException("该成员本周期已评分");
+        }
     }
 
     public List<Map<String, Object>> scoreOverview(Long activityId, Integer week) {

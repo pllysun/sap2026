@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Data
 @TableName("study_score")
 @Entity
-@Table(name = "study_score")
+@Table(name = "study_score", uniqueConstraints =
+        @UniqueConstraint(name = "uk_activity_week_member", columnNames = {"activity_id", "week", "member_user_id"}))
 public class StudyScore {
     @TableId(type = IdType.AUTO)
     @Id

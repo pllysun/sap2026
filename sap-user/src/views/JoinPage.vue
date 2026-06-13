@@ -44,7 +44,7 @@
               <!-- Using margin: 0 auto and block display guarantees horizontal centering explicitly -->
               <img v-if="publicSettings.join_qq_group_url" :src="publicSettings.join_qq_group_url" class="premium-qr" alt="QQ群二维码" />
               <div v-if="publicSettings.join_group_link" class="action-btn-wrap" style="margin-top: 20px;">
-                <a :href="publicSettings.join_group_link" target="_blank" class="cyber-btn">
+                <a :href="publicSettings.join_group_link" target="_blank" rel="noopener noreferrer" class="cyber-btn">
                   🚀 唤起 QQ 一键加群
                 </a>
               </div>

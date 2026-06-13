@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.entity.Bill;
@@ -25,6 +27,7 @@ public class BillController {
 
     @GetMapping("/list")
     @OperationLog("查询财务列表")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> list(@RequestParam(required = false) String grade,
                           @RequestParam(defaultValue = "1") int current,
                           @RequestParam(defaultValue = "10") int size) {
@@ -33,6 +36,7 @@ public class BillController {
 
     @PostMapping
     @OperationLog("新增财务记录")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> add(@RequestBody Map<String, Object> params) {
         Bill bill = new Bill();
         bill.setBillType((Integer) params.get("billType"));
@@ -51,6 +55,7 @@ public class BillController {
 
     @PutMapping("/{id}")
     @OperationLog("修改财务记录")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> update(@PathVariable Long id, @RequestBody Map<String, Object> params) {
         Bill bill = new Bill();
         bill.setBillType((Integer) params.get("billType"));
@@ -69,6 +74,7 @@ public class BillController {
 
     @DeleteMapping("/{id}")
     @OperationLog("删除财务记录")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> delete(@PathVariable Long id) {
         billService.deleteBill(id);
         return Result.ok("删除成功");
@@ -76,12 +82,14 @@ public class BillController {
 
     @GetMapping("/stats")
     @OperationLog("查询财务统计")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> stats(@RequestParam(required = false) String grade) {
         return Result.ok(billService.getStats(grade));
     }
 
     @GetMapping("/export")
     @OperationLog("导出财务报表")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public ResponseEntity<byte[]> export(@RequestParam(required = false) String grade) throws Exception {
         byte[] data = billService.exportExcel(grade);
         HttpHeaders headers = new HttpHeaders();

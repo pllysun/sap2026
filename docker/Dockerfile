@@ -3,7 +3,8 @@
 # ============================================
 
 # ----- Stage 1: 构建前端 -----
-FROM node:20-alpine AS frontend-build
+# 固定到精确 minor 版本以保证可复现构建
+FROM node:20.18-alpine AS frontend-build
 
 WORKDIR /build
 
@@ -21,7 +22,8 @@ ENV VITE_BASE_URL=/admin/
 RUN cd sap-admin && npm run build
 
 # ----- Stage 2: 构建后端 -----
-FROM maven:3.9-eclipse-temurin-21 AS backend-build
+# 固定到精确 patch 版本以保证可复现构建
+FROM maven:3.9.9-eclipse-temurin-21 AS backend-build
 
 WORKDIR /build
 
@@ -34,8 +36,12 @@ COPY sap-backend/src ./src
 RUN mvn package -DskipTests -B
 
 # ----- Stage 3: 运行时 -----
-# 使用 eclipse-temurin JRE + Debian bookworm (和 maven stage 共享基础层)
-FROM eclipse-temurin:21-jre-jammy
+# 使用 eclipse-temurin JRE (Ubuntu jammy 基础镜像)
+# 注：本运行时镜像与 maven 构建阶段并不共享基础层
+#     （maven 阶段基于 temurin-21 完整 JDK，此处为 jammy JRE），
+#     两者层不复用，仅最终 JAR 通过 COPY --from 引入。
+# 固定到精确 patch 版本以保证可复现构建
+FROM eclipse-temurin:21.0.5_11-jre-jammy
 
 # 接收代理参数用于 apt-get
 ARG HTTP_PROXY=""
@@ -74,4 +80,12 @@ EXPOSE 80 443
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD wget -qO- http://localhost:80/ || exit 1
 
+# 安全说明：本容器当前以 root 用户运行。
+#   原因：同一容器内的 Nginx 与 Certbot 需要 root 权限监听 80/443
+#         并写入 /etc/letsencrypt 证书目录。
+#   风险：Java 应用进程同样以 root 身份运行，若被攻破将拥有容器内
+#         root 权限，横向影响面更大。
+#   后续可改进方向：拆分为多容器（Nginx/Certbot 与 Java 应用分离），
+#         或在 entrypoint 内用 su-exec/gosu 将 Java 进程降权为非 root 用户。
+#   此处不强制改 USER，以免破坏 Nginx/Certbot 对特权端口与证书目录的访问。
 ENTRYPOINT ["/app/entrypoint.sh"]

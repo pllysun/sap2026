@@ -33,27 +33,58 @@ public class AuthService {
     @Autowired
     private CacheService cacheService;
 
+    /** 登录失败锁定：达到阈值后锁定一段时间，缓解在线暴力破解 */
+    private static final int MAX_FAIL_ATTEMPTS = 5;
+    private static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
+    // value: [failCount, lockUntilEpochMillis]
+    private final java.util.concurrent.ConcurrentHashMap<String, long[]> loginAttempts =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     /**
      * 登录
      */
     public Map<String, Object> login(LoginDTO dto) {
+        String key = dto.getStudentId();
+        long now = System.currentTimeMillis();
+        long[] rec = key != null ? loginAttempts.get(key) : null;
+        if (rec != null && rec[1] > now) {
+            long mins = (rec[1] - now) / 60000 + 1;
+            throw new BusinessException("登录失败次数过多，账号已临时锁定，请约 " + mins + " 分钟后再试");
+        }
+
         User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>().eq(User::getStudentId, dto.getStudentId())
         );
+        // 统一“账号或密码错误”，避免通过提示区分账号是否存在（防枚举）
         if (user == null) {
-            throw new BusinessException("账号不存在");
+            recordLoginFail(key, now);
+            throw new BusinessException("账号或密码错误");
         }
-        if (user.getStatus() == 0) {
+        if (user.getStatus() != null && user.getStatus() == 0) {
             throw new BusinessException("账号已被禁用");
         }
         if (!PasswordUtil.matches(dto.getPassword(), user.getPassword())) {
-            throw new BusinessException("密码错误");
+            recordLoginFail(key, now);
+            throw new BusinessException("账号或密码错误");
         }
+        if (key != null) loginAttempts.remove(key); // 登录成功，清除失败计数
         StpUtil.login(user.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("token", StpUtil.getTokenValue());
         result.put("user", toVO(user));
         return result;
+    }
+
+    private void recordLoginFail(String key, long now) {
+        if (key == null) return;
+        long[] rec = loginAttempts.computeIfAbsent(key, k -> new long[]{0, 0});
+        synchronized (rec) {
+            rec[0]++;
+            if (rec[0] >= MAX_FAIL_ATTEMPTS) {
+                rec[1] = now + LOCK_DURATION_MS;
+                rec[0] = 0; // 锁定后重置计数，锁定期满重新计
+            }
+        }
     }
 
     /**

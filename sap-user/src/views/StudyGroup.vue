@@ -65,6 +65,7 @@
                       v-if="status.homework.fileUrl"
                       :href="'/api/file/download?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
                       target="_blank"
+                      rel="noopener noreferrer"
                       class="btn btn--primary btn--full btn--sm btn--pill mt-3"
                     >↓ 下载文件</a>
                   </div>
@@ -89,6 +90,7 @@
                         <a
                           :href="'/api/file/download?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
                           target="_blank"
+                          rel="noopener noreferrer"
                           class="btn btn--primary btn--sm btn--pill"
                         >↓ 下载</a>
                         <template v-if="!status.weekScore">

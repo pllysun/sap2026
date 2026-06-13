@@ -196,7 +196,12 @@ public class MessageController {
         like.setTargetType(targetType);
         like.setTargetId(targetId);
         like.setUserId(userId);
-        messageLikeMapper.insert(like);
+        try {
+            messageLikeMapper.insert(like);
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 并发重复点赞：唯一约束兜底，视为已点赞
+            return Result.error("已点赞");
+        }
         return Result.ok("点赞成功");
     }
 
@@ -216,6 +221,26 @@ public class MessageController {
     @DeleteMapping("/{id}")
     @OperationLog("删除留言")
     public Result<?> delete(@PathVariable Long id) {
+        Message msg = messageMapper.selectById(id);
+        if (msg == null) return Result.error("留言不存在");
+        Long userId = StpUtil.getLoginIdAsLong();
+        List<String> roles = StpUtil.getRoleList();
+        boolean isAdmin = roles.stream().anyMatch(r -> "0".equals(r) || "1".equals(r) || "2".equals(r));
+        boolean isOwner = msg.getUserId() != null && msg.getUserId().equals(userId);
+        if (!isAdmin && !isOwner) {
+            return Result.error(403, "无权删除该留言");
+        }
+        // 级联清理：回复、留言点赞、回复点赞，避免孤儿数据污染统计
+        List<MessageReply> replies = messageReplyMapper.selectList(
+                new LambdaQueryWrapper<MessageReply>().eq(MessageReply::getMessageId, id));
+        List<Long> replyIds = replies.stream().map(MessageReply::getId).collect(Collectors.toList());
+        messageReplyMapper.delete(new LambdaQueryWrapper<MessageReply>().eq(MessageReply::getMessageId, id));
+        messageLikeMapper.delete(new LambdaQueryWrapper<MessageLike>()
+                .eq(MessageLike::getTargetType, 0).eq(MessageLike::getTargetId, id));
+        if (!replyIds.isEmpty()) {
+            messageLikeMapper.delete(new LambdaQueryWrapper<MessageLike>()
+                    .eq(MessageLike::getTargetType, 1).in(MessageLike::getTargetId, replyIds));
+        }
         messageMapper.deleteById(id);
         return Result.ok("删除成功");
     }

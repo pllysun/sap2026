@@ -51,11 +51,13 @@ file:
     allowed-types: jpg,jpeg,png,gif,webp,md,pdf,doc,docx,xls,xlsx
 
 # Knife4j 配置
+# 安全默认：API 文档默认关闭，仅 dev 环境(application-dev.yml)显式开启，
+# 避免 prod/docker 暴露接口结构给攻击者。
 springdoc:
   api-docs:
-    enabled: true
+    enabled: false
   swagger-ui:
-    enabled: true
+    enabled: false
   info:
     title: 软件协会管理系统 API
     version: 1.0.0

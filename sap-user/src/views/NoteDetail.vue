@@ -74,6 +74,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import request from '@/utils/request'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 
@@ -98,7 +99,7 @@ const fabOpen = ref(false)
 
 const renderedHtml = computed(() => {
   if (!note.value?.content) return ''
-  try { return marked(note.value.content) } catch { return '<p>Markdown 解析失败</p>' }
+  try { return DOMPurify.sanitize(marked(note.value.content)) } catch { return '<p>Markdown 解析失败</p>' }
 })
 
 const formatDate = (t) => {

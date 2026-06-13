@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Data
 @TableName("sap_note_download")
 @Entity
-@Table(name = "sap_note_download")
+@Table(name = "sap_note_download", uniqueConstraints =
+        @UniqueConstraint(name = "uk_note_download", columnNames = {"note_id", "user_id"}))
 public class NoteDownload {
     @TableId(type = IdType.AUTO)
     @Id

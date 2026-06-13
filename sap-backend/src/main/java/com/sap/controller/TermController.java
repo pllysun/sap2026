@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.entity.Term;
@@ -33,6 +35,7 @@ public class TermController {
 
     @PostMapping
     @OperationLog("新增换届记录")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> add(@RequestBody Term term) {
         termService.addTerm(term);
         return Result.ok("添加成功");
@@ -40,6 +43,7 @@ public class TermController {
 
     @DeleteMapping("/{id}")
     @OperationLog("删除换届记录")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> delete(@PathVariable Long id) {
         termService.deleteTerm(id);
         return Result.ok("删除成功");
@@ -47,6 +51,7 @@ public class TermController {
 
     @PostMapping("/changeover")
     @OperationLog("执行换届")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> changeover(@RequestBody List<Map<String, Object>> assignments) {
         termService.changeover(assignments);
         return Result.ok("换届成功");
