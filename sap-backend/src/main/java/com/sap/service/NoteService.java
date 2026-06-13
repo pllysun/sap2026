@@ -150,10 +150,13 @@ public class NoteService {
     }
 
     /**
-     * 删除笔记
+     * 删除笔记（级联清理浏览/下载明细，避免孤儿数据与统计污染）
      */
+    @org.springframework.transaction.annotation.Transactional
     public void deleteNote(Long id) {
         noteMapper.deleteById(id);
+        noteViewMapper.delete(new LambdaQueryWrapper<NoteView>().eq(NoteView::getNoteId, id));
+        noteDownloadMapper.delete(new LambdaQueryWrapper<NoteDownload>().eq(NoteDownload::getNoteId, id));
     }
 
     /**
@@ -175,7 +178,20 @@ public class NoteService {
             view.setUserId(userId);
             view.setViewCount(1);
             view.setLastViewAt(LocalDateTime.now());
-            noteViewMapper.insert(view);
+            try {
+                noteViewMapper.insert(view);
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                // 并发首次浏览：唯一约束兜底，转为自增已存在记录
+                NoteView again = noteViewMapper.selectOne(
+                        new LambdaQueryWrapper<NoteView>()
+                                .eq(NoteView::getNoteId, noteId)
+                                .eq(NoteView::getUserId, userId));
+                if (again != null) {
+                    again.setViewCount(again.getViewCount() + 1);
+                    again.setLastViewAt(LocalDateTime.now());
+                    noteViewMapper.updateById(again);
+                }
+            }
         }
 
         // 更新笔记总浏览数
@@ -211,7 +227,20 @@ public class NoteService {
             download.setUserId(userId);
             download.setDownloadCount(1);
             download.setLastDownloadAt(LocalDateTime.now());
-            noteDownloadMapper.insert(download);
+            try {
+                noteDownloadMapper.insert(download);
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                // 并发首次下载：唯一约束兜底，转为自增已存在记录
+                NoteDownload again = noteDownloadMapper.selectOne(
+                        new LambdaQueryWrapper<NoteDownload>()
+                                .eq(NoteDownload::getNoteId, noteId)
+                                .eq(NoteDownload::getUserId, userId));
+                if (again != null) {
+                    again.setDownloadCount(again.getDownloadCount() + 1);
+                    again.setLastDownloadAt(LocalDateTime.now());
+                    noteDownloadMapper.updateById(again);
+                }
+            }
         }
 
         // 更新笔记总下载数

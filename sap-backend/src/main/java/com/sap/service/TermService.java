@@ -165,7 +165,12 @@ public class TermService {
                 new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, "current_grade")
         );
         if (setting == null) throw new BusinessException("未找到年级设置");
-        int currentGradeNum = Integer.parseInt(setting.getSettingValue());
+        int currentGradeNum;
+        try {
+            currentGradeNum = Integer.parseInt(setting.getSettingValue());
+        } catch (NumberFormatException e) {
+            throw new BusinessException("当前年级配置非法（应为数字年份）：" + setting.getSettingValue());
+        }
         String newGrade = String.valueOf(currentGradeNum + 1);
 
         // 2. 获取所有非"成员"的身份（需要换届选人的身份）

@@ -13,6 +13,8 @@ import java.util.*;
 @RequestMapping("/api/file")
 public class FileController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FileController.class);
+
     @Autowired
     private CosService cosService;
 
@@ -42,9 +44,27 @@ public class FileController {
     public void download(@RequestParam String url,
                          @RequestParam(required = false, defaultValue = "file") String name,
                          jakarta.servlet.http.HttpServletResponse response) {
+        // SSRF 防护：仅允许代理下载本系统对象存储(腾讯云 COS)域名下的文件，
+        // 拒绝内网地址 / 云元数据 / 任意 http(s) 目标
+        java.net.URI uri;
         try {
-            java.net.URL fileUrl = new java.net.URL(url);
+            uri = java.net.URI.create(url);
+        } catch (Exception e) {
+            response.setStatus(400);
+            return;
+        }
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        boolean schemeOk = "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
+        boolean hostOk = host != null && host.toLowerCase().endsWith(".myqcloud.com");
+        if (!schemeOk || !hostOk) {
+            response.setStatus(403);
+            return;
+        }
+        try {
+            java.net.URL fileUrl = uri.toURL();
             java.net.HttpURLConnection conn = (java.net.HttpURLConnection) fileUrl.openConnection();
+            conn.setInstanceFollowRedirects(false); // 禁止跟随跳转，防止重定向绕过白名单
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(15000);
 
@@ -65,6 +85,7 @@ public class FileController {
                 }
             }
         } catch (Exception e) {
+            log.error("代理下载文件失败: url={}", url, e);
             response.setStatus(500);
         }
     }

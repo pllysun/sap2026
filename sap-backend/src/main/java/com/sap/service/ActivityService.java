@@ -147,10 +147,14 @@ public class ActivityService {
     }
 
     /**
-     * 删除活动
+     * 删除活动（级联删除关联图片，避免产生孤儿数据）
      */
+    @Transactional
     public void deleteActivity(Long id) {
         activityMapper.deleteById(id);
+        activityImageMapper.delete(
+                new LambdaQueryWrapper<ActivityImage>().eq(ActivityImage::getActivityId, id)
+        );
     }
 
     public long countActivities() {

@@ -11,7 +11,8 @@ import lombok.Data;
 @Data
 @TableName("sys_user_role")
 @Entity
-@Table(name = "sys_user_role")
+@Table(name = "sys_user_role", uniqueConstraints =
+        @UniqueConstraint(name = "uk_user_role", columnNames = {"user_id", "role_code"}))
 public class UserRole {
     @TableId(type = IdType.AUTO)
     @Id

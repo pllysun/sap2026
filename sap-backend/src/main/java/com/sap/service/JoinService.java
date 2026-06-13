@@ -22,6 +22,7 @@ public class JoinService {
     @Autowired private UserRoleMapper userRoleMapper;
     @Autowired private UserMapper userMapper;
     @Autowired private TermMapper termMapper;
+    @Autowired private PositionMapper positionMapper;
     @Autowired private SettingService settingService;
     @Autowired private BillService billService;
     @Autowired private CacheService cacheService;
@@ -391,6 +392,32 @@ public class JoinService {
             ur.setUserId(userId);
             ur.setRoleCode(3);
             userRoleMapper.insert(ur);
+        }
+        // 与 UserService.upgradeToMember 保持一致：写入当前年级的"成员"换届记录，
+        // 避免经入会通道升级的成员在历届/年级统计中缺失
+        ensureMemberTerm(userId);
+    }
+
+    /** 确保用户在当前年级有"成员"身份的换届记录（缺则补，幂等） */
+    private void ensureMemberTerm(Long userId) {
+        String currentGrade = settingService.getValue("current_grade");
+        if (currentGrade == null) currentGrade = String.valueOf(java.time.LocalDate.now().getYear());
+        Position memberPosition = positionMapper.selectOne(
+                new LambdaQueryWrapper<Position>().eq(Position::getPositionName, "成员")
+        );
+        if (memberPosition == null) return; // 无成员身份配置则跳过，不阻断升级
+        Long cnt = termMapper.selectCount(
+                new LambdaQueryWrapper<Term>()
+                        .eq(Term::getUserId, userId)
+                        .eq(Term::getGrade, currentGrade)
+                        .eq(Term::getPositionId, memberPosition.getId())
+        );
+        if (cnt == 0) {
+            Term term = new Term();
+            term.setUserId(userId);
+            term.setGrade(currentGrade);
+            term.setPositionId(memberPosition.getId());
+            termMapper.insert(term);
         }
     }
 

@@ -157,6 +157,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { getNoteList, addNote, uploadNote, updateNote, deleteNote, getNoteDetail, getNoteStats } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const keyword = ref('')
 const noteList = ref([])
@@ -181,12 +182,12 @@ const statsData = ref(null)
 
 const previewHtml = computed(() => {
   if (!form.content) return ''
-  try { return marked(form.content) } catch { return '' }
+  try { return DOMPurify.sanitize(marked(form.content)) } catch { return '' }
 })
 
 const previewNoteHtml = computed(() => {
   if (!previewNote.content) return ''
-  try { return marked(previewNote.content) } catch { return '' }
+  try { return DOMPurify.sanitize(marked(previewNote.content)) } catch { return '' }
 })
 
 const formatTime = (t) => {

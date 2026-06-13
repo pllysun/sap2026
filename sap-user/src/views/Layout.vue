@@ -103,7 +103,6 @@ import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
-import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -127,8 +126,8 @@ const hasAnyQr = computed(() => !!(footerSettings.qr_qq_group_url || footerSetti
 
 async function loadFooterSettings() {
   try {
-    const res = await axios.get('/api/setting/public')
-    const d = res.data?.data || {}
+    const res = await request.get('/api/setting/public')
+    const d = res.data || {}
     Object.keys(footerSettings).forEach(k => { if (d[k] !== undefined) footerSettings[k] = d[k] })
   } catch (e) {}
 }

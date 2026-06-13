@@ -80,7 +80,7 @@ router.beforeEach((to, from, next) => {
   document.title = `${to.meta.title || '管理'} · 软件协会`
   const token = localStorage.getItem('sap-token')
   if (!to.meta.noAuth && !token) {
-    next('/login')
+    next({ path: '/login', query: { redirect: to.fullPath } })
   } else {
     next()
   }

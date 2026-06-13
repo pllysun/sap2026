@@ -29,6 +29,14 @@ public class CosService {
     @Autowired
     private SettingService settingService;
 
+    /** 允许上传的文件扩展名（逗号分隔），来自 application.yml: file.upload.allowed-types */
+    @org.springframework.beans.factory.annotation.Value("${file.upload.allowed-types:jpg,jpeg,png,gif,webp,md,pdf,doc,docx,xls,xlsx}")
+    private String allowedTypes;
+
+    /** 单文件最大字节数，来自 application.yml: file.upload.max-size */
+    @org.springframework.beans.factory.annotation.Value("${file.upload.max-size:52428800}")
+    private long maxSize;
+
     private static final String KEY_BUCKET = "cos_bucket_name";
     private static final String KEY_SECRET_ID = "cos_secret_id";
     private static final String KEY_SECRET_KEY = "cos_secret_key";
@@ -69,9 +77,26 @@ public class CosService {
     public Map<String, String> upload(MultipartFile file) {
         if (file.isEmpty()) throw new BusinessException("文件不能为空");
 
+        // 大小校验
+        if (maxSize > 0 && file.getSize() > maxSize) {
+            throw new BusinessException("文件大小超过限制 " + (maxSize / 1024 / 1024) + "MB");
+        }
+
         String originalName = file.getOriginalFilename();
         String ext = (originalName != null && originalName.contains("."))
                 ? originalName.substring(originalName.lastIndexOf(".")) : "";
+
+        // 扩展名白名单校验
+        String extNoDot = ext.startsWith(".") ? ext.substring(1).toLowerCase() : ext.toLowerCase();
+        java.util.Set<String> allowed = new java.util.HashSet<>();
+        for (String t : allowedTypes.split(",")) {
+            if (!t.trim().isEmpty()) allowed.add(t.trim().toLowerCase());
+        }
+        if (extNoDot.isEmpty() || !allowed.contains(extNoDot)) {
+            throw new BusinessException("不支持的文件类型：" + (extNoDot.isEmpty() ? "(无扩展名)" : extNoDot)
+                    + "，仅允许 " + allowedTypes);
+        }
+
         String dateDir = LocalDate.now().toString();
         String cosKey = "uploads/" + dateDir + "/" + UUID.randomUUID().toString().replace("-", "") + ext;
 

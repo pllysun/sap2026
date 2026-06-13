@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import cn.dev33.satoken.stp.StpUtil;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
@@ -41,6 +43,7 @@ public class StudyController {
 
     @PostMapping("/activity")
     @OperationLog("创建学习活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> createActivity(@RequestBody StudyActivity activity) {
         studyService.createActivity(activity);
         return Result.ok("创建成功");
@@ -54,6 +57,7 @@ public class StudyController {
 
     @PutMapping("/activity/{id}/close")
     @OperationLog("关闭学习活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> closeActivity(@PathVariable Long id) {
         studyService.closeActivity(id);
         return Result.ok("已关闭");
@@ -61,6 +65,7 @@ public class StudyController {
 
     @PutMapping("/activity/{id}/active-week")
     @OperationLog("设置活动周期")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> setActiveWeek(@PathVariable Long id, @RequestBody Map<String, Integer> params) {
         studyService.setActiveWeek(id, params.get("week"));
         return Result.ok("活动周期已更新");
@@ -83,6 +88,7 @@ public class StudyController {
 
     @PostMapping("/leader")
     @OperationLog("添加负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> addLeader(@RequestBody StudyLeader leader) {
         studyService.addLeader(leader);
         return Result.ok("添加成功");
@@ -90,6 +96,7 @@ public class StudyController {
 
     @DeleteMapping("/leader/{id}")
     @OperationLog("删除负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> deleteLeader(@PathVariable Long id) {
         studyService.deleteLeader(id);
         return Result.ok("删除成功");
@@ -97,6 +104,7 @@ public class StudyController {
 
     @PutMapping("/leader/{id}/restore")
     @OperationLog("恢复负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> restoreLeader(@PathVariable Long id) {
         studyService.restoreLeader(id);
         return Result.ok("恢复成功");
@@ -134,6 +142,7 @@ public class StudyController {
 
     @PostMapping("/member/batch-join")
     @OperationLog("批量加入学习活动")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> batchJoin(@RequestBody Map<String, Object> params) {
         Long activityId = Long.valueOf(params.get("activityId").toString());
         @SuppressWarnings("unchecked")
@@ -147,6 +156,7 @@ public class StudyController {
 
     @PutMapping("/member/assign")
     @OperationLog("分配成员负责人")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> reassignMember(@RequestBody Map<String, Long> params) {
         studyService.reassignMember(params.get("memberId"), params.get("leaderId"));
         return Result.ok("分配成功");
@@ -155,6 +165,7 @@ public class StudyController {
     // ---- 周期 ----
     @PostMapping("/week/next")
     @OperationLog("开启下一周期")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> nextWeek(@RequestBody Map<String, Long> params) {
         studyService.nextWeek(params.get("activityId"));
         return Result.ok("进入下一周期");
@@ -175,6 +186,7 @@ public class StudyController {
 
     @DeleteMapping("/homework")
     @OperationLog("删除作业文件")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> deleteHomework(@RequestParam Long activityId, @RequestParam Integer week) {
         studyService.deleteHomework(activityId, week);
         return Result.ok("删除成功");

@@ -1,5 +1,6 @@
 package com.sap.service;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sap.common.BusinessException;
@@ -57,9 +58,26 @@ public class UserService {
         cacheService.updateUser(existing);
     }
 
+    @Transactional
     public void updateUserRole(Long userId, List<Integer> roleCodes) {
+        if (roleCodes == null) roleCodes = List.of();
+        // 去重，避免触发 uk_user_role 唯一约束
+        List<Integer> codes = roleCodes.stream().distinct().collect(Collectors.toList());
+
+        // 防垂直越权：只有超级管理员(0)可以授予/变更 超管(0)、会长(1) 等高权限角色
+        List<String> callerRoles = StpUtil.getRoleList();
+        boolean callerIsSuperAdmin = callerRoles.contains("0");
+        if (!callerIsSuperAdmin) {
+            int grantMin = codes.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
+            List<Integer> targetCurrent = userRoleMapper.selectRoleCodesByUserId(userId);
+            int targetMin = targetCurrent.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
+            if (grantMin <= 1 || targetMin <= 1) {
+                throw new BusinessException("无权授予或修改高于自身权限的角色");
+            }
+        }
+
         userRoleMapper.delete(new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId, userId));
-        for (Integer code : roleCodes) {
+        for (Integer code : codes) {
             UserRole ur = new UserRole();
             ur.setUserId(userId);
             ur.setRoleCode(code);

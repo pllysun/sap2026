@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Data
 @TableName("msg_like")
 @Entity
-@Table(name = "msg_like")
+@Table(name = "msg_like", uniqueConstraints =
+        @UniqueConstraint(name = "uk_msg_like", columnNames = {"user_id", "target_type", "target_id"}))
 public class MessageLike {
     @TableId(type = IdType.AUTO)
     @Id

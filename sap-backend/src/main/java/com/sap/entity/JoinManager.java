@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @Data
 @TableName("join_manager")
 @Entity
-@Table(name = "join_manager")
+@Table(name = "join_manager", uniqueConstraints =
+        @UniqueConstraint(name = "uk_user_grade", columnNames = {"user_id", "grade"}))
 public class JoinManager {
     @TableId(type = IdType.AUTO)
     @Id
