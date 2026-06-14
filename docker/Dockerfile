@@ -3,20 +3,22 @@
 # ============================================
 
 # ----- Stage 1: 构建前端 -----
-# 固定到精确 minor 版本以保证可复现构建
-FROM node:20.18-alpine AS frontend-build
+# Node 22（Debian glibc）：Vite 8 要求 Node ≥20.19/≥22.12；glibc 比 alpine/musl
+# 对 rolldown 原生绑定兼容性更好。用 npm install 以便按构建平台拉取对应原生绑定，
+# 规避 npm 可选依赖缺失导致的 "Cannot find native binding" 问题。
+FROM node:22-bookworm-slim AS frontend-build
 
 WORKDIR /build
 
 # 构建用户端
 COPY sap-user/package*.json ./sap-user/
-RUN cd sap-user && npm ci --silent
+RUN cd sap-user && npm install --no-audit --no-fund
 COPY sap-user/ ./sap-user/
 RUN cd sap-user && npm run build
 
 # 构建管理端（设置 base=/admin/）
 COPY sap-admin/package*.json ./sap-admin/
-RUN cd sap-admin && npm ci --silent
+RUN cd sap-admin && npm install --no-audit --no-fund
 COPY sap-admin/ ./sap-admin/
 ENV VITE_BASE_URL=/admin/
 RUN cd sap-admin && npm run build

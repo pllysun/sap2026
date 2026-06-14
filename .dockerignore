@@ -9,3 +9,10 @@
 **/test-cos-integration.ps1
 **/query_old_db.js
 logo.png
+
+# 敏感配置，绝不能打进镜像（含真实数据库/密钥）
+**/application-dev.yml
+**/application-prod.yml
+
+# 单元测试不需要进运行时镜像
+sap-backend/src/test
