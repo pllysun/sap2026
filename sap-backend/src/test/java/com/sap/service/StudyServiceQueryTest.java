@@ -168,7 +168,8 @@ class StudyServiceQueryTest extends BaseUnitTest {
         hw.setTitle("作业一");
         hw.setFileUrl("u");
         hw.setFileName("f");
-        when(studyMaterialMapper.selectOne(any())).thenReturn(hw).thenReturn(null);
+        // 调用顺序：先 lastHw(取最大周, hw.week=null→按 currentWeek) → week1 → week2
+        when(studyMaterialMapper.selectOne(any())).thenReturn(hw, hw, null);
 
         Map<String, Object> detail = service.getActivityDetail(1L);
 

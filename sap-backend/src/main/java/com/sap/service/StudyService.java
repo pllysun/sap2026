@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sap.common.BusinessException;
 import com.sap.entity.*;
 import com.sap.mapper.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class StudyService {
 
@@ -178,9 +181,18 @@ public class StudyService {
         );
         detail.put("totalMembers", totalMembers);
 
-        // 每周期汇总
+        // 每周期汇总（含未来已排期作业的周）
+        StudyMaterial lastHw = studyMaterialMapper.selectOne(
+                new LambdaQueryWrapper<StudyMaterial>()
+                        .eq(StudyMaterial::getActivityId, activityId)
+                        .eq(StudyMaterial::getFileType, 1)
+                        .orderByDesc(StudyMaterial::getWeek)
+                        .last("LIMIT 1"));
+        int maxWeek = Math.max(activity.getCurrentWeek(),
+                (lastHw != null && lastHw.getWeek() != null) ? lastHw.getWeek() : 0);
+        LocalDateTime detailNow = LocalDateTime.now();
         List<Map<String, Object>> weekSummaries = new ArrayList<>();
-        for (int w = 1; w <= activity.getCurrentWeek(); w++) {
+        for (int w = 1; w <= maxWeek; w++) {
             Map<String, Object> ws = new HashMap<>();
             ws.put("week", w);
 
@@ -210,6 +222,10 @@ public class StudyService {
             ws.put("homeworkTitle", homework != null ? homework.getTitle() : null);
             ws.put("homeworkFileUrl", homework != null ? homework.getFileUrl() : null);
             ws.put("homeworkFileName", homework != null ? homework.getFileName() : null);
+            ws.put("homeworkPublishTime", homework != null ? homework.getPublishTime() : null);
+            ws.put("homeworkPublished", homework == null ? null
+                    : (homework.getPublishTime() == null || !homework.getPublishTime().isAfter(detailNow)));
+            ws.put("scheduled", w > activity.getCurrentWeek());
 
             weekSummaries.add(ws);
         }
@@ -473,21 +489,27 @@ public class StudyService {
     public void nextWeek(Long activityId) {
         StudyActivity activity = studyActivityMapper.selectById(activityId);
         if (activity == null) throw new BusinessException("活动不存在");
+        advanceToNextWeek(activity);
+    }
 
+    /**
+     * 将活动推进一个周期：currentWeek+1、activeWeek 同步，并把上一周成员
+     * 随机重新均分到负责人（自动匹配负责人）。
+     */
+    private void advanceToNextWeek(StudyActivity activity) {
         int newWeek = activity.getCurrentWeek() + 1;
         activity.setCurrentWeek(newWeek);
         activity.setActiveWeek(newWeek);
         studyActivityMapper.updateById(activity);
 
-        // 获取上一周期所有成员
         List<StudyMember> prevMembers = studyMemberMapper.selectList(
                 new LambdaQueryWrapper<StudyMember>()
-                        .eq(StudyMember::getActivityId, activityId)
+                        .eq(StudyMember::getActivityId, activity.getId())
                         .eq(StudyMember::getWeek, newWeek - 1)
         );
         List<StudyLeader> leaders = studyLeaderMapper.selectList(
                 new LambdaQueryWrapper<StudyLeader>()
-                        .eq(StudyLeader::getActivityId, activityId)
+                        .eq(StudyLeader::getActivityId, activity.getId())
         );
 
         List<Long> userIds = prevMembers.stream().map(StudyMember::getUserId)
@@ -499,7 +521,7 @@ public class StudyService {
 
         for (int i = 0; i < userIds.size(); i++) {
             StudyMember newMember = new StudyMember();
-            newMember.setActivityId(activityId);
+            newMember.setActivityId(activity.getId());
             newMember.setUserId(userIds.get(i));
             newMember.setWeek(newWeek);
             newMember.setLeaderId(leaders.get(i % leaderCount).getId());
@@ -507,14 +529,86 @@ public class StudyService {
         }
     }
 
+    /**
+     * 定时发布处理：扫描所有进行中的活动，当「下一周」存在已到发布时间(publishTime ≤ now)
+     * 的作业题目时，自动推进周期并重新匹配负责人（逐周推进），实现到点自动进入该周、
+     * 该周作业对学生可见。只在下一周确有到期作业时推进，不会凭空创建不存在周数的成员。
+     *
+     * @return 本次自动推进的周期次数（供监控/测试）
+     */
+    @Transactional
+    public int processScheduledPublish() {
+        LocalDateTime now = LocalDateTime.now();
+        List<StudyActivity> running = studyActivityMapper.selectList(
+                new LambdaQueryWrapper<StudyActivity>().eq(StudyActivity::getStatus, 1));
+        int advanced = 0;
+        for (StudyActivity activity : running) {
+            advanced += advanceForDueHomework(activity, now);
+        }
+        return advanced;
+    }
+
+    private int advanceForDueHomework(StudyActivity activity, LocalDateTime now) {
+        int count = 0;
+        while (true) {
+            int nextW = activity.getCurrentWeek() + 1;
+            Long due = studyMaterialMapper.selectCount(
+                    new LambdaQueryWrapper<StudyMaterial>()
+                            .eq(StudyMaterial::getActivityId, activity.getId())
+                            .eq(StudyMaterial::getWeek, nextW)
+                            .eq(StudyMaterial::getFileType, 1)
+                            .isNotNull(StudyMaterial::getPublishTime)
+                            .le(StudyMaterial::getPublishTime, now));
+            if (due == null || due == 0) break;
+            advanceToNextWeek(activity);
+            count++;
+            log.info("[StudySchedule] 活动 {} 自动进入第 {} 周（作业到达发布时间）",
+                    activity.getId(), activity.getCurrentWeek());
+        }
+        return count;
+    }
+
+    /**
+     * 作业排期列表（管理端）：返回该活动所有周的作业题目，含发布时间与是否已发布，
+     * 供管理员查看/编辑当前及未来多周的排期。
+     */
+    public List<Map<String, Object>> getHomeworkSchedule(Long activityId) {
+        List<StudyMaterial> homeworks = studyMaterialMapper.selectList(
+                new LambdaQueryWrapper<StudyMaterial>()
+                        .eq(StudyMaterial::getActivityId, activityId)
+                        .eq(StudyMaterial::getFileType, 1)
+                        .orderByAsc(StudyMaterial::getWeek));
+        LocalDateTime now = LocalDateTime.now();
+        return homeworks.stream().map(h -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("week", h.getWeek());
+            m.put("title", h.getTitle());
+            m.put("fileUrl", h.getFileUrl());
+            m.put("fileName", h.getFileName());
+            m.put("publishTime", h.getPublishTime());
+            m.put("published", h.getPublishTime() == null || !h.getPublishTime().isAfter(now));
+            return m;
+        }).collect(Collectors.toList());
+    }
+
     // ============= 作业管理 =============
 
     /**
-     * 上传/替换作业文件（会长操作，一个周期一个文件）
+     * 上传/替换作业题目（会长/管理员操作，一个周期一份）。
+     * <p>支持给当前周或未来周提前排期：仅写入作业题目行，<b>不</b>推进周期、<b>不</b>创建成员，
+     * 也就是不会凭空产生不存在周数的成员分配；真正进入该周由 {@link #processScheduledPublish()}
+     * 在 publishTime 到达时自动完成。</p>
+     *
+     * @param publishTime 发布时间：null 表示立即发布；未来时间表示定时发布(发布前仅管理员可见)
      */
     @Transactional
-    public void uploadHomework(Long activityId, Integer week, String title, String fileUrl, String fileName) {
-        // 先删除已有的作业
+    public void uploadHomework(Long activityId, Integer week, String title, String fileUrl,
+                               String fileName, LocalDateTime publishTime) {
+        if (week == null || week < 1) throw new BusinessException("周期不合法");
+        StudyActivity activity = studyActivityMapper.selectById(activityId);
+        if (activity == null) throw new BusinessException("活动不存在");
+
+        // 先删除该周已有的作业题目（upsert，便于随时修改）
         studyMaterialMapper.delete(
                 new LambdaQueryWrapper<StudyMaterial>()
                         .eq(StudyMaterial::getActivityId, activityId)
@@ -529,6 +623,7 @@ public class StudyService {
         material.setTitle(title != null ? title : fileName);
         material.setFileUrl(fileUrl);
         material.setFileName(fileName);
+        material.setPublishTime(publishTime);
         material.setUserId(Long.parseLong(cn.dev33.satoken.stp.StpUtil.getLoginId().toString()));
         studyMaterialMapper.insert(material);
     }
@@ -723,12 +818,15 @@ public class StudyService {
         );
         result.put("joined", memberCount > 0);
 
-        // 当前周期作业
+        // 当前周期作业（学生端：仅返回已发布的作业，未到发布时间的对学生不可见）
+        LocalDateTime now = LocalDateTime.now();
         StudyMaterial homework = studyMaterialMapper.selectOne(
                 new LambdaQueryWrapper<StudyMaterial>()
                         .eq(StudyMaterial::getActivityId, latest.getId())
                         .eq(StudyMaterial::getWeek, latest.getActiveWeek())
                         .eq(StudyMaterial::getFileType, 1)
+                        .and(w -> w.isNull(StudyMaterial::getPublishTime)
+                                .or().le(StudyMaterial::getPublishTime, now))
         );
         result.put("homework", homework);
 
