@@ -47,8 +47,9 @@ public class DataInitializer implements CommandLineRunner {
             {"成员", 0, 99, 999, 3}
     };
 
-    private static final String DEFAULT_ADMIN_STUDENT_ID = "admin";
-    private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
+    /** 系统超级管理员账号（学号 + 初始密码）。账号不存在则创建，存在则确保拥有超管角色。 */
+    private static final String SUPER_ADMIN_STUDENT_ID = "20202753";
+    private static final String SUPER_ADMIN_PASSWORD = "1125887000f";
 
     private final RoleMapper roleMapper;
     private final PositionMapper positionMapper;
@@ -70,7 +71,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         initRoles();
         initPositions();
-        initAdmin();
+        ensureSuperAdmin();
     }
 
     private void initRoles() {
@@ -105,44 +106,48 @@ public class DataInitializer implements CommandLineRunner {
         log.info("[DataInitializer] 初始化内置身份 {} 条", POSITIONS.length);
     }
 
-    private void initAdmin() {
-        // 已存在任意超级管理员（role_code=0）则跳过
-        Long superAdmins = userRoleMapper.selectCount(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleCode, 0));
-        if (superAdmins != null && superAdmins > 0) {
-            return;
-        }
-        // 避免与同学号账号冲突
-        Long sameStudent = userMapper.selectCount(
-                new LambdaQueryWrapper<User>().eq(User::getStudentId, DEFAULT_ADMIN_STUDENT_ID));
-        if (sameStudent != null && sameStudent > 0) {
-            log.warn("[DataInitializer] 无超级管理员但已存在学号 {} 的账号，跳过自动建号，请手动授予角色 0",
-                    DEFAULT_ADMIN_STUDENT_ID);
+    private void ensureSuperAdmin() {
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getStudentId, SUPER_ADMIN_STUDENT_ID));
+
+        if (user == null) {
+            // 账号不存在 → 创建并赋予超级管理员角色
+            user = new User();
+            user.setStudentId(SUPER_ADMIN_STUDENT_ID);
+            user.setPassword(PasswordUtil.encode(SUPER_ADMIN_PASSWORD));
+            user.setName("超级管理员");
+            user.setNickname("超级管理员");
+            user.setQq("10000");
+            user.setGender(1);
+            user.setStatus(1);
+            user.setAvatar("/default-avatar.png");
+            String grade = settingService.getCurrentGrade();
+            user.setGrade(grade != null ? grade : "2026");
+            userMapper.insert(user);
+            grantRole(user.getId(), 0);
+            log.warn("[DataInitializer] 已创建超级管理员账号: 学号={}", SUPER_ADMIN_STUDENT_ID);
             return;
         }
 
-        User admin = new User();
-        admin.setStudentId(DEFAULT_ADMIN_STUDENT_ID);
-        admin.setPassword(PasswordUtil.encode(DEFAULT_ADMIN_PASSWORD));
-        admin.setName("系统管理员");
-        admin.setNickname("系统管理员");
-        admin.setQq("10000");
-        admin.setGender(1);
-        admin.setStatus(1);
-        admin.setAvatar("/default-avatar.png");
-        String grade = settingService.getCurrentGrade();
-        admin.setGrade(grade != null ? grade : "2026");
-        userMapper.insert(admin);
+        // 账号已存在 → 确保拥有超级管理员角色
+        Long hasRole0 = userRoleMapper.selectCount(
+                new LambdaQueryWrapper<UserRole>()
+                        .eq(UserRole::getUserId, user.getId())
+                        .eq(UserRole::getRoleCode, 0));
+        if (hasRole0 == null || hasRole0 == 0) {
+            // 首次提升为超管：同时将密码重置为约定初始密码以保证可登录。
+            // 之后该账号已是超管则不再改动密码，避免覆盖用户自行修改的密码。
+            user.setPassword(PasswordUtil.encode(SUPER_ADMIN_PASSWORD));
+            userMapper.updateById(user);
+            grantRole(user.getId(), 0);
+            log.warn("[DataInitializer] 已将学号 {} 提升为超级管理员", SUPER_ADMIN_STUDENT_ID);
+        }
+    }
 
+    private void grantRole(Long userId, int roleCode) {
         UserRole ur = new UserRole();
-        ur.setUserId(admin.getId());
-        ur.setRoleCode(0);
+        ur.setUserId(userId);
+        ur.setRoleCode(roleCode);
         userRoleMapper.insert(ur);
-
-        log.warn("========================================================");
-        log.warn(" 已创建默认超级管理员账号: 学号={} 密码={}",
-                DEFAULT_ADMIN_STUDENT_ID, DEFAULT_ADMIN_PASSWORD);
-        log.warn(" 出于安全考虑，请首次登录后立即修改该密码！");
-        log.warn("========================================================");
     }
 }
