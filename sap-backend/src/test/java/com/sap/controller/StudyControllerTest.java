@@ -236,7 +236,7 @@ class StudyControllerTest extends BaseUnitTest {
     // ===================== 作业（含 StpUtil） =====================
 
     @Test
-    void uploadHomework_parsesAllParams() {
+    void uploadHomework_parsesAllParams_immediatePublish() {
         Map<String, Object> params = new HashMap<>();
         params.put("activityId", "1");
         params.put("week", "2");
@@ -245,7 +245,8 @@ class StudyControllerTest extends BaseUnitTest {
         params.put("fileName", "f.pdf");
 
         Result<?> r = controller.uploadHomework(params);
-        verify(studyService).uploadHomework(1L, 2, "作业", "url", "f.pdf");
+        // 无 publishTime → 传 null（立即发布）
+        verify(studyService).uploadHomework(1L, 2, "作业", "url", "f.pdf", null);
         assertEquals("上传成功", r.getData());
     }
 
@@ -255,7 +256,50 @@ class StudyControllerTest extends BaseUnitTest {
         params.put("activityId", "1");
         params.put("week", "2");
         controller.uploadHomework(params);
-        verify(studyService).uploadHomework(1L, 2, null, null, null);
+        verify(studyService).uploadHomework(1L, 2, null, null, null, null);
+    }
+
+    @Test
+    void uploadHomework_parsesPublishTime() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("activityId", "1");
+        params.put("week", "5");
+        params.put("title", "定时作业");
+        params.put("fileUrl", "url");
+        params.put("fileName", "f.pdf");
+        params.put("publishTime", "2026-08-01 18:30:00");
+
+        controller.uploadHomework(params);
+        verify(studyService).uploadHomework(1L, 5, "定时作业", "url", "f.pdf",
+                java.time.LocalDateTime.of(2026, 8, 1, 18, 30, 0));
+    }
+
+    @Test
+    void uploadHomework_parsesPublishTime_isoAndNoSeconds() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("activityId", "1");
+        params.put("week", "3");
+        params.put("publishTime", "2026-08-01T09:05");
+        controller.uploadHomework(params);
+        verify(studyService).uploadHomework(1L, 3, null, null, null,
+                java.time.LocalDateTime.of(2026, 8, 1, 9, 5, 0));
+    }
+
+    @Test
+    void uploadHomework_invalidPublishTime_throws() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("activityId", "1");
+        params.put("week", "3");
+        params.put("publishTime", "not-a-date");
+        assertThrows(com.sap.common.BusinessException.class, () -> controller.uploadHomework(params));
+    }
+
+    @Test
+    void homeworkSchedule_delegates() {
+        when(studyService.getHomeworkSchedule(1L)).thenReturn(java.util.List.of());
+        Result<?> r = controller.homeworkSchedule(1L);
+        assertEquals(200, r.getCode());
+        verify(studyService).getHomeworkSchedule(1L);
     }
 
     @Test

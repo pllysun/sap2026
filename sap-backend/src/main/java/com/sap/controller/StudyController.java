@@ -174,14 +174,44 @@ public class StudyController {
     // ---- 作业 ----
     @PostMapping("/homework/upload")
     @OperationLog("上传作业文件")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> uploadHomework(@RequestBody Map<String, Object> params) {
         Long activityId = Long.valueOf(params.get("activityId").toString());
         Integer week = Integer.valueOf(params.get("week").toString());
         String title = params.get("title") != null ? params.get("title").toString() : null;
         String fileUrl = params.get("fileUrl") != null ? params.get("fileUrl").toString() : null;
         String fileName = params.get("fileName") != null ? params.get("fileName").toString() : null;
-        studyService.uploadHomework(activityId, week, title, fileUrl, fileName);
+        // 发布时间：null/空 表示立即发布；未来时间表示定时发布
+        Object pt = params.get("publishTime");
+        java.time.LocalDateTime publishTime = (pt != null && !pt.toString().isBlank())
+                ? parseDateTime(pt.toString()) : null;
+        studyService.uploadHomework(activityId, week, title, fileUrl, fileName, publishTime);
         return Result.ok("上传成功");
+    }
+
+    /** 作业排期列表（管理端查看当前+未来多周的作业题目与发布状态） */
+    @GetMapping("/homework/schedule")
+    @OperationLog("查询作业排期")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> homeworkSchedule(@RequestParam Long activityId) {
+        return Result.ok(studyService.getHomeworkSchedule(activityId));
+    }
+
+    /** 兼容前端日期选择器：解析 "yyyy-MM-dd HH:mm[:ss]"（含 ISO 'T'） */
+    private static java.time.LocalDateTime parseDateTime(String s) {
+        String v = s.trim().replace('T', ' ');
+        java.time.format.DateTimeFormatter[] fmts = {
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        };
+        for (java.time.format.DateTimeFormatter f : fmts) {
+            try {
+                return java.time.LocalDateTime.parse(v, f);
+            } catch (Exception ignore) {
+                // 尝试下一种格式
+            }
+        }
+        throw new com.sap.common.BusinessException("发布时间格式不正确");
     }
 
     @DeleteMapping("/homework")

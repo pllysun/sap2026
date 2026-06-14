@@ -47,6 +47,14 @@ public class StudyMaterial {
     @jakarta.persistence.Column(name = "file_url", length = 500, columnDefinition = "VARCHAR(500) COMMENT '文件地址'")
     private String fileUrl;
 
+    /**
+     * 发布时间（仅作业题目 fileType=1 使用）。
+     * null 或 ≤ 当前时间 = 已发布(学生可见)；> 当前时间 = 定时草稿(仅管理员可见)。
+     * 到达发布时间时由定时任务自动推进周期并匹配负责人。
+     */
+    @jakarta.persistence.Column(name = "publish_time", columnDefinition = "DATETIME COMMENT '作业发布时间(定时)'")
+    private LocalDateTime publishTime;
+
     /** 创建时间 */
     @TableField(fill = FieldFill.INSERT)
     @jakarta.persistence.Column(name = "created_at", columnDefinition = "DATETIME COMMENT '创建时间'")
