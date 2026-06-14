@@ -91,7 +91,14 @@
         </div>
         <!-- 右侧：开启下一周期 -->
         <div class="ops-right">
-          <el-button type="warning" size="small" @click="handleNextWeek" :loading="loading.nextWeek">
+          <el-tooltip v-if="leaders.length === 0" content="请先添加负责人后再开启下一周期" placement="top">
+            <span>
+              <el-button type="warning" size="small" disabled>
+                🔄 开启第{{ selectedActivity.currentWeek + 1 }}周期
+              </el-button>
+            </span>
+          </el-tooltip>
+          <el-button v-else type="warning" size="small" @click="handleNextWeek" :loading="loading.nextWeek">
             🔄 开启第{{ selectedActivity.currentWeek + 1 }}周期
           </el-button>
         </div>
@@ -236,8 +243,8 @@
                           :style="{ color: row.score >= 7 ? 'var(--zen-success)' : row.score >= 4 ? 'var(--zen-warning)' : 'var(--zen-danger)', fontWeight: 600 }">
                           {{ row.score }}分
                         </span>
-                        <el-input-number v-else-if="isEditable" v-model="scoreForm[row.userId]" :min="0" :max="10" :step="1" size="small"
-                          controls-position="right" style="width: 90px" placeholder="0-10" />
+                        <el-input-number v-else-if="isEditable" v-model="scoreForm[row.userId]" :min="1" :max="10" :step="1" size="small"
+                          controls-position="right" style="width: 90px" placeholder="1-10" />
                         <span v-else style="color: var(--zen-text-muted)">-</span>
                       </template>
                     </el-table-column>
@@ -436,6 +443,16 @@ const isCurrentGrade = computed(() => gradeFilter.value === systemGrade.value)
 const isEditable = computed(() => isCurrentGrade.value && selectedActivity.value?.status === 1)
 
 const unscoredCount = computed(() => leaderMembers.value.filter(m => m.score === null).length)
+// 当前周期（currentWeek）全部成员中未评分人数，用于开启下一周期前的提示
+const currentCycleUnscoredCount = computed(() => {
+  let n = 0
+  for (const l of leaders.value) {
+    for (const m of (l._memberDetails || [])) {
+      if (m.score === null || m.score === undefined) n++
+    }
+  }
+  return n
+})
 const unscoredWithScoreCount = computed(() =>
   leaderMembers.value.filter(m => m.score === null && scoreForm[m.userId] !== undefined && scoreForm[m.userId] !== null).length
 )
@@ -641,6 +658,9 @@ const handleHomeworkUpload = async (res) => {
       ElMessage.success('作业上传成功')
       loadActivityDetail(selectedActivity.value.id)
     } catch (e) {}
+  } else {
+    // 原生上传返回 HTTP200+{code!=200}，需手动提示后端原因（如 COS 未配置）
+    ElMessage.error(res.message || '文件上传失败')
   }
 }
 
@@ -656,6 +676,8 @@ const handleHomeworkReplace = async (res) => {
       ElMessage.success('作业已替换')
       loadActivityDetail(selectedActivity.value.id)
     } catch (e) {}
+  } else {
+    ElMessage.error(res.message || '文件上传失败')
   }
 }
 
@@ -706,8 +728,27 @@ const handleSetActiveWeek = async (week) => {
 
 const handleNextWeek = async () => {
   if (loading.nextWeek) return
+  // 前置校验：必须有负责人
+  if (leaders.value.length === 0) {
+    ElMessage.warning('请先添加负责人，再开启下一周期')
+    return
+  }
+  const nextNum = selectedActivity.value.currentWeek + 1
+  const unscored = currentCycleUnscoredCount.value
+  let msg = `<div style="line-height:1.7;">
+    <p>即将开启<strong>第${nextNum}周期</strong>。</p>
+    <p style="color:#f56c6c;font-weight:bold;">⚠️ 此操作不可撤销，上一周期分组将被打乱并重新随机均分。</p>`
+  if (unscored > 0) {
+    msg += `<p style="color:#e6a23c;">当前周期尚有 ${unscored} 人未评分，是否继续？</p>`
+  }
+  msg += '</div>'
   try {
-    await ElMessageBox.confirm(`进入第${selectedActivity.value.currentWeek + 1}周期，成员将随机均分，确认？`, '提示')
+    await ElMessageBox.confirm(msg, '开启下一周期', {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '确认开启',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     loading.nextWeek = true
     ElMessage({ message: '生成中...', type: 'info', duration: 0, grouping: true })
     await nextWeek({ activityId: selectedActivity.value.id })
@@ -726,9 +767,14 @@ const handleScore = async (row) => {
   const score = scoreForm[row.userId]
   if (score === undefined || score === null) return
   if (loading.score) return
-  const comment = commentForm[row.userId] || ''
-  if (comment.length > 0 && comment.length < 10) {
-    ElMessage.warning('评语不得少于10个字')
+  // 前端校验，与后端保持一致：分数 1-10、评语必填且不少于10字
+  if (score < 1 || score > 10) {
+    ElMessage.warning('分数需在 1-10 之间')
+    return
+  }
+  const comment = (commentForm[row.userId] || '').trim()
+  if (comment.length < 10) {
+    ElMessage.warning('评语必填，且不得少于10个字')
     return
   }
   loading.score = row.userId

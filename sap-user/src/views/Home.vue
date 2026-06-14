@@ -16,13 +16,13 @@
         <span class="hero-float-tag" style="bottom:18%;right:6%;animation-delay:-5s;">Linux</span>
         <span class="hero-float-tag" style="top:32%;right:2%;animation-delay:-6s;">React</span>
         <span class="hero-float-tag" style="bottom:38%;left:2%;animation-delay:-7s;">SQL</span>
-        <span class="hero-float-tag" style="top:3%;left:22%;animation-delay:-1.5s;">🤖 ChatGPT</span>
-        <span class="hero-float-tag" style="top:15%;right:18%;animation-delay:-3.5s;">🧠 LLM</span>
+        <span class="hero-float-tag" style="top:3%;left:22%;animation-delay:-1.5s;">ChatGPT</span>
+        <span class="hero-float-tag" style="top:15%;right:18%;animation-delay:-3.5s;">LLM</span>
         <span class="hero-float-tag" style="bottom:12%;left:15%;animation-delay:-4.5s;">TensorFlow</span>
-        <span class="hero-float-tag" style="bottom:25%;right:15%;animation-delay:-0.5s;">🐳 Docker</span>
+        <span class="hero-float-tag" style="bottom:25%;right:15%;animation-delay:-0.5s;">Docker</span>
         <span class="hero-float-tag" style="top:28%;left:10%;animation-delay:-5.5s;">Spring Boot</span>
         <span class="hero-float-tag" style="bottom:8%;right:22%;animation-delay:-2.5s;">Node.js</span>
-        <span class="hero-float-tag" style="bottom:5%;left:52%;animation-delay:-8s;">🔥 PyTorch</span>
+        <span class="hero-float-tag" style="bottom:5%;left:52%;animation-delay:-8s;">PyTorch</span>
         <span class="hero-float-tag" style="bottom:5%;left:38%;animation-delay:-8s;">TypeScript</span>
       </div>
 
@@ -42,21 +42,21 @@
       <div class="hero-body">
         <div class="home-hero__inner">
           <div class="anim-in hero-text-col" style="animation-delay: 0.15s;">
-            <span class="section-label">🚀 CSUFTSAP · 计算机学习入门</span>
+            <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>CSUFTSAP · 计算机学习入门</span>
             <h2 class="t-display mt-2" style="font-size: 1.8rem;">开启你的编程之旅，<br/>从零到一构建技术力量</h2>
             <p class="t-body mt-3" style="max-width: 480px; font-size: 0.95rem;">
               我们为每一位同学提供系统的编程学习路径——从 Markdown、C 语言基础到 Web 开发、AI 与就业分析，帮你找到属于自己的方向。
             </p>
             <div class="hero-btns hero-btns--desktop">
               <!-- 游客 + 入会开启 → 加入协会 -->
-              <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn">🌟 加入协会</router-link>
+              <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
               <!-- 游客 + 入会关闭 → 开始学习（不可点） -->
-              <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;" title="请联系会长开放入口">🎯 开始学习</span>
+              <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;" title="请联系会长开放入口"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</span>
               <!-- 正式成员 → 开始学习 -->
-              <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn">🎯 开始学习</router-link>
+              <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</router-link>
               <!-- 正式成员 + 入会开启 → 加入协会（提示已加入） -->
-              <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn">🌟 加入协会</router-link>
-              <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout">🏫 了解协会</a>
+              <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
+              <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>了解协会</a>
             </div>
           </div>
           <div class="card anim-in home-hero__code" style="animation-delay:0.25s;">
@@ -71,18 +71,18 @@
 <span style="color:var(--primary);">int</span> <span style="color:#F59E0B;">main</span>() {
   cout &lt;&lt; <span style="color:var(--teal);">"Hello, Future Developer!"</span>
        &lt;&lt; endl;
-  <span style="color:#6e7591;">// 你的编程之旅从这里开始 🎉</span>
+  <span style="color:#6e7591;">// 你的编程之旅从这里开始</span>
   <span style="color:#8B5CF6;">return</span> <span style="color:var(--primary);">0</span>;
 }</pre>
             <p class="t-caption mt-3 text-center">写下你的第一行代码，成为未来的开发者</p>
           </div>
           <!-- 手机端按钮放在代码卡片下方 -->
           <div class="hero-btns hero-btns--mobile anim-in" style="animation-delay: 0.3s;">
-            <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn">🌟 加入协会</router-link>
-            <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;">🎯 开始学习</span>
-            <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn">🎯 开始学习</router-link>
-            <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn">🌟 加入协会</router-link>
-            <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout">🏫 了解协会</a>
+            <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
+            <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</span>
+            <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</router-link>
+            <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
+            <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>了解协会</a>
           </div>
         </div>
 
@@ -97,7 +97,7 @@
     <!-- Stats + Line Chart Section -->
     <section id="about-section" class="home-section">
       <div class="page">
-        <span class="section-label">📈 数据洞察</span>
+        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>数据洞察</span>
         <h2 class="section-title">数读软协，见证成长</h2>
         <p class="section-desc">用数据记录我们的足迹，每一位成员都是协会历史的创造者。</p>
 
@@ -113,7 +113,7 @@
 
         <!-- 历届成员折线图 -->
         <div v-if="gradeStats.length > 0" class="card anim-in" style="padding: var(--s5);">
-          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">📊 历届正式成员人数</h3>
+          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><svg style="width:18px;height:18px;color:var(--primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>历届正式成员人数</h3>
           <div class="chart-container">
             <canvas ref="lineChartCanvas"></canvas>
           </div>
@@ -121,7 +121,7 @@
 
         <!-- 操作日志日历热力图 -->
         <div class="card anim-in" style="padding: var(--s5); margin-top: var(--s4);">
-          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">🔥 在线成员活跃度</h3>
+          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><svg style="width:18px;height:18px;color:var(--teal)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>在线成员活跃度</h3>
           <div class="heatmap-container">
             <canvas ref="heatmapCanvas"></canvas>
           </div>
@@ -141,20 +141,26 @@
     <!-- Learning Path Section -->
     <section class="home-section">
       <div class="page">
-        <span class="section-label">📚 推荐学习路径</span>
+        <span class="section-label section-label--icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+          推荐学习路径
+        </span>
         <h2 class="section-title">计算机入门学习路线</h2>
         <p class="section-desc">循序渐进，从基础到实战，找到最适合你的学习方向。</p>
 
         <div class="home-paths">
           <div v-for="(path, idx) in learningPaths" :key="idx"
             class="card card--interactive anim-in home-path-card"
-            :style="{ animationDelay: (idx * 0.08) + 's' }">
-            <div class="home-path-card__step">STEP {{ idx + 1 }}</div>
-            <div style="font-size: 2.5rem; margin-bottom: var(--s3);">{{ path.icon }}</div>
-            <h3 class="t-heading" style="margin-bottom: var(--s2);">{{ path.title }}</h3>
-            <p class="t-body" style="margin-bottom: var(--s3);">{{ path.desc }}</p>
-            <div class="flex gap-1" style="flex-wrap: wrap; justify-content: center;">
-              <span v-for="tag in path.tags" :key="tag" class="badge badge--primary" style="font-size: 0.7rem;">{{ tag }}</span>
+            :style="{ animationDelay: (idx * 0.08) + 's', '--accent': path.accent }">
+            <span class="home-path-card__step">STEP {{ idx + 1 }}</span>
+            <!-- 图标为内置静态 SVG，无用户输入，v-html 安全 -->
+            <div class="home-path-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="path.svg"></svg>
+            </div>
+            <h3 class="home-path-card__title">{{ path.title }}</h3>
+            <p class="home-path-card__desc">{{ path.desc }}</p>
+            <div class="home-path-card__tags">
+              <span v-for="tag in path.tags" :key="tag" class="home-path-tag">{{ tag }}</span>
             </div>
           </div>
         </div>
@@ -164,7 +170,7 @@
     <!-- Quick Start Tips -->
     <section class="home-section">
       <div class="page">
-        <span class="section-label">💡 新手必看</span>
+        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>新手必看</span>
         <h2 class="section-title">编程入门指南</h2>
         <p class="section-desc">来自学长学姐的建议，帮你少走弯路。</p>
 
@@ -173,7 +179,7 @@
             class="card card--interactive anim-in"
             :style="{ animationDelay: (idx * 0.06) + 's' }">
             <div class="flex gap-2" style="align-items: flex-start;">
-              <div class="home-tip-icon" :style="{ background: tip.bg }">{{ tip.icon }}</div>
+              <div class="home-tip-icon" :style="{ background: tip.bg, color: tip.accent }"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="tip.svg"></svg></div>
               <div>
                 <h3 class="t-heading" style="margin-bottom: 4px;">{{ tip.title }}</h3>
                 <p class="t-body">{{ tip.desc }}</p>
@@ -187,7 +193,7 @@
     <!-- Outstanding Members -->
     <section class="home-section">
       <div class="page">
-        <span class="section-label">🌟 榜样力量</span>
+        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>榜样力量</span>
         <h2 class="section-title">优秀学长学姐</h2>
         <p class="section-desc">他们曾在软件协会分享、学习、成长，如今在更大的舞台发光发热。</p>
 
@@ -205,7 +211,7 @@
               <span class="badge" :class="destinationBadge(m.destination)">{{ m.destination || '—' }}</span>
             </div>
             <div class="member-card__info">{{ m.grade }}级 · {{ m.major || '未填写' }}</div>
-            <div class="member-card__info" v-if="m.destinationDetail">📍 {{ m.destinationDetail }}</div>
+            <div class="member-card__info" v-if="m.destinationDetail" style="display:flex;align-items:center;gap:4px;"><svg style="width:13px;height:13px;flex-shrink:0;opacity:.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{{ m.destinationDetail }}</div>
           </div>
         </div>
 
@@ -251,20 +257,51 @@ const statCards = computed(() => {
   ]
 })
 
+// icon 为内置线性 SVG 路径（Lucide 风格），accent 为该卡片的主题强调色
 const learningPaths = [
-  { icon: '📝', title: 'Markdown 语法', desc: 'AI 时代的必备技能，学会用 Markdown 编写规范文档，提高沟通效率。', tags: ['文档编写', 'AI 提问', '排版技能'] },
-  { icon: '💻', title: 'C 语言基础', desc: '编程的第一步，掌握变量、循环、函数等核心概念，为后续学习打下坚实基础。', tags: ['入门必学', '语法基础', '指针'] },
-  { icon: '🧩', title: '数据结构与算法', desc: '学会用合适的数据结构解决问题，培养算法思维，提升编程核心竞争力。', tags: ['链表', '树与图', '排序算法'] },
-  { icon: '🌐', title: 'Web 开发入门', desc: '从 HTML/CSS/JavaScript 开始，学习构建网页应用，了解前后端协作模式。', tags: ['HTML/CSS', 'JavaScript', 'Vue/React'] },
-  { icon: '🤖', title: 'AI 人工智能', desc: '了解机器学习与深度学习基础，学习用 Python 构建智能应用与数据分析。', tags: ['Python', '机器学习', '深度学习'] },
-  { icon: '🎯', title: '就业/考研分析', desc: '规划你的未来发展路径，了解计算机行业就业趋势与考研/保研备考策略。', tags: ['就业方向', '考研攻略', '保研规划'] }
+  {
+    accent: '#3B82F6', title: 'Markdown 语法',
+    desc: 'AI 时代的必备技能，学会用 Markdown 编写规范文档，提高沟通效率。',
+    tags: ['文档编写', 'AI 提问', '排版技能'],
+    svg: '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6"/><path d="M9 17h6"/>'
+  },
+  {
+    accent: '#6366F1', title: 'C 语言基础',
+    desc: '编程的第一步，掌握变量、循环、函数等核心概念，为后续学习打下坚实基础。',
+    tags: ['入门必学', '语法基础', '指针'],
+    svg: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>'
+  },
+  {
+    accent: '#8B5CF6', title: '数据结构与算法',
+    desc: '学会用合适的数据结构解决问题，培养算法思维，提升编程核心竞争力。',
+    tags: ['链表', '树与图', '排序算法'],
+    svg: '<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>'
+  },
+  {
+    accent: '#14B8A6', title: 'Web 开发入门',
+    desc: '从 HTML/CSS/JavaScript 开始，学习构建网页应用，了解前后端协作模式。',
+    tags: ['HTML/CSS', 'JavaScript', 'Vue/React'],
+    svg: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"/>'
+  },
+  {
+    accent: '#0EA5E9', title: 'AI 人工智能',
+    desc: '了解机器学习与深度学习基础，学习用 Python 构建智能应用与数据分析。',
+    tags: ['Python', '机器学习', '深度学习'],
+    svg: '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v2"/><path d="M15 2v2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M2 9h2"/><path d="M2 15h2"/><path d="M20 9h2"/><path d="M20 15h2"/>'
+  },
+  {
+    accent: '#F43F5E', title: '就业/考研分析',
+    desc: '规划你的未来发展路径，了解计算机行业就业趋势与考研/保研备考策略。',
+    tags: ['就业方向', '考研攻略', '保研规划'],
+    svg: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'
+  }
 ]
 
 const beginnerTips = [
-  { icon: '📝', bg: 'rgba(59,130,246,0.1)', title: '坚持每天写代码', desc: '编程是一项实践技能，每天写至少 30 分钟代码，比一周集中学一天效果好得多。' },
-  { icon: '🤔', bg: 'rgba(139,92,246,0.1)', title: '不要怕看错误信息', desc: '报错是程序员最好的老师。学会阅读和理解编译器/运行时给出的错误提示。' },
-  { icon: '🤝', bg: 'rgba(20,184,166,0.1)', title: '加入学习小组', desc: '和志同道合的同学组队学习，互相督促、讨论问题，学习效率翻倍。' },
-  { icon: '📖', bg: 'rgba(245,158,11,0.1)', title: '善用搜索和文档', desc: '遇到问题先 Google，学会阅读官方文档。这是每个开发者的必备技能。' }
+  { accent: '#3B82F6', bg: 'rgba(59,130,246,0.1)', title: '坚持每天写代码', desc: '编程是一项实践技能，每天写至少 30 分钟代码，比一周集中学一天效果好得多。', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>' },
+  { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', title: '不要怕看错误信息', desc: '报错是程序员最好的老师。学会阅读和理解编译器/运行时给出的错误提示。', svg: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>' },
+  { accent: '#14B8A6', bg: 'rgba(20,184,166,0.1)', title: '加入学习小组', desc: '和志同道合的同学组队学习，互相督促、讨论问题，学习效率翻倍。', svg: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+  { accent: '#F59E0B', bg: 'rgba(245,158,11,0.1)', title: '善用搜索和文档', desc: '遇到问题先 Google，学会阅读官方文档。这是每个开发者的必备技能。', svg: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>' }
 ]
 
 const totalPages = computed(() => Math.ceil(members.value.length / pageSize))
@@ -767,21 +804,95 @@ onUnmounted(() => {
   gap: var(--s5);
 }
 .home-path-card {
+  --accent: var(--primary);
   position: relative;
-  padding: var(--s6) var(--s5) var(--s5);
-  text-align: center;
+  padding: var(--s5);
+  text-align: left;
+  overflow: hidden;
+}
+/* 顶部强调线：悬停时从左展开 */
+.home-path-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, transparent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur) var(--ease);
+}
+.home-path-card:hover::before { transform: scaleX(1); }
+.home-path-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--ink-100));
 }
 .home-path-card__step {
   position: absolute;
-  top: var(--s3);
-  right: var(--s3);
-  font-size: 0.65rem;
+  top: var(--s4);
+  right: var(--s4);
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--primary);
-  background: rgba(59,130,246,0.08);
-  padding: 2px 10px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 3px 10px;
   border-radius: var(--r-pill);
+}
+.home-path-card__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  margin-bottom: var(--s4);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.home-path-card__icon svg { width: 27px; height: 27px; }
+.home-path-card:hover .home-path-card__icon {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.home-path-card__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+  margin-bottom: var(--s2);
+}
+.home-path-card__desc {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--ink-500);
+  margin-bottom: var(--s4);
+}
+.home-path-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.home-path-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  transition: background var(--dur) var(--ease);
+}
+.home-path-card:hover .home-path-tag {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+/* 区块标签内联图标 */
+.section-label--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-label--icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .home-tip-icon {
@@ -791,8 +902,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
   flex-shrink: 0;
+}
+.home-tip-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* Hero buttons */
@@ -883,8 +997,15 @@ onUnmounted(() => {
 
   .home-paths { grid-template-columns: 1fr 1fr; gap: var(--s3); }
   .home-path-card {
-    padding: var(--s4) var(--s3) var(--s3);
+    padding: var(--s4);
   }
+  .home-path-card__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    margin-bottom: var(--s3);
+  }
+  .home-path-card__icon svg { width: 23px; height: 23px; }
   .home-path-card__step {
     font-size: 0.6rem;
     padding: 2px 6px;

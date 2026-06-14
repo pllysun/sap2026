@@ -83,7 +83,9 @@ const handleLogin = async () => {
     localStorage.setItem('sap-user', JSON.stringify(res.data.user))
     ElMessage.success('欢迎回来')
     const redirect = route.query.redirect
-    router.push(typeof redirect === 'string' ? redirect : '/')
+    // 仅允许站内路径（以 / 开头且非 //），避免畸形或外站跳转
+    const safeRedirect = typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
+    router.push(safeRedirect)
   } catch (e) {
     // handled by interceptor
   } finally {

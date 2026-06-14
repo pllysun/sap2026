@@ -50,8 +50,9 @@ public class CosService {
         String secretKey = settingService.getValue(KEY_SECRET_KEY);
         String region = settingService.getValue(KEY_REGION);
 
-        if (secretId == null || secretKey == null || region == null) {
-            throw new BusinessException("COS 配置不完整，请到系统设置中配置对象存储");
+        // 配置项初始化为空字符串，需同时判空串，否则会带着空密钥构建客户端抛出晦涩错误
+        if (isBlank(secretId) || isBlank(secretKey) || isBlank(region)) {
+            throw new BusinessException("对象存储(COS)尚未配置，请先到「系统设置 → 对象存储」中填写并保存 SecretId / SecretKey / 地域 / Bucket");
         }
 
         // region 存的是类似 "cos.ap-nanjing"，需去掉 "cos." 前缀
@@ -64,10 +65,24 @@ public class CosService {
 
     private String getBucketName() {
         String bucket = settingService.getValue(KEY_BUCKET);
-        if (bucket == null || bucket.isEmpty()) {
-            throw new BusinessException("COS Bucket 未配置");
+        if (isBlank(bucket)) {
+            throw new BusinessException("对象存储(COS)尚未配置，请先到「系统设置 → 对象存储」中填写并保存 SecretId / SecretKey / 地域 / Bucket");
         }
         return bucket;
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    /**
+     * 对象存储是否已完整配置（供前端/接口预检，避免上传后才发现未配置）
+     */
+    public boolean isConfigured() {
+        return !isBlank(settingService.getValue(KEY_SECRET_ID))
+                && !isBlank(settingService.getValue(KEY_SECRET_KEY))
+                && !isBlank(settingService.getValue(KEY_REGION))
+                && !isBlank(settingService.getValue(KEY_BUCKET));
     }
 
     /**

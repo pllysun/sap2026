@@ -5,7 +5,7 @@
         <h2>入 · 会</h2>
         <p>入会管理与审核</p>
       </div>
-      <div v-if="isLeader || isManager">
+      <div v-if="isLeader">
         <el-button type="primary" plain @click="$router.push('/settings')">
           <span style="margin-right: 4px;">🛠️</span> 点击配置正式群信息
         </el-button>
@@ -319,7 +319,7 @@ const handleToggle = async (val) => {
     if (val) loadManagers()
   } catch (e) {
     joinEnabled.value = !val
-    ElMessage.error(e.response?.data?.msg || '操作失败')
+    // 接口失败由全局拦截器统一提示
   } finally {
     toggleLoading.value = false
   }
@@ -333,7 +333,7 @@ const handleAddManager = async () => {
     newManagerId.value = null
     loadManagers()
   } catch (e) {
-    ElMessage.error(e.response?.data?.msg || '添加失败')
+    // 接口失败由全局拦截器统一提示
   } finally {
     addingManager.value = false
   }
@@ -345,7 +345,7 @@ const handleRemoveManager = async (row) => {
     ElMessage.success('已移除')
     loadManagers()
   } catch (e) {
-    ElMessage.error(e.response?.data?.msg || '移除失败')
+    // 接口失败由全局拦截器统一提示
   }
 }
 
@@ -373,24 +373,51 @@ const handleApprove = async (row) => {
     ElMessage.success('审核通过，已升级为正式成员')
     loadApplications()
   } catch (e) {
-    ElMessage.error(e.response?.data?.msg || '审核失败')
+    // 接口失败由全局拦截器统一提示
   } finally {
     row._approving = false
   }
 }
 
 const handleDirectUpgrade = async () => {
+  const sid = upgradeStudentId.value.trim()
+  if (!sid) return
+
+  // 用本地已加载的申请列表做前置查重，避免无效请求与重复操作
+  const existing = applications.value.find(a => String(a.studentId) === sid)
+  if (existing && existing.status === 2) {
+    ElMessage.warning(`学号 ${sid} 已是正式会员，无需重复升级`)
+    return
+  }
+  if (existing) {
+    try {
+      await ElMessageBox.confirm(
+        `学号 ${sid} 已有进行中的入会申请（${statusText(existing.status)}），建议前往「入会审核」处理，是否仍要直接升级？`,
+        '提示',
+        { confirmButtonText: '仍要直接升级', cancelButtonText: '去审核', type: 'warning' }
+      )
+    } catch {
+      activeTab.value = 'review'
+      return
+    }
+  }
+
   try {
-    await ElMessageBox.confirm(`确认将学号 ${upgradeStudentId.value} 直接升级为正式成员？`, '升级确认')
+    await ElMessageBox.confirm(
+      `将直接把学号 ${sid} 升级为正式会员并自动生成一笔会费收入记录，确认？`,
+      '升级确认',
+      { confirmButtonText: '确认升级', cancelButtonText: '取消', type: 'warning' }
+    )
   } catch { return }
 
   upgrading.value = true
   try {
-    await directUpgradeMember(upgradeStudentId.value)
+    await directUpgradeMember(sid)
     ElMessage.success('升级成功')
     upgradeStudentId.value = ''
+    loadApplications()
   } catch (e) {
-    ElMessage.error(e.response?.data?.msg || '升级失败')
+    // 接口失败由全局拦截器统一提示
   } finally {
     upgrading.value = false
   }
@@ -415,7 +442,7 @@ const handleUploadQr = async (options, type) => {
     ElMessage.success('上传成功')
     loadManagers()
   } catch (e) {
-    ElMessage.error('上传失败')
+    // 上传/接口失败由全局拦截器统一提示（COS 未配置时显示后端引导文案）
   }
 }
 

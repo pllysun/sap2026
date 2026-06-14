@@ -100,11 +100,16 @@ public class ActivityService {
             activity.setGrade(gradeSetting != null ? gradeSetting.getSettingValue() : "2025");
         }
 
-        // 计算该年级的活动次数
-        long count = activityMapper.selectCount(
-                new LambdaQueryWrapper<Activity>().eq(Activity::getGrade, activity.getGrade())
+        // 取该年级当前最大序号 + 1，而非 count + 1：
+        // 软删除会让 count 回退，删除中间活动后再新增会与已有序号重复
+        Activity last = activityMapper.selectOne(
+                new LambdaQueryWrapper<Activity>()
+                        .eq(Activity::getGrade, activity.getGrade())
+                        .orderByDesc(Activity::getSeqNum)
+                        .last("LIMIT 1")
         );
-        activity.setSeqNum((int) count + 1);
+        int nextSeq = (last != null && last.getSeqNum() != null) ? last.getSeqNum() + 1 : 1;
+        activity.setSeqNum(nextSeq);
 
         activityMapper.insert(activity);
 

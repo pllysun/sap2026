@@ -471,7 +471,7 @@ public class JoinService {
         }
 
         // 是否可刷新（超过24h且状态为0）
-        boolean canRefresh = app.getStatus() == 0 && app.getAssignedAt() != null
+        boolean canRefresh = app.getStatus() != null && app.getStatus() == 0 && app.getAssignedAt() != null
                 && app.getAssignedAt().plusHours(24).isBefore(LocalDateTime.now());
         map.put("canRefresh", canRefresh);
 

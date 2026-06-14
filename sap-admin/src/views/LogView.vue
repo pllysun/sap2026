@@ -9,15 +9,24 @@
     <div class="stats-row">
       <div class="zen-card stat-card">
         <div class="stat-title">操作类型分布</div>
-        <div ref="pieChart" class="chart-box"></div>
+        <div v-show="statsStatus === 'loaded' && hasPie" ref="pieChart" class="chart-box"></div>
+        <div v-if="statsStatus !== 'loaded' || !hasPie" class="log-chart-empty">
+          {{ chartPlaceholderText(hasPie) }}
+        </div>
       </div>
       <div class="zen-card stat-card">
         <div class="stat-title">HTTP 方法统计</div>
-        <div ref="barChart" class="chart-box"></div>
+        <div v-show="statsStatus === 'loaded' && hasBar" ref="barChart" class="chart-box"></div>
+        <div v-if="statsStatus !== 'loaded' || !hasBar" class="log-chart-empty">
+          {{ chartPlaceholderText(hasBar) }}
+        </div>
       </div>
       <div class="zen-card stat-card stat-card-wide">
         <div class="stat-title">近7天操作趋势</div>
-        <div ref="lineChart" class="chart-box"></div>
+        <div v-show="statsStatus === 'loaded' && hasLine" ref="lineChart" class="chart-box"></div>
+        <div v-if="statsStatus !== 'loaded' || !hasLine" class="log-chart-empty">
+          {{ chartPlaceholderText(hasLine) }}
+        </div>
       </div>
     </div>
 
@@ -103,6 +112,18 @@ let pieInstance = null
 let barInstance = null
 let lineInstance = null
 
+// 统计区状态：loading / loaded / error
+const statsStatus = ref('loading')
+const hasPie = ref(false)
+const hasBar = ref(false)
+const hasLine = ref(false)
+
+const chartPlaceholderText = (hasData) => {
+  if (statsStatus.value === 'loading') return '加载中…'
+  if (statsStatus.value === 'error') return '统计加载失败'
+  return hasData ? '' : '暂无数据'
+}
+
 const calendarChart = ref(null)
 let calendarInstance = null
 
@@ -130,13 +151,25 @@ const loadLogs = async () => {
 }
 
 const loadStats = async () => {
+  statsStatus.value = 'loading'
   try {
     const res = await getLogStats(7)
     const data = res.data || {}
-    renderPie(data.byOperationType || {})
-    renderBar(data.byHttpMethod || {})
-    renderLine(data.dailyTrend || {})
-  } catch (e) {}
+    const pieData = data.byOperationType || {}
+    const barData = data.byHttpMethod || {}
+    const lineData = data.dailyTrend || {}
+    hasPie.value = Object.keys(pieData).length > 0
+    hasBar.value = Object.keys(barData).length > 0
+    hasLine.value = Object.keys(lineData).length > 0
+    statsStatus.value = 'loaded'
+    // 等容器 v-show 显示后再渲染，否则 echarts 容器尺寸为 0
+    await nextTick()
+    if (hasPie.value) renderPie(pieData)
+    if (hasBar.value) renderBar(barData)
+    if (hasLine.value) renderLine(lineData)
+  } catch (e) {
+    statsStatus.value = 'error'
+  }
 }
 
 const COLORS = ['#c9a96e', '#e8c87a', '#a68b5b', '#d4b978', '#8b7355', '#f0d890', '#b5976b']
@@ -282,5 +315,16 @@ onBeforeUnmount(() => {
   calendarInstance?.dispose()
 })
 </script>
+
+<style scoped>
+.log-chart-empty {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--zen-text-muted, #999);
+  font-size: 13px;
+}
+</style>
 
 

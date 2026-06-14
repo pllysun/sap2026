@@ -105,17 +105,30 @@ public class PdfService {
         // 3. 包装为完整 XHTML
         String xhtml = buildXhtml(title, bodyHtml);
 
-        // 4. HTML → PDF
+        // 4. HTML → PDF。优先嵌入中文字体；若字体无法被底层加载（如 CFF/OTF 与
+        // pdfbox 不兼容），降级为不嵌字体渲染，保证始终产出有效 PDF 而非抛异常导致下载 500
+        if (fontFile != null) {
+            try {
+                return render(xhtml, fontFile);
+            } catch (Exception e) {
+                log.warn("[PdfService] 嵌入字体渲染失败，降级为无嵌入字体（中文可能显示异常）: {}", e.getMessage());
+            }
+        }
+        return render(xhtml, null);
+    }
+
+    /**
+     * 渲染 XHTML 为 PDF 字节流。
+     * @param font 可选嵌入字体；为 null 时使用渲染器内置字体
+     */
+    private byte[] render(String xhtml, File font) throws Exception {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-
-            // 注册中文字体
-            if (fontFile != null) {
-                builder.useFont(fontFile, FONT_FAMILY, 400,
+            if (font != null) {
+                builder.useFont(font, FONT_FAMILY, 400,
                         BaseRendererBuilder.FontStyle.NORMAL, true);
             }
-
             builder.withHtmlContent(xhtml, null);
             builder.toStream(os);
             builder.run();

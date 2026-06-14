@@ -73,6 +73,7 @@
               {{ cosTestResult.msg }}
             </span>
           </div>
+          <p style="font-size:12px;color:#aaa;margin-top:8px;">「检测连通性」测试的是<strong>已保存</strong>的配置，修改后请先点「保存配置」再检测</p>
         </div>
 
         <!-- 入会会费配置 -->
@@ -331,13 +332,21 @@ const loadCurrentGrade = async () => {
 }
 
 const handleSaveGrade = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '修改当前年级会影响入会负责人匹配、学习活动归属、财务年级统计等全局数据，确认修改？',
+      '修改当前年级',
+      { confirmButtonText: '确认修改', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch { return }
+
   gradeSaving.value = true
   try {
     await updateSetting({ settingKey: 'current_grade', settingValue: String(currentGrade.value) })
     originalGrade.value = currentGrade.value
     ElMessage.success('当前年级已更新')
   } catch (e) {
-    ElMessage.error('保存失败')
+    // 接口失败由全局拦截器统一提示
   } finally {
     gradeSaving.value = false
   }
@@ -403,6 +412,14 @@ const handleSaveCosConfig = async () => {
 }
 
 const handleTestCos = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '检测的是已保存的配置，请确认已先点击「保存配置」。是否继续检测？',
+      '检测连通性',
+      { confirmButtonText: '继续检测', cancelButtonText: '取消', type: 'info' }
+    )
+  } catch { return }
+
   cosTesting.value = true
   cosTestResult.value = null
   try {
@@ -486,7 +503,8 @@ const onQrUploaded = (res, field) => {
     footerConfig[field] = res.data.url
     ElMessage.success('图片上传成功，记得点击保存')
   } else {
-    ElMessage.error('上传失败')
+    // 原生上传返回 HTTP200+{code!=200}，显示后端原因（如 COS 未配置时的引导文案）
+    ElMessage.error(res?.message || '上传失败')
   }
 }
 
@@ -494,12 +512,14 @@ const handleSaveFooterConfig = async () => {
   footerSaving.value = true
   try {
     const keys = Object.keys(footerConfig)
-    for (const key of keys) {
-      await updateSetting({ settingKey: key, settingValue: footerConfig[key] })
-    }
+    // 并发提交所有配置，避免逐项串行导致中途失败半保存
+    await Promise.all(
+      keys.map(key => updateSetting({ settingKey: key, settingValue: footerConfig[key] }))
+    )
     ElMessage.success('页脚配置保存成功')
   } catch (e) {
-    ElMessage.error('保存失败')
+    // 单项失败时全局拦截器已弹出具体原因，这里补充整体性提示
+    ElMessage.error('部分配置未保存，请重试')
   } finally {
     footerSaving.value = false
   }

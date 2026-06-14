@@ -44,10 +44,6 @@ sap-user/dist/
 sap-backend/src/main/resources/application-dev.yml
 sap-backend/src/main/resources/application-prod.yml
 
-# ===== 测试文件 =====
-# 测试代码含数据迁移脚本等敏感内容，不提交
-sap-backend/src/test/
-
 # ===== 日志 =====
 *.log
 logs/

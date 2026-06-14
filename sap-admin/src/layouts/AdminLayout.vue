@@ -51,7 +51,7 @@
           <el-icon><Document /></el-icon>
           <span>日志管理</span>
         </el-menu-item>
-        <el-menu-item index="/settings">
+        <el-menu-item v-if="isLeaderOrSuper" index="/settings">
           <el-icon><Setting /></el-icon>
           <span>系统设置</span>
         </el-menu-item>
@@ -102,6 +102,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getUserInfo, logout as logoutApi } from '../api'
+import { clearAuth } from '../utils/request'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
@@ -130,7 +131,7 @@ const handleLogout = async () => {
   try {
     await logoutApi()
   } catch (e) {}
-  localStorage.removeItem('sap-token')
+  clearAuth()
   ElMessage.success('已退出')
   router.push('/login')
 }
