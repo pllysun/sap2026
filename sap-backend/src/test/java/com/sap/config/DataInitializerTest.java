@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * DataInitializer 单元测试：覆盖角色 / 职位 / 超管账号的幂等初始化分支。
+ * 超管逻辑：账号(学号 20202753)不存在则创建并赋超管；存在但无超管角色则
+ * 重置密码并提升；已是超管则不动。
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -37,28 +39,33 @@ class DataInitializerTest extends BaseUnitTest {
 
     @InjectMocks DataInitializer initializer;
 
+    /** 让超管逻辑变为 no-op：账号已存在且已是超管 */
+    private void superAdminAlreadyConfigured() {
+        User existing = new User();
+        existing.setId(1L);
+        when(userMapper.selectOne(any())).thenReturn(existing);
+        when(userRoleMapper.selectCount(any())).thenReturn(1L);
+    }
+
+    // ---------- 角色 / 职位 ----------
+
     @Test
-    void run_insertsAllRoles_whenNoneExist() {
+    void run_insertsAllRolesAndPositions_whenNoneExist() {
         when(roleMapper.selectCount(any())).thenReturn(0L);
         when(positionMapper.selectCount(any())).thenReturn(0L);
-        when(userRoleMapper.selectCount(any())).thenReturn(0L);
-        when(userMapper.selectCount(any())).thenReturn(0L);
-        when(settingService.getCurrentGrade()).thenReturn("2027");
+        superAdminAlreadyConfigured();
 
         initializer.run();
 
-        // 5 个内置角色全部插入
         verify(roleMapper, times(5)).insert(any(Role.class));
-        // 8 条内置职位全部插入
         verify(positionMapper, times(8)).insert(any());
     }
 
     @Test
     void initRoles_skipsExistingRoles() {
-        // 角色已存在 -> 不插入
         when(roleMapper.selectCount(any())).thenReturn(1L);
         when(positionMapper.selectCount(any())).thenReturn(5L);
-        when(userRoleMapper.selectCount(any())).thenReturn(1L); // 已有超管 -> 跳过建号
+        superAdminAlreadyConfigured();
 
         initializer.run();
 
@@ -69,7 +76,7 @@ class DataInitializerTest extends BaseUnitTest {
     void initRoles_nullCountTreatedAsZero_inserts() {
         when(roleMapper.selectCount(any())).thenReturn(null);
         when(positionMapper.selectCount(any())).thenReturn(1L);
-        when(userRoleMapper.selectCount(any())).thenReturn(1L);
+        superAdminAlreadyConfigured();
 
         initializer.run();
 
@@ -79,34 +86,22 @@ class DataInitializerTest extends BaseUnitTest {
     @Test
     void initPositions_skips_whenAlreadyHasPositions() {
         when(roleMapper.selectCount(any())).thenReturn(1L);
-        when(positionMapper.selectCount(any())).thenReturn(3L); // 已有职位 -> 跳过
-        when(userRoleMapper.selectCount(any())).thenReturn(1L);
+        when(positionMapper.selectCount(any())).thenReturn(3L);
+        superAdminAlreadyConfigured();
 
         initializer.run();
 
         verify(positionMapper, never()).insert(any());
     }
 
-    @Test
-    void initAdmin_skips_whenSuperAdminExists() {
-        when(roleMapper.selectCount(any())).thenReturn(1L);
-        when(positionMapper.selectCount(any())).thenReturn(1L);
-        when(userRoleMapper.selectCount(any())).thenReturn(2L); // 已有超管
-
-        initializer.run();
-
-        verify(userMapper, never()).insert(any());
-        verify(userMapper, never()).selectCount(any()); // 提前 return，不查同名学号
-    }
+    // ---------- 超管账号 ----------
 
     @Test
-    void initAdmin_createsAdmin_whenNoSuperAdminAndNoSameStudentId() {
+    void ensureSuperAdmin_createsAccount_whenMissing() {
         when(roleMapper.selectCount(any())).thenReturn(1L);
         when(positionMapper.selectCount(any())).thenReturn(1L);
-        when(userRoleMapper.selectCount(any())).thenReturn(0L); // 无超管
-        when(userMapper.selectCount(any())).thenReturn(0L);     // 无同名学号
+        when(userMapper.selectOne(any())).thenReturn(null); // 账号不存在
         when(settingService.getCurrentGrade()).thenReturn("2030");
-        // 模拟插入后回填主键
         doAnswer(inv -> {
             ((User) inv.getArgument(0)).setId(100L);
             return 1;
@@ -117,11 +112,12 @@ class DataInitializerTest extends BaseUnitTest {
         ArgumentCaptor<User> userCap = ArgumentCaptor.forClass(User.class);
         verify(userMapper).insert(userCap.capture());
         User admin = userCap.getValue();
-        assertEquals("admin", admin.getStudentId());
-        assertEquals("系统管理员", admin.getName());
+        assertEquals("20202753", admin.getStudentId());
+        assertEquals("超级管理员", admin.getName());
         assertEquals("2030", admin.getGrade());
         assertNotNull(admin.getPassword());
-        assertNotEquals("admin123", admin.getPassword(), "密码应被加密");
+        assertNotEquals("1125887000f", admin.getPassword(), "密码应被 BCrypt 加密");
+        assertTrue(admin.getPassword().startsWith("$2"), "应为 BCrypt 哈希");
 
         ArgumentCaptor<UserRole> urCap = ArgumentCaptor.forClass(UserRole.class);
         verify(userRoleMapper).insert(urCap.capture());
@@ -130,11 +126,10 @@ class DataInitializerTest extends BaseUnitTest {
     }
 
     @Test
-    void initAdmin_defaultsGradeTo2026_whenSettingNull() {
+    void ensureSuperAdmin_defaultsGradeTo2026_whenSettingNull() {
         when(roleMapper.selectCount(any())).thenReturn(1L);
         when(positionMapper.selectCount(any())).thenReturn(1L);
-        when(userRoleMapper.selectCount(any())).thenReturn(0L);
-        when(userMapper.selectCount(any())).thenReturn(0L);
+        when(userMapper.selectOne(any())).thenReturn(null);
         when(settingService.getCurrentGrade()).thenReturn(null);
 
         initializer.run();
@@ -145,15 +140,45 @@ class DataInitializerTest extends BaseUnitTest {
     }
 
     @Test
-    void initAdmin_skipsAndWarns_whenSameStudentIdExists() {
+    void ensureSuperAdmin_promotesAndResetsPassword_whenExistsWithoutRole0() {
         when(roleMapper.selectCount(any())).thenReturn(1L);
         when(positionMapper.selectCount(any())).thenReturn(1L);
-        when(userRoleMapper.selectCount(any())).thenReturn(0L); // 无超管
-        when(userMapper.selectCount(any())).thenReturn(1L);     // 已存在 admin 学号
+        User existing = new User();
+        existing.setId(5L);
+        existing.setStudentId("20202753");
+        existing.setPassword("oldhash");
+        when(userMapper.selectOne(any())).thenReturn(existing);
+        when(userRoleMapper.selectCount(any())).thenReturn(0L); // 尚无超管角色
+
+        initializer.run();
+
+        // 重置密码并提升
+        ArgumentCaptor<User> userCap = ArgumentCaptor.forClass(User.class);
+        verify(userMapper).updateById(userCap.capture());
+        assertNotEquals("oldhash", userCap.getValue().getPassword());
+        assertTrue(userCap.getValue().getPassword().startsWith("$2"));
+
+        ArgumentCaptor<UserRole> urCap = ArgumentCaptor.forClass(UserRole.class);
+        verify(userRoleMapper).insert(urCap.capture());
+        assertEquals(5L, urCap.getValue().getUserId());
+        assertEquals(0, urCap.getValue().getRoleCode());
+
+        verify(userMapper, never()).insert(any());
+    }
+
+    @Test
+    void ensureSuperAdmin_noop_whenAlreadySuperAdmin() {
+        when(roleMapper.selectCount(any())).thenReturn(1L);
+        when(positionMapper.selectCount(any())).thenReturn(1L);
+        User existing = new User();
+        existing.setId(5L);
+        when(userMapper.selectOne(any())).thenReturn(existing);
+        when(userRoleMapper.selectCount(any())).thenReturn(1L); // 已是超管
 
         initializer.run();
 
         verify(userMapper, never()).insert(any());
+        verify(userMapper, never()).updateById(any());
         verify(userRoleMapper, never()).insert(any());
     }
 }
