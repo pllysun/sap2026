@@ -235,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import {
   getTermList, getGrades, addTerm, deleteTerm, doChangeover,
   getUserList, getPositions, getSettingValue, getMemberUsers,
@@ -373,8 +373,16 @@ const handleAdd = async () => {
 const handleDelete = async (id) => {
   try {
     await ElMessageBox.confirm('确认移除此记录？', '提示')
+  } catch (e) {
+    return // 用户取消，静默
+  }
+  try {
     await deleteTerm(id)
     ElMessage.success('已移除')
+    // 若删的是当前页最后一条且不在首页，回退一页避免停在空白页
+    if (termList.value.length === 1 && termPage.value > 1) {
+      termPage.value--
+    }
     loadTerms()
   } catch (e) {}
 }
@@ -551,6 +559,11 @@ onMounted(async () => {
     const pRes = await getPositions()
     positions.value = pRes.data || []
   } catch (e) {}
+})
+
+onBeforeUnmount(() => {
+  // 清理换届倒计时定时器，避免路由离开后定时器泄漏
+  if (countdownTimer) clearInterval(countdownTimer)
 })
 </script>
 

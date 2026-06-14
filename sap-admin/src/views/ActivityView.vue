@@ -58,17 +58,23 @@
           <el-input v-model="form.content" type="textarea" :rows="4" placeholder="活动描述(选填)" />
         </el-form-item>
         <el-form-item label="活动图片">
-          <el-upload
-            action="/api/file/upload"
-            :headers="uploadHeaders"
-            multiple
-            list-type="picture-card"
-            :file-list="fileList"
-            :on-success="handleUploadSuccess"
-            :on-remove="handleUploadRemove"
-          >
-            <el-icon><Plus /></el-icon>
-          </el-upload>
+          <div style="width: 100%">
+            <el-upload
+              action="/api/file/upload"
+              :headers="uploadHeaders"
+              multiple
+              list-type="picture-card"
+              :file-list="fileList"
+              :on-success="handleUploadSuccess"
+              :on-remove="handleUploadRemove"
+              :on-error="handleUploadError"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+            <div v-if="cosConfigured === false" style="color: var(--zen-text-muted); font-size: 12px; margin-top: 4px;">
+              对象存储未配置，图片上传将不可用，请联系管理员在系统设置中配置
+            </div>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -125,6 +131,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import axios from 'axios'
 import { Plus } from '@element-plus/icons-vue'
 import { getActivities, addActivity, updateActivity, deleteActivity, getSettingValue, getActivityYears, getActivityCount } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -148,6 +155,8 @@ const fileList = ref([])
 // 查看弹窗
 const showViewDialog = ref(false)
 const viewAct = ref(null)
+
+const cosConfigured = ref(null)
 
 const form = reactive({
   grade: '',
@@ -181,7 +190,20 @@ onMounted(async () => {
   }
   await loadYears()
   loadActivities()
+  checkCosStatus()
 })
+
+const checkCosStatus = async () => {
+  // 直接用 axios 调用以静默处理（不触发全局错误 toast）
+  try {
+    const { data } = await axios.get('/api/file/cos-status', {
+      headers: { 'sap-token': localStorage.getItem('sap-token') || '' }
+    })
+    if (data?.code === 200) cosConfigured.value = data.data?.configured !== false
+  } catch (e) {
+    cosConfigured.value = null
+  }
+}
 
 const loadYears = async () => {
   try {
@@ -237,10 +259,18 @@ const openViewDialog = (act) => {
   showViewDialog.value = true
 }
 
-const handleUploadSuccess = (res) => {
+const handleUploadSuccess = (res, file) => {
   if (res.code === 200) {
     form.imageUrls.push(res.data.url)
+  } else {
+    // 后端返回 HTTP 200 但 body code 非 200（如 COS 未配置），走的是 on-success
+    ElMessage.error(res.message || '上传失败')
+    fileList.value = fileList.value.filter(f => f.uid !== file.uid)
   }
+}
+
+const handleUploadError = () => {
+  ElMessage.error('上传失败，请稍后重试')
 }
 
 const handleUploadRemove = (file) => {

@@ -113,22 +113,28 @@
           <el-input v-model="form.remark" placeholder="选填" />
         </el-form-item>
         <el-form-item label="凭证图片">
-          <el-upload
-            action="/api/file/upload"
-            :headers="uploadHeaders"
-            multiple
-            list-type="picture-card"
-            :file-list="fileList"
-            :on-success="handleUploadSuccess"
-            :on-remove="handleUploadRemove"
-          >
-            <el-icon><Plus /></el-icon>
-          </el-upload>
+          <div style="width: 100%">
+            <el-upload
+              action="/api/file/upload"
+              :headers="uploadHeaders"
+              multiple
+              list-type="picture-card"
+              :file-list="fileList"
+              :on-success="handleUploadSuccess"
+              :on-remove="handleUploadRemove"
+              :on-error="handleUploadError"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+            <div v-if="cosConfigured === false" style="color: var(--zen-text-muted); font-size: 12px; margin-top: 4px;">
+              对象存储未配置，图片上传将不可用，请联系管理员在系统设置中配置
+            </div>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确 认</el-button>
+        <el-button type="primary" :loading="submitting" :disabled="submitting" @click="handleSubmit">确 认</el-button>
       </template>
     </el-dialog>
 
@@ -189,6 +195,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import axios from 'axios'
 import { getBills, addBill, updateBill, deleteBill, getBillStats, getSettingValue } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -200,6 +207,8 @@ const showDialog = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
 const fileList = ref([])
+const submitting = ref(false)
+const cosConfigured = ref(null)
 const showViewDialog = ref(false)
 const viewRow = reactive({ billType: 0, content: '', amount: 0, billTime: '', remark: '', grade: '', images: [] })
 
@@ -219,7 +228,20 @@ onMounted(async () => {
     loadBills()
     loadStats()
   } catch (e) {}
+  checkCosStatus()
 })
+
+const checkCosStatus = async () => {
+  // 直接用 axios 调用以静默处理（不触发全局错误 toast）
+  try {
+    const { data } = await axios.get('/api/file/cos-status', {
+      headers: { 'sap-token': localStorage.getItem('sap-token') || '' }
+    })
+    if (data?.code === 200) cosConfigured.value = data.data?.configured !== false
+  } catch (e) {
+    cosConfigured.value = null
+  }
+}
 
 const loadBills = async () => {
   try {
@@ -269,13 +291,29 @@ const openEditDialog = (row) => {
   showDialog.value = true
 }
 
-const handleUploadSuccess = (res) => { if (res.code === 200) form.imageUrls.push(res.data.url) }
+const handleUploadSuccess = (res, file) => {
+  if (res.code === 200) {
+    form.imageUrls.push(res.data.url)
+  } else {
+    // 后端返回 HTTP 200 但 body code 非 200（如 COS 未配置），走的是 on-success
+    ElMessage.error(res.message || '上传失败')
+    fileList.value = fileList.value.filter(f => f.uid !== file.uid)
+  }
+}
+const handleUploadError = () => {
+  ElMessage.error('上传失败，请稍后重试')
+}
 const handleUploadRemove = (file) => {
   const url = file.url || file.response?.data?.url
   form.imageUrls = form.imageUrls.filter(u => u !== url)
 }
 
 const handleSubmit = async () => {
+  if (!(form.amount > 0)) { ElMessage.warning('金额必须大于 0'); return }
+  if (!form.content || !form.content.trim()) { ElMessage.warning('请填写账单内容'); return }
+  if (!form.billTime) { ElMessage.warning('请选择账单时间'); return }
+  if (submitting.value) return
+  submitting.value = true
   try {
     if (isEdit.value) { await updateBill(editId.value, form) }
     else { await addBill(form) }
@@ -283,14 +321,25 @@ const handleSubmit = async () => {
     showDialog.value = false
     loadBills()
     loadStats()
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    submitting.value = false
+  }
 }
 
 const handleDelete = async (id) => {
   try {
     await ElMessageBox.confirm('确认删除？', '提示')
+  } catch (e) {
+    return // 用户取消，静默
+  }
+  try {
     await deleteBill(id)
     ElMessage.success('已删除')
+    // 若删的是当前页最后一条且不在首页，回退一页避免停在空白页
+    if (bills.value.length === 1 && pagination.current > 1) {
+      pagination.current--
+    }
     loadBills()
     loadStats()
   } catch (e) {}

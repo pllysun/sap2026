@@ -28,10 +28,11 @@
     <div class="zen-card chart-card">
       <h3 class="section-title">历届成员</h3>
       <div v-show="gradeStatsLoaded" ref="chartRef" class="grade-chart"></div>
-      <div v-if="!gradeStatsLoaded" class="chart-placeholder">
+      <div v-if="!gradeStatsLoaded && gradeStatsLoading" class="chart-placeholder">
         <span style="opacity: 0.3; font-size: 32px">📊</span>
         <p style="color: var(--zen-text-muted); margin-top: 8px; font-size: 13px">加载中...</p>
       </div>
+      <el-empty v-if="!gradeStatsLoading && !gradeStatsLoaded" description="暂无历届数据" :image-size="80" />
     </div>
 
     <!-- 财务概览 + 快捷操作 -->
@@ -49,7 +50,12 @@
           </div>
           <div class="fin-divider"></div>
           <div class="fin-item">
-            <span class="fin-label">结余</span>
+            <span class="fin-label">
+              结余
+              <el-tooltip v-if="isAll" content="累计口径（含历届）：为所有年级收支直接相加，非单届结算" placement="top">
+                <span style="color: var(--zen-text-muted); font-size: 12px; cursor: help;">（累计口径）</span>
+              </el-tooltip>
+            </span>
             <span class="fin-value balance">¥{{ financeStats.balance || '0.00' }}</span>
           </div>
         </div>
@@ -103,6 +109,7 @@ const financeStats = reactive({
 
 const chartRef = ref(null)
 const gradeStatsLoaded = ref(false)
+const gradeStatsLoading = ref(true)
 let chartInstance = null
 
 const loadStats = async (grade) => {
@@ -190,7 +197,11 @@ onMounted(async () => {
       initChart(data)
       window.addEventListener('resize', handleResize)
     }
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    // 无论成功失败都结束 loading，空数据时显示 el-empty 而非永远「加载中」
+    gradeStatsLoading.value = false
+  }
 })
 
 onBeforeUnmount(() => {

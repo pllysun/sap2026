@@ -18,6 +18,16 @@ public class FileController {
     @Autowired
     private CosService cosService;
 
+    /**
+     * 对象存储是否已配置（供前端上传前预检，未配置时给出明确引导）
+     */
+    @GetMapping("/cos-status")
+    public Result<?> cosStatus() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("configured", cosService.isConfigured());
+        return Result.ok(data);
+    }
+
     @PostMapping("/upload")
     @OperationLog("上传文件")
     public Result<?> upload(@RequestParam("file") MultipartFile file) {

@@ -8,7 +8,7 @@
     <div class="zen-card">
       <div class="filter-bar">
         <el-input v-model="keyword" placeholder="搜索笔记标题…" clearable style="width: 240px"
-          @keyup.enter="loadNotes" @clear="loadNotes">
+          @keyup.enter="handleSearch" @clear="handleSearch">
           <template #prefix><el-icon><Search /></el-icon></template>
         </el-input>
         <el-button type="primary" @click="openAdd">新增笔记</el-button>
@@ -205,6 +205,12 @@ const loadNotes = async () => {
   loading.value = false
 }
 
+// 搜索时重置到第 1 页，避免在非首页搜出只有少量结果的空白页
+const handleSearch = () => {
+  page.value = 1
+  loadNotes()
+}
+
 const openAdd = () => {
   isEdit.value = false
   editId.value = null
@@ -282,8 +288,16 @@ const handleSubmit = async () => {
 const handleDelete = async (id) => {
   try {
     await ElMessageBox.confirm('确认删除此笔记？删除后不可恢复。', '提示', { type: 'warning' })
+  } catch (e) {
+    return // 用户取消，静默
+  }
+  try {
     await deleteNote(id)
     ElMessage.success('删除成功')
+    // 若删的是当前页最后一条且不在首页，回退一页避免停在空白页
+    if (noteList.value.length === 1 && page.value > 1) {
+      page.value--
+    }
     loadNotes()
   } catch (e) {}
 }

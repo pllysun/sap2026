@@ -93,10 +93,15 @@ public class StudyService {
         String currentGrade = gradeSetting != null ? gradeSetting.getSettingValue() : "2025";
         activity.setGrade(currentGrade);
 
-        LambdaQueryWrapper<StudyActivity> cntWrapper = new LambdaQueryWrapper<>();
-        cntWrapper.eq(StudyActivity::getGrade, currentGrade);
-        long count = studyActivityMapper.selectCount(cntWrapper);
-        activity.setSeqNum((int) count + 1);
+        // 取该年级最大序号 + 1，避免软删除后 count 回退导致序号重复
+        StudyActivity lastAct = studyActivityMapper.selectOne(
+                new LambdaQueryWrapper<StudyActivity>()
+                        .eq(StudyActivity::getGrade, currentGrade)
+                        .orderByDesc(StudyActivity::getSeqNum)
+                        .last("LIMIT 1")
+        );
+        int nextSeq = (lastAct != null && lastAct.getSeqNum() != null) ? lastAct.getSeqNum() + 1 : 1;
+        activity.setSeqNum(nextSeq);
         activity.setCurrentWeek(1);
         activity.setActiveWeek(1);
         activity.setStatus(1);

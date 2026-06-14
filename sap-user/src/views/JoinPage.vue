@@ -210,7 +210,7 @@ const handleApply = async () => {
     application.value = res.data
     qrType.value = application.value?.wechatQr ? 'wechat' : 'alipay'
   } catch (e) {
-    alert(e.response?.data?.msg || '申请失败')
+    alert(e.message || '申请失败')
   } finally {
     applying.value = false
   }
@@ -222,7 +222,7 @@ const handleSubmit = async () => {
     await request.post('/api/join/submit-payment', { paymentCode: paymentCode.value })
     await loadApplication()
   } catch (e) {
-    alert(e.response?.data?.msg || '提交失败')
+    alert(e.message || '提交失败')
   } finally {
     submitting.value = false
   }
@@ -235,7 +235,7 @@ const handleRefresh = async () => {
     application.value = res.data
     qrType.value = application.value?.wechatQr ? 'wechat' : 'alipay'
   } catch (e) {
-    alert(e.response?.data?.msg || '刷新失败')
+    alert(e.message || '刷新失败')
   } finally {
     refreshing.value = false
   }
