@@ -74,6 +74,7 @@ export const reassignMember = (data) => request.put('/api/study/member/assign', 
 export const nextWeek = (data) => request.post('/api/study/week/next', data)
 export const uploadHomework = (data) => request.post('/api/study/homework/upload', data)
 export const deleteHomework = (params) => request.delete('/api/study/homework', { params })
+export const getHomeworkSchedule = (activityId) => request.get('/api/study/homework/schedule', { params: { activityId } })
 export const setActiveWeek = (id, week) => request.put(`/api/study/activity/${id}/active-week`, { week })
 export const submitScore = (data) => request.post('/api/study/score', data)
 export const getScoreOverview = (params) => request.get('/api/study/score/overview', { params })

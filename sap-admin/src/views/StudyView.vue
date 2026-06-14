@@ -89,8 +89,9 @@
             </el-upload>
           </template>
         </div>
-        <!-- 右侧：开启下一周期 -->
+        <!-- 右侧：作业排期 + 开启下一周期 -->
         <div class="ops-right">
+          <el-button size="small" plain @click="openHomeworkSchedule">📅 作业排期</el-button>
           <el-tooltip v-if="leaders.length === 0" content="请先添加负责人后再开启下一周期" placement="top">
             <span>
               <el-button type="warning" size="small" disabled>
@@ -154,6 +155,9 @@
               <template #default="{ row }">
                 <span v-if="row.homeworkFileName || row.homeworkTitle">
                   {{ row.homeworkFileName || row.homeworkTitle }}
+                  <el-tag v-if="row.homeworkPublished === false || row.scheduled === true" type="warning" size="small" effect="plain" style="margin-left: 4px">
+                    定时{{ row.homeworkPublishTime ? ' · ' + row.homeworkPublishTime : '' }}
+                  </el-tag>
                   <el-button v-if="row.homeworkFileUrl" text size="small" type="primary" @click="openUrl(row.homeworkFileUrl)" style="margin-left: 4px">下载</el-button>
                 </span>
                 <span v-else style="color: var(--zen-text-muted)">-</span>
@@ -342,6 +346,87 @@
       </template>
     </el-dialog>
 
+    <!-- 作业排期弹窗 -->
+    <el-dialog v-model="showHomeworkSchedule" title="作业排期" width="760px" append-to-body
+      @closed="resetHomeworkForm">
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
+        <template #title>
+          <span style="font-weight: 500">可一次给当前周及未来多周提前排好作业。未来周排期<strong>不会立刻推进周期</strong>，到发布时间系统会自动进入该周并匹配负责人、对学生可见。发布前只有管理员可见，可随时修改。</span>
+        </template>
+      </el-alert>
+
+      <!-- 排期列表 -->
+      <el-table :data="homeworkSchedule" stripe size="small" max-height="320" v-loading="loading.schedule"
+        empty-text="暂无作业排期">
+        <el-table-column prop="week" label="周次" width="60" />
+        <el-table-column label="标题" min-width="110" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.title">{{ row.title }}</span>
+            <span v-else style="color: var(--zen-text-muted)">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="文件名" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.fileName">{{ row.fileName }}</span>
+            <span v-else style="color: var(--zen-text-muted)">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="发布时间" width="160">
+          <template #default="{ row }">
+            <span v-if="row.publishTime">{{ row.publishTime }}</span>
+            <span v-else style="color: var(--zen-text-muted)">立即</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.published" type="success" size="small" effect="plain">已发布</el-tag>
+            <el-tag v-else type="warning" size="small" effect="plain">
+              定时 · {{ scheduleCountdown(row.publishTime) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button text size="small" type="primary" @click="editHomeworkRow(row)">编辑</el-button>
+            <el-button v-if="row.fileUrl" text size="small" @click="downloadFileByUrl(row.fileUrl, row.fileName || 'homework')">下载</el-button>
+            <el-button text size="small" type="danger" @click="handleScheduleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 新增/编辑表单 -->
+      <div class="hw-form-block">
+        <div class="hw-form-title">{{ hwForm.editing ? `编辑 · 第${hwForm.week}周作业` : '新增 / 排期作业' }}</div>
+        <el-form :model="hwForm" label-width="80px" size="small">
+          <el-form-item label="周次">
+            <el-input-number v-model="hwForm.week" :min="1" :max="hwWeekMax" :step="1"
+              :disabled="hwForm.editing" controls-position="right" style="width: 140px" />
+            <span class="hw-hint">可选当前周到未来周（{{ 1 }} ~ {{ hwWeekMax }}），当前周期 {{ selectedActivity?.currentWeek }}</span>
+          </el-form-item>
+          <el-form-item label="作业文件">
+            <el-upload action="/api/file/upload" :headers="uploadHeaders" :show-file-list="false"
+              :on-success="handleScheduleFileUpload" accept=".md,.txt,.pdf,.doc,.docx,.zip">
+              <el-button size="small" plain>选择文件</el-button>
+            </el-upload>
+            <el-tag v-if="hwForm.fileName" size="small" effect="plain" style="margin-left: 10px">📄 {{ hwForm.fileName }}</el-tag>
+          </el-form-item>
+          <el-form-item label="标题">
+            <el-input v-model="hwForm.title" placeholder="选填" style="width: 280px" />
+          </el-form-item>
+          <el-form-item label="发布时间">
+            <el-date-picker v-model="hwForm.publishTime" type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss" placeholder="留空表示立即发布" style="width: 220px" />
+            <span class="hw-hint">留空 = 立即发布；未来时间 = 定时发布</span>
+          </el-form-item>
+        </el-form>
+        <div class="hw-form-actions">
+          <el-button v-if="hwForm.editing" size="small" @click="resetHomeworkForm">取消编辑</el-button>
+          <el-button type="primary" size="small" :loading="loading.scheduleSubmit"
+            @click="handleScheduleSubmit">{{ hwForm.editing ? '保存覆盖' : '提交排期' }}</el-button>
+        </div>
+      </div>
+    </el-dialog>
+
     <!-- 查看负责人全部成员弹窗 -->
     <el-dialog v-model="showLeaderMembers" :title="leaderDetailName + ' 的成员详情'" width="500px" append-to-body>
       <el-table :data="leaderDetailMembers" stripe size="small" max-height="400">
@@ -368,7 +453,8 @@ import {
   getStudyActivities, createStudyActivity, getStudyActivityDetail,
   getStudyCycleDetail, addStudyLeader, deleteStudyLeader,
   nextWeek, uploadHomework, deleteHomework, setActiveWeek,
-  getSettingValue, submitScore, getUserInfo, getGrades
+  getSettingValue, submitScore, getUserInfo, getGrades,
+  getHomeworkSchedule
 } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -397,8 +483,24 @@ const loading = reactive({
   deleteHomework: false,
   nextWeek: false,
   score: null, // 存放当前打分的userId
-  setActiveWeek: false
+  setActiveWeek: false,
+  schedule: false, // 加载排期列表
+  scheduleSubmit: false // 提交排期
 })
+
+// 作业排期
+const showHomeworkSchedule = ref(false)
+const homeworkSchedule = ref([])
+const hwForm = reactive({
+  editing: false,
+  week: 1,
+  title: '',
+  fileUrl: '',
+  fileName: '',
+  publishTime: ''
+})
+// 允许排到当前周 + 8 周
+const hwWeekMax = computed(() => (selectedActivity.value?.currentWeek || 1) + 8)
 
 // 负责人视图
 const currentUserId = ref(null)
@@ -701,6 +803,107 @@ const downloadHomework = () => {
   if (currentHomework.value?.fileUrl) {
     downloadFileByUrl(currentHomework.value.fileUrl, currentHomework.value.fileName || 'homework')
   }
+}
+
+// ---- 作业排期 ----
+const openHomeworkSchedule = async () => {
+  resetHomeworkForm()
+  hwForm.week = selectedActivity.value?.currentWeek || 1
+  showHomeworkSchedule.value = true
+  await loadHomeworkSchedule()
+}
+
+const loadHomeworkSchedule = async () => {
+  if (!selectedActivity.value) return
+  loading.schedule = true
+  try {
+    const res = await getHomeworkSchedule(selectedActivity.value.id)
+    homeworkSchedule.value = (res.data || []).slice().sort((a, b) => a.week - b.week)
+  } catch (e) {} finally { loading.schedule = false }
+}
+
+const resetHomeworkForm = () => {
+  hwForm.editing = false
+  hwForm.week = selectedActivity.value?.currentWeek || 1
+  hwForm.title = ''
+  hwForm.fileUrl = ''
+  hwForm.fileName = ''
+  hwForm.publishTime = ''
+}
+
+const editHomeworkRow = (row) => {
+  hwForm.editing = true
+  hwForm.week = row.week
+  hwForm.title = row.title || ''
+  hwForm.fileUrl = row.fileUrl || ''
+  hwForm.fileName = row.fileName || ''
+  hwForm.publishTime = row.publishTime || ''
+}
+
+const handleScheduleFileUpload = (res) => {
+  if (res.code === 200 && res.data) {
+    hwForm.fileUrl = res.data.url
+    hwForm.fileName = res.data.name || res.data.url.split('/').pop()
+    ElMessage.success('文件已上传')
+  } else {
+    ElMessage.error(res.message || '文件上传失败')
+  }
+}
+
+const handleScheduleSubmit = async () => {
+  if (loading.scheduleSubmit) return
+  if (!hwForm.week || hwForm.week < 1) {
+    ElMessage.warning('请填写有效的周次')
+    return
+  }
+  if (!hwForm.fileUrl) {
+    ElMessage.warning('请先上传作业文件')
+    return
+  }
+  loading.scheduleSubmit = true
+  try {
+    await uploadHomework({
+      activityId: selectedActivity.value.id,
+      week: hwForm.week,
+      title: hwForm.title || undefined,
+      fileUrl: hwForm.fileUrl,
+      fileName: hwForm.fileName,
+      publishTime: hwForm.publishTime || undefined
+    })
+    ElMessage.success(hwForm.editing ? '已保存覆盖' : '排期已提交')
+    resetHomeworkForm()
+    await loadHomeworkSchedule()
+    await loadActivityDetail(selectedActivity.value.id)
+  } catch (e) {} finally { loading.scheduleSubmit = false }
+}
+
+const handleScheduleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确认删除第${row.week}周作业？`, '提示', { type: 'warning' })
+    ElMessage({ message: '删除中...', type: 'info', duration: 0, grouping: true })
+    await deleteHomework({ activityId: selectedActivity.value.id, week: row.week })
+    ElMessage.closeAll()
+    ElMessage.success('已删除')
+    if (hwForm.editing && hwForm.week === row.week) resetHomeworkForm()
+    await loadHomeworkSchedule()
+    await loadActivityDetail(selectedActivity.value.id)
+  } catch (e) { ElMessage.closeAll() }
+}
+
+// 距离发布时间的倒计时文案
+const scheduleCountdown = (publishTime) => {
+  if (!publishTime) return '即将发布'
+  const target = new Date(publishTime.replace(/-/g, '/')).getTime()
+  if (isNaN(target)) return publishTime
+  const diff = target - Date.now()
+  if (diff <= 0) return '即将发布'
+  const mins = Math.floor(diff / 60000)
+  const days = Math.floor(mins / 1440)
+  const hours = Math.floor((mins % 1440) / 60)
+  const m = mins % 60
+  if (days > 0) return `${days}天${hours}小时后`
+  if (hours > 0) return `${hours}小时${m}分后`
+  return `${m}分钟后`
 }
 
 const downloadFile = (material) => {
