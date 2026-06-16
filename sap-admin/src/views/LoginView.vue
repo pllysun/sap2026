@@ -8,7 +8,7 @@
     <div class="login-card zen-fade-in">
       <div class="login-header">
         <h1 class="login-title">软件协会</h1>
-        <p class="login-subtitle">管理平台 · 禅</p>
+        <p class="login-subtitle">管理平台</p>
         <div class="zen-divider"></div>
       </div>
 
@@ -40,7 +40,7 @@
             :loading="loading"
             @click="handleLogin"
           >
-            入 · 定
+            登 录
           </el-button>
         </el-form-item>
       </el-form>

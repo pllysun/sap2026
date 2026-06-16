@@ -1,7 +1,7 @@
 <template>
   <div class="log-page zen-fade-in">
     <div class="page-header">
-      <h2>鉴 · 迹</h2>
+      <h2>日志管理</h2>
       <p>系统操作日志记录与统计分析</p>
     </div>
 
@@ -172,7 +172,7 @@ const loadStats = async () => {
   }
 }
 
-const COLORS = ['#c9a96e', '#e8c87a', '#a68b5b', '#d4b978', '#8b7355', '#f0d890', '#b5976b']
+const COLORS = ['#3B82F6', '#14B8A6', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#0EA5E9']
 
 const renderPie = (data) => {
   if (!pieChart.value) return
@@ -215,11 +215,11 @@ const renderLine = (data) => {
     yAxis: { type: 'value' },
     series: [{
       type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
-      lineStyle: { color: '#c9a96e', width: 3 },
-      itemStyle: { color: '#c9a96e' },
+      lineStyle: { color: '#3B82F6', width: 3 },
+      itemStyle: { color: '#3B82F6' },
       areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
-        { offset: 0, color: 'rgba(201,169,110,0.3)' },
-        { offset: 1, color: 'rgba(201,169,110,0.02)' }
+        { offset: 0, color: 'rgba(59,130,246,0.25)' },
+        { offset: 1, color: 'rgba(59,130,246,0.02)' }
       ]) },
       data: entries.map(e => e[1])
     }]
@@ -264,9 +264,9 @@ const renderCalendar = (data) => {
       left: 'center',
       bottom: 0,
       inRange: {
-        color: ['#ebedf0', '#f0d89066', '#e8c87a', '#c9a96e', '#8b7355']
+        color: ['#eef0f7', '#c8dbfc', '#9dbffb', '#6ba1f8', '#3B82F6']
       },
-      textStyle: { color: '#7c7a72' }
+      textStyle: { color: '#9298b0' }
     },
     calendar: {
       top: 30,
@@ -281,8 +281,8 @@ const renderCalendar = (data) => {
         borderColor: '#fff'
       },
       yearLabel: { show: false },
-      monthLabel: { nameMap: 'en', color: '#7c7a72' },
-      dayLabel: { firstDay: 1, nameMap: 'en', color: '#7c7a72' }
+      monthLabel: { nameMap: 'en', color: '#9298b0' },
+      dayLabel: { firstDay: 1, nameMap: 'en', color: '#9298b0' }
     },
     series: [{
       type: 'heatmap',

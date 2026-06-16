@@ -1,7 +1,7 @@
 <template>
   <div class="note-page zen-fade-in">
     <div class="page-header">
-      <h2>笔 · 记</h2>
+      <h2>软协笔记</h2>
       <p>软协知识库，Markdown 笔记管理</p>
     </div>
 
@@ -200,7 +200,7 @@ const loadNotes = async () => {
   try {
     const res = await getNoteList({ current: page.value, size: pageSize, keyword: keyword.value || undefined })
     noteList.value = res.data?.records || []
-    total.value = res.data?.total || 0
+    total.value = Number(res.data?.total || 0)
   } catch (e) {}
   loading.value = false
 }

@@ -61,10 +61,22 @@ const routes = [
         meta: { title: '日志管理' }
       },
       {
+        path: 'analytics',
+        name: 'Analytics',
+        component: () => import('../views/analytics/AnalyticsView.vue'),
+        meta: { title: '流量统计' }
+      },
+      {
         path: 'join',
         name: 'Join',
         component: () => import('../views/JoinView.vue'),
         meta: { title: '入会管理' }
+      },
+      {
+        path: 'app-release',
+        name: 'AppRelease',
+        component: () => import('../views/AppReleaseView.vue'),
+        meta: { title: 'App 版本发布' }
       }
     ]
   }

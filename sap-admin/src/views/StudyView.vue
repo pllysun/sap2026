@@ -1,7 +1,7 @@
 <template>
   <div class="study-page zen-fade-in">
     <div class="page-header">
-      <h2>学 · 修</h2>
+      <h2>学习小组</h2>
       <p>学习小组活动与评分管理</p>
     </div>
 
@@ -909,12 +909,12 @@ const scheduleCountdown = (publishTime) => {
 const downloadFile = (material) => {
   if (material?.fileUrl) {
     const name = material.fileName || material.fileUrl.split('/').pop()
-    window.open(`/api/file/download?url=${encodeURIComponent(material.fileUrl)}&name=${encodeURIComponent(name)}`, '_blank')
+    window.open(`/api/file/go?url=${encodeURIComponent(material.fileUrl)}&name=${encodeURIComponent(name)}`, '_blank')
   }
 }
 
 const downloadFileByUrl = (url, filename) => {
-  window.open(`/api/file/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`, '_blank')
+  window.open(`/api/file/go?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`, '_blank')
 }
 
 const openUrl = (url) => window.open(url, '_blank')
