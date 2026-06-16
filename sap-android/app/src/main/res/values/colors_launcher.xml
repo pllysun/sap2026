@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用图标自适应背景：新图标为白底满幅前景，背景取白与之衔接（前景已不透明覆盖，仅作兜底） -->
+    <color name="ic_launcher_bg">#FFFFFFFF</color>
+</resources>

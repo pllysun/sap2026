@@ -1,0 +1,12 @@
+# ===== Android / Gradle =====
+.gradle/
+build/
+/captures/
+local.properties
+*.apk
+*.aab
+
+# ===== 签名密钥（绝不提交；丢失=无法发布升级包）=====
+keystore.properties
+*.jks
+*.keystore

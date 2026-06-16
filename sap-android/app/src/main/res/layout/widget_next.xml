@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/next_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/next_bar"
+        android:layout_width="4dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:text=""
+        android:background="#FF2B2F38" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/next_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF888F99"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:text="下一节" />
+
+        <TextView
+            android:id="@+id/next_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF1F2329"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="课程名" />
+
+        <TextView
+            android:id="@+id/next_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF646A73"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="08:00-09:45  @地点" />
+    </LinearLayout>
+</LinearLayout>
