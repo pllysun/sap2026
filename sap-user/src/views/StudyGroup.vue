@@ -63,7 +63,7 @@
                     </div>
                     <a
                       v-if="status.homework.fileUrl"
-                      :href="'/api/file/download?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
+                      :href="'/api/file/go?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="btn btn--primary btn--full btn--sm btn--pill mt-3"
@@ -88,7 +88,7 @@
                       </div>
                       <div class="flex gap-1 mt-3" style="flex-wrap: wrap;">
                         <a
-                          :href="'/api/file/download?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
+                          :href="'/api/file/go?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="btn btn--primary btn--sm btn--pill"
