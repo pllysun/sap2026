@@ -8,6 +8,22 @@ echo "========================================="
 # 确保目录存在
 mkdir -p /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
 
+# ===== 安全校验：JW_AES_KEY 不得为空或默认占位 =====
+# 该密钥用于 AES 加密存储学校教务账号密码，绝不能用源码默认弱值上线（泄露即可解密所有用户教务凭据）。
+# 仅本地快速体验可显式 -e ALLOW_DEFAULT_AES_KEY=true 跳过（切勿用于生产/真实用户）。
+PLACEHOLDER_AES_KEY="change-me-in-prod-please-32bytes!"
+if [ -z "$JW_AES_KEY" ] || [ "$JW_AES_KEY" = "$PLACEHOLDER_AES_KEY" ]; then
+    if [ "$ALLOW_DEFAULT_AES_KEY" = "true" ]; then
+        echo "[WARN] JW_AES_KEY 未设置/为默认占位，已被 ALLOW_DEFAULT_AES_KEY=true 放行——仅限本地体验，禁止用于生产！"
+    else
+        echo "[FATAL] JW_AES_KEY 未设置或仍为默认占位值，拒绝启动。"
+        echo "[FATAL] 该密钥加密存储学校教务密码，生产必须注入 32 字节随机密钥："
+        echo "[FATAL]   -e JW_AES_KEY=\"\$(openssl rand -base64 24 | cut -c1-32)\""
+        echo "[FATAL] （仅本地体验可临时加 -e ALLOW_DEFAULT_AES_KEY=true 跳过此校验）"
+        exit 1
+    fi
+fi
+
 # ===== 数据库模式检测 =====
 # 非敏感配置仍走命令行参数；数据源连接信息（含密码）改为通过环境变量传递，
 # 避免出现在进程列表 (ps) 与命令行参数中。Spring 的 relaxed binding 会自动
@@ -298,6 +314,15 @@ if [ -n "$DOMAIN" ]; then
     fi
 else
     echo "[SSL] 未设置 DOMAIN 变量，使用 HTTP 模式"
+fi
+
+# ===== 启动 OCR 边车（教务验证码识别，本机 127.0.0.1:9000）=====
+# 与主应用同容器。后端 jw.ocr-url 默认即 http://127.0.0.1:9000，无需额外环境变量。
+if [ -f /app/ocr/main.py ]; then
+    echo "[OCR] 启动验证码识别服务 (127.0.0.1:9000)..."
+    ( cd /app/ocr && exec python3 -m uvicorn main:app --host 127.0.0.1 --port 9000 ) \
+        >> /app/logs/ocr.log 2>&1 &
+    echo "[OCR] 已后台启动 (日志: /app/logs/ocr.log)"
 fi
 
 # ===== 启动 Nginx =====

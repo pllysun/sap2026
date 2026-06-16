@@ -1,0 +1,52 @@
+# sap2026 正式环境编排：单一主镜像(Nginx + Java 后端 + 两个前端 + OCR 边车 全打进同一镜像)。
+# 用法（在仓库根 sap2026/ 执行）：
+#   cp docker/.env.example docker/.env   # 然后编辑填入 JW_AES_KEY / MySQL 等
+#   docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build
+#
+# 构建上下文是仓库根(..)，因为 Dockerfile 要 COPY sap-user/sap-admin/sap-backend/ocr-sidecar。
+name: sap
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: pllysun/sap:latest
+    container_name: sap-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-}                  # 设了才签发 HTTPS（如 csuftsap.top）
+      SSL_EMAIL: ${SSL_EMAIL:-}
+      MYSQL_URL: ${MYSQL_URL:-}            # 留空=容器内置 H2 文件库
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      JW_AES_KEY: ${JW_AES_KEY:?必须设置 32 字节生产密钥(教务密码加密)，见 docker/.env.example}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
+      # OCR 边车与本应用同镜像、跑在 127.0.0.1:9000，后端默认连它，无需 JW_OCRURL。
+    volumes:
+      - ./data/app-data:/app/data
+      - ./data/app-logs:/app/logs
+      - ./data/app-uploads:/app/uploads
+      - ./data/letsencrypt:/etc/letsencrypt
+    networks: [sap-net]
+
+  # 可选：自带 MySQL（不用外部库时取消注释，并把上面 app 的 MYSQL_URL 设为
+  # jdbc:mysql://mysql:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=UTF-8）
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: sap-mysql
+  #   restart: unless-stopped
+  #   command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:?}
+  #     MYSQL_DATABASE: sap
+  #   volumes:
+  #     - ./data/mysql:/var/lib/mysql
+  #   networks: [sap-net]
+
+networks:
+  sap-net:
+    driver: bridge
