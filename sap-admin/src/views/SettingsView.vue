@@ -1,7 +1,7 @@
 <template>
   <div class="settings-page zen-fade-in">
     <div class="page-header">
-      <h2>器 · 道</h2>
+      <h2>系统设置</h2>
       <p>系统配置与身份管理</p>
     </div>
 
@@ -63,6 +63,10 @@
                 <el-button size="small" @click="showReplaceSecret('secretKey')">替换</el-button>
               </div>
             </div>
+            <div class="cos-field" style="grid-column: 1 / -1">
+              <label>自定义下载域名（CDN，选填）</label>
+              <el-input v-model="cosConfig.cdnDomain" size="small" placeholder="如 dl.csuftsap.top —— APK 必须用自定义域名下载；留空则用 COS 默认域名" />
+            </div>
           </div>
           <div class="cos-actions">
             <el-button type="primary" size="small" @click="handleSaveCosConfig" :loading="cosSaving">保存配置</el-button>
@@ -92,6 +96,20 @@
             </el-button>
           </div>
           <p style="font-size:12px;color:#aaa;margin-top:8px;">审核通过入会申请时，将自动记录此金额为收入</p>
+        </div>
+
+        <!-- 非会员登录开关 -->
+        <div class="zen-card">
+          <div class="card-header">
+            <span class="card-header__icon">🔓</span>
+            <span class="card-header__title">非会员登录</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <p style="flex:1;font-size:13px;color:#666;margin:0;">
+              开启后，非协会会员也可登录 App（仅课表功能，需自行 WebVPN 导入）；关闭则仅会员可登录。
+            </p>
+            <el-switch v-model="guestLogin" :loading="guestSaving" @change="handleSaveGuestLogin" />
+          </div>
         </div>
 
         <!-- 招新群配置 -->
@@ -270,8 +288,9 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { updateSetting, getPublicSettings, getSettingValue, getUserInfo, getPositions, addPosition, updatePosition, deletePosition, getCosConfig, updateCosConfig, testCosConnection } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 
-
+const router = useRouter()
 const positions = ref([])
 const showEditPosition = ref(false)
 const editPositionId = ref(null)
@@ -293,13 +312,17 @@ const originalFee = ref(30)
 const feeSaving = ref(false)
 const feeChanged = computed(() => membershipFee.value !== originalFee.value)
 
+// 非会员登录开关
+const guestLogin = ref(false)
+const guestSaving = ref(false)
+
 const roleCodeLabel = (code) => {
   const map = { 0: '超管', 1: '会长', 2: '管理员', 3: '成员', 4: '游客' }
   return map[code] || code
 }
 
 // COS config
-const cosConfig = reactive({ bucketName: '', region: '', secretId: '', secretKey: '' })
+const cosConfig = reactive({ bucketName: '', region: '', cdnDomain: '', secretId: '', secretKey: '' })
 const cosSaving = ref(false)
 const cosTesting = ref(false)
 const cosTestResult = ref(null)
@@ -311,6 +334,12 @@ onMounted(async () => {
     const roles = res.data?.roles || []
     isSuperAdmin.value = roles.includes(0) || roles.includes('0')
     canEdit.value = roles.includes(0) || roles.includes('0') || roles.includes(1) || roles.includes('1')
+    // 仅超管/会长可进入设置页：非授权用户直敲 URL 时拦回首页（后端亦有 SaCheckRole 兜底）
+    if (!canEdit.value) {
+      ElMessage.warning('无权访问系统设置')
+      router.push('/dashboard')
+      return
+    }
   } catch (e) {}
 
   loadPositions()
@@ -318,7 +347,27 @@ onMounted(async () => {
   loadFooterConfig()
   loadCurrentGrade()
   loadMembershipFee()
+  loadGuestLogin()
 })
+
+const loadGuestLogin = async () => {
+  try {
+    const res = await getSettingValue('allow_guest_login')
+    guestLogin.value = res.data === 'true' || res.data === true
+  } catch (e) {}
+}
+
+const handleSaveGuestLogin = async (val) => {
+  guestSaving.value = true
+  try {
+    await updateSetting({ settingKey: 'allow_guest_login', settingValue: String(val) })
+    ElMessage.success(val ? '已开放非会员登录' : '已关闭非会员登录')
+  } catch (e) {
+    guestLogin.value = !val // 失败回滚开关
+  } finally {
+    guestSaving.value = false
+  }
+}
 
 const loadCurrentGrade = async () => {
   try {
@@ -370,7 +419,7 @@ const handleSaveFee = async () => {
     originalFee.value = membershipFee.value
     ElMessage.success('会费金额已更新')
   } catch (e) {
-    ElMessage.error('保存失败')
+    // 失败由全局响应拦截器统一提示，避免重复弹窗
   } finally {
     feeSaving.value = false
   }
@@ -382,6 +431,7 @@ const loadCosConfig = async () => {
     const d = res.data || {}
     cosConfig.bucketName = d.bucketName || ''
     cosConfig.region = d.region || ''
+    cosConfig.cdnDomain = d.cdnDomain || ''
     cosConfig.secretId = d.secretId || ''
     cosConfig.secretKey = d.secretKey || ''
   } catch (e) {}
@@ -518,8 +568,7 @@ const handleSaveFooterConfig = async () => {
     )
     ElMessage.success('页脚配置保存成功')
   } catch (e) {
-    // 单项失败时全局拦截器已弹出具体原因，这里补充整体性提示
-    ElMessage.error('部分配置未保存，请重试')
+    // 单项失败时全局响应拦截器已弹出具体原因，此处不再重复提示
   } finally {
     footerSaving.value = false
   }

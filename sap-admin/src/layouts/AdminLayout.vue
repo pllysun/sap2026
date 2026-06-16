@@ -51,6 +51,14 @@
           <el-icon><Document /></el-icon>
           <span>日志管理</span>
         </el-menu-item>
+        <el-menu-item v-if="isLeaderOrSuper" index="/analytics">
+          <el-icon><TrendCharts /></el-icon>
+          <span>流量统计</span>
+        </el-menu-item>
+        <el-menu-item v-if="isLeaderOrSuper" index="/app-release">
+          <el-icon><Cellphone /></el-icon>
+          <span>App 版本发布</span>
+        </el-menu-item>
         <el-menu-item v-if="isLeaderOrSuper" index="/settings">
           <el-icon><Setting /></el-icon>
           <span>系统设置</span>

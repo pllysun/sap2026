@@ -1,7 +1,7 @@
 <template>
   <div class="member-page zen-fade-in">
     <div class="page-header">
-      <h2>众 · 生</h2>
+      <h2>成员管理</h2>
       <p>社团成员换届档案</p>
     </div>
 
@@ -182,7 +182,7 @@
         <div style="background: white; padding: 10px; border-radius: 4px; color: #333;">
           <div v-for="item in confirmList" :key="item.posName" style="margin-bottom: 5px; display: flex;">
             <span style="font-weight: 600; min-width: 90px; text-align: right; margin-right: 10px; flex-shrink: 0;">{{ item.posName }}：</span>
-            <span style="color: #409eff;">{{ item.names }}</span>
+            <span style="color: #3B82F6;">{{ item.names }}</span>
           </div>
         </div>
       </div>
@@ -338,7 +338,7 @@ const loadTerms = async () => {
   try {
     const res = await getTermList({ grade: currentGrade.value, current: termPage.value, size: termPageSize.value })
     termList.value = res.data?.records || []
-    termTotal.value = res.data?.total || 0
+    termTotal.value = Number(res.data?.total || 0)
   } catch (e) {}
 }
 

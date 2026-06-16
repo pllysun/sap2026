@@ -433,7 +433,7 @@
 }
 
 .study-page .el-table__row:hover > td.el-table__cell {
-  background-color: #fcfcfb !important;
+  background-color: var(--zen-card-hover) !important;
 }
 
 /* 活动周期 */

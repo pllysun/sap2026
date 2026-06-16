@@ -29,6 +29,13 @@ export const getCosConfig = () => request.get('/api/setting/cos-config')
 export const updateCosConfig = (data) => request.put('/api/setting/cos-config', data)
 export const testCosConnection = () => request.post('/api/setting/cos-test')
 
+// ===== App 版本发布（在线升级） =====
+export const getAppVersion = () => request.get('/api/app/version')
+export const getCosStatus = () => request.get('/api/file/cos-status')
+export const publishAppVersion = (formData) => request.post('/api/app/version/publish', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+
 // ===== 身份 =====
 export const getPositions = () => request.get('/api/position/list')
 export const addPosition = (data) => request.post('/api/position', data)
@@ -112,6 +119,16 @@ export const uploadManagerQr = (data) => request.post('/api/join/manager/qr', da
 export const getJoinApplications = (params) => request.get('/api/join/applications', { params })
 export const approveJoinApplication = (id) => request.post(`/api/join/approve/${id}`)
 export const directUpgradeMember = (studentId) => request.post('/api/join/direct-upgrade', { studentId })
+
+// ===== 流量统计 =====
+export const getStatsOverview = (days) => request.get('/api/stats/overview', { params: { days } })
+export const getCosByUser = (days) => request.get('/api/stats/cos/by-user', { params: { days } })
+export const getCosTrend = (days) => request.get('/api/stats/cos/trend', { params: { days } })
+export const getApiTop = (params) => request.get('/api/stats/api/top', { params })
+export const getApiTrend = (days) => request.get('/api/stats/api/trend', { params: { days } })
+export const getApiByUser = (params) => request.get('/api/stats/api/by-user', { params })
+export const getApiByEndpoint = (params) => request.get('/api/stats/api/by-endpoint', { params })
+export const getStatsUsers = () => request.get('/api/stats/users')
 
 // ===== 软协笔记 =====
 export const getNoteList = (params) => request.get('/api/note/list', { params })
