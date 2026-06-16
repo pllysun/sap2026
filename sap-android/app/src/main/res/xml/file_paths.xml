@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="share" path="share/" />
+    <!-- 应用内升级：下载的 APK 存到 getExternalFilesDir(null)/update/，经 FileProvider 调起安装 -->
+    <external-files-path name="update" path="update/" />
+</paths>

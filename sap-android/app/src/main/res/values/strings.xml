@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">软协课表</string>
+    <string name="widget_label">软协课表</string>
+    <string name="widget_desc">在桌面查看今日 / 本周课程表</string>
+    <string name="widget_next_label">下一节课</string>
+    <string name="widget_next_desc">显示今日正在上 / 下一节课</string>
+    <string name="widget_today_label">今日课程</string>
+    <string name="widget_today_desc">在桌面查看今日全部课程</string>
+</resources>
