@@ -32,6 +32,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private ApiStatInterceptor apiStatInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
@@ -39,12 +42,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/auth/login",
                         "/api/auth/admin/login",
+                        "/api/auth/app/login",
                         "/api/auth/register",
                         "/api/file/uploads/**",
                         "/api/setting/public",
                         "/api/log/public/**",
                         "/api/join/status"
                 );
+
+        // 全局接口请求计数（在登录拦截之后；统计自身与静态资源排除，避免自激增长）
+        registry.addInterceptor(apiStatInterceptor)
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/stats/**", "/api/file/uploads/**");
     }
 
     @Override

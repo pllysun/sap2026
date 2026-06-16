@@ -38,6 +38,17 @@ public class SettingService {
         insertIfAbsent("join_qq_group_url", "", "入会-新生群二维码");
         insertIfAbsent("join_qq_group_name", "", "入会-新生群名称");
         insertIfAbsent("join_group_link", "", "入会-一键加群链接");
+        insertIfAbsent("allow_guest_login", "false", "是否允许非会员(游客)登录App");
+
+        // 安卓 App 在线升级（由管理端「App 版本发布」页维护，APK 走 COS）
+        insertIfAbsent("app_version_code", "0", "App 最新 versionCode（0=未发布）");
+        insertIfAbsent("app_version_name", "", "App 版本名");
+        insertIfAbsent("app_changelog", "", "App 更新说明");
+        insertIfAbsent("app_force_update", "false", "App 是否强制更新");
+        insertIfAbsent("app_min_version_code", "1", "App 最低支持 versionCode");
+        insertIfAbsent("app_apk_sha256", "", "APK SHA-256");
+        insertIfAbsent("app_apk_size", "0", "APK 字节数");
+        insertIfAbsent("app_download_url", "", "APK 下载地址(COS/CDN)");
     }
 
     private void insertIfAbsent(String key, String value, String description) {

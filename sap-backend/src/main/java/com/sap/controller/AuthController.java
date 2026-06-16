@@ -33,6 +33,13 @@ public class AuthController {
         return Result.ok(result);
     }
 
+    @PostMapping("/app/login")
+    @OperationLog("App端登录")
+    public Result<?> appLogin(@Valid @RequestBody LoginDTO dto) {
+        Map<String, Object> result = authService.appLogin(dto);
+        return Result.ok(result);
+    }
+
     @PostMapping("/register")
     @OperationLog("用户注册")
     public Result<?> register(@Valid @RequestBody RegisterDTO dto) {

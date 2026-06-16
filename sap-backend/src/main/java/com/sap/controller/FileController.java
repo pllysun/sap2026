@@ -18,6 +18,9 @@ public class FileController {
     @Autowired
     private CosService cosService;
 
+    @Autowired
+    private com.sap.service.TrafficService trafficService;
+
     /**
      * 对象存储是否已配置（供前端上传前预检，未配置时给出明确引导）
      */
@@ -97,6 +100,67 @@ public class FileController {
         } catch (Exception e) {
             log.error("代理下载文件失败: url={}", url, e);
             response.setStatus(500);
+        }
+    }
+
+    /**
+     * 下载计量重定向：记录本次下载流量（按当前用户，按文件大小近似），随后 302 跳转到 COS 直链。
+     * <p>文件字节始终由 COS/CDN 传输，<b>不经过本服务器</b>，契合小带宽服务器。替代 /download 流式代理。</p>
+     */
+    @GetMapping("/go")
+    public void go(@RequestParam String url,
+                   @RequestParam(required = false, defaultValue = "file") String name,
+                   jakarta.servlet.http.HttpServletResponse response) {
+        java.net.URI uri;
+        try {
+            uri = java.net.URI.create(url);
+        } catch (Exception e) {
+            response.setStatus(400);
+            return;
+        }
+        // SSRF 防护：仅允许跳转到本系统对象存储(腾讯云 COS 默认域名)或已配置的自定义下载域名(CDN)
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        boolean schemeOk = "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
+        boolean hostOk = cosService.isAllowedPublicHost(host);
+        if (!schemeOk || !hostOk) {
+            response.setStatus(403);
+            return;
+        }
+
+        // 计量：优先用上传登记的大小，未命中则 HEAD 兜底取 Content-Length（取不到只计次）
+        long size = trafficService.sizeOf(url);
+        if (size < 0) size = headContentLength(uri);
+        trafficService.recordDownload(size < 0 ? 0 : size);
+
+        // 拼 response-content-disposition（公有桶 COS 支持该 query 覆盖）以保留原文件名，再 302
+        try {
+            String disp = "attachment;filename=\"" + name + "\"";
+            String encodedDisp = java.net.URLEncoder.encode(disp, "UTF-8");
+            String sep = url.contains("?") ? "&" : "?";
+            response.sendRedirect(url + sep + "response-content-disposition=" + encodedDisp);
+        } catch (Exception e) {
+            try {
+                response.sendRedirect(url);
+            } catch (Exception ignore) {
+                response.setStatus(500);
+            }
+        }
+    }
+
+    /** HEAD 请求取 COS 对象 Content-Length；失败返回 -1。仅在上传登记表未命中时兜底调用。 */
+    private long headContentLength(java.net.URI uri) {
+        try {
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) uri.toURL().openConnection();
+            conn.setRequestMethod("HEAD");
+            conn.setInstanceFollowRedirects(false);
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            long len = conn.getContentLengthLong();
+            conn.disconnect();
+            return len;
+        } catch (Exception e) {
+            return -1;
         }
     }
 }

@@ -41,9 +41,46 @@ public class AuthService {
             new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
-     * 登录
+     * 登录（Web/PC，使用全局默认 token 时效）
      */
     public Map<String, Object> login(LoginDTO dto) {
+        User user = authenticate(dto);
+        StpUtil.login(user.getId());
+        return loginResult(user);
+    }
+
+    /**
+     * App 登录：签发永不过期的长效 token（device=app，timeout/activeTimeout=-1）。
+     * <p>满足“本地有凭证即永久免密”——App 把 token 存本地，启动时调 /api/auth/info 校验即可免密。
+     * 长效 token 是长期凭证，App 端须安全存储（Android Keystore / EncryptedSharedPreferences）。</p>
+     */
+    public Map<String, Object> appLogin(LoginDTO dto) {
+        User user = authenticate(dto);
+        // 非会员(仅游客角色 4)登录受管理端「非会员登录」开关控制；会员(角色≤3)不受限
+        List<Integer> roles = userRoleMapper.selectRoleCodesByUserId(user.getId());
+        boolean isMember = roles.stream().anyMatch(r -> r <= 3);
+        if (!isMember && !guestLoginAllowed()) {
+            throw new BusinessException(403, "当前暂未开放非会员登录，请先完成入会或联系软件协会");
+        }
+        StpUtil.login(user.getId(), new cn.dev33.satoken.stp.SaLoginModel()
+                .setDevice("app")
+                .setTimeout(-1)
+                .setActiveTimeout(-1));
+        Map<String, Object> result = loginResult(user);
+        result.put("roles", roles); // 客户端据此判定会员/非会员并门控功能
+        return result;
+    }
+
+    /** 管理端「非会员登录」开关（Setting: allow_guest_login）。 */
+    private boolean guestLoginAllowed() {
+        Setting s = settingMapper.selectOne(
+                new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, "allow_guest_login")
+        );
+        return s != null && "true".equalsIgnoreCase(s.getSettingValue());
+    }
+
+    /** 校验账号密码（含失败锁定/禁用判断），返回用户；失败抛业务异常。 */
+    private User authenticate(LoginDTO dto) {
         String key = dto.getStudentId();
         long now = System.currentTimeMillis();
         long[] rec = key != null ? loginAttempts.get(key) : null;
@@ -68,7 +105,10 @@ public class AuthService {
             throw new BusinessException("账号或密码错误");
         }
         if (key != null) loginAttempts.remove(key); // 登录成功，清除失败计数
-        StpUtil.login(user.getId());
+        return user;
+    }
+
+    private Map<String, Object> loginResult(User user) {
         Map<String, Object> result = new HashMap<>();
         result.put("token", StpUtil.getTokenValue());
         result.put("user", toVO(user));
@@ -149,6 +189,13 @@ public class AuthService {
     public Map<String, Object> getCurrentUser() {
         long userId = StpUtil.getLoginIdAsLong();
         User user = cacheService.getUserById(userId);
+        if (user == null) {
+            // 缓存未命中（如新建/初始化用户尚未进缓存）时回源数据库，避免误报“用户不存在”
+            user = userMapper.selectById(userId);
+            if (user != null) {
+                cacheService.refreshUsers();
+            }
+        }
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
