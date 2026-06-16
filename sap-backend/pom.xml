@@ -99,6 +99,13 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
+        <!-- jsoup：解析教务(强智)课表 HTML -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
         <!-- Markdown → PDF -->
         <dependency>
             <groupId>org.commonmark</groupId>
