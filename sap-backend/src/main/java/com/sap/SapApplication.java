@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.util.TimeZone;
 
 @SpringBootApplication
-@MapperScan("com.sap.mapper")
+@MapperScan({"com.sap.mapper", "com.sap.jw.mapper"})
 public class SapApplication {
     public static void main(String[] args) {
         // 固定时区为东八区，避免容器默认 UTC 导致 LocalDate.now()/LocalDateTime.now()
