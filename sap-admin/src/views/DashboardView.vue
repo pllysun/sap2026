@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard zen-fade-in">
     <div class="page-header">
-      <h2>静 · 观</h2>
+      <h2>首页</h2>
       <p>总览社团运行脉络</p>
     </div>
 
@@ -95,10 +95,10 @@ const isAll = ref(false)
 const currentGrade = ref('')
 
 const statCards = ref([
-  { label: '社团成员', value: '0', icon: 'User', color: '#8b7355', bgColor: 'rgba(139,115,85,0.08)' },
-  { label: '社团活动', value: '0', icon: 'Calendar', color: '#5c8a5e', bgColor: 'rgba(92,138,94,0.08)' },
-  { label: '学习活动', value: '0', icon: 'Reading', color: '#6b8fa3', bgColor: 'rgba(107,143,163,0.08)' },
-  { label: '财务账单', value: '0', icon: 'Wallet', color: '#c49b5c', bgColor: 'rgba(196,155,92,0.08)' }
+  { label: '社团成员', value: '0', icon: 'User', color: '#3B82F6', bgColor: 'rgba(59,130,246,0.08)' },
+  { label: '社团活动', value: '0', icon: 'Calendar', color: '#14B8A6', bgColor: 'rgba(20,184,166,0.08)' },
+  { label: '学习活动', value: '0', icon: 'Reading', color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.08)' },
+  { label: '财务账单', value: '0', icon: 'Wallet', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.08)' }
 ])
 
 const financeStats = reactive({
@@ -142,43 +142,43 @@ const initChart = (data) => {
     tooltip: {
       trigger: 'axis',
       backgroundColor: 'rgba(255,255,255,0.96)',
-      borderColor: '#e8e6e3', borderWidth: 1,
-      textStyle: { color: '#222', fontSize: 13 },
+      borderColor: '#dfe2ee', borderWidth: 1,
+      textStyle: { color: '#2d3142', fontSize: 13 },
       formatter: (params) => {
         const p = params[0]
         return `<div style="font-weight:600;margin-bottom:4px">${p.name}</div>
-                <span style="color:#8b7355">● </span>成员 <b>${p.value}</b> 人`
+                <span style="color:#3B82F6">● </span>成员 <b>${p.value}</b> 人`
       }
     },
     grid: { top: 20, right: 20, bottom: 30, left: 50 },
     xAxis: {
       type: 'category', data: grades,
-      axisLine: { lineStyle: { color: '#e8e6e3' } },
+      axisLine: { lineStyle: { color: '#dfe2ee' } },
       axisTick: { show: false },
-      axisLabel: { color: '#999', fontSize: 12, fontFamily: 'Noto Sans SC, sans-serif' }
+      axisLabel: { color: '#9298b0', fontSize: 12, fontFamily: 'Noto Sans SC, sans-serif' }
     },
     yAxis: {
       type: 'value', minInterval: 1,
-      splitLine: { lineStyle: { color: '#f5f3f0', type: 'dashed' } },
+      splitLine: { lineStyle: { color: '#eef0f7', type: 'dashed' } },
       axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: '#999', fontSize: 12 }
+      axisLabel: { color: '#9298b0', fontSize: 12 }
     },
     series: [{
       type: 'bar', data: counts, barWidth: '45%',
       itemStyle: {
         borderRadius: [6, 6, 0, 0],
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#a89279' }, { offset: 1, color: '#8b7355' }
+          { offset: 0, color: '#14B8A6' }, { offset: 1, color: '#3B82F6' }
         ])
       },
       emphasis: {
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#c5b5a2' }, { offset: 1, color: '#8b7355' }
+            { offset: 0, color: '#2DD4BF' }, { offset: 1, color: '#3B82F6' }
           ])
         }
       },
-      label: { show: true, position: 'top', color: '#8b7355', fontSize: 13, fontWeight: 600, formatter: '{c}人' }
+      label: { show: true, position: 'top', color: '#3B82F6', fontSize: 13, fontWeight: 600, formatter: '{c}人' }
     }],
     animationDuration: 800, animationEasing: 'cubicOut'
   })

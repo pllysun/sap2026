@@ -2,7 +2,7 @@
   <div class="join-page zen-fade-in">
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
-        <h2>入 · 会</h2>
+        <h2>入会管理</h2>
         <p>入会管理与审核</p>
       </div>
       <div v-if="isLeader">
@@ -80,7 +80,7 @@
                 <template v-if="isLeader || isManager">
                   <span v-if="app.status === 2" style="color:#999;font-size:12px;">已通过</span>
                   <span v-else-if="app.status === 0" style="color:#e6a23c;font-size:12px;">等待凭证上传</span>
-                  <span v-else-if="app.status === 1" style="color:#409eff;font-size:12px;">待平台审核</span>
+                  <span v-else-if="app.status === 1" style="color:#3B82F6;font-size:12px;">待平台审核</span>
                 </template>
               </div>
               <div class="review-card-body">
@@ -356,7 +356,7 @@ const handleApprove = async (row) => {
         <p style="margin-bottom: 12px; font-weight: bold; color: #f56c6c;">⚠️ 请仔细核对以下付款信息，一旦通过不可撤回：</p>
         <p><strong>姓名：</strong>${row.userName}</p>
         <p><strong>QQ号：</strong>${row.userQq || '—'}</p>
-        <p><strong>交易单号：</strong><span style="color: #409eff; font-weight: bold; font-family: monospace; font-size: 16px;">${row.paymentCode || '—'}</span></p>
+        <p><strong>交易单号：</strong><span style="color: #3B82F6; font-weight: bold; font-family: monospace; font-size: 16px;">${row.paymentCode || '—'}</span></p>
       </div>`,
       '审批资格确认',
       {

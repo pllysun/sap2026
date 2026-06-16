@@ -1,7 +1,7 @@
 <template>
   <div class="finance-page zen-fade-in">
     <div class="page-header">
-      <h2>金 · 石</h2>
+      <h2>财务管理</h2>
       <p>社团财务收支管理</p>
     </div>
 
@@ -248,7 +248,7 @@ const loadBills = async () => {
     const res = await getBills({ grade: gradeFilter.value, current: pagination.current, size: pagination.size })
     const page = res.data
     bills.value = page.records || []
-    pagination.total = page.total || 0
+    pagination.total = Number(page.total || 0)
   } catch (e) {}
 }
 

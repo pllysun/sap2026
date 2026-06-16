@@ -1,7 +1,7 @@
 <template>
   <div class="activity-page zen-fade-in">
     <div class="page-header">
-      <h2>行 · 迹</h2>
+      <h2>活动管理</h2>
       <p>社团活动记录管理</p>
     </div>
 

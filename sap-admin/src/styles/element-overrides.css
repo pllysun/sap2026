@@ -1,67 +1,85 @@
 /* ============================================
- * 禅意设计系统 - Element Plus 主题覆盖
+ * Fresh Gradient 设计系统 - Element Plus 主题覆盖
  * 唯一的 Element Plus 样式覆盖来源
- * （合并自 index.css + App.vue + index.html）
+ * 主色：用户端蓝 #3B82F6；主按钮采用青绿→蓝渐变
  * ============================================ */
 
-/* -- Element 主色变量 -- */
+/* -- Element 主题色变量 -- */
 :root {
-  --el-color-primary: #8b7355;
-  --el-color-primary-light-3: #a89279;
-  --el-color-primary-light-5: #c5b5a2;
-  --el-color-primary-light-7: #ddd3c6;
-  --el-color-primary-light-8: #e8e0d5;
-  --el-color-primary-light-9: #f4f0eb;
-  --el-color-primary-dark-2: #7a6549;
+  --el-color-primary: #3B82F6;
+  --el-color-primary-light-3: #6ba1f8;
+  --el-color-primary-light-5: #9dbffb;
+  --el-color-primary-light-7: #c8dbfc;
+  --el-color-primary-light-8: #dce9fd;
+  --el-color-primary-light-9: #eff5fe;
+  --el-color-primary-dark-2: #2563eb;
+
+  --el-color-success: #22c55e;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-error: #ef4444;
+  --el-color-info: #6e7591;
+
+  --el-border-radius-base: var(--zen-radius-md);
+  --el-font-family: var(--font);
 }
 
-/* -- Primary 按钮 -- */
-html body .el-button.el-button--primary,
-html body button.el-button--primary,
-html body .el-button--primary.el-button {
-  background-color: #8b7355 !important;
-  border-color: #8b7355 !important;
+/* -- Primary 按钮：渐变背景 -- */
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+  background-color: #3B82F6 !important;
+  background-image: var(--gradient-btn) !important;
+  border-color: transparent !important;
   color: #ffffff !important;
+  box-shadow: var(--shadow-gradient) !important;
+  transition: var(--zen-transition) !important;
 }
-html body .el-button.el-button--primary:hover,
-html body .el-button.el-button--primary:focus,
-html body button.el-button--primary:hover {
-  background-color: #a89279 !important;
-  border-color: #a89279 !important;
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):hover,
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):focus {
+  background-image: var(--gradient-btn) !important;
+  border-color: transparent !important;
   color: #ffffff !important;
+  box-shadow: 0 6px 24px rgba(20, 184, 166, 0.28), 0 4px 14px rgba(59, 130, 246, 0.2) !important;
+  transform: translateY(-1px);
 }
-html body .el-button.el-button--primary:active {
-  background-color: #7a6549 !important;
-  border-color: #7a6549 !important;
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):active {
+  transform: translateY(0) scale(0.99);
 }
-.el-button--primary.is-disabled,
-.el-button--primary.is-disabled:hover {
-  background-color: #c5b5a2 !important;
-  border-color: #c5b5a2 !important;
+html body .el-button--primary.is-disabled,
+html body .el-button--primary.is-disabled:hover {
+  background-image: none !important;
+  background-color: #9dbffb !important;
+  border-color: #9dbffb !important;
   color: #fff !important;
+  box-shadow: none !important;
+  transform: none;
 }
-.el-button--primary.is-loading {
-  background-color: #a89279 !important;
-  border-color: #a89279 !important;
-  color: #fff !important;
+html body .el-button--primary.is-loading {
+  box-shadow: none !important;
+  transform: none;
+}
+
+/* -- 主按钮的 text / link / plain 变体保持纯色蓝 -- */
+.el-button--primary.is-text,
+.el-button--primary.is-link {
+  color: var(--primary) !important;
 }
 
 /* -- Default 按钮 -- */
 html body .el-button.el-button--default,
 html body button.el-button--default {
   background-color: #ffffff !important;
-  border-color: #d4d0cb !important;
-  color: #333333 !important;
+  border-color: var(--ink-200) !important;
+  color: var(--ink-700) !important;
 }
 html body .el-button.el-button--default:hover,
 html body .el-button.el-button--default:focus,
 html body button.el-button--default:hover {
-  background-color: #f5f3f0 !important;
-  border-color: #8b7355 !important;
-  color: #8b7355 !important;
+  background-color: var(--ink-50) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
 }
 
-/* -- 其他按钮 -- */
+/* -- 其他语义按钮 -- */
 .el-button--danger:not(.is-text):not(.is-link) { color: #fff !important; }
 .el-button--danger.is-text { color: var(--el-color-danger) !important; }
 .el-button--success:not(.is-text):not(.is-link) { color: #fff !important; }
@@ -72,8 +90,8 @@ html body button.el-button--default:hover {
   background-color: transparent !important;
 }
 .el-menu-item, .el-sub-menu__title {
-  font-family: var(--zen-font-sans) !important;
-  letter-spacing: 1px;
+  font-family: var(--font) !important;
+  letter-spacing: 0.3px;
 }
 .el-menu-item.is-active {
   color: var(--zen-accent) !important;
@@ -101,12 +119,13 @@ html body button.el-button--default:hover {
 .el-table {
   --el-table-border-color: var(--zen-border-light) !important;
   --el-table-header-bg-color: var(--zen-bg-warm) !important;
+  --el-table-row-hover-bg-color: var(--zen-accent-bg) !important;
 }
 .el-table th {
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   color: var(--zen-text-secondary) !important;
   font-size: 13px !important;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 /* -- 弹窗 -- */
@@ -132,9 +151,9 @@ html body .el-dialog__body {
   padding-bottom: 16px !important;
 }
 .el-dialog__title {
-  font-family: var(--zen-font-serif) !important;
-  font-weight: 500 !important;
-  letter-spacing: 1px;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
   color: var(--zen-text) !important;
 }
 
@@ -152,11 +171,14 @@ html body .el-dialog__body {
   box-shadow: 0 0 0 1px var(--zen-accent-light) inset !important;
 }
 .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 1px var(--zen-accent) inset !important;
+  box-shadow: 0 0 0 1px var(--zen-accent) inset, 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 .el-select .el-select__wrapper {
   box-shadow: 0 0 0 1px var(--zen-border) inset !important;
   border-radius: var(--zen-radius-md) !important;
+}
+.el-select .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--zen-accent) inset, 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* -- 分页 -- */
@@ -164,9 +186,20 @@ html body .el-dialog__body {
   --el-pagination-button-bg-color: var(--zen-card) !important;
   --el-pagination-hover-color: var(--zen-accent) !important;
 }
+.el-pager li.is-active {
+  color: var(--zen-accent) !important;
+}
 
 /* -- 其他组件 -- */
 .el-tag { border-radius: var(--zen-radius-sm) !important; }
 .el-tabs__item.is-active { color: var(--zen-accent) !important; }
 .el-tabs__active-bar { background-color: var(--zen-accent) !important; }
 .el-breadcrumb { font-size: 13px !important; }
+.el-switch.is-checked .el-switch__core { background-color: var(--zen-accent) !important; border-color: var(--zen-accent) !important; }
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background-color: var(--zen-accent) !important;
+  border-color: var(--zen-accent) !important;
+  box-shadow: -1px 0 0 0 var(--zen-accent) !important;
+}
+.el-radio__input.is-checked .el-radio__inner { background-color: var(--zen-accent) !important; border-color: var(--zen-accent) !important; }
+.el-radio__input.is-checked + .el-radio__label { color: var(--zen-accent) !important; }
