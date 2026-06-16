@@ -49,11 +49,18 @@ FROM eclipse-temurin:21.0.5_11-jre-jammy
 ARG HTTP_PROXY=""
 ARG HTTPS_PROXY=""
 
-# 安装 Nginx、Certbot、Cron
+# 安装 Nginx、Certbot、Cron，以及 OCR 边车所需 Python 运行时（libgomp1 供 onnxruntime）
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends nginx wget certbot cron && \
+    apt-get install -y --no-install-recommends nginx wget certbot cron python3 python3-pip libgomp1 && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /run/nginx /app/static/user /app/static/admin /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
+    mkdir -p /run/nginx /app/static/user /app/static/admin /app/ocr /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
+
+# ----- 教务验证码 OCR 边车（ddddocr，与主应用同镜像，本机 127.0.0.1:9000）-----
+# 先装依赖（利用层缓存），再拷源码。代理由 Docker 预置 build-arg (HTTP_PROXY 等) 自动透传给 pip。
+COPY ocr-sidecar/requirements.txt /app/ocr/requirements.txt
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir -r /app/ocr/requirements.txt
+COPY ocr-sidecar/main.py /app/ocr/main.py
 
 # 清除代理环境变量（运行时不需要）
 ENV HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy=""
