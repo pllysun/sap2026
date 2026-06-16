@@ -43,6 +43,16 @@ sap-user/dist/
 # 请复制 .example 文件并重命名后使用
 sap-backend/src/main/resources/application-dev.yml
 sap-backend/src/main/resources/application-prod.yml
+# Docker 生产环境变量（含 JW_AES_KEY/MySQL 密码），仅保留 .env.example
+docker/.env
+.env
+# 安卓签名密钥
+**/keystore.properties
+**/*.jks
+**/*.keystore
+
+# ===== 打包产物（APK 输出目录）=====
+/release/
 
 # ===== 日志 =====
 *.log
@@ -56,5 +66,16 @@ logs/
 **/data/
 **/uploads/
 
+# ===== Python（OCR sidecar）=====
+# 虚拟环境/字节码体积大且平台相关，绝不入库；靠 requirements.txt 重建
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
 # ===== Gemini AI =====
 .gemini/
+
+# ===== App 发版产物（APK 体积大，不入库；按版本归档在本地/分发渠道）=====
+/release/
