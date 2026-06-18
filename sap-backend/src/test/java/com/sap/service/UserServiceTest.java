@@ -226,6 +226,76 @@ class UserServiceTest extends BaseUnitTest {
         }
     }
 
+    // ===================== resetPassword =====================
+
+    @Test
+    void resetPassword_superAdmin_resetsAnyAccount() {
+        User u = new User();
+        u.setId(5L);
+        u.setStudentId("20200001");
+        u.setPassword("oldhash");
+        when(userMapper.selectOne(any())).thenReturn(u);
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getRoleList).thenReturn(List.of("0"));
+
+            service.resetPassword("20200001", "newPass123");
+
+            ArgumentCaptor<User> cap = ArgumentCaptor.forClass(User.class);
+            verify(userMapper).updateById(cap.capture());
+            assertNotEquals("oldhash", cap.getValue().getPassword());
+            assertTrue(cap.getValue().getPassword().startsWith("$2"));
+            verify(cacheService).updateUser(u);
+        }
+    }
+
+    @Test
+    void resetPassword_nonSuperAdmin_highPrivilegeTarget_throws() {
+        User u = new User();
+        u.setId(5L);
+        when(userMapper.selectOne(any())).thenReturn(u);
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getRoleList).thenReturn(List.of("1"));
+            when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(0)); // 超管目标
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> service.resetPassword("20200001", "newPass123"));
+            assertEquals("无权重置该账号密码", ex.getMessage());
+            verify(userMapper, never()).updateById(any());
+        }
+    }
+
+    @Test
+    void resetPassword_nonSuperAdmin_normalTarget_ok() {
+        User u = new User();
+        u.setId(5L);
+        when(userMapper.selectOne(any())).thenReturn(u);
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getRoleList).thenReturn(List.of("1"));
+            when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(3)); // 成员目标
+
+            service.resetPassword("20200001", "newPass123");
+            verify(userMapper).updateById(any(User.class));
+        }
+    }
+
+    @Test
+    void resetPassword_blankStudentId_throws() {
+        assertThrows(BusinessException.class, () -> service.resetPassword("  ", "newPass123"));
+    }
+
+    @Test
+    void resetPassword_shortPassword_throws() {
+        assertThrows(BusinessException.class, () -> service.resetPassword("20200001", "123"));
+    }
+
+    @Test
+    void resetPassword_accountNotFound_throws() {
+        when(userMapper.selectOne(any())).thenReturn(null);
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.resetPassword("nobody", "newPass123"));
+        assertEquals("账号不存在", ex.getMessage());
+    }
+
     // ===================== getUserRoles =====================
 
     @Test

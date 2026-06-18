@@ -85,6 +85,36 @@ public class UserService {
         }
     }
 
+    /**
+     * 管理员重置指定账号(按学号)的密码。
+     * 防越权：非超级管理员不得重置高权限账号(超管/会长，roleCode ≤ 1)的密码，
+     * 避免低权限管理员通过重置密码接管高权限账号。
+     */
+    @Transactional
+    public void resetPassword(String studentId, String newPassword) {
+        if (studentId == null || studentId.isBlank()) throw new BusinessException("账号不能为空");
+        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 64) {
+            throw new BusinessException("密码长度需为6-64位");
+        }
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getStudentId, studentId.trim()));
+        if (user == null) throw new BusinessException("账号不存在");
+
+        List<String> callerRoles = StpUtil.getRoleList();
+        boolean callerIsSuperAdmin = callerRoles.contains("0");
+        if (!callerIsSuperAdmin) {
+            List<Integer> targetRoles = userRoleMapper.selectRoleCodesByUserId(user.getId());
+            int targetMin = targetRoles.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
+            if (targetMin <= 1) {
+                throw new BusinessException("无权重置该账号密码");
+            }
+        }
+
+        user.setPassword(PasswordUtil.encode(newPassword));
+        userMapper.updateById(user);
+        cacheService.updateUser(user);
+    }
+
     public List<Integer> getUserRoles(Long userId) {
         return userRoleMapper.selectRoleCodesByUserId(userId);
     }
