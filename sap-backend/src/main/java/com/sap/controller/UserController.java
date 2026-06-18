@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -78,5 +79,16 @@ public class UserController {
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> listMembers() {
         return Result.ok(userService.listMemberUsers());
+    }
+
+    /**
+     * 管理员重置指定账号密码（输入学号 + 新密码）。仅超管/会长可操作。
+     */
+    @PostMapping("/reset-password")
+    @OperationLog("重置用户密码")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
+    public Result<?> resetPassword(@RequestBody Map<String, String> body) {
+        userService.resetPassword(body.get("studentId"), body.get("newPassword"));
+        return Result.ok("密码已重置");
     }
 }

@@ -80,6 +80,28 @@
           <p style="font-size:12px;color:#aaa;margin-top:8px;">「检测连通性」测试的是<strong>已保存</strong>的配置，修改后请先点「保存配置」再检测</p>
         </div>
 
+        <!-- 重置账号密码（仅超管/会长可见可用） -->
+        <div class="zen-card" v-if="canEdit">
+          <div class="card-header">
+            <span class="card-header__icon">🔑</span>
+            <span class="card-header__title">重置账号密码</span>
+          </div>
+          <div class="cos-config-grid">
+            <div class="cos-field" style="grid-column: 1 / -1">
+              <label>账号（学号）</label>
+              <el-input v-model="resetPwd.studentId" size="small" placeholder="输入要重置密码的账号学号" clearable />
+            </div>
+            <div class="cos-field" style="grid-column: 1 / -1">
+              <label>新密码</label>
+              <el-input v-model="resetPwd.newPassword" type="password" show-password size="small" placeholder="6-64 位" clearable />
+            </div>
+          </div>
+          <div class="cos-actions">
+            <el-button type="danger" size="small" @click="handleResetPassword" :loading="resetPwd.loading">重置密码</el-button>
+          </div>
+          <p style="font-size:12px;color:#aaa;margin-top:8px;">直接将该账号密码改为新密码（无需原密码）。出于安全，非超级管理员不能重置超管/会长的密码。</p>
+        </div>
+
         <!-- 入会会费配置 -->
         <div class="zen-card">
           <div class="card-header">
@@ -286,7 +308,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { updateSetting, getPublicSettings, getSettingValue, getUserInfo, getPositions, addPosition, updatePosition, deletePosition, getCosConfig, updateCosConfig, testCosConnection } from '../api'
+import { updateSetting, getPublicSettings, getSettingValue, getUserInfo, getPositions, addPosition, updatePosition, deletePosition, getCosConfig, updateCosConfig, testCosConnection, resetUserPassword } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 
@@ -296,6 +318,9 @@ const showEditPosition = ref(false)
 const editPositionId = ref(null)
 const isSuperAdmin = ref(false)
 const canEdit = ref(false)
+
+// 重置账号密码
+const resetPwd = reactive({ studentId: '', newPassword: '', loading: false })
 
 const newPosition = reactive({ positionName: '', sortOrder: 99, maxCount: 1, roleCode: 2 })
 const editPositionForm = reactive({ positionName: '', sortOrder: 0, maxCount: 1, roleCode: 2 })
@@ -422,6 +447,32 @@ const handleSaveFee = async () => {
     // 失败由全局响应拦截器统一提示，避免重复弹窗
   } finally {
     feeSaving.value = false
+  }
+}
+
+const handleResetPassword = async () => {
+  const studentId = resetPwd.studentId.trim()
+  const newPassword = resetPwd.newPassword
+  if (!studentId) { ElMessage.warning('请输入账号学号'); return }
+  if (!newPassword || newPassword.length < 6 || newPassword.length > 64) {
+    ElMessage.warning('新密码长度需为 6-64 位'); return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确认将账号 ${studentId} 的密码重置为新密码？此操作立即生效。`,
+      '重置密码', { type: 'warning' }
+    )
+  } catch (e) { return }
+  resetPwd.loading = true
+  try {
+    await resetUserPassword({ studentId, newPassword })
+    ElMessage.success('密码已重置')
+    resetPwd.studentId = ''
+    resetPwd.newPassword = ''
+  } catch (e) {
+    // 失败由全局响应拦截器统一提示（如账号不存在、无权重置）
+  } finally {
+    resetPwd.loading = false
   }
 }
 
