@@ -103,4 +103,16 @@ class UserControllerTest {
 
         assertSame(members, result.getData());
     }
+
+    @Test
+    void resetPassword_delegatesAndReturnsMessage() {
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        body.put("studentId", "20200001");
+        body.put("newPassword", "newPass123");
+
+        Result<?> result = controller.resetPassword(body);
+
+        verify(userService).resetPassword("20200001", "newPass123");
+        assertEquals("密码已重置", result.getData());
+    }
 }

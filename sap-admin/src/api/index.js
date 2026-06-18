@@ -17,6 +17,7 @@ export const getUserRoles = (id) => request.get(`/api/user/${id}/roles`)
 export const upgradeUser = (id) => request.post(`/api/user/${id}/upgrade`)
 export const batchUpgradeUsers = (ids) => request.post('/api/user/batch-upgrade', ids)
 export const getMemberUsers = () => request.get('/api/user/members')
+export const resetUserPassword = (data) => request.post('/api/user/reset-password', data)
 
 // ===== 设置 =====
 export const getSettings = () => request.get('/api/setting/list')
