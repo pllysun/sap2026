@@ -129,6 +129,7 @@ export const getApiTop = (params) => request.get('/api/stats/api/top', { params 
 export const getApiTrend = (days) => request.get('/api/stats/api/trend', { params: { days } })
 export const getApiByUser = (params) => request.get('/api/stats/api/by-user', { params })
 export const getApiByEndpoint = (params) => request.get('/api/stats/api/by-endpoint', { params })
+export const getApiDetail = (params) => request.get('/api/stats/api/detail', { params })
 export const getStatsUsers = () => request.get('/api/stats/users')
 
 // ===== 软协笔记 =====

@@ -64,6 +64,13 @@ public class StatsController {
         return Result.ok(statsService.apiByEndpoint(endpoint, days));
     }
 
+    /** 用户×接口 全量明细（统一搜索/排序表格用）。 */
+    @GetMapping("/api/detail")
+    public Result<?> apiDetail(@RequestParam(defaultValue = "7") int days,
+                               @RequestParam(defaultValue = "1000") int limit) {
+        return Result.ok(statsService.apiDetail(days, limit));
+    }
+
     /** 有统计记录的用户列表（供下钻选择器）。 */
     @GetMapping("/users")
     public Result<?> users() {

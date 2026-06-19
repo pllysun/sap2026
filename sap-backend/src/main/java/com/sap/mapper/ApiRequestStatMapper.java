@@ -39,6 +39,12 @@ public interface ApiRequestStatMapper extends BaseMapper<ApiRequestStat> {
             "WHERE stat_date >= #{start} AND user_id = #{userId} GROUP BY endpoint, http_method ORDER BY cnt DESC")
     List<Map<String, Object>> byUser(@Param("start") LocalDate start, @Param("userId") Long userId);
 
+    /** 用户×接口×方法 全量明细（窗口内，按次数倒序，限 N 行），供前端统一搜索/排序表格。 */
+    @Select("SELECT user_id userId, user_name userName, endpoint, http_method httpMethod, SUM(count) cnt " +
+            "FROM stat_api_request WHERE stat_date >= #{start} " +
+            "GROUP BY user_id, user_name, endpoint, http_method ORDER BY cnt DESC LIMIT #{limit}")
+    List<Map<String, Object>> detail(@Param("start") LocalDate start, @Param("limit") int limit);
+
     /** 指定接口的逐用户请求数。 */
     @Select("SELECT user_id userId, user_name userName, SUM(count) cnt FROM stat_api_request " +
             "WHERE stat_date >= #{start} AND endpoint = #{endpoint} GROUP BY user_id, user_name ORDER BY cnt DESC")
