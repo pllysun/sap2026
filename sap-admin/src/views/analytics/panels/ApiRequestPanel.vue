@@ -12,58 +12,59 @@
       </div>
     </div>
 
-    <!-- 下钻 -->
-    <div class="drill-bar">
-      <el-radio-group v-model="drillMode" size="small" @change="onDrillModeChange">
-        <el-radio-button value="user">按用户看接口</el-radio-button>
-        <el-radio-button value="endpoint">按接口看用户</el-radio-button>
-      </el-radio-group>
-
-      <el-select v-if="drillMode === 'user'" v-model="selUser" filterable placeholder="选择用户" size="small" style="width: 220px" @change="loadDrill">
-        <el-option v-for="u in users" :key="u.userId" :label="u.userName" :value="u.userId" />
-      </el-select>
-      <el-select v-else v-model="selEndpoint" filterable placeholder="选择接口" size="small" style="width: 320px" @change="loadDrill">
-        <el-option v-for="ep in endpoints" :key="ep" :label="ep" :value="ep" />
-      </el-select>
+    <!-- 统一明细：用户 × 接口 × 方法 × 请求数，直接搜索/排序，无需先选用户 -->
+    <div class="detail-bar">
+      <span class="detail-title">请求明细</span>
+      <span class="detail-count" v-if="detail.length">共 {{ filteredDetail.length }} / {{ detail.length }} 条</span>
+      <el-input v-model="search" placeholder="搜索用户 / 接口 / 方法" clearable size="small" class="detail-search">
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
     </div>
 
-    <el-table v-if="drillMode === 'user'" :data="drillRows" stripe size="small">
+    <el-table :data="filteredDetail" stripe size="small" max-height="440"
+      :default-sort="{ prop: 'cnt', order: 'descending' }">
       <el-table-column type="index" label="#" width="50" />
-      <el-table-column prop="endpoint" label="接口" min-width="240" show-overflow-tooltip />
-      <el-table-column prop="httpMethod" label="方法" width="90">
-        <template #default="{ row }"><el-tag size="small" effect="plain">{{ row.httpMethod }}</el-tag></template>
+      <el-table-column prop="userName" label="用户" min-width="130" sortable show-overflow-tooltip />
+      <el-table-column prop="endpoint" label="接口" min-width="250" sortable show-overflow-tooltip />
+      <el-table-column prop="httpMethod" label="方法" width="92" sortable>
+        <template #default="{ row }">
+          <el-tag size="small" effect="light" :type="methodTag(row.httpMethod)">{{ row.httpMethod }}</el-tag>
+        </template>
       </el-table-column>
       <el-table-column prop="cnt" label="请求数" width="110" align="right" sortable />
-      <template #empty><span style="color: var(--zen-text-muted)">{{ selUser ? '该用户暂无记录' : '请选择用户' }}</span></template>
-    </el-table>
-
-    <el-table v-else :data="drillRows" stripe size="small">
-      <el-table-column type="index" label="#" width="50" />
-      <el-table-column prop="userName" label="用户" min-width="160" />
-      <el-table-column prop="cnt" label="请求数" width="110" align="right" sortable />
-      <template #empty><span style="color: var(--zen-text-muted)">{{ selEndpoint ? '该接口暂无记录' : '请选择接口' }}</span></template>
+      <template #empty>
+        <span style="color: var(--zen-text-muted)">{{ loading ? '加载中…' : (search ? '没有匹配的记录' : '暂无数据') }}</span>
+      </template>
     </el-table>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getApiTop, getApiTrend, getApiByUser, getApiByEndpoint, getStatsUsers } from '../../../api'
+import { getApiTop, getApiTrend, getApiDetail } from '../../../api'
 
 const props = defineProps({ days: { type: Number, default: 7 } })
 
 const top = ref([])
 const trendData = ref({ dates: [], counts: [] })
-const users = ref([])
+const detail = ref([])
+const search = ref('')
 const loading = ref(false)
 
-const drillMode = ref('user')
-const selUser = ref(null)
-const selEndpoint = ref(null)
-const drillRows = ref([])
+// HTTP 方法着色：GET 蓝 / POST 绿 / PUT 橙 / DELETE 红
+const methodTag = (m) => ({ GET: 'info', POST: 'success', PUT: 'warning', DELETE: 'danger', PATCH: 'primary' }[m] || '')
 
-const endpoints = computed(() => [...new Set(top.value.map(r => r.endpoint))])
+const filteredDetail = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return detail.value
+  return detail.value.filter(r =>
+    (r.userName || '').toLowerCase().includes(q) ||
+    (r.endpoint || '').toLowerCase().includes(q) ||
+    (r.httpMethod || '').toLowerCase().includes(q)
+  )
+})
 
 const barEl = ref(null)
 const trendEl = ref(null)
@@ -73,10 +74,10 @@ let trendInst = null
 const load = async () => {
   loading.value = true
   try {
-    const [t, tr, u] = await Promise.all([
+    const [t, tr, dt] = await Promise.all([
       getApiTop({ days: props.days, limit: 20 }),
       getApiTrend(props.days),
-      getStatsUsers()
+      getApiDetail({ days: props.days, limit: 1000 })
     ])
     top.value = (t.data || []).map(r => ({
       endpoint: r.endpoint,
@@ -84,9 +85,16 @@ const load = async () => {
       cnt: Number(r.cnt || 0)
     }))
     trendData.value = tr.data || { dates: [], counts: [] }
-    users.value = (u.data || []).map(x => ({ userId: Number(x.userId || 0), userName: x.userName || '匿名' }))
+    detail.value = (dt.data || []).map(r => ({
+      userId: Number(r.userId || 0),
+      userName: r.userName || '匿名',
+      endpoint: r.endpoint,
+      httpMethod: r.httpMethod,
+      cnt: Number(r.cnt || 0)
+    }))
   } catch (e) {
     top.value = []
+    detail.value = []
   } finally {
     loading.value = false
   }
@@ -139,30 +147,9 @@ const renderTrend = () => {
   })
 }
 
-const onDrillModeChange = () => {
-  drillRows.value = []
-  loadDrill()
-}
-
-const loadDrill = async () => {
-  try {
-    if (drillMode.value === 'user') {
-      if (!selUser.value) { drillRows.value = []; return }
-      const res = await getApiByUser({ userId: selUser.value, days: props.days })
-      drillRows.value = (res.data || []).map(r => ({ endpoint: r.endpoint, httpMethod: r.httpMethod, cnt: Number(r.cnt || 0) }))
-    } else {
-      if (!selEndpoint.value) { drillRows.value = []; return }
-      const res = await getApiByEndpoint({ endpoint: selEndpoint.value, days: props.days })
-      drillRows.value = (res.data || []).map(r => ({ userName: r.userName || '匿名', cnt: Number(r.cnt || 0) }))
-    }
-  } catch (e) {
-    drillRows.value = []
-  }
-}
-
 const onResize = () => { barInst?.resize(); trendInst?.resize() }
 
-watch(() => props.days, async () => { await load(); await loadDrill() })
+watch(() => props.days, load)
 onMounted(async () => { await load(); window.addEventListener('resize', onResize) })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
@@ -202,12 +189,24 @@ onBeforeUnmount(() => {
   color: var(--zen-text-muted);
   font-size: 13px;
 }
-.drill-bar {
+.detail-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 4px 0 14px;
-  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0 12px;
+}
+.detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zen-text);
+}
+.detail-count {
+  font-size: 12px;
+  color: var(--zen-text-muted);
+}
+.detail-search {
+  width: 260px;
+  margin-left: auto;
 }
 @media (max-width: 900px) {
   .panel-grid { grid-template-columns: 1fr; }
