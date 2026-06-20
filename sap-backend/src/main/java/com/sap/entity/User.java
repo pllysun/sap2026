@@ -23,7 +23,9 @@ public class User {
     @jakarta.persistence.Column(name = "student_id", nullable = false, unique = true, length = 20, columnDefinition = "VARCHAR(20) COMMENT '学号'")
     private String studentId;
 
-    /** 密码（BCrypt加密） */
+    /** 密码（BCrypt加密）。绝不随响应序列化外泄（本项目 HTTP 用 FastJson2，故用 @JSONField；并加 Jackson @JsonIgnore 双保险）。 */
+    @com.alibaba.fastjson2.annotation.JSONField(serialize = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @jakarta.persistence.Column(name = "password", nullable = false, columnDefinition = "VARCHAR(255) COMMENT '密码(BCrypt)'")
     private String password;
 

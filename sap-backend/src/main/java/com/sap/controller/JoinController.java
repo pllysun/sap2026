@@ -10,6 +10,7 @@ import com.sap.service.JoinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -115,7 +116,12 @@ public class JoinController {
             @RequestParam(defaultValue = "false") boolean onlyMine
     ) {
         Long userId = StpUtil.getLoginIdAsLong();
-        return Result.ok(joinService.listApplications(status, onlyMine, userId));
+        // 防越权：仅管理员(0/1/2)可查看全部申请；其他人(含入会负责人)强制只看分配给自己的，
+        // 避免任意登录用户批量拉取全部申请人实名/学号/QQ/支付码等 PII。
+        List<String> roles = StpUtil.getRoleList();
+        boolean isAdmin = roles.contains("0") || roles.contains("1") || roles.contains("2");
+        boolean effectiveOnlyMine = isAdmin ? onlyMine : true;
+        return Result.ok(joinService.listApplications(status, effectiveOnlyMine, userId));
     }
 
     /** 审核通过 */

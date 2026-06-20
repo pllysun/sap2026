@@ -53,6 +53,7 @@ public class SettingController {
 
     @GetMapping("/cos-config")
     @OperationLog("查询COS配置")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> getCosConfig() {
         return Result.ok(cosService.getMaskedConfig());
     }

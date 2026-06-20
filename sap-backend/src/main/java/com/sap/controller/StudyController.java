@@ -121,9 +121,8 @@ public class StudyController {
     @PostMapping("/member/auto-join")
     @OperationLog("自动加入学习活动")
     public Result<?> autoJoin(@RequestBody(required = false) Map<String, Long> params) {
-        Long userId = null;
-        if (params != null) userId = params.get("userId");
-        if (userId == null) userId = StpUtil.getLoginIdAsLong();
+        // 防越权：强制本人自助加入，忽略请求体里的 userId
+        Long userId = StpUtil.getLoginIdAsLong();
         studyService.autoJoinLatest(userId);
         return Result.ok("自动加入最新活动成功");
     }
@@ -132,10 +131,8 @@ public class StudyController {
     @OperationLog("加入学习活动")
     public Result<?> memberJoin(@RequestBody Map<String, Long> params) {
         Long activityId = params.get("activityId");
-        Long userId = params.get("userId");
-        if (userId == null) {
-            userId = StpUtil.getLoginIdAsLong();
-        }
+        // 防越权：强制本人自助加入，忽略请求体里的 userId（管理员代加请用 /member/batch-join）
+        Long userId = StpUtil.getLoginIdAsLong();
         studyService.memberJoin(activityId, userId);
         return Result.ok("加入成功");
     }
