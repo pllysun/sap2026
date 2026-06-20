@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dashboard")
+@SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
 public class DashboardController {
 
     @Autowired private ActivityService activityService;

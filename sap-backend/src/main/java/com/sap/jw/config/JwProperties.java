@@ -49,4 +49,27 @@ public class JwProperties {
 
     /** 验证码自动 OCR 最大重试次数；超过则转人工。 */
     private int captchaMaxOcr = 4;
+
+    /** 默认占位 AES 密钥（公开常量，绝不能用于生产，否则存库教务密码可被任何拿到源码者解密）。 */
+    public static final String DEFAULT_AES_KEY = "change-me-in-prod-please-32bytes!";
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.core.env.Environment env;
+
+    /**
+     * 启动期安全校验：生产/容器环境若仍使用默认占位 AES 密钥则 fail-fast，强制通过环境变量 JW_AES_KEY 注入。
+     * dev 环境仅告警放行，便于本地调试。
+     */
+    @jakarta.annotation.PostConstruct
+    public void validateAesKey() {
+        if (!DEFAULT_AES_KEY.equals(aesKey)) return;
+        java.util.List<String> profiles = java.util.Arrays.asList(env.getActiveProfiles());
+        boolean prodLike = profiles.contains("prod") || profiles.contains("docker");
+        if (prodLike) {
+            throw new IllegalStateException("[安全] jw.aes-key 仍为默认占位值且当前为生产/容器环境" + profiles
+                    + "：请通过环境变量 JW_AES_KEY 注入 32 字节强随机密钥后再启动，否则存库教务密码加密形同明文。");
+        }
+        org.slf4j.LoggerFactory.getLogger(JwProperties.class)
+                .warn("[安全] jw.aes-key 仍为默认占位值(仅 dev 放行)。生产务必用环境变量 JW_AES_KEY 覆盖！");
+    }
 }

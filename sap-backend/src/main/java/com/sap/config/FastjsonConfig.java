@@ -27,10 +27,9 @@ public class FastjsonConfig implements WebMvcConfigurer {
                 JSONWriter.Feature.WriteNullStringAsEmpty,
                 JSONWriter.Feature.WriteLongAsString
         );
-        config.setReaderFeatures(
-                JSONReader.Feature.FieldBased,
-                JSONReader.Feature.SupportAutoType
-        );
+        // 安全：不开启 SupportAutoType / FieldBased。
+        // 对不可信请求体开启 autoType 会形成反序列化 RCE 面（@type 触发任意类型实例化），
+        // 官方明确禁止；本系统所有入参用强类型/Map 解析，无需多态自动类型。
         converter.setFastJsonConfig(config);
         converter.setDefaultCharset(StandardCharsets.UTF_8);
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.APPLICATION_JSON));

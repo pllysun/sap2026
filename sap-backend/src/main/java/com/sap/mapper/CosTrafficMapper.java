@@ -41,6 +41,11 @@ public interface CosTrafficMapper extends BaseMapper<CosTraffic> {
             "FROM stat_cos_traffic WHERE stat_date >= #{start} GROUP BY stat_date ORDER BY stat_date")
     List<Map<String, Object>> trend(@Param("start") LocalDate start);
 
+    /** 某用户当日上传累计(字节与次数)，用于上传前配额校验防盗刷。 */
+    @Select("SELECT COALESCE(SUM(bytes),0) bytes, COALESCE(SUM(count),0) cnt FROM stat_cos_traffic " +
+            "WHERE stat_date = #{date} AND user_id = #{userId} AND direction = 'UPLOAD'")
+    Map<String, Object> userDailyUpload(@Param("date") LocalDate date, @Param("userId") Long userId);
+
     /** 窗口内总上传/下载字节，用于概览卡片。 */
     @Select("SELECT COALESCE(SUM(CASE WHEN direction='UPLOAD' THEN bytes ELSE 0 END),0) uploadBytes, " +
             "COALESCE(SUM(CASE WHEN direction='DOWNLOAD' THEN bytes ELSE 0 END),0) downloadBytes " +

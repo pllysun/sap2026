@@ -117,6 +117,9 @@ public class CosService {
                     + "，仅允许 " + allowedTypes);
         }
 
+        // 配额校验：超过单用户当日上传上限则拒绝，防 COS 盗刷（批量上传逐个累计生效）
+        trafficService.checkUploadQuota(file.getSize());
+
         String dateDir = LocalDate.now().toString();
         String cosKey = "uploads/" + dateDir + "/" + UUID.randomUUID().toString().replace("-", "") + ext;
 
