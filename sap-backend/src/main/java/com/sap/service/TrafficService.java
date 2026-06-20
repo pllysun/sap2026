@@ -1,6 +1,7 @@
 package com.sap.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.sap.common.BusinessException;
 import com.sap.entity.CosTraffic;
 import com.sap.entity.FileObject;
 import com.sap.entity.User;
@@ -31,6 +32,45 @@ public class TrafficService {
     private ApiRequestStatMapper apiRequestStatMapper;
     @Autowired
     private UserMapper userMapper;
+
+    /** 单用户每日上传字节配额（默认 500MB），防 COS 盗刷。可用 file.upload.daily-quota-bytes 覆盖。 */
+    @org.springframework.beans.factory.annotation.Value("${file.upload.daily-quota-bytes:524288000}")
+    private long dailyQuotaBytes;
+
+    /** 单用户每日上传次数配额（默认 200 次）。可用 file.upload.daily-quota-count 覆盖。 */
+    @org.springframework.beans.factory.annotation.Value("${file.upload.daily-quota-count:200}")
+    private int dailyQuotaCount;
+
+    private static long toLong(Object o) {
+        if (o instanceof Number n) return n.longValue();
+        if (o == null) return 0L;
+        try { return Long.parseLong(o.toString()); } catch (Exception e) { return 0L; }
+    }
+
+    /**
+     * 上传前配额校验：超过单用户当日上传字节/次数上限则抛 BusinessException 拒绝，防 COS 存储/带宽盗刷。
+     * 配额表查询异常时放行（埋点表问题不应阻断正常业务）。
+     */
+    public void checkUploadQuota(long incomingSize) {
+        Object[] cu = currentUser();
+        Long uid = (Long) cu[0];
+        if (uid == null || uid == 0L) return;
+        long bytes;
+        long cnt;
+        try {
+            java.util.Map<String, Object> used = cosTrafficMapper.userDailyUpload(LocalDate.now(), uid);
+            bytes = used != null ? toLong(used.get("bytes")) : 0L;
+            cnt = used != null ? toLong(used.get("cnt")) : 0L;
+        } catch (Exception ignore) {
+            return; // 配额查询失败不阻断
+        }
+        if (cnt + 1 > dailyQuotaCount) {
+            throw new BusinessException("今日上传次数已达上限(" + dailyQuotaCount + ")，请明日再试");
+        }
+        if (bytes + Math.max(0, incomingSize) > dailyQuotaBytes) {
+            throw new BusinessException("今日上传流量已达上限(" + (dailyQuotaBytes / 1024 / 1024) + "MB)，请明日再试");
+        }
+    }
 
     /** 解析当前登录用户为 [userId(Long, 匿名=0), userName(String)]。 */
     private Object[] currentUser() {
