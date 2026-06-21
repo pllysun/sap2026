@@ -90,9 +90,15 @@ function triggerUpload() { fileInput.value?.click() }
 
 async function handleAvatarChange(e) {
   const file = e.target.files[0]; if (!file) return
-  uploadingAvatar.value = true
-  try { const fd = new FormData(); fd.append('file', file); const r = await request.post('/api/file/upload', fd); form.avatar = r.data.url } catch {}
-  finally { uploadingAvatar.value = false }
+  uploadingAvatar.value = true; saveError.value = ''; saveSuccess.value = ''
+  try {
+    const fd = new FormData(); fd.append('file', file)
+    const r = await request.post('/api/file/upload', fd)
+    form.avatar = r.data.url
+  } catch (e) {
+    // 不再静默吞掉：把后端真实原因显示出来（如「对象存储(COS)尚未配置…」），便于定位
+    saveError.value = e.message || '头像上传失败，请稍后重试'
+  } finally { uploadingAvatar.value = false }
 }
 
 async function saveProfile() {

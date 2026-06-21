@@ -51,8 +51,13 @@ import edu.csuft.sap.data.account.MemberState
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.WeekUtil
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import edu.csuft.sap.notify.ReminderPermissions
 import edu.csuft.sap.notify.ReminderPrefs
 import edu.csuft.sap.notify.ReminderScheduler
+import edu.csuft.sap.ui.common.OptionSheet
 import edu.csuft.sap.widget.ScheduleWidgetProvider
 import java.time.Instant
 import java.time.ZoneOffset
@@ -90,8 +95,18 @@ fun ScheduleSettingsScreen(
     var showRescanConfirm by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var reminderOn by remember { mutableStateOf(ReminderPrefs.enabled(context)) }
+    var popupOn by remember { mutableStateOf(ReminderPrefs.popupEnabled(context)) }
     var lead by remember { mutableStateOf(ReminderPrefs.leadMinutes(context)) }
+    var showPermDialog by remember { mutableStateOf(false) }
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    // 申请「显示在其它应用上层」(悬浮窗)权限；返回后若已授予则正式开启弹窗提醒
+    val overlayPerm = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (Settings.canDrawOverlays(context)) {
+            popupOn = true
+            ReminderPrefs.setPopupEnabled(context, true)
+            ReminderScheduler.reschedule(context)
+        }
+    }
 
     if (showRescanConfirm) {
         AlertDialog(
@@ -116,9 +131,9 @@ fun ScheduleSettingsScreen(
     }
     if (showPeriodTimes) {
         PeriodTimesScreen(
-            initial = Periods.current,
-            onSave = { Periods.save(context, it); ScheduleWidgetProvider.notifyChanged(context) },
-            onReset = { Periods.resetDefault(context); ScheduleWidgetProvider.notifyChanged(context) },
+            initial = Periods.tableFor(settings.dailyPeriods), // 有多少节就编辑多少节的时间
+            onSave = { Periods.save(context, it); ScheduleWidgetProvider.notifyChanged(context); ReminderScheduler.reschedule(context) },
+            onReset = { Periods.resetDefault(context); ScheduleWidgetProvider.notifyChanged(context); ReminderScheduler.reschedule(context) },
             onBack = { showPeriodTimes = false },
         )
         return
@@ -137,15 +152,16 @@ fun ScheduleSettingsScreen(
             Text("课表设置", fontSize = 18.sp, fontWeight = FontWeight.Medium)
         }
 
-        // 教务账号多账号切换：仅教务模式。Web 模式无教务绑定、单一课表，不展示。
-        if (MemberState.isJw && accounts.isNotEmpty()) {
+        // 教务账号多账号切换：仅教务模式，且只列真实教务账号（不含本地 WebVPN 源）
+        val jwAccounts = accounts.filter { !it.isLocal }
+        if (MemberState.isJw && jwAccounts.isNotEmpty()) {
             SectionHeader("教务账号")
             Card {
-                accounts.forEachIndexed { i, a ->
+                jwAccounts.forEachIndexed { i, a ->
                     if (i > 0) RowDivider()
                     SelectableRow(
-                        title = if (a.isLocal) "WebVPN 课表" else (a.nickname?.takeIf { it.isNotBlank() } ?: a.account),
-                        subtitle = if (a.isLocal) "网页端上导入，不绑定教务" else (if (a.nickname.isNullOrBlank()) null else a.account),
+                        title = a.nickname?.takeIf { it.isNotBlank() } ?: a.account,
+                        subtitle = if (a.nickname.isNullOrBlank()) null else a.account,
                         selected = a.account == activeAccount,
                         onClick = { onSwitchAccount(a.account) },
                     )
@@ -155,24 +171,35 @@ fun ScheduleSettingsScreen(
 
         SectionHeader("课表")
         Card {
-            // 课表管理(切换/另存为/多学期/重新扫描)仅教务模式；Web 模式课表唯一，只能重新导入覆盖
-            if (MemberState.isJw) {
+            // 多课表管理(切换/另存为/重命名)：教务模式 + 会员 Web 模式；非会员 Web 单课表，仅可删除
+            val multiProfile = MemberState.isJw || MemberState.isMember
+            if (multiProfile) {
                 NavRow("切换课表", currentName) { showSwitcher = true }
                 RowDivider()
                 ActionRow("另存为新课表", "把当前课表（含自建课）冻结成独立课表", onSaveAs)
                 RowDivider()
                 ActionRow("重命名当前课表", null, onRename)
                 RowDivider()
-                ActionRow("删除当前课表", null, onDelete)
-                RowDivider()
+            }
+            // 重新扫描：仅教务模式（走后端代抓）
+            if (MemberState.isJw) {
                 ActionRow("重新扫描学期", "重新拉取各学期教务课表", { showRescanConfirm = true })
                 RowDivider()
             }
             ActionRow(
-                "WebVPN 导入课表",
-                if (MemberState.isWeb) "在网页里登录教务、抓取并覆盖当前课表" else "在网页里登录教务、端上抓取（不经服务器）",
-                onWebImport,
+                "删除当前课表",
+                if (MemberState.isWeb && !MemberState.isMember) "Web 模式仅保留一份课表，可删除后重新导入" else null,
+                onDelete,
             )
+            // WebVPN 导入：仅 Web 模式（教务模式不显示）
+            if (MemberState.isWeb) {
+                RowDivider()
+                ActionRow(
+                    "WebVPN 导入课表",
+                    if (MemberState.isMember) "在网页登录教务、抓取并新增/更新该学期课表" else "在网页登录教务、抓取并覆盖当前课表",
+                    onWebImport,
+                )
+            }
         }
 
         SectionHeader("显示设置")
@@ -190,7 +217,9 @@ fun ScheduleSettingsScreen(
             SettingRow("一天的总课时数", "每天显示多少节课，可设 8-16 节",
                 value = "${settings.dailyPeriods} 节", onClick = { showPeriods = true })
             RowDivider()
-            SettingRow("课表时间设置", "自定义每节的起止时间", value = "", onClick = { showPeriodTimes = true })
+            SettingRow("课表时间设置", "自定义每节的起止时间，提醒/课表按新时间生效",
+                value = Periods.tableFor(settings.dailyPeriods).let { "${it.first().start}–${it.last().end}" },
+                onClick = { showPeriodTimes = true })
             RowDivider()
             SettingRow("课格高度", "调整每节课格子的高度", value = "${settings.rowHeightDp} dp", onClick = { showRowHeight = true })
             RowDivider()
@@ -215,7 +244,7 @@ fun ScheduleSettingsScreen(
         SectionHeader("提醒")
         Card {
             SwitchRow(
-                "上课提醒", "课前提醒；国产手机请关闭对本应用的电池优化以保证准时",
+                "上课提醒（通知）", "课前在通知栏提醒；国产手机请关闭对本应用的电池优化以保证准时",
                 checked = reminderOn,
                 onChange = { on ->
                     reminderOn = on
@@ -223,13 +252,47 @@ fun ScheduleSettingsScreen(
                     if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notifPerm.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                     }
+                    // 杀后台仍准时的关键：未关电池优化/无精确闹钟权限时引导开启
+                    if (on && (!ReminderPermissions.batteryUnrestricted(context) || !ReminderPermissions.exactAlarmGranted(context))) {
+                        showPermDialog = true
+                    }
                     ReminderScheduler.reschedule(context)
                 },
             )
-            if (reminderOn) {
+            RowDivider()
+            SwitchRow(
+                "上课弹窗提醒", "课前弹出悬浮窗，盖在其它应用上层（类似微信来消息的弹窗）；需授予「显示在其它应用上层」权限",
+                checked = popupOn,
+                onChange = { on ->
+                    if (on) {
+                        if (Settings.canDrawOverlays(context)) {
+                            popupOn = true
+                            ReminderPrefs.setPopupEnabled(context, true)
+                            ReminderScheduler.reschedule(context)
+                            if (!ReminderPermissions.batteryUnrestricted(context) || !ReminderPermissions.exactAlarmGranted(context)) {
+                                showPermDialog = true
+                            }
+                        } else {
+                            // 去系统设置授予悬浮窗权限，返回后在 overlayPerm 回调里正式开启
+                            overlayPerm.launch(
+                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")),
+                            )
+                        }
+                    } else {
+                        popupOn = false
+                        ReminderPrefs.setPopupEnabled(context, false)
+                        ReminderScheduler.reschedule(context)
+                    }
+                },
+            )
+            if (reminderOn || popupOn) {
                 RowDivider()
                 SettingRow("提前提醒", "课程开始前多少分钟提醒",
                     value = "$lead 分钟", onClick = { showLead = true })
+                RowDivider()
+                ActionRow("确保准时收到（权限设置）", "杀后台 / 锁屏也能准时提醒：开启通知、精确闹钟、忽略电池优化、自启动") {
+                    showPermDialog = true
+                }
             }
         }
 
@@ -254,22 +317,24 @@ fun ScheduleSettingsScreen(
         ) { DatePicker(state = pickerState) }
     }
 
-    if (showWeeks) PickerDialog("本学期总周数", (10..30).toList(), settings.totalWeeks, { "$it 周" },
+    if (showWeeks) OptionSheet("本学期总周数", (10..30).toList(), settings.totalWeeks, { "$it 周" },
         onPick = { onSave(settings.copy(totalWeeks = it)) }, onDismiss = { showWeeks = false })
 
-    if (showPeriods) PickerDialog("一天的总课时数", (8..16).toList(), settings.dailyPeriods, { "$it 节" },
+    if (showPeriods) OptionSheet("一天的总课时数", (8..16).toList(), settings.dailyPeriods, { "$it 节" },
         onPick = { onSave(settings.copy(periodsPerDay = it)) }, onDismiss = { showPeriods = false })
 
-    if (showRowHeight) PickerDialog("课格高度", (40..88 step 4).toList(), settings.rowHeightDp, { "$it dp" },
+    if (showRowHeight) OptionSheet("课格高度", (40..88 step 4).toList(), settings.rowHeightDp, { "$it dp" },
         onPick = { onSave(settings.copy(rowHeight = it)) }, onDismiss = { showRowHeight = false })
 
-    if (showCardScale) PickerDialog("课程卡字号", listOf(80, 90, 100, 110, 125, 140),
+    if (showCardScale) OptionSheet("课程卡字号", listOf(80, 90, 100, 110, 125, 140),
         (settings.cardScale * 100).toInt(), { "$it%" },
         onPick = { onSave(settings.copy(cardTextScale = it)) }, onDismiss = { showCardScale = false })
 
-    if (showLead) PickerDialog("提前提醒", listOf(5, 10, 15, 20, 30, 45, 60), lead, { "$it 分钟" },
+    if (showLead) OptionSheet("提前提醒", listOf(5, 10, 15, 20, 30, 45, 60), lead, { "$it 分钟" },
         onPick = { lead = it; ReminderPrefs.setLead(context, it); ReminderScheduler.reschedule(context) },
         onDismiss = { showLead = false })
+
+    if (showPermDialog) ReminderPermDialog(onDismiss = { showPermDialog = false })
 }
 
 // ---------- 通用卡片/行 ----------
@@ -379,36 +444,4 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChang
         }
         Switch(checked = checked, onCheckedChange = onChange)
     }
-}
-
-/** 通用单列选择对话框（总周数 / 每日节数共用）。 */
-@Composable
-private fun PickerDialog(
-    title: String,
-    options: List<Int>,
-    selected: Int,
-    label: (Int) -> String,
-    onPick: (Int) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
-                options.forEach { v ->
-                    val sel = v == selected
-                    Row(
-                        Modifier.fillMaxWidth().clickable { onPick(v); onDismiss() }
-                            .padding(vertical = 10.dp, horizontal = 8.dp),
-                    ) {
-                        Text(label(v), fontSize = 15.sp,
-                            color = if (sel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (sel) FontWeight.Medium else FontWeight.Normal)
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("关闭") } },
-    )
 }

@@ -1,0 +1,60 @@
+/* 设置页样式：复用 app.wxss 全局类(.card/.btn-danger/.t-*) + schedule 弹层风格(.mask/.sheet/.opt-row) */
+.settings-page { min-height: 100vh; padding-bottom: 20rpx; }
+
+/* 卡片小标题 */
+.card-title { font-size: 26rpx; color: var(--text-tertiary); margin-bottom: 8rpx; }
+
+/* 设置行 */
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 88rpx; padding: 14rpx 0;
+  border-bottom: 1rpx solid var(--hairline);
+  font-size: 29rpx;
+}
+.row.last { border-bottom: none; }
+.row-k { color: var(--text-primary); }
+.row-kwrap { display: flex; flex-direction: column; }
+.row-sub { margin-top: 2rpx; }
+.row-v { display: flex; align-items: center; color: var(--text-secondary); }
+.row-v text { font-size: 28rpx; }
+.caret { color: var(--text-tertiary); font-size: 34rpx; margin-left: 10rpx; line-height: 1; }
+.row.tap:active { opacity: 0.6; }
+
+/* 主题色圆点 */
+.dots { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
+.dot-wrap {
+  width: 16.66%; display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 8rpx;
+}
+.dot {
+  width: 72rpx; height: 72rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.12);
+}
+.dot.on { box-shadow: 0 0 0 6rpx rgba(0,0,0,0.06), 0 2rpx 8rpx rgba(0,0,0,0.18); }
+.dot-tick { color: #fff; font-size: 34rpx; font-weight: 700; }
+.dot-name { margin-top: 12rpx; }
+
+/* 退出登录 */
+.logout-wrap { padding: 12rpx 24rpx 0; }
+
+/* 子视图（隐私/关于） */
+.sub-head {
+  display: flex; align-items: center; height: 96rpx; padding: 0 24rpx;
+  background: var(--surface); border-bottom: 1rpx solid var(--hairline);
+}
+.sub-back { font-size: 30rpx; color: var(--accent); width: 140rpx; }
+.sub-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; margin-right: 140rpx; }
+.sub-body { height: calc(100vh - 96rpx); padding-top: 20rpx; }
+.doc-line { font-size: 27rpx; line-height: 1.7; color: var(--text-secondary); margin-bottom: 8rpx; }
+.doc-line.doc-h { color: var(--text-primary); font-weight: 600; margin-top: 16rpx; }
+.about-desc { font-size: 26rpx; line-height: 1.6; margin-top: 24rpx; }
+
+/* 弹层（复用 schedule 风格） */
+.mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: flex; align-items: flex-end; }
+.sheet { width: 100%; background: var(--surface); border-radius: 28rpx 28rpx 0 0; padding: 28rpx; max-height: 70vh; }
+.sheet-head { font-size: 30rpx; font-weight: 600; margin-bottom: 16rpx; }
+.opt-wrap { max-height: 56vh; }
+.opt-row { display: flex; justify-content: space-between; align-items: center; padding: 26rpx 8rpx; border-bottom: 1rpx solid var(--hairline); font-size: 29rpx; }
+.opt-row:last-child { border-bottom: none; }
+.opt-row:active { background: var(--surface-muted); }

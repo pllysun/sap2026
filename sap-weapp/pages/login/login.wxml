@@ -1,0 +1,30 @@
+<view class="login-page">
+  <!-- 品牌区 -->
+  <view class="brand">
+    <image class="brand-logo" mode="aspectFit"
+           src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NiA5NiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNERBRUYzIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkU5QkVGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3QgeD0iNiIgeT0iNiIgd2lkdGg9Ijg0IiBoZWlnaHQ9Ijg0IiByeD0iMjQiIGZpbGw9InVybCgjZykiLz48cmVjdCB4PSIyNiIgeT0iMjgiIHdpZHRoPSI0NCIgaGVpZ2h0PSI0MCIgcng9IjciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGxpbmUgeDE9IjI2IiB5MT0iNDEiIHgyPSI3MCIgeTI9IjQxIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIvPjxsaW5lIHgxPSIzNyIgeTE9IjIzIiB4Mj0iMzciIHkyPSIzMiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI1OSIgeTE9IjIzIiB4Mj0iNTkiIHkyPSIzMiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTIiIHI9IjMuNCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iNTIiIHI9IjMuNCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjU5IiBjeT0iNTIiIHI9IjMuNCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNjEiIHI9IjMuNCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iNjEiIHI9IjMuNCIgZmlsbD0iI2ZmZiIvPjwvc3ZnPgo=" />
+    <text class="brand-title">软协课表</text>
+    <text class="brand-sub">登录协会会员账号，查看课表 · 成绩 · 考试</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="card login-card">
+    <view class="field">
+      <view class="field-icon icon-id"></view>
+      <input class="field-input" type="text" placeholder="请输入学号" placeholder-class="ph"
+             value="{{studentId}}" bindinput="onStudentId" confirm-type="next" />
+    </view>
+    <view class="field-divider"></view>
+    <view class="field">
+      <view class="field-icon icon-lock"></view>
+      <input class="field-input" password placeholder="请输入密码" placeholder-class="ph"
+             value="{{password}}" bindinput="onPassword" confirm-type="done" bindconfirm="onLogin" />
+    </view>
+  </view>
+
+  <button class="login-btn" bindtap="onLogin" disabled="{{loading || !studentId || !password}}">
+    {{loading ? '登录中…' : '登 录'}}
+  </button>
+
+  <view class="privacy">登录即表示同意隐私政策</view>
+</view>

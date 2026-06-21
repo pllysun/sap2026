@@ -39,7 +39,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import edu.csuft.sap.R
 import edu.csuft.sap.data.account.AppMode
+import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.ui.common.pressFade
 import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.update.Changelog
 import edu.csuft.sap.update.UpdateDialog
 import edu.csuft.sap.update.UpdateViewModel
 
@@ -51,10 +54,12 @@ fun AppSettingsScreen(
     onToggleMode: (Boolean) -> Unit,
     onTheme: () -> Unit,
     onPrivacy: () -> Unit,
+    onChangelog: () -> Unit,
     onAbout: () -> Unit,
     onLogout: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val ctx = LocalContext.current
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("设置", onBack)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -79,9 +84,31 @@ fun AppSettingsScreen(
                     Switch(checked = mode == AppMode.WEB, onCheckedChange = onToggleMode)
                 }
             }
+            // 显示成绩：教务模式专属；关闭后教务模式底栏仅「课表 / 我的」
+            if (mode == AppMode.JW) {
+                Spacer(Modifier.height(12.dp))
+                Card {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("显示成绩", fontSize = 16.sp)
+                            Text(
+                                "底栏显示「成绩」菜单；关闭后仅保留课表与我的",
+                                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                        Switch(checked = MemberState.showGrade, onCheckedChange = { MemberState.setShowGrade(ctx, it) })
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
             Card {
                 NavRow("隐私协议", onPrivacy)
+                RowDivider()
+                NavRow("更新日志", onChangelog)
                 RowDivider()
                 NavRow("关于", onAbout)
             }
@@ -93,9 +120,15 @@ fun AppSettingsScreen(
     }
 }
 
-/** 隐私协议。 */
+/**
+ * 隐私协议。
+ * [offline]=true 时展示离线版本（完全不联网、不收集任何信息），优先级最高。
+ * [web]=true 时展示 Web 模式版本（端上抓取、不存教务密码、仅课表），数据权限与教务模式不同。
+ */
 @Composable
-fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, web: Boolean = false, offline: Boolean = false) {
+    if (offline) { OfflinePrivacyScreen(modifier, onBack); return }
+    if (web) { WebPrivacyScreen(modifier, onBack); return }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("隐私协议", onBack)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
@@ -113,6 +146,82 @@ fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 "· 你可随时退出登录，本地保存的登录凭证将被清除。")
             Section("五、第三方共享")
             Para("除你的学校教务系统外，本应用不会向任何第三方共享你的个人信息。")
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+/** Web 模式隐私协议：端上抓取、不存教务密码、仅课表，数据权限与教务模式不同。 */
+@Composable
+fun WebPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        SettingsTopBar("隐私协议", onBack)
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            Para("软协课表（以下简称「本应用」）非常重视你的隐私。Web 模式下本应用仅在你的设备本地处理数据。本协议说明 Web 模式收集哪些信息、如何使用与存储，以及你拥有的权利。")
+            Section("一、我们收集的信息")
+            Para("1. 协会会员账号（如已登录）：用于校验身份。\n" +
+                "2. Web 模式不收集、不存储你的学校教务账号与密码。你在应用内置网页（WebVPN / 统一身份认证）中自行登录，本应用不读取、不上传你的账号密码。")
+            Section("二、信息如何使用与存储")
+            Para("· 你的网页登录态（Cookie）仅保存在你的设备本地，用于免重复登录，本应用不会上传到服务器。\n" +
+                "· 仅在你主动点击「导入课表」后，本应用在你的设备上（端侧）解析当前网页中的课表数据并保存在本地，用于离线展示；课表数据不上传服务器。")
+            Section("三、数据范围")
+            Para("Web 模式仅抓取并展示你的课表，不抓取成绩、考试安排等其它教务数据（这与教务模式不同）。")
+            Section("四、你的权利")
+            Para("· 你可随时在导入页点「换账号」清除网页登录态，或退出登录以清除本地登录态与网页缓存。\n" +
+                "· 本地保存的课表可随时删除。")
+            Section("五、第三方共享")
+            Para("除你在网页中自行访问的学校教务系统外，本应用不会向任何第三方共享你的个人信息。")
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+/** 离线模式隐私协议：完全离线、不联网，不收集/不上传/不存储任何信息，仅本地展示已缓存课表。 */
+@Composable
+fun OfflinePrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        SettingsTopBar("隐私协议", onBack)
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            Para("软协课表（以下简称「本应用」）非常重视你的隐私。当前为离线模式：本应用未连接任何服务器，不收集、不上传、不存储你的任何个人信息。")
+            Section("一、我们不收集任何信息")
+            Para("离线模式下，本应用不收集你的协会会员账号、学校教务账号与密码、设备标识、位置等任何个人信息，也不会发起任何网络请求或数据上传。")
+            Section("二、数据如何处理")
+            Para("· 本应用仅在你的设备本地读取此前已缓存的课表数据用于离线展示。\n" +
+                "· 所有数据均保存在你的设备本地，不会离开你的设备。")
+            Section("三、数据范围")
+            Para("离线模式仅展示你设备本地已有的课表，不抓取、不更新任何教务数据；恢复联网后才会按你所选模式重新提供在线功能。")
+            Section("四、你的权利")
+            Para("· 本地保存的课表可随时删除。\n" +
+                "· 离线模式下无需登录或退出，本应用不持有任何可在离线状态下收集的信息。")
+            Section("五、第三方共享")
+            Para("离线模式下本应用不联网，不会向任何第三方共享任何信息。")
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+/** 更新日志：展示全部历史版本的更新内容（本地内置，离线可见）。 */
+@Composable
+fun ChangelogScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        SettingsTopBar("更新日志", onBack)
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            Changelog.entries.forEachIndexed { i, e ->
+                if (i > 0) Spacer(Modifier.height(18.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("v${e.versionName}", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text("  (build ${e.versionCode})", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.weight(1f))
+                    Text(e.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                }
+                Spacer(Modifier.height(6.dp))
+                e.changes.forEach { c ->
+                    Row(Modifier.padding(top = 4.dp)) {
+                        Text("·  ", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(c, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 21.sp)
+                    }
+                }
+            }
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -191,7 +300,8 @@ private fun SettingsTopBar(title: String, onBack: () -> Unit) {
 @Composable
 private fun Card(content: @Composable () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
+        // 先 clip 再 background，保证整行按下高亮被裁到圆角内（首尾行不溢出圆角）
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface),
     ) { content() }
 }
 
@@ -204,7 +314,7 @@ private fun RowDivider() {
 @Composable
 private fun ThemeRow(onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
+        Modifier.fillMaxWidth().pressFade(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text("主题色", fontSize = 16.sp, modifier = Modifier.weight(1f))
@@ -216,7 +326,7 @@ private fun ThemeRow(onClick: () -> Unit) {
 @Composable
 private fun NavRow(title: String, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
+        Modifier.fillMaxWidth().pressFade(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(title, fontSize = 16.sp, modifier = Modifier.weight(1f))

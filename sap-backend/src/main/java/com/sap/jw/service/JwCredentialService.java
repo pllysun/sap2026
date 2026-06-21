@@ -47,21 +47,22 @@ public class JwCredentialService {
         return list.isEmpty() ? null : list.get(0).getJwAccount();
     }
 
-    /** 新增或更新某个学号的绑定（密码加密存储）。 */
+    /**
+     * 新增或更新某个学号的绑定（密码加密存储）。
+     * <p>用原生 UPDATE 先尝试复活/更新：能命中含“逻辑删除”的历史行（{@link #get} 带 deleted=0 过滤查不到它），
+     * 0 行才插入。这样既修复了“以前解绑残留的软删行占着唯一索引 uk_user_account → 重绑报‘数据已存在’”的问题，
+     * 也避免再次踩坑。</p>
+     */
     public void save(Long userId, String account, String rawPassword) {
         String enc = AesUtil.encrypt(props.getAesKey(), rawPassword);
-        JwCredential existing = get(userId, account);
-        if (existing == null) {
+        int affected = mapper.reviveOrUpdate(userId, account, enc);
+        if (affected == 0) {
             JwCredential c = new JwCredential();
             c.setUserId(userId);
             c.setJwAccount(account);
             c.setJwPasswordEnc(enc);
             c.setStatus(1);
             mapper.insert(c);
-        } else {
-            existing.setJwPasswordEnc(enc);
-            existing.setStatus(1);
-            mapper.updateById(existing);
         }
     }
 
@@ -70,9 +71,14 @@ public class JwCredentialService {
         return AesUtil.decrypt(props.getAesKey(), required(userId, account).getJwPasswordEnc());
     }
 
+    /**
+     * 解绑：物理删除该学号的密文凭据。
+     * <p>不走逻辑删除——一是隐私合规（解绑须真正从服务器删除学校密码），
+     * 二是软删行会占着唯一索引 uk_user_account 导致同一学号无法重新绑定。</p>
+     */
     public void unbind(Long userId, String account) {
-        JwCredential c = get(userId, account);
-        if (c != null) mapper.deleteById(c.getId());
+        if (account == null || account.isBlank()) return;
+        mapper.physicalDelete(userId, account.trim());
     }
 
     public void markSynced(Long userId, String account) {

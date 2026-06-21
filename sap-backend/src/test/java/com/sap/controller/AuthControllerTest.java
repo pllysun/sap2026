@@ -27,6 +27,8 @@ class AuthControllerTest {
 
     @Mock AuthService authService;
 
+    @Mock com.sap.service.CaptchaService captchaService;
+
     @InjectMocks AuthController controller;
 
     @Test
@@ -54,11 +56,43 @@ class AuthControllerTest {
 
     @Test
     void register_returnsSuccessMessage() {
-        Result<?> result = controller.register(new RegisterDTO());
+        // 默认风控不要求验证码（mock captchaRequired→false）→ 正常注册
+        when(captchaService.captchaRequired(any())).thenReturn(false);
+        Result<?> result = controller.register(new RegisterDTO(),
+                new org.springframework.mock.web.MockHttpServletRequest());
 
         assertEquals(200, result.getCode());
         assertEquals("注册成功", result.getData());
         verify(authService).register(any());
+        verify(captchaService).recordRegister(any());
+    }
+
+    @Test
+    void register_whenRiskTriggered_returnsCaptchaRequired() {
+        // 风控触发且未带验证码 → 返回 captchaRequired，不创建用户
+        when(captchaService.captchaRequired(any())).thenReturn(true);
+        Result<?> result = controller.register(new RegisterDTO(),
+                new org.springframework.mock.web.MockHttpServletRequest());
+
+        assertEquals(200, result.getCode());
+        assertTrue(result.getData() instanceof Map);
+        assertEquals(Boolean.TRUE, ((Map<?, ?>) result.getData()).get("captchaRequired"));
+        verify(authService, never()).register(any());
+    }
+
+    @Test
+    void register_whenRiskTriggered_wrongCaptcha_returnsError() {
+        // 风控触发且验证码错误 → 返回错误，不创建用户
+        when(captchaService.captchaRequired(any())).thenReturn(true);
+        when(captchaService.verify(any(), any())).thenReturn(false);
+        RegisterDTO dto = new RegisterDTO();
+        dto.setCaptchaId("cid");
+        dto.setCaptchaCode("bad");
+        Result<?> result = controller.register(dto,
+                new org.springframework.mock.web.MockHttpServletRequest());
+
+        assertNotEquals(200, result.getCode());
+        verify(authService, never()).register(any());
     }
 
     @Test

@@ -2,17 +2,26 @@
 #
 # 软协课表 App —— 正式包一键构建脚本
 # ---------------------------------------------------------------------------
+# 版本号约定（重要）：
+#   • versionName（如 1.13 → 1.14）= 对外发布版本，每次发布递增——这是用户看到的「版本」。
+#   • versionCode（21、22…）       = 内部构建号，仅内部使用，每次构建自动 +1（驱动「检查更新」的比对）。
+#
 # 每次运行都会：
-#   1) 自动把 versionCode +1（强制递增，杜绝"忘了升版本"导致用户端识别不到更新）
-#   2) R8 混淆 + 资源压缩 + 正式 keystore 签名 打 release 包
-#   3) 产物按版本归档到  <repo>/release/sap-<versionName>-<versionCode>.apk
+#   1) 默认升「对外版本」versionName 末位 +1（如 1.13→1.14）；versionCode 始终内部 +1
+#   2) 校验「更新日志」：即将发布的 (versionCode, versionName) 必须在
+#      app/.../update/Changelog.kt 里有完全匹配的条目，缺失/不一致则拒绝打包（每个版本都要写更新日志）
+#   3) R8 混淆 + 资源压缩 + 正式 keystore 签名 打 release 包
+#   4) 产物按版本归档到  <repo>/release/sap-<versionName>-<versionCode>.apk
 #      连同 mapping.txt（崩溃栈反混淆用）
-#   4) 打印 大小 / SHA-256 / 签名证书，供管理平台「App 版本发布」填写
+#   5) 打印 大小 / SHA-256 / 签名证书，供管理平台「App 版本发布」填写
+#
+# ⚠️ 发版前先在 Changelog.kt 顶部加好「本次 (versionCode, versionName)」的更新日志，否则脚本会中止。
 #
 # 用法：
-#   ./build-release.sh                 # versionCode +1，versionName 不变
-#   ./build-release.sh --name 1.5      # 同时把 versionName 改成 1.5
-#   ./build-release.sh --no-bump       # 仅重打当前版本（慎用：不升版本，用户端识别不到更新）
+#   ./build-release.sh                 # 发对外新版本：versionName 末位 +1（1.13→1.14）、versionCode 内部 +1
+#   ./build-release.sh --name 2.0      # 指定 versionName=2.0（大版本跳号）、versionCode 内部 +1
+#   ./build-release.sh --build-only    # 仅内部构建：versionCode +1、versionName 不变（不对外发版）
+#   ./build-release.sh --no-bump       # 仅重打当前版本（慎用：不升任何号，用户端识别不到更新）
 #
 # 可用环境变量覆盖（跨机器/CI）：JAVA_HOME、GRADLE_BIN
 # ---------------------------------------------------------------------------
@@ -25,12 +34,14 @@ RELEASE_DIR="$REPO_ROOT/release"
 BUILD_GRADLE="$APP_DIR/app/build.gradle.kts"
 
 NEW_NAME=""
-BUMP=1
+BUMP_VN=1     # 默认：升对外版本 versionName 末位（1.13→1.14）
+BUMP_VC=1     # versionCode 始终内部 +1（仅 --no-bump 时为 0）
 while [ $# -gt 0 ]; do
   case "$1" in
-    --name) NEW_NAME="${2:-}"; shift 2 ;;
-    --no-bump) BUMP=0; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    --name) NEW_NAME="${2:-}"; BUMP_VN=0; shift 2 ;;   # 显式指定 versionName（不再自动末位 +1）
+    --build-only) BUMP_VN=0; shift ;;                  # 仅内部构建：versionName 不变、versionCode +1
+    --no-bump) BUMP_VN=0; BUMP_VC=0; shift ;;          # 仅重打：什么都不升
+    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
     *) echo "✗ 未知参数: $1（-h 看用法）"; exit 1 ;;
   esac
 done
@@ -64,8 +75,30 @@ CUR_VC="$(grep -E 'versionCode = [0-9]+' "$BUILD_GRADLE" | head -1 | sed -E 's/[
 CUR_VN="$(grep -E 'versionName = "' "$BUILD_GRADLE" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
 [ -n "$CUR_VC" ] || { echo "✗ 读不到 versionCode"; exit 1; }
 
-if [ "$BUMP" -eq 1 ]; then NEW_VC=$((CUR_VC + 1)); else NEW_VC="$CUR_VC"; fi
-NEW_VN="${NEW_NAME:-$CUR_VN}"
+if [ "$BUMP_VC" -eq 1 ]; then NEW_VC=$((CUR_VC + 1)); else NEW_VC="$CUR_VC"; fi
+if [ -n "$NEW_NAME" ]; then
+  NEW_VN="$NEW_NAME"                                 # 显式指定（--name）
+elif [ "$BUMP_VN" -eq 1 ]; then
+  NEW_VN="${CUR_VN%.*}.$(( ${CUR_VN##*.} + 1 ))"     # 对外版本末位 +1：1.13 → 1.14
+else
+  NEW_VN="$CUR_VN"                                   # --build-only / --no-bump：不变
+fi
+
+# ---- 打包铁律：每个版本必须写「更新日志」----
+# 即将发布的 (versionCode, versionName) 必须在 Changelog.kt 里有完全匹配的条目，否则拒绝打包
+# （与"强制 versionCode +1"同级的硬约束，杜绝发版忘写更新日志/版本名对不上）。在改动版本号之前先校验。
+CHANGELOG_KT="$APP_DIR/app/src/main/java/edu/csuft/sap/update/Changelog.kt"
+[ -f "$CHANGELOG_KT" ] || { echo "✗ 找不到更新日志数据源 $CHANGELOG_KT。已中止（未改动版本号）。"; exit 1; }
+VN_RE="$(printf '%s' "$NEW_VN" | sed 's/[.]/\\./g')"   # 转义点号，精确匹配版本名
+if ! grep -qE "versionCode[[:space:]]*=[[:space:]]*${NEW_VC},[[:space:]]*versionName[[:space:]]*=[[:space:]]*\"${VN_RE}\"" "$CHANGELOG_KT"; then
+  echo "✗ 更新日志缺失/不匹配：Changelog.kt 没有 (versionCode=${NEW_VC}, versionName=\"${NEW_VN}\") 的条目。"
+  echo "  打包铁律——每个版本都要写更新日志，且 versionCode/versionName 必须与本次发布一致。"
+  echo "  请在 Changelog.kt 的 entries【最前面】新增一条后重试（versionCode 与 versionName 写同一行）："
+  echo "    ChangelogEntry(versionCode = ${NEW_VC}, versionName = \"${NEW_VN}\", date = \"YYYY-MM-DD\", changes = listOf(\"...\"))"
+  echo "  已中止（未改动版本号）。"
+  exit 1
+fi
+echo "▶ 更新日志校验通过：Changelog.kt 已含 (versionCode=${NEW_VC}, versionName=\"${NEW_VN}\") 条目"
 
 # ---- 原子写回 build.gradle.kts（先写临时文件并校验，再替换，失败不破坏原文件）----
 TMP="$(mktemp)"

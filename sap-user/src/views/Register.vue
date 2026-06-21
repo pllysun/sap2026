@@ -41,6 +41,16 @@
           <label class="form-label">QQ号</label>
           <input v-model="form.qq" type="text" class="input" placeholder="请输入QQ号" required />
         </div>
+        <!-- 验证码：默认隐藏，仅当后端风控判定该 IP 需要验证时才出现 -->
+        <div class="form-group" v-if="captchaRequired">
+          <label class="form-label">验证码</label>
+          <div class="captcha-row">
+            <input v-model="form.captchaCode" type="text" class="input captcha-input"
+                   placeholder="请输入图中字符" maxlength="6" autocomplete="off" />
+            <img v-if="captchaImg" :src="captchaImg" class="captcha-img" alt="验证码"
+                 title="看不清？点击刷新" @click="loadCaptcha" />
+          </div>
+        </div>
         <button type="submit" class="btn btn--primary btn--full btn--pill" :disabled="loading">
           {{ loading ? '注册中…' : '立即注册' }}
         </button>
@@ -57,23 +67,58 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import request from '@/utils/request'
 
 const router = useRouter()
 const userStore = useUserStore()
-const form = reactive({ studentId: '', password: '', name: '', gender: 1, qq: '' })
+const form = reactive({ studentId: '', password: '', name: '', gender: 1, qq: '', captchaCode: '' })
 const loading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
+// 风控验证码：默认隐藏，仅在后端返回 captchaRequired 时出现
+const captchaRequired = ref(false)
+const captchaImg = ref('')
+const captchaId = ref('')
+
+async function loadCaptcha() {
+  try {
+    const res = await request.get('/api/auth/captcha')
+    captchaImg.value = res.data.image
+    captchaId.value = res.data.captchaId
+    form.captchaCode = ''
+  } catch (e) { /* 拉取失败忽略，用户可点击图片重试 */ }
+}
+
 async function handleRegister() {
   loading.value = true; errorMsg.value = ''; successMsg.value = ''
-  try { await userStore.register(form); successMsg.value = '注册成功，正在跳转…'; setTimeout(() => router.push('/login'), 1200) }
-  catch (e) { errorMsg.value = e.message || '注册失败' }
-  finally { loading.value = false }
+  try {
+    const res = await userStore.register({ ...form, captchaId: captchaId.value })
+    // 风控触发：后端要求验证码 → 展示验证码并提示重提（非注册成功）
+    if (res?.data?.captchaRequired) {
+      captchaRequired.value = true
+      await loadCaptcha()
+      errorMsg.value = '为确保账号安全，请输入下方验证码后重新提交'
+      return
+    }
+    successMsg.value = '注册成功，正在跳转…'
+    setTimeout(() => router.push('/login'), 1200)
+  } catch (e) {
+    errorMsg.value = e.message || '注册失败'
+    if (captchaRequired.value) await loadCaptcha() // 失败(含验证码错误)后刷新验证码
+  } finally { loading.value = false }
 }
 </script>
 
 <style scoped>
+.captcha-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.captcha-input { flex: 1; }
+.captcha-img {
+  height: 40px; width: 120px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border, #e5e7eb); object-fit: cover; flex-shrink: 0;
+}
 .auth-logo-wrap {
   display: inline-flex; align-items: center; justify-content: center;
   animation: iconBounce 2s ease-in-out infinite;

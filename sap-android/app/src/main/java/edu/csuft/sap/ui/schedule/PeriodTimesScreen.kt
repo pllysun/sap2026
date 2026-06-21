@@ -56,7 +56,7 @@ fun PeriodTimesScreen(
         ) {
             IconButton(onClick = { onSave(list); onBack() }) { Icon(AppIcons.Back, "返回") }
             Text("课表时间设置", fontSize = 18.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-            TextButton(onClick = { list = Periods.DEFAULT; onReset() }) { Text("恢复默认") }
+            TextButton(onClick = { list = Periods.defaultTableFor(list.size); onReset() }) { Text("恢复默认") }
         }
         Text(
             "点时间可修改；返回即保存。课表、小组件、上课提醒都会按新时间计算。",

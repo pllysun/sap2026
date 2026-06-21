@@ -1,7 +1,10 @@
 package edu.csuft.sap.ui.common
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,9 +23,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,17 +127,42 @@ private fun formatSyncTime(ms: Long): String {
     return "%02d-%02d %02d:%02d".format(t.monthValue, t.dayOfMonth, t.hour, t.minute)
 }
 
-/** 扁平白卡：白底、圆角、细描边，无投影。 */
+/**
+ * 扁平白卡：白底、圆角、无投影。
+ * 传 [onClick] 即把**整张卡**变为按钮：按下时整卡背景渐变上浅色、松手淡出（无 ripple 灰条）。
+ */
 @Composable
 fun SapCard(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        content = content,
-    )
+    val shape = RoundedCornerShape(16.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val surface = MaterialTheme.colorScheme.surface
+    val target = if (onClick != null && pressed)
+        lerp(surface, MaterialTheme.colorScheme.onSurface, 0.06f) else surface
+    val bg by animateColorAsState(target, label = "cardPress")
+    var m = modifier.fillMaxWidth().clip(shape).background(bg)
+    if (onClick != null) m = m.clickable(interactionSource = interaction, indication = null, onClick = onClick)
+    Column(m.padding(16.dp), content = content)
+}
+
+/**
+ * 列表行/按钮的「整块按下高亮」Modifier：按下时整行背景渐变上一层浅色、松手淡出，
+ * 替代默认 ripple（避免只在文字那一行出现一条灰条）。
+ * 用法：放在 `fillMaxWidth()` 之后、`padding()` 之前，使整行（含内边距）成为受效区。
+ */
+@Composable
+fun Modifier.pressFade(enabled: Boolean = true, onClick: () -> Unit): Modifier {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val target = if (pressed && enabled)
+        lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.onSurface, 0.08f)
+    else Color.Transparent
+    val bg by animateColorAsState(target, label = "pressFade")
+    return this
+        .background(bg)
+        .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
 }

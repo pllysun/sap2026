@@ -1,0 +1,55 @@
+/* 我的页私有样式（卡片走全局 .card） */
+
+/* ---- 用户信息卡 ---- */
+.user-card { display: flex; align-items: center; }
+.avatar-wrap { flex: 0 0 auto; margin-right: 24rpx; }
+.avatar {
+  width: 112rpx; height: 112rpx; border-radius: 50%;
+  display: block;
+}
+.avatar-ph {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-muted); color: var(--text-secondary);
+  font-size: 48rpx; font-weight: 600;
+}
+.user-main { flex: 1; min-width: 0; }
+.user-top { display: flex; align-items: center; }
+.user-nick { font-size: 36rpx; font-weight: 700; max-width: 360rpx; }
+.user-sid { display: block; margin-top: 8rpx; }
+.user-identity { display: block; margin-top: 6rpx; }
+
+/* 会员/游客徽标 chip */
+.chip {
+  flex: 0 0 auto; margin-left: 16rpx;
+  font-size: 22rpx; line-height: 1; padding: 8rpx 16rpx; border-radius: 999rpx;
+}
+.chip-member { background: rgba(46,155,239,0.12); color: var(--accent); }
+.chip-guest { background: var(--surface-muted); color: var(--text-tertiary); }
+
+/* ---- 教务账号卡 ---- */
+.card-title { font-size: 26rpx; color: var(--text-tertiary); margin-bottom: 8rpx; }
+.jw-empty { padding: 28rpx 0; text-align: center; font-size: 26rpx; }
+
+.jw-row {
+  display: flex; align-items: center;
+  padding: 24rpx 0; border-bottom: 1rpx solid var(--hairline);
+}
+.jw-info { flex: 1; min-width: 0; }
+.jw-acc { font-size: 30rpx; font-weight: 500; }
+.jw-acc.on { color: var(--accent); }
+.jw-sync { display: block; margin-top: 6rpx; }
+.jw-tick { color: var(--accent); font-size: 30rpx; margin: 0 20rpx 0 8rpx; }
+.jw-unbind {
+  flex: 0 0 auto; font-size: 24rpx; color: var(--danger);
+  padding: 8rpx 16rpx; border: 1rpx solid #F2C9C7; border-radius: 999rpx;
+}
+
+.jw-add { padding: 26rpx 0 4rpx; }
+.jw-add-text { color: var(--accent); font-size: 28rpx; }
+
+/* ---- 设置入口 ---- */
+.entry-row { display: flex; align-items: center; }
+.entry-main { flex: 1; min-width: 0; }
+.entry-title { font-size: 32rpx; font-weight: 600; }
+.entry-sub { display: block; margin-top: 8rpx; }
+.entry-arrow { font-size: 44rpx; line-height: 1; margin-left: 16rpx; }

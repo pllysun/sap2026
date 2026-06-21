@@ -149,7 +149,22 @@ public class ScheduleParser {
                 r.setName(before);
             }
         } else {
-            r.setName(e);
+            // 无周次（如军训等集中实践）：仍尝试拆“课程名 + 教师列表”，并对强智把同一老师重复几十次的脏数据去重，
+            // 避免课程名和人名糊在一起。
+            String[] toks = e.split("\\s+");
+            int tIdx = -1;
+            for (int i = 0; i < toks.length; i++) {
+                if (toks[i].contains(",") || toks[i].contains("，") || toks[i].contains("、")) { tIdx = i; break; }
+            }
+            if (tIdx >= 1) {
+                r.setName(String.join(" ", Arrays.copyOfRange(toks, 0, tIdx)).trim());
+                r.setTeacher(dedupTeacher(toks[tIdx]));
+                if (tIdx + 1 < toks.length) {
+                    r.setClazz(String.join(" ", Arrays.copyOfRange(toks, tIdx + 1, toks.length)).trim());
+                }
+            } else {
+                r.setName(e);
+            }
         }
         return r;
     }

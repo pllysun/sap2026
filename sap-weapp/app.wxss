@@ -1,0 +1,148 @@
+/* 全局样式 + 颜色变量（移植安卓 Color.kt 的简约白 + 中性灰） */
+page {
+  --page-bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --surface-muted: #F1F3F5;
+  --text-primary: #1F2329;
+  --text-secondary: #646A73;
+  --text-tertiary: #9098A1;
+  --hairline: #EDEFF2;
+  --danger: #E2504A;
+  --accent: #2E9BEF;
+
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-size: 28rpx;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, sans-serif;
+}
+
+view, text, scroll-view, button, input, textarea, image { box-sizing: border-box; }
+
+/* 通用卡片 */
+.card {
+  background: var(--surface);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 0 24rpx 20rpx;
+}
+
+/* 通用按钮（强调色实心） */
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  line-height: 2.8;
+  text-align: center;
+  border: none;
+}
+.btn-accent[disabled] { opacity: 0.5; }
+
+.btn-outline {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1rpx solid var(--hairline);
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  line-height: 2.8;
+  text-align: center;
+}
+
+.btn-danger {
+  background: var(--surface);
+  color: var(--danger);
+  border: 1rpx solid #F2C9C7;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  line-height: 2.8;
+  text-align: center;
+}
+
+/* 文本工具类 */
+.t-sec { color: var(--text-secondary); }
+.t-ter { color: var(--text-tertiary); }
+.t-sm { font-size: 24rpx; }
+.t-lg { font-size: 34rpx; }
+.bold { font-weight: 600; }
+.ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* 屏幕标题（对齐 App ScreenHeader：20sp Medium，简约白） */
+.screen-header {
+  background: var(--surface);
+  padding: 24rpx 24rpx 14rpx;
+}
+.screen-header .title { font-size: 40rpx; font-weight: 600; }
+
+/* 空态（对齐 App EmptyHint：居中浅灰文字，无 emoji） */
+.empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: 140rpx 48rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+.empty .emoji { font-size: 72rpx; display: block; margin-bottom: 20rpx; }
+
+/* 分段控件（对齐 App Segmented：灰底轨道 + 选中态主题色填充白字） */
+.seg {
+  display: flex;
+  margin: 8rpx 24rpx 16rpx;
+  padding: 6rpx;
+  background: var(--surface-muted);
+  border-radius: 20rpx;
+}
+.seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  border-radius: 18rpx;
+  transition: background .15s, color .15s;
+}
+.seg-item.on {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* 底部弹层（全局：mask 半透遮罩 + sheet 底部抽屉；多页共用，务必全局） */
+.mask {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: flex-end;
+}
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 28rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
+  max-height: 76vh;
+}
+.sheet-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 32rpx; font-weight: 600; margin-bottom: 16rpx;
+}
+.sheet-act { font-size: 26rpx; color: var(--accent); font-weight: 400; }
+.sheet-scroll { max-height: 56vh; }
+.opt-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 26rpx 20rpx; margin-bottom: 4rpx; border-radius: 16rpx;
+  font-size: 30rpx;
+}
+.opt-row.on { background: rgba(46, 155, 239, 0.12); color: var(--accent); font-weight: 600; }
+.opt-tick { color: var(--accent); }
+
+/* 分隔线 */
+.hairline { height: 1rpx; background: var(--hairline); }
+
+/* 加载条 */
+.sync-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16rpx 28rpx; margin: 0 24rpx 16rpx;
+  background: var(--surface); border-radius: 14rpx;
+  font-size: 24rpx; color: var(--text-secondary);
+}
+.sync-bar .sync-btn { color: var(--accent); }
+.sync-bar .err { color: var(--danger); }

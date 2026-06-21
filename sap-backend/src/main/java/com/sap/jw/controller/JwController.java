@@ -5,6 +5,7 @@ import com.sap.annotation.OperationLog;
 import com.sap.common.BusinessException;
 import com.sap.common.Result;
 import com.sap.jw.client.CaptchaRequiredException;
+import com.sap.jw.client.MfaRequiredException;
 import com.sap.jw.client.JwAuthClient;
 import com.sap.jw.client.JwHttpSession;
 import com.sap.jw.dto.EvalAutoDTO;
@@ -69,7 +70,48 @@ public class JwController {
         } catch (CaptchaRequiredException e) {
             return captchaResult(pendingManager.put(userId, dto.getAccount(), dto.getPassword(), e.getPending()),
                     e.getCaptchaImage());
+        } catch (MfaRequiredException e) {
+            // 安全手机短信二次验证：短信已发出，返回挑战 + 掩码手机号，客户端输码后调 /bind/mfa
+            String cid = pendingManager.put(userId, dto.getAccount(), dto.getPassword(), e.getPending());
+            return mfaResult(cid, e.getPhone());
         }
+    }
+
+    /** 输入短信验证码后续登：成功保存绑定；错误则报错让用户重输。 */
+    @PostMapping("/bind/mfa")
+    @OperationLog("短信验证码续登绑定")
+    public Result<?> bindMfa(@RequestBody JwCaptchaDTO dto) {
+        long userId = StpUtil.getLoginIdAsLong();
+        PendingLoginManager.Entry e = pendingManager.get(dto.getChallengeId());
+        if (e == null || e.userId == null || e.userId != userId) {
+            throw new BusinessException("二次验证会话已过期，请重新绑定");
+        }
+        JwHttpSession s = authClient.continueWithMfa(e.cas, dto.getCode());
+        credentialService.save(e.userId, e.account, e.rawPassword);
+        sessionManager.cache(e.userId, e.account, s);
+        pendingManager.remove(dto.getChallengeId());
+        return Result.ok(Map.of("needMfa", false));
+    }
+
+    /** 重新发送短信验证码。 */
+    @PostMapping("/bind/mfa/resend")
+    @OperationLog("重发短信验证码")
+    public Result<?> bindMfaResend(@RequestBody JwCaptchaDTO dto) {
+        long userId = StpUtil.getLoginIdAsLong();
+        PendingLoginManager.Entry e = pendingManager.get(dto.getChallengeId());
+        if (e == null || e.userId == null || e.userId != userId) {
+            throw new BusinessException("二次验证会话已过期，请重新绑定");
+        }
+        authClient.sendSms(e.cas);
+        return Result.ok(Map.of("needMfa", true));
+    }
+
+    private Result<?> mfaResult(String challengeId, String phone) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("needMfa", true);
+        data.put("challengeId", challengeId);
+        data.put("phone", phone);
+        return Result.ok(data);
     }
 
     /** 人工输入验证码后续登：成功保存绑定；仍错则返回新验证码图。 */

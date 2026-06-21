@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -61,14 +62,26 @@ import edu.csuft.sap.R
 @Composable
 fun LoginScreen(
     onLoggedIn: () -> Unit,
+    onOffline: () -> Unit = {},
     vm: AuthViewModel = viewModel(),
 ) {
     val state by vm.state.collectAsState()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     var studentId by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var pwVisible by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.success) { if (state.success) onLoggedIn() }
+    // 登录成功→跳转后立即消费 success，复位该 Activity 级 VM 的状态。
+    // 否则退出登录后 LoginScreen 重显时残留 success=true 会再次触发 onLoggedIn（“退不出去”）。
+    LaunchedEffect(state.success) { if (state.success) { onLoggedIn(); vm.consumeSuccess() } }
+
+    // 登录时连不上服务器 → 不报错，直接丝滑进入离线模式（只看本地课表）。
+    LaunchedEffect(state.offline) {
+        if (state.offline) {
+            android.widget.Toast.makeText(ctx, "网络不可用，已进入离线模式", android.widget.Toast.LENGTH_SHORT).show()
+            onOffline(); vm.consumeOffline()
+        }
+    }
 
     val primary = MaterialTheme.colorScheme.primary
     val primaryDark = lerp(primary, Color.Black, 0.22f)
@@ -168,7 +181,7 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "用协会会员账号登录，解锁全部功能",
+                    "软件协会账号登录",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp, bottom = 20.dp),
@@ -217,10 +230,10 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
                 )
 
-                // 错误提示（固定高度避免按钮跳动）
-                Box(Modifier.fillMaxWidth().height(22.dp).padding(top = 4.dp)) {
+                // 错误提示（至少 22dp 占位避免按钮跳动；长文案可换行撑开、完整显示，不裁切）
+                Box(Modifier.fillMaxWidth().heightIn(min = 22.dp).padding(top = 4.dp)) {
                     state.error?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, lineHeight = 16.sp)
                     }
                 }
 
