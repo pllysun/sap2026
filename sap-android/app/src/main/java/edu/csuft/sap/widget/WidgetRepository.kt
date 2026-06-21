@@ -22,12 +22,13 @@ data class WidgetCourse(
     val colorIndex: Int,
 )
 
-/** 当前激活学号·激活课表的全量课程 + 当前周。 */
+/** 当前激活学号·激活课表的全量课程 + 当前周 + 开学日期（用于按任意日期算周次）。 */
 data class WidgetData(
     val bound: Boolean,
     val profileName: String,
     val currentWeek: Int?,
     val courses: List<WidgetCourse>,
+    val semesterStart: String? = null,
 )
 
 /**
@@ -101,17 +102,20 @@ object WidgetRepository {
                 ),
             )
         }
-        return WidgetData(true, profile.name, currentWeek, out)
+        return WidgetData(true, profile.name, currentWeek, out, profile.settings.semesterStartDate)
+    }
+
+    /** 指定日期（按该日所在周生效）的课，按节次升序。 */
+    fun coursesOn(data: WidgetData, date: LocalDate): List<WidgetCourse> {
+        val dow = date.dayOfWeek.value // 1=周一 … 7=周日
+        val week = WeekUtil.currentWeek(data.semesterStart, date)
+        return data.courses
+            .filter { it.day == dow && (it.weeks.isEmpty() || week == null || it.weeks.contains(week)) }
+            .sortedBy { it.startNode }
     }
 
     /** 今日（本周生效）的课，按节次升序。 */
-    fun todayCourses(data: WidgetData): List<WidgetCourse> {
-        val today = LocalDate.now().dayOfWeek.value // 1=周一 … 7=周日
-        val week = data.currentWeek
-        return data.courses
-            .filter { it.day == today && (it.weeks.isEmpty() || week == null || it.weeks.contains(week)) }
-            .sortedBy { it.startNode }
-    }
+    fun todayCourses(data: WidgetData): List<WidgetCourse> = coursesOn(data, LocalDate.now())
 
     /** 今日正在上的课，否则下一节；都没有返回 null。 */
     fun nextClass(data: WidgetData, now: LocalTime = LocalTime.now()): WidgetCourse? {

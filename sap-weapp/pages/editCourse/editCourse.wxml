@@ -1,0 +1,83 @@
+<view class="page">
+  <!-- 基本信息 -->
+  <view class="card">
+    <view class="sec-title">基本信息</view>
+    <view class="field">
+      <text class="f-label">课程名 <text class="req">*</text></text>
+      <input class="f-input" placeholder="如 高等数学" value="{{name}}" bindinput="onName" maxlength="40" />
+    </view>
+    <view class="field">
+      <text class="f-label">教室 / 地点</text>
+      <input class="f-input" placeholder="如 教三 301" value="{{location}}" bindinput="onLocation" maxlength="40" />
+    </view>
+    <view class="field">
+      <text class="f-label">教师</text>
+      <input class="f-input" placeholder="任课教师" value="{{teacher}}" bindinput="onTeacher" maxlength="40" />
+    </view>
+  </view>
+
+  <!-- 星期 -->
+  <view class="card">
+    <view class="sec-title">星期 <text class="req">*</text></view>
+    <view class="chip-row">
+      <view wx:for="{{dayNames}}" wx:key="index"
+            class="chip {{day === index + 1 ? 'on' : ''}}"
+            data-day="{{index + 1}}" bindtap="pickDay">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 节次 -->
+  <view class="card">
+    <view class="sec-title">节次 <text class="req">*</text></view>
+    <view class="sub-title">开始节</view>
+    <view class="chip-row">
+      <view wx:for="{{nodeList}}" wx:key="*this"
+            class="chip sq {{startNode === item ? 'on' : ''}}"
+            data-node="{{item}}" bindtap="pickStart">{{item}}</view>
+    </view>
+    <view class="sub-title">结束节</view>
+    <view class="chip-row">
+      <view wx:for="{{nodeList}}" wx:key="*this"
+            class="chip sq {{endNode === item ? 'on' : ''}} {{item < startNode ? 'dim' : ''}}"
+            data-node="{{item}}" bindtap="pickEnd">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 上课周数 -->
+  <view class="card">
+    <view class="sec-title">上课周数 <text class="req">*</text></view>
+    <view class="sub-title">本校第10周分界（上半 1-8 / 下半 10-17）</view>
+    <view class="chip-row quick">
+      <view class="chip" bindtap="weeksFirstHalf">上半学期</view>
+      <view class="chip" bindtap="weeksSecondHalf">下半学期</view>
+      <view class="chip" bindtap="weeksOdd">单周</view>
+      <view class="chip" bindtap="weeksEven">双周</view>
+      <view class="chip" bindtap="weeksAll">全选</view>
+    </view>
+    <view class="week-grid">
+      <view wx:for="{{weekList}}" wx:key="*this"
+            class="wk-cell {{weeksSel[item] ? 'on' : ''}}"
+            data-week="{{item}}" bindtap="toggleWeek">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 颜色 -->
+  <view class="card">
+    <view class="sec-title">颜色</view>
+    <view class="color-row">
+      <view wx:for="{{palette}}" wx:key="index"
+            class="color-dot {{colorIndex === index ? 'on' : ''}}"
+            style="background:{{item.container}}"
+            data-idx="{{index}}" bindtap="pickColor">
+        <text wx:if="{{colorIndex === index}}" class="tick" style="color:{{item.onContainer}}">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作 -->
+  <view class="actions">
+    <button class="btn-accent save-btn" bindtap="onSave">保存</button>
+    <button wx:if="{{id}}" class="btn-danger del-btn" bindtap="onDelete">删除课程</button>
+  </view>
+  <view style="height:60rpx"></view>
+</view>

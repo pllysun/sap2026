@@ -6,9 +6,11 @@ import com.sap.common.BusinessException;
 import com.sap.dto.LoginDTO;
 import com.sap.dto.RegisterDTO;
 import com.sap.entity.Setting;
+import com.sap.entity.Term;
 import com.sap.entity.User;
 import com.sap.entity.UserRole;
 import com.sap.mapper.SettingMapper;
+import com.sap.mapper.TermMapper;
 import com.sap.mapper.UserMapper;
 import com.sap.mapper.UserRoleMapper;
 import com.sap.util.PasswordUtil;
@@ -17,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +36,8 @@ public class AuthService {
     private SettingMapper settingMapper;
     @Autowired
     private CacheService cacheService;
+    @Autowired
+    private TermMapper termMapper;
 
     /** 登录失败锁定：达到阈值后锁定一段时间，缓解在线暴力破解 */
     private static final int MAX_FAIL_ATTEMPTS = 5;
@@ -79,9 +85,27 @@ public class AuthService {
         return s != null && "true".equalsIgnoreCase(s.getSettingValue());
     }
 
+    /** 取客户端 IP（经 nginx 反代取 X-Forwarded-For 首段，否则 RemoteAddr）。 */
+    private String clientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attr =
+                    (org.springframework.web.context.request.ServletRequestAttributes)
+                            org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attr == null) return "unknown";
+            jakarta.servlet.http.HttpServletRequest req = attr.getRequest();
+            String xff = req.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+            String ip = req.getRemoteAddr();
+            return ip != null ? ip : "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
     /** 校验账号密码（含失败锁定/禁用判断），返回用户；失败抛业务异常。 */
     private User authenticate(LoginDTO dto) {
-        String key = dto.getStudentId();
+        // 锁定按 (学号 + 客户端IP) 维度：避免攻击者对某学号循环错误把受害者从其自身 IP 也锁死(定向DoS)
+        String key = dto.getStudentId() + "|" + clientIp();
         long now = System.currentTimeMillis();
         long[] rec = key != null ? loginAttempts.get(key) : null;
         if (rec != null && rec[1] > now) {
@@ -187,6 +211,20 @@ public class AuthService {
      * 获取当前登录用户信息
      */
     public Map<String, Object> getCurrentUser() {
+        return buildCurrentUser(true);
+    }
+
+    /**
+     * 轻量版当前用户信息：不含头像 + 平台身份(届+职务) + 修改时间 updatedAt（毫秒）。
+     * <p>App 频繁调用此接口判断是否要重新拉头像：本地缓存的 updatedAt &lt; 服务端 updatedAt 才去调
+     * {@link #getCurrentUser()} 拿新头像 URL，否则直接用本地缓存头像——省 CDN 流量。</p>
+     */
+    public Map<String, Object> getCurrentUserLight() {
+        return buildCurrentUser(false);
+    }
+
+    /** 组装当前用户信息：含/不含头像，附 roles + identities(届+身份) + updatedAt(毫秒)。 */
+    private Map<String, Object> buildCurrentUser(boolean includeAvatar) {
         long userId = StpUtil.getLoginIdAsLong();
         User user = cacheService.getUserById(userId);
         if (user == null) {
@@ -199,10 +237,26 @@ public class AuthService {
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
+        UserVO vo = toVO(user);
+        if (!includeAvatar) {
+            vo.setAvatar(null); // 轻量版不下发头像，App 用本地缓存
+        }
         List<Integer> roles = userRoleMapper.selectRoleCodesByUserId(userId);
+        // 平台身份：换届表(届 grade + 身份 position) 逐条，如 2025/宣传部部长、2026/会长；无记录=游客
+        List<Map<String, Object>> identities = new ArrayList<>();
+        for (Term t : termMapper.selectList(
+                new LambdaQueryWrapper<Term>().eq(Term::getUserId, userId))) {
+            Map<String, Object> idy = new HashMap<>();
+            idy.put("grade", t.getGrade());
+            idy.put("positionName", cacheService.getPositionName(t.getPositionId()));
+            identities.add(idy);
+        }
         Map<String, Object> result = new HashMap<>();
-        result.put("user", toVO(user));
+        result.put("user", vo);
         result.put("roles", roles);
+        result.put("identities", identities);
+        result.put("updatedAt", user.getUpdatedAt() == null ? null
+                : user.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         return result;
     }
 
@@ -223,6 +277,10 @@ public class AuthService {
         if (params.containsKey("gender")) {
             user.setGender(Integer.valueOf(params.get("gender").toString()));
         }
+        // 显式刷新 updated_at：user 由 selectById 读出后 updatedAt 非空，MyBatis-Plus 的
+        // strictUpdateFill 仅在字段为 null 时填充 → 不显式置则会把旧值写回，App 端据 updatedAt
+        // 判断是否重拉头像的省流量逻辑就永远认为“没变过”，导致换头像后 App 不刷新。
+        user.setUpdatedAt(java.time.LocalDateTime.now());
         userMapper.updateById(user);
         cacheService.refreshUsers();
     }

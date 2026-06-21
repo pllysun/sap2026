@@ -33,18 +33,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import coil.compose.AsyncImage
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edu.csuft.sap.data.account.AppMode
+import edu.csuft.sap.data.account.ConnectivityState
 import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.common.ScreenHeader
 
-private enum class WebRoute { HOME, THEME, PRIVACY }
+private enum class WebRoute { HOME, PROFILE_EDIT, THEME, PRIVACY, CHANGELOG }
 
 /**
  * Web 模式底栏「设置」页：个人信息(登录账号) + 修改主题色 + 隐私协议 + 退出登录。
@@ -95,29 +100,53 @@ fun WebSettingsScreen(
                     LoadingBox()
                 } else {
                     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                        // 个人信息（当前登录账号）
-                        SapCard {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                val initial = (state.user?.name ?: state.user?.nickname ?: "用").take(1)
-                                Box(
-                                    Modifier.size(48.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(initial, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                }
-                                Column(Modifier.padding(start = 14.dp)) {
-                                    Text(state.user?.name ?: state.user?.nickname ?: "当前账号", fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                                    state.user?.studentId?.let {
-                                        Text("学号 $it", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                        // 个人信息（当前登录账号）；在线时点击进编辑（会员/非会员都可改资料）；离线兜底时显示「离线模式」不可点
+                        SapCard(onClick = if (ConnectivityState.online) ({ route = WebRoute.PROFILE_EDIT }) else null) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                if (!ConnectivityState.online) {
+                                    // 离线：当前账号位直接展示「离线模式」，不显示账号/学号
+                                    Box(
+                                        Modifier.size(48.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text("离", fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                                     }
+                                    Column(Modifier.padding(start = 14.dp)) {
+                                        Text("离线模式", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                                        Text("服务器暂时连不上，仅本地课表可用，联网后自动恢复", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                                    }
+                                } else {
+                                    val avatarUrl = avatarUrlOf(state.user?.avatar, state.avatarVersion)
+                                    Box(
+                                        Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (avatarUrl != null) {
+                                            AsyncImage(model = avatarUrl, contentDescription = "头像", contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp))
+                                        } else {
+                                            Text((state.user?.name ?: state.user?.nickname ?: "用").take(1), fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        }
+                                    }
+                                    Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                                        Text(state.user?.name ?: state.user?.nickname ?: "当前账号", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                                        state.user?.studentId?.let {
+                                            Text("学号 $it", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                                        }
+                                        // 平台身份（游客 / 2025正式成员 / 2025宣传部部长 / 2026会长…）
+                                        IdentityTags(identityLabels(state.identities, MemberState.roleCodes))
+                                    }
+                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
                                 }
                             }
                         }
                         // 主题色
                         Box(Modifier.padding(top = 12.dp)) {
-                            SapCard {
+                            SapCard(onClick = { route = WebRoute.THEME }) {
                                 Row(
-                                    Modifier.fillMaxWidth().clickable { route = WebRoute.THEME },
+                                    Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text("主题色", fontSize = 15.sp, modifier = Modifier.weight(1f))
@@ -128,12 +157,24 @@ fun WebSettingsScreen(
                         }
                         // 隐私协议
                         Box(Modifier.padding(top = 12.dp)) {
-                            SapCard {
+                            SapCard(onClick = { route = WebRoute.PRIVACY }) {
                                 Row(
-                                    Modifier.fillMaxWidth().clickable { route = WebRoute.PRIVACY },
+                                    Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text("隐私协议", fontSize = 15.sp, modifier = Modifier.weight(1f))
+                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                        }
+                        // 更新日志（本地内置，离线也可查看）
+                        Box(Modifier.padding(top = 12.dp)) {
+                            SapCard(onClick = { route = WebRoute.CHANGELOG }) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text("更新日志", fontSize = 15.sp, modifier = Modifier.weight(1f))
                                     Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
                                 }
                             }
@@ -149,29 +190,36 @@ fun WebSettingsScreen(
                                         }
                                         Switch(
                                             checked = MemberState.mode == AppMode.WEB,
-                                            onCheckedChange = { on -> MemberState.setMode(ctx, if (on) AppMode.WEB else AppMode.JW) },
+                                            onCheckedChange = { on ->
+                                                MemberState.setMode(ctx, if (on) AppMode.WEB else AppMode.JW)
+                                                if (on) Graph.accountManager.useWebview() else Graph.accountManager.activateJwAccount()
+                                            },
                                         )
                                     }
                                 }
                             }
                         }
                     }
-                    // 退出登录固定底部
-                    Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                        SapCard {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().clickable { showLogoutConfirm = true },
-                            ) {
-                                Text("退出登录", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
-                                Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp))
+                    // 退出登录固定底部；离线模式下不显示（退出无意义，且离线不做登录态管理）
+                    if (ConnectivityState.online) {
+                        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                            SapCard(onClick = { showLogoutConfirm = true }) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("退出登录", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
+                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp))
+                                }
                             }
                         }
                     }
                 }
             }
+            WebRoute.PROFILE_EDIT -> ProfileEditScreen(modifier = modifier, vm = vm, onBack = { route = WebRoute.HOME })
             WebRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
-            WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
+            WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME }, web = true, offline = !ConnectivityState.online)
+            WebRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
         }
     }
 }

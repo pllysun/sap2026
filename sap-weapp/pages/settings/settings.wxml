@@ -1,0 +1,139 @@
+<!-- 设置页：page 上挂 --accent 让全局变量随主题色更新 -->
+<view class="settings-page" style="--accent:{{accent}}">
+
+  <!-- ============ 主视图 ============ -->
+  <block wx:if="{{view === ''}}">
+
+    <!-- 1. 课表显示设置 -->
+    <view class="screen-header"><text class="title">设置</text></view>
+
+    <view wx:if="{{!hasAccount}}" class="card">
+      <text class="t-sec">绑定教务账号后可设置课表显示</text>
+    </view>
+
+    <block wx:if="{{hasAccount}}">
+      <view class="card">
+        <view class="card-title">课表显示</view>
+
+        <!-- 显示周末 -->
+        <view class="row">
+          <text class="row-k">显示周末</text>
+          <switch checked="{{settings.showWeekend}}" color="{{accent}}" bindchange="onToggleWeekend" />
+        </view>
+
+        <!-- 显示非本周课程 -->
+        <view class="row">
+          <text class="row-k">显示非本周课程</text>
+          <switch checked="{{settings.showNonWeek}}" color="{{accent}}" bindchange="onToggleNonWeek" />
+        </view>
+
+        <!-- 一天总节数 -->
+        <view class="row tap" data-field="periodsPerDay" bindtap="openPicker">
+          <text class="row-k">一天总节数</text>
+          <view class="row-v"><text>{{settings.periodsPerDay}} 节</text><text class="caret">›</text></view>
+        </view>
+
+        <!-- 课格高度 -->
+        <view class="row tap" data-field="rowHeight" bindtap="openPicker">
+          <text class="row-k">课格高度</text>
+          <view class="row-v"><text>{{rowHeightLabel}}</text><text class="caret">›</text></view>
+        </view>
+
+        <!-- 课程卡字号 -->
+        <view class="row tap" data-field="cardTextScale" bindtap="openPicker">
+          <text class="row-k">课程卡字号</text>
+          <view class="row-v"><text>{{cardScaleLabel}}</text><text class="caret">›</text></view>
+        </view>
+
+        <!-- 总周数 -->
+        <view class="row tap" data-field="totalWeeks" bindtap="openPicker">
+          <text class="row-k">总周数</text>
+          <view class="row-v"><text>{{settings.totalWeeks}} 周</text><text class="caret">›</text></view>
+        </view>
+
+        <!-- 开学日期 -->
+        <picker mode="date" value="{{startDate}}" bindchange="onPickStartDate">
+          <view class="row last">
+            <view class="row-kwrap">
+              <text class="row-k">开学日期</text>
+              <text wx:if="{{activeTermLabel}}" class="row-sub t-ter t-sm">{{activeTermLabel}}</text>
+            </view>
+            <view class="row-v"><text>{{startDate || '未设置'}}</text><text class="caret">›</text></view>
+          </view>
+        </picker>
+      </view>
+    </block>
+
+    <!-- 2. 主题色 -->
+    <view class="card">
+      <view class="card-title">主题色</view>
+      <view class="dots">
+        <view wx:for="{{accents}}" wx:key="color" class="dot-wrap" data-color="{{item.color}}" bindtap="pickAccent">
+          <view class="dot {{item.color === accent ? 'on' : ''}}" style="background:{{item.color}}">
+            <text wx:if="{{item.color === accent}}" class="dot-tick">✓</text>
+          </view>
+          <text class="dot-name t-ter t-sm">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 3. 其它 -->
+    <view class="card">
+      <view class="row tap" bindtap="showPrivacy">
+        <text class="row-k">隐私协议</text><text class="caret">›</text>
+      </view>
+      <view class="row last tap" bindtap="showAbout">
+        <text class="row-k">关于</text><text class="caret">›</text>
+      </view>
+    </view>
+
+    <view class="logout-wrap">
+      <button class="btn-danger" bindtap="onLogout">退出登录</button>
+    </view>
+    <view style="height:40rpx"></view>
+  </block>
+
+  <!-- ============ 隐私协议视图 ============ -->
+  <block wx:if="{{view === 'privacy'}}">
+    <view class="sub-head">
+      <text class="sub-back" bindtap="backToMain">‹ 返回</text>
+      <text class="sub-title">隐私协议</text>
+    </view>
+    <scroll-view scroll-y class="sub-body">
+      <view class="card">
+        <view wx:for="{{privacy}}" wx:key="t" class="doc-line {{item.h ? 'doc-h' : ''}}">{{item.t}}</view>
+      </view>
+    </scroll-view>
+  </block>
+
+  <!-- ============ 关于视图 ============ -->
+  <block wx:if="{{view === 'about'}}">
+    <view class="sub-head">
+      <text class="sub-back" bindtap="backToMain">‹ 返回</text>
+      <text class="sub-title">关于</text>
+    </view>
+    <scroll-view scroll-y class="sub-body">
+      <view class="card">
+        <view wx:for="{{about}}" wx:key="k" class="row">
+          <text class="row-k t-sec">{{item.k}}</text>
+          <text>{{item.v}}</text>
+        </view>
+        <view class="about-desc t-sec">{{aboutDesc}}</view>
+      </view>
+    </scroll-view>
+  </block>
+
+  <!-- ============ 通用选择器弹层 ============ -->
+  <view wx:if="{{picker}}" class="mask" bindtap="closePicker">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-head"><text>{{picker.title}}</text></view>
+      <scroll-view scroll-y class="opt-wrap">
+        <view wx:for="{{picker.options}}" wx:key="value" class="opt-row"
+              data-value="{{item.value}}" bindtap="pickOption">
+          <text>{{item.label}}</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+</view>

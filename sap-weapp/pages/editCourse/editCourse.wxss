@@ -1,0 +1,56 @@
+/* 编辑/新增自建课程页 —— 复用 app.wxss 全局类与 CSS 变量 */
+.page { padding-top: 16rpx; }
+
+/* 卡片内分区标题 */
+.sec-title { font-size: 30rpx; font-weight: 600; margin-bottom: 20rpx; }
+.sub-title { font-size: 24rpx; color: var(--text-tertiary); margin: 16rpx 0 12rpx; }
+.req { color: var(--danger); font-weight: 400; }
+
+/* 文本字段 */
+.field { margin-bottom: 22rpx; }
+.field:last-child { margin-bottom: 0; }
+.f-label { display: block; font-size: 25rpx; color: var(--text-secondary); margin-bottom: 12rpx; }
+.f-input {
+  width: 100%; height: 80rpx; padding: 0 24rpx;
+  background: var(--surface-muted); border-radius: 14rpx;
+  font-size: 28rpx; color: var(--text-primary);
+}
+
+/* chip 行（星期 / 节次 / 快捷周）—— 参考课表弹层 .week-chip 风格 */
+.chip-row { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.chip {
+  min-width: 96rpx; height: 64rpx; padding: 0 24rpx;
+  border-radius: 12rpx; background: var(--surface-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26rpx; color: var(--text-primary);
+}
+.chip.on { background: var(--accent); color: #fff; }
+/* 节次小方块 */
+.chip.sq { min-width: 0; width: 64rpx; padding: 0; }
+.chip.dim { opacity: 0.4; }
+.chip-row.quick .chip { min-width: 0; }
+
+/* 周格小方块 */
+.week-grid { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 8rpx; }
+.wk-cell {
+  width: 70rpx; height: 60rpx; border-radius: 10rpx;
+  background: var(--surface-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24rpx; color: var(--text-secondary);
+}
+.wk-cell.on { background: var(--accent); color: #fff; }
+
+/* 颜色块 */
+.color-row { display: flex; flex-wrap: wrap; gap: 22rpx; }
+.color-dot {
+  width: 76rpx; height: 76rpx; border-radius: 18rpx;
+  display: flex; align-items: center; justify-content: center;
+  border: 4rpx solid transparent;
+}
+.color-dot.on { border-color: var(--text-primary); }
+.tick { font-size: 36rpx; font-weight: 700; }
+
+/* 操作区 */
+.actions { padding: 12rpx 24rpx 0; }
+.save-btn { width: 100%; }
+.del-btn { width: 100%; margin-top: 20rpx; }

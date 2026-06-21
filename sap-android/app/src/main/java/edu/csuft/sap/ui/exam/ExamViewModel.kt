@@ -2,6 +2,7 @@ package edu.csuft.sap.ui.exam
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import edu.csuft.sap.data.account.JwMfaState
 import edu.csuft.sap.data.remote.Outcome
 import edu.csuft.sap.data.remote.dto.ExamDto
 import edu.csuft.sap.data.remote.dto.TermDto
@@ -9,6 +10,7 @@ import edu.csuft.sap.di.Graph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +38,8 @@ class ExamViewModel : ViewModel() {
 
     init {
         viewModelScope.launch { acc.active.collect { loadCache() } }
+        // 教务短信验证通过后自动重试同步
+        viewModelScope.launch { JwMfaState.passedTick.drop(1).collect { sync() } }
     }
 
     private fun loadCache() {

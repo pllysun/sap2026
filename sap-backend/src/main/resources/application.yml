@@ -37,8 +37,14 @@ mybatis-plus:
 # sa-token 配置
 sa-token:
   token-name: sap-token
+  # timeout：token 绝对有效期（秒）。Web/管理端走此默认值（86400=1天，到期重登，Redis 自动按 TTL 清理不膨胀）。
+  #          App 登录(appLogin)单独 setTimeout(-1) 覆盖为永久——本地有凭证即永久免密。
   timeout: 86400
-  active-timeout: 3600
+  # active-timeout：无操作冻结超时（秒）。-1=永不冻结。
+  #   ⚠️ 原来是 3600(1小时)：App 放久不进就被冻结→/me 返 401→被迫重登（“放一晚上跳登录”的元凶）。
+  #   改为 -1 后任何登录都不会因空闲被冻结；App 的永久免密不再依赖每-token覆盖，铁打不掉线。
+  #   绝对有效期仍由上面的 timeout 控制（Web/管理端 1天，App 永久）。
+  active-timeout: -1
   is-concurrent: true
   token-style: uuid
   is-log: false

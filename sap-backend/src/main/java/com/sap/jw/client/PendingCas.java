@@ -12,6 +12,9 @@ public class PendingCas {
     public final String mfaState;
     public final String fpId;
     public volatile String execution;
+    /** 安全手机短信 MFA：initByType 拿到的鉴权服务器地址与组 id（发码/校验都要带）。 */
+    public volatile String attestServerUrl;
+    public volatile String gid;
 
     public PendingCas(JwHttpSession session, String account, String pwField,
                       String mfaState, String fpId, String execution) {

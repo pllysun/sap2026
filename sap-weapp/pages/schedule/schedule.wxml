@@ -1,0 +1,140 @@
+<!-- 顶栏 -->
+<view class="topbar">
+  <view class="tb-left" bindtap="openAccountPicker">
+    <text class="tb-account ellipsis">{{account || '课表'}}</text>
+    <view wx:if="{{accounts.length > 1}}" class="tb-ic ic-swap"></view>
+  </view>
+  <view class="tb-center" bindtap="openWeekPicker">
+    <text class="tb-week">第 {{selectedWeek}} 周</text>
+    <view class="tb-ic ic-dd"></view>
+  </view>
+  <view class="tb-right">
+    <text class="tb-term" bindtap="openTermPicker">{{term}}</text>
+    <view class="tb-ic ic-gear" bindtap="goSettings"></view>
+  </view>
+</view>
+
+<!-- 未绑定教务 -->
+<view wx:if="{{ready && !hasAccount}}" class="empty">
+  <text class="emoji">📚</text>
+  <text>还没有绑定教务账号</text>
+  <button class="btn-accent bind-btn" bindtap="goBind">绑定教务账号</button>
+</view>
+
+<block wx:if="{{ready && hasAccount}}">
+  <!-- 星期表头 -->
+  <view class="weekrow">
+    <view class="time-col head"></view>
+    <view wx:for="{{days}}" wx:key="day" class="day-head {{item.isToday ? 'today' : ''}}">
+      <text class="dh-name">{{item.name}}</text>
+      <text class="dh-date">{{item.dateLabel}}</text>
+    </view>
+  </view>
+
+  <!-- 周翻页 -->
+  <swiper class="weeks-swiper" style="height:{{swiperHeight}}px" current="{{selectedWeek - 1}}" bindchange="onSwiperChange" duration="220">
+    <swiper-item wx:for="{{weeks}}" wx:for-item="wk" wx:key="week">
+      <scroll-view scroll-y class="grid-scroll" style="height:{{swiperHeight}}px">
+        <view class="grid-body" style="height:{{totalHeight}}rpx">
+          <!-- 时间列 -->
+          <view class="time-col" style="height:{{totalHeight}}rpx">
+            <view wx:for="{{nodeRows}}" wx:for-item="n" wx:key="node" class="time-cell"
+                  style="top:{{n.top}}rpx;height:{{n.height}}rpx">
+              <text class="tc-node">{{n.node}}</text>
+              <text class="tc-time">{{n.start}}</text>
+              <text class="tc-time">{{n.end}}</text>
+            </view>
+          </view>
+          <!-- 每天一列 -->
+          <view wx:for="{{days}}" wx:for-item="d" wx:key="day" class="day-col" style="height:{{totalHeight}}rpx">
+            <view wx:for="{{wk.byDay[d.day]}}" wx:for-item="c" wx:key="idx"
+                  class="course-card {{c.isThisWeek ? '' : 'faded'}}"
+                  style="top:{{c.top}}rpx;height:{{c.height}}rpx;left:{{c.leftPct}}%;width:{{c.widthPct}}%;background:{{c.bg}};color:{{c.fg}}"
+                  data-w="{{wk.week}}" data-i="{{c.idx}}" bindtap="tapCard">
+              <text class="cc-name" style="font-size:{{22*cardScale}}rpx">{{c.name}}</text>
+              <text wx:if="{{c.location}}" class="cc-room" style="font-size:{{18*cardScale}}rpx">@{{c.location}}</text>
+              <text wx:if="{{c.teacher}}" class="cc-room" style="font-size:{{18*cardScale}}rpx">{{c.teacher}}</text>
+              <view wx:if="{{!c.isThisWeek}}" class="cc-corner"></view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 备注（无固定时间课） -->
+        <view wx:if="{{remarks.length}}" class="remarks">
+          <view class="remarks-title">备注 · 无固定时间（点击设置时间地点）</view>
+          <view wx:for="{{remarks}}" wx:key="name" class="remark-item" data-i="{{index}}" bindtap="tapRemark">
+            <view class="ri-left">
+              <text class="ri-name">{{item.name}}</text>
+              <text class="ri-sub">{{item.teacher}} {{item.weeks}}</text>
+            </view>
+            <text class="ri-arrow">设时间 ›</text>
+          </view>
+        </view>
+        <view style="height:120rpx"></view>
+      </scroll-view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 加载/错误条 -->
+  <view wx:if="{{loading}}" class="float-tip">课表加载中…</view>
+
+  <!-- FAB 添加课程 -->
+  <view class="fab" style="background:{{accent}}" bindtap="addCourse">
+    <view class="fab-add"></view>
+  </view>
+</block>
+
+<!-- 周选择弹层 -->
+<view wx:if="{{showWeekPicker}}" class="mask" bindtap="closeWeekPicker">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head">
+      <text>选择周次</text>
+      <text class="sheet-act" bindtap="backToCurrentWeek">回到本周</text>
+    </view>
+    <scroll-view scroll-y class="week-grid-wrap">
+      <view class="week-grid">
+        <view wx:for="{{totalWeeks}}" wx:key="*this"
+              class="week-chip {{(index+1)===selectedWeek ? 'on' : ''}} {{(index+1)===currentWeek ? 'cur' : ''}}"
+              data-w="{{index+1}}" bindtap="pickWeek">{{index+1}}</view>
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 学期选择弹层 -->
+<view wx:if="{{showTermPicker}}" class="mask" bindtap="closeTermPicker">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head"><text>选择学期</text></view>
+    <view wx:for="{{terms}}" wx:key="value" class="opt-row {{item.value===term ? 'on' : ''}}" data-t="{{item.value}}" bindtap="pickTerm">
+      <text>{{item.label}}</text>
+      <text wx:if="{{item.value===term}}" class="opt-tick">✓</text>
+    </view>
+  </view>
+</view>
+
+<!-- 账号选择弹层 -->
+<view wx:if="{{showAccountPicker}}" class="mask" bindtap="closeAccountPicker">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head"><text>切换教务账号</text></view>
+    <view wx:for="{{accounts}}" wx:key="*this" class="opt-row {{item===account ? 'on' : ''}}" data-a="{{item}}" bindtap="pickAccount">
+      <text>{{item}}</text>
+      <text wx:if="{{item===account}}" class="opt-tick">✓</text>
+    </view>
+    <view class="opt-row" bindtap="goBind"><text class="t-sec">＋ 绑定新教务账号</text></view>
+  </view>
+</view>
+
+<!-- 课程详情 -->
+<view wx:if="{{detail}}" class="mask" bindtap="closeDetail">
+  <view class="detail-card" catchtap="noop" style="border-top:8rpx solid {{detail.bg}}">
+    <view class="dc-name">{{detail.name}}</view>
+    <view wx:if="{{detail.teacher}}" class="dc-row"><text class="dc-k">教师</text><text>{{detail.teacher}}</text></view>
+    <view wx:if="{{detail.location}}" class="dc-row"><text class="dc-k">地点</text><text>{{detail.location}}</text></view>
+    <view class="dc-row"><text class="dc-k">节次</text><text>第 {{detail.startNode}}-{{detail.endNode}} 节</text></view>
+    <view wx:if="{{detail.weeksLabel}}" class="dc-row"><text class="dc-k">周次</text><text>{{detail.weeksLabel}}</text></view>
+    <view wx:if="{{detail.isCustom}}" class="dc-actions">
+      <button class="btn-outline dc-btn" bindtap="editDetail">编辑</button>
+      <button class="btn-danger dc-btn" bindtap="deleteDetail">删除</button>
+    </view>
+  </view>
+</view>

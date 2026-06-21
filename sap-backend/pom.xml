@@ -50,6 +50,17 @@
             <artifactId>sa-token-spring-boot3-starter</artifactId>
             <version>${sa-token.version}</version>
         </dependency>
+        <!-- sa-token 整合 redis（持久化登录态，使 token 扛住后端重启/重新部署；
+             仅 docker 环境启用，dev/local 用 spring.autoconfigure.exclude 排除 → 回退内存） -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redis-jackson</artifactId>
+            <version>${sa-token.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
 
         <!-- MyBatis-Plus -->
         <dependency>
@@ -135,6 +146,13 @@
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
             <version>5.6.227</version>
+        </dependency>
+
+        <!-- 图形验证码（注册风控；自带字体，无需系统字体，headless 容器可用） -->
+        <dependency>
+            <groupId>com.github.whvcse</groupId>
+            <artifactId>easy-captcha</artifactId>
+            <version>1.6.2</version>
         </dependency>
 
         <!-- Spring Boot Test -->

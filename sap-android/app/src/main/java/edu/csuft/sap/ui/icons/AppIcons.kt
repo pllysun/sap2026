@@ -1,6 +1,7 @@
 package edu.csuft.sap.ui.icons
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -19,6 +20,9 @@ object AppIcons {
         name: String,
         strokes: List<String> = emptyList(),
         fills: List<String> = emptyList(),
+        // 偶奇填充：单条路径里「外形 + 镂空子路径」共存，实心图标用它抠出内部细节
+        // （选中态被单色 tint 后，同色内描边不可见，必须靠镂空/负空间保留语义）
+        evenOddFills: List<String> = emptyList(),
         strokeWidth: Float = 2f,
     ): ImageVector = ImageVector.Builder(
         name = name,
@@ -27,6 +31,19 @@ object AppIcons {
         viewportWidth = 24f,
         viewportHeight = 24f,
     ).apply {
+        fills.forEach { d ->
+            addPath(
+                pathData = PathParser().parsePathString(d).toNodes(),
+                fill = SolidColor(Color.Black),
+            )
+        }
+        evenOddFills.forEach { d ->
+            addPath(
+                pathData = PathParser().parsePathString(d).toNodes(),
+                pathFillType = PathFillType.EvenOdd,
+                fill = SolidColor(Color.Black),
+            )
+        }
         strokes.forEach { d ->
             addPath(
                 pathData = PathParser().parsePathString(d).toNodes(),
@@ -36,59 +53,110 @@ object AppIcons {
                 strokeLineJoin = StrokeJoin.Round,
             )
         }
-        fills.forEach { d ->
-            addPath(
-                pathData = PathParser().parsePathString(d).toNodes(),
-                fill = SolidColor(Color.Black),
-            )
-        }
     }.build()
 
-    /** 课表：日历 + 高亮课卡 */
+    // ─── 底部 Tab 图标（线性=未选中 / 实心=选中，一套精准线性语言，24dp）───
+    // 设计经多方案评审收敛：课表/成绩/我的用 Crisp Linear，设置用 Soft Rounded 双滑杆。
+    // 选中态用实心剪影 + 偶奇镂空保留语义（日历表头/课卡格、柱状图柱、头肩、滑块旋钮）。
+
+    /** 课表（未选中）：日历线框 + 表头线 + 装订环 + 5 个课卡点 */
     val Schedule: ImageVector by lazy {
         build(
             "schedule",
             strokes = listOf(
-                "M8 2.5 V6", "M16 2.5 V6",
-                "M5 4.5 H19 A2 2 0 0 1 21 6.5 V19 A2 2 0 0 1 19 21 H5 A2 2 0 0 1 3 19 V6.5 A2 2 0 0 1 5 4.5 Z",
-                "M3 9.5 H21",
+                "M5.5 5.5 L18.5 5.5 A2 2 0 0 1 20.5 7.5 L20.5 19 A2 2 0 0 1 18.5 21 L5.5 21 A2 2 0 0 1 3.5 19 L3.5 7.5 A2 2 0 0 1 5.5 5.5 Z",
+                "M3.5 9.5 L20.5 9.5",
+                "M8 3.2 L8 6.3", "M16 3.2 L16 6.3",
+                "M7 13 L9 13", "M11 13 L13 13", "M15 13 L17 13",
+                "M7 17 L9 17", "M11 17 L13 17",
             ),
-            fills = listOf("M7.3 12.3 H11 A0.9 0.9 0 0 1 11.9 13.2 V16 A0.9 0.9 0 0 1 11 16.9 H7.3 A0.9 0.9 0 0 1 6.4 16 V13.2 A0.9 0.9 0 0 1 7.3 12.3 Z"),
         )
     }
 
-    /** 成绩：奖章 + 对勾 */
+    /** 课表（选中）：实心日历，偶奇镂空出表头条与课卡格，装订环描边在上 */
+    val ScheduleFilled: ImageVector by lazy {
+        build(
+            "schedule_filled",
+            strokes = listOf("M8 3.2 L8 6", "M16 3.2 L16 6"),
+            evenOddFills = listOf(
+                "M5.5 5.5 L18.5 5.5 A2 2 0 0 1 20.5 7.5 L20.5 19 A2 2 0 0 1 18.5 21 L5.5 21 A2 2 0 0 1 3.5 19 L3.5 7.5 A2 2 0 0 1 5.5 5.5 Z " +
+                    "M5 8.8 L19 8.8 L19 9.6 L5 9.6 Z " +
+                    "M6.7 12.2 L8.7 12.2 L8.7 14 L6.7 14 Z M11 12.2 L13 12.2 L13 14 L11 14 Z M15.3 12.2 L17.3 12.2 L17.3 14 L15.3 14 Z " +
+                    "M6.7 16 L8.7 16 L8.7 17.8 L6.7 17.8 Z M11 16 L13 16 L13 17.8 L11 17.8 Z",
+            ),
+        )
+    }
+
+    /** 成绩（未选中）：基线 + 三根升序柱（圆头） */
     val Grades: ImageVector by lazy {
         build(
             "grades",
             strokes = listOf(
-                "M9 3 L11.2 9", "M15 3 L12.8 9",
-                "M7 14.5 A5 5 0 1 0 17 14.5 A5 5 0 1 0 7 14.5 Z",
-                "M9.9 14.7 L11.3 16.1 L14.1 13.2",
+                "M3.8 20 L20.2 20",
+                "M7 20 L7 14.5", "M12 20 L12 10.5", "M17 20 L17 6.5",
             ),
         )
     }
 
-    /** 我的：圆头 + 肩 */
+    /** 成绩（选中）：基线 + 三根实心圆角升序柱 */
+    val GradesFilled: ImageVector by lazy {
+        build(
+            "grades_filled",
+            strokes = listOf("M3.8 20.2 L20.2 20.2"),
+            fills = listOf(
+                "M5.6 20 L5.6 16 A1.4 1.4 0 0 1 8.4 16 L8.4 20 Z",
+                "M10.6 20 L10.6 11.5 A1.4 1.4 0 0 1 13.4 11.5 L13.4 20 Z",
+                "M15.6 20 L15.6 7 A1.4 1.4 0 0 1 18.4 7 L18.4 20 Z",
+            ),
+        )
+    }
+
+    /** 我的（未选中）：圆头 + 肩弧 */
     val Profile: ImageVector by lazy {
         build(
             "profile",
             strokes = listOf(
-                "M8.8 7.8 A3.2 3.2 0 1 0 15.2 7.8 A3.2 3.2 0 1 0 8.8 7.8 Z",
-                "M5.5 20 A6.5 6.5 0 0 1 18.5 20",
+                "M8.6 8.5 A3.4 3.4 0 1 0 15.4 8.5 A3.4 3.4 0 1 0 8.6 8.5 Z",
+                "M5.2 19.6 A6.8 6.8 0 0 1 18.8 19.6",
             ),
         )
     }
 
-    /** 设置：滑杆 */
+    /** 我的（选中）：实心头 + 实心肩穹 */
+    val ProfileFilled: ImageVector by lazy {
+        build(
+            "profile_filled",
+            fills = listOf(
+                "M8.3 8 A3.7 3.7 0 1 0 15.7 8 A3.7 3.7 0 1 0 8.3 8 Z",
+                "M4.8 20 A7.2 6.2 0 0 1 19.2 20 Z",
+            ),
+        )
+    }
+
+    // 8 齿齿轮（齿尖 R9 / 齿谷 R6.5，余弦定点，bbox≈[3,21]）
+    private const val GEAR_COG =
+        "M 18.3 10.5 L 20.9 10.6 L 20.9 13.4 L 18.3 13.5 L 17.5 15.4 L 19.3 17.3 L 17.3 19.3 L 15.4 17.5 " +
+            "L 13.5 18.3 L 13.4 20.9 L 10.6 20.9 L 10.5 18.3 L 8.6 17.5 L 6.7 19.3 L 4.7 17.3 L 6.5 15.4 " +
+            "L 5.7 13.5 L 3.1 13.4 L 3.1 10.6 L 5.7 10.5 L 6.5 8.6 L 4.7 6.7 L 6.7 4.7 L 8.6 6.5 " +
+            "L 10.5 5.7 L 10.6 3.1 L 13.4 3.1 L 13.5 5.7 L 15.4 6.5 L 17.3 4.7 L 19.3 6.7 L 17.5 8.6 Z"
+
+    /** 设置（未选中）：齿轮线框 + 中心圆 */
     val Settings: ImageVector by lazy {
         build(
             "settings",
-            strokes = listOf("M4 7 H20", "M4 12 H20", "M4 17 H20"),
-            fills = listOf(
-                "M8 7 A2 2 0 1 0 12 7 A2 2 0 1 0 8 7 Z",
-                "M13 12 A2 2 0 1 0 17 12 A2 2 0 1 0 13 12 Z",
-                "M5 17 A2 2 0 1 0 9 17 A2 2 0 1 0 5 17 Z",
+            strokes = listOf(
+                GEAR_COG,
+                "M 9.4 12 A 2.6 2.6 0 1 0 14.6 12 A 2.6 2.6 0 1 0 9.4 12 Z",
+            ),
+        )
+    }
+
+    /** 设置（选中）：实心齿轮，偶奇镂空出中心孔 */
+    val SettingsFilled: ImageVector by lazy {
+        build(
+            "settings_filled",
+            evenOddFills = listOf(
+                "$GEAR_COG M 9.1 12 A 2.9 2.9 0 1 0 14.9 12 A 2.9 2.9 0 1 0 9.1 12 Z",
             ),
         )
     }

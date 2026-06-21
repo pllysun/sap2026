@@ -26,6 +26,22 @@ public class GlobalExceptionHandler {
         return Result.error(e.getCode(), e.getMessage());
     }
 
+    /**
+     * 拉取教务数据时重新登录触发了短信二次验证(MFA)：短信已发出，返回 428 + 挑战信息，
+     * 让 App 弹短信输入框续验（调 /api/jw/bind/mfa）后重试原请求。
+     */
+    @ExceptionHandler(com.sap.jw.client.JwMfaPendingException.class)
+    public Result<?> handleJwMfaPending(com.sap.jw.client.JwMfaPendingException e) {
+        Result<java.util.Map<String, Object>> r = new Result<>();
+        r.setCode(428);
+        r.setMessage("教务登录需短信二次验证，请输入短信验证码");
+        r.setData(java.util.Map.of(
+                "needMfa", true,
+                "challengeId", e.getChallengeId(),
+                "phone", e.getPhone() == null ? "" : e.getPhone()));
+        return r;
+    }
+
     @ExceptionHandler(NotLoginException.class)
     public Result<?> handleNotLoginException(NotLoginException e) {
         return Result.error(401, "未登录或登录已过期");

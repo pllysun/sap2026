@@ -40,6 +40,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
+                        "/api/ping",
                         "/api/auth/login",
                         "/api/auth/admin/login",
                         "/api/auth/app/login",

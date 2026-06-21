@@ -1,0 +1,6 @@
+<view class="tabbar">
+  <view wx:for="{{list}}" wx:key="text" class="tab" data-index="{{index}}" bindtap="switchTab">
+    <image class="tab-ic" src="{{selected === index ? item.iconOn : item.icon}}" mode="aspectFit" />
+    <text class="tab-txt" style="color:{{selected === index ? selectedColor : color}}">{{item.text}}</text>
+  </view>
+</view>

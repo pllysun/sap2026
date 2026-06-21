@@ -30,6 +30,15 @@ private fun buildScheme(accent: Color): ColorScheme {
         onSurface = TextPrimary,
         surfaceVariant = SurfaceMuted,
         onSurfaceVariant = TextSecondary,
+        // 弹窗/底部弹出/菜单纯白：M3 默认用 surfaceContainer* + surfaceTint（带淡紫灰高程染色），
+        // 全部压成纯白，配灰底页面=纯净「灰底白窗」。AlertDialog/DatePicker 用 High、ModalBottomSheet 用 Low。
+        surfaceTint = Color.White,              // 取消高程染色
+        surfaceBright = Color.White,
+        surfaceContainerLowest = Color.White,
+        surfaceContainerLow = Color.White,      // ModalBottomSheet（OptionSheet 等）
+        surfaceContainer = Color.White,
+        surfaceContainerHigh = Color.White,     // AlertDialog / DatePickerDialog
+        surfaceContainerHighest = SurfaceMuted, // 文本框/筹码浅灰底，白窗内仍有对比
         outline = TextTertiary,
         outlineVariant = Hairline,
         error = Danger,

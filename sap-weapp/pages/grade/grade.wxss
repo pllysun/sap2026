@@ -1,0 +1,128 @@
+/* 成绩页私有样式（分段控件/弹层走全局 app.wxss + CSS 变量） */
+
+/* 同步按钮：App 刷新图标 + 文字 */
+.sync-btn { display: flex; align-items: center; }
+.sync-btn .ic-refresh {
+  width: 28rpx; height: 28rpx; margin-right: 8rpx;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMkU5QkVGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTE5IDggQTcgNyAwIDEgMCAyMCAxMi44Ii8+PHBhdGggZD0iTTE5IDMuNiBMMTkgOCBMMTQuNiA4Ii8+PC9zdmc+"); }
+
+/* 卡片标题 */
+.card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+/* ===== 成绩概览 ===== */
+.ov-top { display: flex; }
+.ov-main { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.ov-num { font-size: 48rpx; font-weight: 700; color: var(--accent); line-height: 1.2; }
+.ov-lab { font-size: 23rpx; color: var(--text-tertiary); margin-top: 6rpx; }
+.ov-hr { margin: 24rpx 0; }
+.ov-grid { display: flex; flex-wrap: wrap; }
+.ov-cell {
+  width: 33.33%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 0;
+}
+.oc-k { font-size: 22rpx; color: var(--text-tertiary); }
+.oc-v { font-size: 30rpx; font-weight: 600; margin-top: 6rpx; }
+.oc-danger { color: var(--danger); }
+
+/* ===== 分数段分布 ===== */
+.band-row { display: flex; align-items: center; margin-bottom: 16rpx; }
+.band-row:last-child { margin-bottom: 0; }
+.band-lab { width: 120rpx; flex: 0 0 120rpx; font-size: 24rpx; color: var(--text-secondary); }
+.band-track {
+  flex: 1;
+  height: 24rpx;
+  background: var(--surface-muted);
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin: 0 16rpx;
+}
+.band-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 12rpx;
+  min-width: 2rpx;
+  transition: width 0.3s ease;
+}
+.band-fill.danger { background: var(--danger); }
+.band-cnt { width: 50rpx; flex: 0 0 50rpx; text-align: right; font-size: 24rpx; color: var(--text-secondary); }
+
+/* ===== 成绩列表（对齐 App：汇总卡 + 学期标题 + 逐课白卡） ===== */
+.stat-card { display: flex; }
+.stat { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.stat-v { font-size: 44rpx; font-weight: 600; color: var(--accent); line-height: 1.2; }
+.stat-k { font-size: 24rpx; color: var(--text-tertiary); margin-top: 6rpx; }
+
+.term-head {
+  font-size: 26rpx; font-weight: 500; color: var(--accent);
+  margin: 16rpx 32rpx 8rpx;
+}
+.grade-card { display: flex; align-items: center; padding: 24rpx 28rpx; }
+.gc-left { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gc-name { font-size: 30rpx; font-weight: 500; }
+.gc-sub { font-size: 24rpx; color: var(--text-secondary); margin-top: 6rpx; }
+.gc-score { flex: 0 0 auto; margin-left: 20rpx; font-size: 40rpx; font-weight: 600; color: var(--accent); }
+.gc-score.fail { color: var(--danger); }
+
+/* ===== 学期选择条 ===== */
+.term-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 24rpx 16rpx;
+  padding: 18rpx 28rpx;
+  background: var(--surface);
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+.tp-caret { color: var(--text-tertiary); font-size: 24rpx; }
+
+/* ===== 考试卡（对齐 App ExamCard：色点 + 课程名 + 信息行） ===== */
+.exam-head { display: flex; align-items: center; margin-bottom: 8rpx; }
+.exam-dot { width: 18rpx; height: 18rpx; border-radius: 50%; margin-right: 14rpx; flex: 0 0 auto; }
+.exam-name { font-size: 32rpx; font-weight: 500; }
+.exam-row { display: flex; padding: 8rpx 0; font-size: 26rpx; }
+.ex-k { width: 96rpx; flex: 0 0 96rpx; color: var(--text-secondary); }
+.ex-v { flex: 1; color: var(--text-primary); }
+
+/* ===== 评教 ===== */
+.auto-btn { margin: 0 24rpx 20rpx; }
+.eval-top { display: flex; align-items: center; justify-content: space-between; }
+.eval-teacher { font-size: 30rpx; font-weight: 600; }
+.eval-status { font-size: 26rpx; font-weight: 600; }
+.eval-status.done { color: var(--accent); }
+.eval-status.todo { color: var(--text-tertiary); }
+.eval-sub { display: flex; align-items: center; margin-top: 10rpx; }
+.eval-type {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  background: var(--surface-muted);
+  border-radius: 8rpx;
+  padding: 2rpx 12rpx;
+  margin-left: 12rpx;
+}
+
+/* ===== 弹层滚动 ===== */
+.sheet-scroll { max-height: 56vh; }
+
+/* ===== 评教结果行 ===== */
+.res-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 4rpx;
+  border-bottom: 1rpx solid var(--hairline);
+}
+.res-left { display: flex; flex-direction: column; }
+.res-teacher { font-size: 28rpx; font-weight: 500; }
+.res-flag { font-size: 26rpx; max-width: 320rpx; text-align: right; }
+.res-flag.ok { color: var(--accent); }
+.res-flag.bad { color: var(--danger); }
