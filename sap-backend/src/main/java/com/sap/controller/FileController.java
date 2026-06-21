@@ -1,5 +1,7 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaMode;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.service.CosService;
@@ -14,6 +16,9 @@ import java.util.*;
 public class FileController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FileController.class);
+
+    /** /download 代理中转的单文件大小上限(30MB)；更大的文件走 /go 直链由 CDN 承载。 */
+    private static final long PROXY_MAX_BYTES = 30L * 1024 * 1024;
 
     @Autowired
     private CosService cosService;
@@ -31,8 +36,10 @@ public class FileController {
         return Result.ok(data);
     }
 
+    // 上传仅限正式成员及以上(排除游客 role 4)，配合 CosService 内的每日配额，遏制 COS 盗刷
     @PostMapping("/upload")
     @OperationLog("上传文件")
+    @SaCheckRole(value = {"0", "1", "2", "3"}, mode = SaMode.OR)
     public Result<?> upload(@RequestParam("file") MultipartFile file) {
         Map<String, String> result = cosService.upload(file);
         return Result.ok(result);
@@ -40,7 +47,11 @@ public class FileController {
 
     @PostMapping("/upload/batch")
     @OperationLog("批量上传文件")
+    @SaCheckRole(value = {"0", "1", "2", "3"}, mode = SaMode.OR)
     public Result<?> batchUpload(@RequestParam("files") MultipartFile[] files) {
+        if (files != null && files.length > 10) {
+            return Result.error("单次最多上传 10 个文件");
+        }
         List<Map<String, String>> results = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
@@ -69,7 +80,8 @@ public class FileController {
         String scheme = uri.getScheme();
         String host = uri.getHost();
         boolean schemeOk = "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
-        boolean hostOk = host != null && host.toLowerCase().endsWith(".myqcloud.com");
+        // 收紧白名单：仅本系统已配置的 COS/CDN 主机，而非泛 .myqcloud.com（防打到他人桶）
+        boolean hostOk = host != null && cosService.isAllowedPublicHost(host);
         if (!schemeOk || !hostOk) {
             response.setStatus(403);
             return;
@@ -80,6 +92,13 @@ public class FileController {
             conn.setInstanceFollowRedirects(false); // 禁止跟随跳转，防止重定向绕过白名单
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(15000);
+
+            // 限制经服务器中转的文件大小，超过则拒绝（大文件应走 /go 直链由 CDN 承载，避免刷爆服务器带宽）
+            long contentLength = conn.getContentLengthLong();
+            if (contentLength > PROXY_MAX_BYTES) {
+                response.setStatus(413); // Payload Too Large
+                return;
+            }
 
             String contentType = conn.getContentType();
             if (contentType == null) contentType = "application/octet-stream";
@@ -133,18 +152,15 @@ public class FileController {
         if (size < 0) size = headContentLength(uri);
         trafficService.recordDownload(size < 0 ? 0 : size);
 
-        // 拼 response-content-disposition（公有桶 COS 支持该 query 覆盖）以保留原文件名，再 302
+        // 直接 302 到公网直链。
+        // 注意：不可追加 response-content-disposition 等 response-* 覆盖参数——COS 对「匿名 GET」
+        // 会拒绝（InvalidRequest: "Request specific response headers cannot be used for anonymous
+        // GET response."），自定义 CDN 域名也无法走预签名。文件名由客户端自行处理：App 升级按
+        // versionCode 落地，浏览器下载用对象键名。（这是 CDN 域名下 APK/文件下载 400 的根因。）
         try {
-            String disp = "attachment;filename=\"" + name + "\"";
-            String encodedDisp = java.net.URLEncoder.encode(disp, "UTF-8");
-            String sep = url.contains("?") ? "&" : "?";
-            response.sendRedirect(url + sep + "response-content-disposition=" + encodedDisp);
+            response.sendRedirect(url);
         } catch (Exception e) {
-            try {
-                response.sendRedirect(url);
-            } catch (Exception ignore) {
-                response.setStatus(500);
-            }
+            response.setStatus(500);
         }
     }
 

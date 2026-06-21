@@ -8,6 +8,9 @@ import edu.csuft.sap.data.remote.dto.RemarkDto
 import edu.csuft.sap.data.remote.dto.ScheduleData
 import edu.csuft.sap.data.remote.dto.TermDto
 import edu.csuft.sap.data.account.AccountManager
+import edu.csuft.sap.data.account.JwMfaState
+import edu.csuft.sap.data.account.MemberState
+import kotlinx.coroutines.flow.drop
 import edu.csuft.sap.data.schedule.AccountData
 import edu.csuft.sap.data.schedule.CachedCourse
 import edu.csuft.sap.data.schedule.CustomCourse
@@ -17,8 +20,11 @@ import edu.csuft.sap.data.schedule.Remark
 import edu.csuft.sap.data.schedule.ProfileKind
 import edu.csuft.sap.data.schedule.ScheduleProfile
 import edu.csuft.sap.data.schedule.ScheduleSettings
+import edu.csuft.sap.data.schedule.TermScan
+import edu.csuft.sap.data.schedule.TermUtil
 import edu.csuft.sap.data.schedule.WeekUtil
 import edu.csuft.sap.di.Graph
+import edu.csuft.sap.notify.ReminderScheduler
 import edu.csuft.sap.ui.theme.colorIndexOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +70,7 @@ class ScheduleViewModel : ViewModel() {
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     private var userPickedWeek = false
+    private var lastReschedKey: String? = null // 当前渲染课表的指纹，变化即重排上课提醒
 
     init {
         viewModelScope.launch {
@@ -78,11 +85,19 @@ class ScheduleViewModel : ViewModel() {
         }
         viewModelScope.launch { store.root.collect { render() } }
         viewModelScope.launch { if (acc.activeAccount == null) acc.refresh() }
+        // 教务短信验证通过后自动重试拉取（解决会话过期/扫描时触发 MFA）
+        viewModelScope.launch { JwMfaState.passedTick.drop(1).collect { retry() } }
     }
 
     private suspend fun onAccountSelected(account: String) {
         if (AccountManager.isLocal(account)) {
-            render() // 本地 WebVPN 源：不扫教务，直接渲染本地数据（无则提示导入）
+            if (MemberState.isJw) {
+                // 教务模式落到本地 Web 源（如重启残留）：自动切回上次的教务账号；
+                // 无教务账号则置空 → 触发绑定提示，绝不在教务模式展示 Web 课表
+                acc.activateJwAccount()
+                return
+            }
+            render() // Web 模式本地源：不扫教务，直接渲染本地数据（无则提示导入）
             return
         }
         val data = store.accountData(account)
@@ -193,6 +208,11 @@ class ScheduleViewModel : ViewModel() {
 
     // ---------- 扫描有数据学期 ----------
 
+    /**
+     * 扫描有数据学期：以**当前学期为锚**，向过去/将来用 [TermScan] 统一逻辑推进——遇连续 2 个空学期或达上限即止
+     * （当前若为大四下这类空学期也照常尝试、不会因单个空学期提前结束），默认按日期选中当前/下一学期。
+     * 与 WebView 抓取共用同一算法。
+     */
     private suspend fun scanTerms(account: String) {
         _state.value = _state.value.copy(scanning = true, loading = true, error = null, account = account)
         val first = jw.schedule(account, null)
@@ -202,41 +222,48 @@ class ScheduleViewModel : ViewModel() {
         }
         val data0 = (first as Outcome.Success).data
         val currentTerm = data0.term
-        val terms = data0.terms.sortedByDescending { it.value }
-        if (currentTerm != null) cacheTermData(account, currentTerm, data0)
+        val labels = data0.terms.associate { it.value to it.label }
+        fun profileOf(term: String) = ScheduleProfile(
+            id = "term:$term",
+            name = labels[term]?.takeIf { it.isNotBlank() } ?: TermUtil.label(term),
+            kind = ProfileKind.TERM,
+            termValue = term,
+        )
 
-        val startIdx = terms.indexOfFirst { it.value == currentTerm }.let { if (it < 0) 0 else it }
-        val scanList = terms.drop(startIdx)
+        if (currentTerm == null || !TermUtil.isTerm(currentTerm)) {
+            // 识别不出当前学期：退化为仅首个/当前学期
+            if (currentTerm != null) cacheTermData(account, currentTerm, data0)
+            val fb = currentTerm?.let { profileOf(it) } ?: data0.terms.firstOrNull()?.let { termProfile(it) }
+            store.replaceTermProfiles(account, listOfNotNull(fb))
+            applyAutoStarts(account)
+            _state.value = _state.value.copy(scanning = false, loading = false)
+            render()
+            return
+        }
+        cacheTermData(account, currentTerm, data0)
 
-        val profiles = ArrayList<ScheduleProfile>()
-        var foundData = false
-        var fetches = 0
-        for (t in scanList) {
-            val courses: List<CourseDto> = when {
-                t.value == currentTerm -> data0.courses
-                fetches >= MAX_FETCH -> break
-                else -> {
-                    fetches++
-                    when (val r = jw.schedule(account, t.value)) {
-                        is Outcome.Success -> {
-                            cacheTermData(account, t.value, r.data)
-                            r.data.courses
-                        }
-                        is Outcome.Error -> emptyList()
-                    }
+        // 以当前学期为锚扫描；hasData 抓取并缓存某学期、返回是否有课
+        val withData = TermScan.scanAround(currentTerm) { term ->
+            val courses: List<CourseDto> = if (term == currentTerm) data0.courses else {
+                when (val r = jw.schedule(account, term)) {
+                    // 仅当返回的就是所请求学期且非空才算有课；强智把无效学期回显当前学期的情况按“无课”处理
+                    is Outcome.Success ->
+                        if (r.data.term?.trim() == term && r.data.courses.isNotEmpty()) {
+                            cacheTermData(account, term, r.data); r.data.courses
+                        } else emptyList()
+                    is Outcome.Error -> emptyList()
                 }
             }
-            if (courses.isNotEmpty()) {
-                foundData = true
-                profiles.add(termProfile(t))
-            } else if (foundData) {
-                break // 入学前空学期 → 停，更早的不再加载
-            }
+            courses.isNotEmpty()
         }
-        if (profiles.isEmpty()) {
-            terms.firstOrNull()?.let { profiles.add(termProfile(it)) }
-        }
-        store.replaceTermProfiles(account, profiles) // 持久化 + scanned=true → 触发 render
+
+        // 当前学期即使空也展示（如大四下），保持学期完整；其余仅列有课学期
+        val terms = (withData + currentTerm).distinct().sortedDescending()
+        store.replaceTermProfiles(account, terms.map { profileOf(it) }) // 持久化 + scanned=true → 触发 render
+        // 默认选中：按日期选当前/下一学期；当前无课则选最近有课学期
+        val month = java.time.LocalDate.now().monthValue
+        val def = TermScan.defaultTerm(currentTerm, withData, month) ?: terms.firstOrNull()
+        def?.let { store.setActiveProfile(account, "term:$it") }
         applyAutoStarts(account) // profiles 创建后补刷自动开学日期
         _state.value = _state.value.copy(scanning = false, loading = false)
         render()
@@ -259,6 +286,7 @@ class ScheduleViewModel : ViewModel() {
             (data.termRemarks ?: emptyMap())[active.termValue] ?: emptyList()
         else emptyList()
 
+        val display = buildDisplay(data, active)
         _state.value = _state.value.copy(
             loading = false,
             account = account,
@@ -269,11 +297,21 @@ class ScheduleViewModel : ViewModel() {
             settings = settings,
             currentWeek = cw,
             selectedWeek = sel,
-            display = buildDisplay(data, active),
+            display = display,
             remarks = remarks,
             isLocalSource = AccountManager.isLocal(account),
             error = if (profiles.isEmpty() && !_state.value.scanning) _state.value.error else null,
         )
+        // 让上课提醒始终以「当前渲染的课表」为准：账号/课表/模式/开学日期 + 课程内容（增删改任一字段）变化即重排。
+        // 用排程相关字段（星期/节次/名称/地点/周次）的内容指纹，而非课程数——否则「改时间但数量不变」会漏排。
+        val coursesSig = display.joinToString(";") {
+            "${it.day}/${it.startNode}-${it.endNode}/${it.name}/${it.location}/${it.weeks.joinToString(",")}"
+        }.hashCode()
+        val key = "$account|$activeId|${settings.semesterStartDate}|$coursesSig"
+        if (key != lastReschedKey) {
+            lastReschedKey = key
+            ReminderScheduler.reschedule(Graph.appContext)
+        }
     }
 
     private fun buildDisplay(data: AccountData, p: ScheduleProfile?): List<DisplayCourse> {
@@ -388,8 +426,4 @@ class ScheduleViewModel : ViewModel() {
         kind = ProfileKind.TERM,
         termValue = t.value,
     )
-
-    private companion object {
-        const val MAX_FETCH = 14
-    }
 }

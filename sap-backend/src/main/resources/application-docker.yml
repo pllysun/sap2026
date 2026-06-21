@@ -5,6 +5,14 @@
 # 可通过环境变量 MYSQL_URL / MYSQL_USER / MYSQL_PASSWORD 切换到外部 MySQL
 
 spring:
+  # 登录态持久化：sa-token 用容器内置 Redis（127.0.0.1:6379，AOF 落 /app/data/redis 挂载卷）。
+  # 后端重启/重新部署/重建容器都不丢 token；配合 appLogin 的 timeout=-1 → 永久免密，
+  # 只有主动 logout/踢人才失效。Redis 适配自动装配在此 profile 生效（dev/local 已 exclude）。
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      timeout: 3000ms
   datasource:
     url: jdbc:h2:file:/app/data/sap;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=FALSE
     driver-class-name: org.h2.Driver

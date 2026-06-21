@@ -316,6 +316,20 @@ else
     echo "[SSL] 未设置 DOMAIN 变量，使用 HTTP 模式"
 fi
 
+# ===== 启动 Redis（登录态持久化，本机 127.0.0.1:6379）=====
+# sa-token 把 token 存这里；AOF 落 /app/data/redis（挂载卷）→ 重启/重建容器都不丢登录。
+# 仅本机回环，不暴露公网。noeviction 保证内存到顶也绝不淘汰 token（数据极小，128mb 远够）。
+if command -v redis-server >/dev/null 2>&1; then
+    echo "[REDIS] 启动 Redis (127.0.0.1:6379, AOF 持久化)..."
+    mkdir -p /app/data/redis
+    redis-server \
+        --bind 127.0.0.1 --port 6379 \
+        --dir /app/data/redis --appendonly yes --appendfsync everysec --save '' \
+        --maxmemory 128mb --maxmemory-policy noeviction \
+        >> /app/logs/redis.log 2>&1 &
+    echo "[REDIS] 已后台启动 (日志: /app/logs/redis.log)"
+fi
+
 # ===== 启动 OCR 边车（教务验证码识别，本机 127.0.0.1:9000）=====
 # 与主应用同容器。后端 jw.ocr-url 默认即 http://127.0.0.1:9000，无需额外环境变量。
 if [ -f /app/ocr/main.py ]; then

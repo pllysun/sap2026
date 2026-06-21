@@ -5,6 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,21 +39,26 @@ import edu.csuft.sap.ui.schedule.ScheduleScreen
 import edu.csuft.sap.update.UpdateDialog
 import edu.csuft.sap.update.UpdateViewModel
 
-private enum class Tab(val label: String, val icon: ImageVector) {
-    Schedule("课表", AppIcons.Schedule),
-    Grade("成绩", AppIcons.Grades),
-    Profile("我的", AppIcons.Profile),
-    WebSettings("设置", AppIcons.Settings),
+private enum class Tab(val label: String, val icon: ImageVector, val iconFilled: ImageVector) {
+    Schedule("课表", AppIcons.Schedule, AppIcons.ScheduleFilled),
+    Grade("成绩", AppIcons.Grades, AppIcons.GradesFilled),
+    Profile("我的", AppIcons.Profile, AppIcons.ProfileFilled),
+    WebSettings("设置", AppIcons.Settings, AppIcons.SettingsFilled),
 }
 
 @Composable
 fun HomeScreen(onLoggedOut: () -> Unit) {
     var current by rememberSaveable { mutableIntStateOf(0) }
 
-    // 模式门控：JW(教务)=课表/成绩/我的；WEB=课表/设置。非会员强制 WEB。
+    // 模式门控：JW(教务)=课表/(开启→成绩)/我的；WEB=课表/设置。非会员强制 WEB。
+    // 成绩属教务模式，是否显示由「我的→设置→显示成绩」控制（默认显示，关闭则只剩课表/我的）。
     val mode = MemberState.effectiveMode
     val visibleTabs = if (mode == AppMode.JW)
-        listOf(Tab.Schedule, Tab.Grade, Tab.Profile)
+        buildList {
+            add(Tab.Schedule)
+            if (MemberState.showGrade) add(Tab.Grade)
+            add(Tab.Profile)
+        }
     else
         listOf(Tab.Schedule, Tab.WebSettings)
     val idx = current.coerceIn(0, visibleTabs.size - 1)
@@ -76,7 +83,10 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                     NavigationBarItem(
                         selected = idx == index,
                         onClick = { current = index },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        icon = {
+                            // 选中=实心剪影，未选中=线性，提升 Tab 切换的层次与质感
+                            Icon(if (idx == index) tab.iconFilled else tab.icon, contentDescription = tab.label)
+                        },
                         label = { Text(tab.label, fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -90,20 +100,22 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
             }
         },
     ) { innerPadding ->
-        val contentModifier = Modifier.padding(innerPadding)
-        AnimatedContent(
-            targetState = visibleTabs[idx],
-            label = "tab",
-            transitionSpec = {
-                // 底部 Tab 切换用淡入淡出，自然不突兀
-                fadeIn(tween(220)) togetherWith fadeOut(tween(220))
-            },
-        ) { tab ->
-            when (tab) {
-                Tab.Schedule -> ScheduleScreen(contentModifier)
-                Tab.Grade -> GradeScreen(contentModifier)
-                Tab.Profile -> ProfileScreen(contentModifier, onLoggedOut = onLoggedOut)
-                Tab.WebSettings -> WebSettingsScreen(contentModifier, onLoggedOut = onLoggedOut)
+        Column(Modifier.padding(innerPadding).fillMaxSize()) {
+            AnimatedContent(
+                targetState = visibleTabs[idx],
+                label = "tab",
+                modifier = Modifier.weight(1f),
+                transitionSpec = {
+                    // 底部 Tab 切换用淡入淡出，自然不突兀
+                    fadeIn(tween(220)) togetherWith fadeOut(tween(220))
+                },
+            ) { tab ->
+                when (tab) {
+                    Tab.Schedule -> ScheduleScreen(Modifier.fillMaxSize())
+                    Tab.Grade -> GradeScreen(Modifier.fillMaxSize())
+                    Tab.Profile -> ProfileScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut)
+                    Tab.WebSettings -> WebSettingsScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut)
+                }
             }
         }
     }

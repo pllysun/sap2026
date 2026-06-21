@@ -1,0 +1,44 @@
+/* 教务绑定页私有样式（全局类见 app.wxss） */
+
+.intro {
+  padding: 0 32rpx 20rpx;
+  line-height: 1.5;
+}
+
+/* 表单行 */
+.field {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 0;
+}
+.label {
+  flex: 0 0 160rpx;
+  color: var(--text-secondary);
+  font-size: 28rpx;
+}
+.input {
+  flex: 1;
+  font-size: 30rpx;
+  color: var(--text-primary);
+}
+
+/* 提交按钮 */
+.submit { margin-top: 32rpx; }
+.submit2 { margin-top: 20rpx; }
+
+/* 阶段提示 */
+.step-tip {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.5;
+  margin-bottom: 20rpx;
+}
+
+/* 验证码图片 */
+.captcha-img {
+  width: 320rpx;
+  height: 120rpx;
+  background: var(--surface-muted);
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+}

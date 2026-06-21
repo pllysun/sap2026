@@ -122,6 +122,17 @@ object WebScheduleParser {
                 Remark(name = before, weeks = weeks, clazz = after)
             }
         }
+        // 无周次（如军训等集中实践）：仍尝试拆“课程名 + 教师列表”，并对强智把同一老师重复几十次的脏数据去重，
+        // 避免课程名和人名糊在一起。
+        val toks = e.split(Regex("\\s+")).filter { it.isNotBlank() }
+        val tIdx = toks.indexOfFirst { it.contains(',') || it.contains('，') || it.contains('、') }
+        if (tIdx >= 1) {
+            return Remark(
+                name = toks.subList(0, tIdx).joinToString(" "),
+                teacher = dedupTeacher(toks[tIdx]),
+                clazz = toks.drop(tIdx + 1).joinToString(" "),
+            )
+        }
         return Remark(name = e)
     }
 

@@ -49,9 +49,9 @@ FROM eclipse-temurin:21.0.5_11-jre-jammy
 ARG HTTP_PROXY=""
 ARG HTTPS_PROXY=""
 
-# 安装 Nginx、Certbot、Cron，以及 OCR 边车所需 Python 运行时（libgomp1 供 onnxruntime）
+# 安装 Nginx、Certbot、Cron、Redis（登录态持久化），以及 OCR 边车所需 Python 运行时（libgomp1 供 onnxruntime）
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends nginx wget certbot cron python3 python3-pip libgomp1 && \
+    apt-get install -y --no-install-recommends nginx wget certbot cron redis-server python3 python3-pip libgomp1 && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /run/nginx /app/static/user /app/static/admin /app/ocr /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
 

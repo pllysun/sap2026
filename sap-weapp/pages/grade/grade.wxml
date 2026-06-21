@@ -1,0 +1,214 @@
+<!-- 屏幕标题 -->
+<view class="screen-header"><text class="title">成绩</text></view>
+
+<!-- 分段切换：成绩 / 考试 / 评教 -->
+<view class="seg">
+  <view class="seg-item {{tab===0 ? 'on' : ''}}" data-tab="0" bindtap="switchTab">成绩</view>
+  <view class="seg-item {{tab===1 ? 'on' : ''}}" data-tab="1" bindtap="switchTab">考试</view>
+  <view class="seg-item {{tab===2 ? 'on' : ''}}" data-tab="2" bindtap="switchTab">评教</view>
+</view>
+
+<!-- 未绑定教务 -->
+<view wx:if="{{ready && !hasAccount}}" class="empty">
+  <text>请先在「我的」里绑定教务账号</text>
+</view>
+
+<block wx:if="{{ready && hasAccount}}">
+  <!-- ============ 成绩 tab ============ -->
+  <block wx:if="{{tab===0}}">
+    <!-- 同步条 -->
+    <view class="sync-bar">
+      <text wx:if="{{gradeSync.state==='syncing'}}">同步中…</text>
+      <text wx:elif="{{gradeSync.state==='error'}}" class="err">同步失败：{{gradeSync.err}}</text>
+      <text wx:else>{{gradeSync.at ? '上次同步 ' + gradeSync.at : '未同步'}}</text>
+      <view class="sync-btn" bindtap="onSync"><view class="ic-refresh"></view><text>同步</text></view>
+    </view>
+
+    <block wx:if="{{stats && stats.hasData}}">
+      <!-- 二级分段：列表 / 分析（对齐 App） -->
+      <view class="seg">
+        <view class="seg-item {{subTab===0 ? 'on' : ''}}" data-sub="0" bindtap="switchSub">列表</view>
+        <view class="seg-item {{subTab===1 ? 'on' : ''}}" data-sub="1" bindtap="switchSub">分析</view>
+      </view>
+
+      <!-- ===== 列表 ===== -->
+      <block wx:if="{{subTab===0}}">
+        <view class="card stat-card">
+          <view class="stat"><text class="stat-v">{{stats.totalCourses}}</text><text class="stat-k">课程</text></view>
+          <view class="stat"><text class="stat-v">{{stats.totalCredit}}</text><text class="stat-k">总学分</text></view>
+          <view class="stat"><text class="stat-v">{{stats.gpa}}</text><text class="stat-k">平均绩点</text></view>
+        </view>
+        <block wx:for="{{termGroups}}" wx:for-item="grp" wx:key="term">
+          <view class="term-head">{{grp.label}}</view>
+          <view wx:for="{{grp.courses}}" wx:for-item="c" wx:key="name" class="card grade-card">
+            <view class="gc-left">
+              <text class="gc-name ellipsis">{{c.name}}</text>
+              <text wx:if="{{c.sub}}" class="gc-sub">{{c.sub}}</text>
+            </view>
+            <text class="gc-score {{c.fail ? 'fail' : ''}}">{{c.score}}</text>
+          </view>
+        </block>
+      </block>
+
+      <!-- ===== 分析 ===== -->
+      <block wx:if="{{subTab===1}}">
+        <view class="card">
+          <view class="ov-top">
+            <view class="ov-main">
+              <text class="ov-num">{{stats.gpa}}</text>
+              <text class="ov-lab">平均绩点</text>
+            </view>
+            <view class="ov-main">
+              <text class="ov-num">{{stats.avgScore}}</text>
+              <text class="ov-lab">加权均分</text>
+            </view>
+            <view class="ov-main">
+              <text class="ov-num">{{stats.totalCourses}}</text>
+              <text class="ov-lab">课程门数</text>
+            </view>
+          </view>
+          <view class="hairline ov-hr"></view>
+          <view class="ov-grid">
+            <view class="ov-cell"><text class="oc-k">总学分</text><text class="oc-v">{{stats.totalCredit}}</text></view>
+            <view class="ov-cell"><text class="oc-k">已修学分</text><text class="oc-v">{{stats.earnedCredit}}</text></view>
+            <view class="ov-cell"><text class="oc-k">最高分</text><text class="oc-v">{{stats.maxScore}}</text></view>
+            <view class="ov-cell"><text class="oc-k">最低分</text><text class="oc-v">{{stats.minScore}}</text></view>
+            <view class="ov-cell"><text class="oc-k">优秀率</text><text class="oc-v">{{stats.excellentRate}}%</text></view>
+            <view class="ov-cell"><text class="oc-k">及格率</text><text class="oc-v">{{stats.passRate}}%</text></view>
+            <view class="ov-cell"><text class="oc-k">挂科</text><text class="oc-v {{stats.failCount>0 ? 'oc-danger' : ''}}">{{stats.failCount}}</text></view>
+          </view>
+        </view>
+        <view class="card">
+          <view class="card-title">分数段分布</view>
+          <view wx:for="{{bandRows}}" wx:key="key" class="band-row">
+            <text class="band-lab">{{item.label}}</text>
+            <view class="band-track">
+              <view class="band-fill {{item.danger ? 'danger' : ''}}" style="width:{{item.pct}}%"></view>
+            </view>
+            <text class="band-cnt">{{item.count}}</text>
+          </view>
+        </view>
+      </block>
+    </block>
+
+    <view wx:elif="{{gradeSync.state!=='syncing'}}" class="empty">
+      <text>暂无成绩，点右上「同步」获取</text>
+    </view>
+  </block>
+
+  <!-- ============ 考试 tab ============ -->
+  <block wx:if="{{tab===1}}">
+    <!-- 学期选择 -->
+    <view class="term-pick" bindtap="openTermSheet">
+      <text>{{examTermLabel || '选择学期'}}</text>
+      <text class="tp-caret">▾</text>
+    </view>
+
+    <!-- 同步条 -->
+    <view class="sync-bar">
+      <text wx:if="{{examSync.state==='syncing'}}">同步中…</text>
+      <text wx:elif="{{examSync.state==='error'}}" class="err">同步失败：{{examSync.err}}</text>
+      <text wx:else>{{examSync.at ? '上次同步 ' + examSync.at : '未同步'}}</text>
+      <view class="sync-btn" bindtap="onSync"><view class="ic-refresh"></view><text>同步</text></view>
+    </view>
+
+    <block wx:if="{{exams.length}}">
+      <view wx:for="{{exams}}" wx:key="courseNo" class="card exam-card">
+        <view class="exam-head">
+          <view class="exam-dot" style="background:{{item.dot}}"></view>
+          <text class="exam-name">{{item.courseName}}</text>
+        </view>
+        <view wx:if="{{item.time}}" class="exam-row"><text class="ex-k">时间</text><text class="ex-v">{{item.time}}</text></view>
+        <view wx:if="{{item.room}}" class="exam-row"><text class="ex-k">考场</text><text class="ex-v">{{item.room}}</text></view>
+        <view wx:if="{{item.seat}}" class="exam-row"><text class="ex-k">座位</text><text class="ex-v">{{item.seat}}</text></view>
+        <view wx:if="{{item.admissionTicket}}" class="exam-row"><text class="ex-k">准考证</text><text class="ex-v">{{item.admissionTicket}}</text></view>
+      </view>
+    </block>
+    <view wx:elif="{{examSync.state!=='syncing'}}" class="empty">
+      <text>该学期暂无考试安排</text>
+    </view>
+  </block>
+
+  <!-- ============ 评教 tab ============ -->
+  <block wx:if="{{tab===2}}">
+    <!-- 学期选择（评教 terms） -->
+    <view wx:if="{{evalTerms.length}}" class="term-pick" bindtap="openEvalTermSheet">
+      <text>{{evalTermLabel}}</text>
+      <text class="tp-caret">▾</text>
+    </view>
+
+    <!-- 同步条 -->
+    <view class="sync-bar">
+      <text wx:if="{{evalSync.state==='syncing'}}">同步中…</text>
+      <text wx:elif="{{evalSync.state==='error'}}" class="err">同步失败：{{evalSync.err}}</text>
+      <text wx:else>{{evalSync.at ? '上次同步 ' + evalSync.at : '未同步'}}</text>
+      <view class="sync-btn" bindtap="onSync"><view class="ic-refresh"></view><text>同步</text></view>
+    </view>
+
+    <!-- 一键自动评教 -->
+    <button wx:if="{{hasUnEvaluated}}" class="btn-accent auto-btn" bindtap="autoEval">一键自动评教</button>
+
+    <block wx:if="{{tasks.length}}">
+      <view wx:for="{{tasks}}" wx:key="teacherNo" class="card eval-card">
+        <view class="eval-top">
+          <text class="eval-teacher">{{item.teacher}}</text>
+          <text class="eval-status {{item.evaluated ? 'done' : 'todo'}}">{{item.statusText}}</text>
+        </view>
+        <view class="eval-sub">
+          <text class="t-sec t-sm">{{item.college}}</text>
+          <text wx:if="{{item.typeName}}" class="eval-type">{{item.typeName}}</text>
+        </view>
+      </view>
+    </block>
+    <view wx:elif="{{evalSync.state!=='syncing'}}" class="empty">
+      <text>该学期暂无评教任务</text>
+    </view>
+  </block>
+</block>
+
+<!-- 考试学期选择弹层 -->
+<view wx:if="{{showTermSheet}}" class="mask" bindtap="closeTermSheet">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head"><text>选择学期</text></view>
+    <scroll-view scroll-y class="sheet-scroll">
+      <view wx:for="{{terms}}" wx:key="value" class="opt-row {{item.value===examTerm ? 'on' : ''}}"
+            data-t="{{item.value}}" bindtap="pickExamTerm">
+        <text>{{item.label}}</text>
+        <text wx:if="{{item.value===examTerm}}" class="opt-tick">✓</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 评教学期选择弹层 -->
+<view wx:if="{{showEvalTermSheet}}" class="mask" bindtap="closeEvalTermSheet">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head"><text>选择学期</text></view>
+    <scroll-view scroll-y class="sheet-scroll">
+      <view wx:for="{{evalTerms}}" wx:key="*this" class="opt-row {{item===evalTerm ? 'on' : ''}}"
+            data-t="{{item}}" bindtap="pickEvalTerm">
+        <text>{{item}}</text>
+        <text wx:if="{{item===evalTerm}}" class="opt-tick">✓</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 一键评教结果弹层 -->
+<view wx:if="{{showEvalResult}}" class="mask" bindtap="closeEvalResult">
+  <view class="sheet" catchtap="noop">
+    <view class="sheet-head">
+      <text>评教结果</text>
+      <text class="sheet-act" bindtap="closeEvalResult">关闭</text>
+    </view>
+    <scroll-view scroll-y class="sheet-scroll">
+      <view wx:for="{{evalResults}}" wx:key="index" class="res-row">
+        <view class="res-left">
+          <text class="res-teacher">{{item.teacher}}</text>
+          <text wx:if="{{item.typeName}}" class="t-ter t-sm">{{item.typeName}}</text>
+        </view>
+        <text class="res-flag {{item.success ? 'ok' : 'bad'}}">{{item.success ? '✓ ' + (item.score!=null && item.score!=='' ? item.score : '成功') : '✗ ' + item.message}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

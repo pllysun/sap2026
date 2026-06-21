@@ -14,8 +14,8 @@ android {
         applicationId = "edu.csuft.sap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.5"
+        versionCode = 35
+        versionName = "1.26"
         // 后端地址：模拟器用 10.0.2.2 指向宿主机；真机改成局域网IP或部署域名
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081\"")
     }
@@ -96,6 +96,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.security.crypto)
     implementation(libs.jsoup) // WebView 抓取的课表 HTML 端上解析
+    implementation(libs.coil.compose) // 网络头像加载
     testImplementation("junit:junit:4.13.2")
 }
 

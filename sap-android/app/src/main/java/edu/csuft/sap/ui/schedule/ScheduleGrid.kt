@@ -198,7 +198,8 @@ private fun isOngoing(course: DisplayCourse, day: Int, todayDay: Int, now: Local
 
 @Composable
 private fun TimeCell(node: Int, rowHeight: Dp) {
-    val p = Periods.period(node)
+    // 读 Periods.revision 作为 key：节次时间一改（save）即重算并重组，无需重进 App
+    val p = remember(node, Periods.revision) { Periods.period(node) }
     Column(
         Modifier.width(timeColWidth).height(rowHeight),
         verticalArrangement = Arrangement.Center,

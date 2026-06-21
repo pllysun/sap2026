@@ -2,6 +2,7 @@ package com.sap.jw.service;
 
 import com.sap.common.BusinessException;
 import com.sap.jw.client.CaptchaRequiredException;
+import com.sap.jw.client.MfaRequiredException;
 import com.sap.jw.client.JwAuthClient;
 import com.sap.jw.client.JwHttpSession;
 import com.sap.jw.config.JwProperties;
@@ -20,14 +21,17 @@ public class JwSessionManager {
     private final JwAuthClient authClient;
     private final JwCredentialService credentialService;
     private final JwProperties props;
+    private final PendingLoginManager pendingManager;
 
     private final ConcurrentHashMap<String, JwHttpSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
 
-    public JwSessionManager(JwAuthClient authClient, JwCredentialService credentialService, JwProperties props) {
+    public JwSessionManager(JwAuthClient authClient, JwCredentialService credentialService,
+                            JwProperties props, PendingLoginManager pendingManager) {
         this.authClient = authClient;
         this.credentialService = credentialService;
         this.props = props;
+        this.pendingManager = pendingManager;
     }
 
     /** 取（或建立）某学号的教务会话；未绑定则由 credentialService 抛业务异常。 */
@@ -49,6 +53,11 @@ public class JwSessionManager {
             } catch (CaptchaRequiredException e) {
                 // 后台拉取无法交互输入验证码，提示用户重新绑定
                 throw new BusinessException("教务登录需要验证码，请到「我的」重新绑定该学号");
+            } catch (MfaRequiredException e) {
+                // 短信已发出：登记待验证会话并抛 MFA-pending（全局异常处理返回 428），
+                // App 弹短信输入框、用户输码调 /api/jw/bind/mfa 续登缓存会话后重试本请求。
+                String cid = pendingManager.put(userId, account, password, e.getPending());
+                throw new com.sap.jw.client.JwMfaPendingException(cid, e.getPhone());
             }
             sessions.put(key, s);
             return s;

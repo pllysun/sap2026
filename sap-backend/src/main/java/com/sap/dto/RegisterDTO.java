@@ -17,4 +17,9 @@ public class RegisterDTO {
     private Integer gender;
     @NotBlank(message = "QQ号不能为空")
     private String qq;
+
+    /** 风控验证码标识（仅当注册接口返回 captchaRequired 时由前端回填，正常注册留空）。 */
+    private String captchaId;
+    /** 风控验证码用户输入值（同上，正常注册留空）。 */
+    private String captchaCode;
 }

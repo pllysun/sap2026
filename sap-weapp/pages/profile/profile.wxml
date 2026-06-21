@@ -1,0 +1,48 @@
+<view class="screen-header">
+  <text class="title">我的</text>
+</view>
+
+<!-- 1. 用户信息卡 -->
+<view class="card user-card">
+  <view class="avatar-wrap">
+    <image wx:if="{{avatar}}" class="avatar" src="{{avatar}}" mode="aspectFill" />
+    <view wx:else class="avatar avatar-ph">{{nickInitial}}</view>
+  </view>
+  <view class="user-main">
+    <view class="user-top">
+      <text class="user-nick ellipsis">{{nick}}</text>
+      <text class="chip {{isMember ? 'chip-member' : 'chip-guest'}}">{{memberLabel}}</text>
+    </view>
+    <text wx:if="{{studentId}}" class="user-sid t-sec t-sm">学号 {{studentId}}</text>
+    <text wx:if="{{identityLine}}" class="user-identity t-ter t-sm ellipsis">{{identityLine}}</text>
+  </view>
+</view>
+
+<!-- 2. 教务账号管理卡 -->
+<view class="card jw-card">
+  <view class="card-title">教务账号</view>
+
+  <view wx:if="{{accountsLoaded && !accounts.length}}" class="jw-empty t-ter">还没有绑定教务账号</view>
+
+  <view wx:for="{{accounts}}" wx:key="account" class="jw-row" data-acc="{{item.account}}" bindtap="tapAccount">
+    <view class="jw-info">
+      <text class="jw-acc {{item.account === activeAccount ? 'on' : ''}}">{{item.account}}</text>
+      <text wx:if="{{item.syncLabel}}" class="jw-sync t-ter t-sm">{{item.syncLabel}}</text>
+    </view>
+    <text wx:if="{{item.account === activeAccount}}" class="jw-tick">✓</text>
+    <text class="jw-unbind" data-acc="{{item.account}}" catchtap="unbindAccount">解绑</text>
+  </view>
+
+  <view class="jw-add" bindtap="goBind">
+    <text class="jw-add-text">＋ 绑定教务账号</text>
+  </view>
+</view>
+
+<!-- 3. 设置入口 -->
+<view class="card entry-row" bindtap="goSettings">
+  <view class="entry-main">
+    <text class="entry-title">设置</text>
+    <text class="entry-sub t-ter t-sm">主题色 · 隐私协议 · 关于 · 退出登录</text>
+  </view>
+  <text class="entry-arrow t-ter">›</text>
+</view>
