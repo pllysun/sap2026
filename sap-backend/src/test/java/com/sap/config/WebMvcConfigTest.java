@@ -19,6 +19,9 @@ class WebMvcConfigTest {
         WebMvcConfig config = new WebMvcConfig();
         ReflectionTestUtils.setField(config, "allowedOrigins",
                 "http://localhost:5173,http://127.0.0.1:5173");
+        // 拦截器字段须为非空对象，addInterceptors 才能注册（此处不执行其内部逻辑）
+        ReflectionTestUtils.setField(config, "apiStatInterceptor", new ApiStatInterceptor());
+        ReflectionTestUtils.setField(config, "rateLimitInterceptor", new RateLimitInterceptor());
         return config;
     }
 

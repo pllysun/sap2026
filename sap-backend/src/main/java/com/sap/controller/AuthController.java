@@ -67,12 +67,9 @@ public class AuthController {
         return Result.ok("注册成功");
     }
 
-    /** 取客户端 IP（经 nginx 反代取 X-Forwarded-For 首段，否则 RemoteAddr）。 */
+    /** 取客户端 IP：统一走 {@link com.sap.util.IpUtil}（采信可信 X-Real-IP，避免 XFF 首段被伪造绕过风控）。 */
     private String clientIp(jakarta.servlet.http.HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
-        String ip = request.getRemoteAddr();
-        return ip != null ? ip : "unknown";
+        return com.sap.util.IpUtil.clientIp(request);
     }
 
     @GetMapping("/info")

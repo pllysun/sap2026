@@ -43,8 +43,8 @@ class SettingServiceTest extends BaseUnitTest {
 
         service.initDefaultSettings();
 
-        // 18 default keys are inserted when none exist
-        verify(settingMapper, times(18)).insert(any(Setting.class));
+        // 27 default keys are inserted when none exist
+        verify(settingMapper, times(27)).insert(any(Setting.class));
         verify(settingMapper, never()).updateById(any());
     }
 
@@ -69,7 +69,7 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(18)).updateById(any(Setting.class));
+        verify(settingMapper, times(27)).updateById(any(Setting.class));
     }
 
     @Test
@@ -80,7 +80,7 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(18)).updateById(any(Setting.class));
+        verify(settingMapper, times(27)).updateById(any(Setting.class));
     }
 
     // ===================== getValue =====================
