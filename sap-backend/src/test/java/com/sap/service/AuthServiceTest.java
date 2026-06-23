@@ -9,6 +9,7 @@ import com.sap.entity.Setting;
 import com.sap.entity.User;
 import com.sap.entity.UserRole;
 import com.sap.mapper.SettingMapper;
+import com.sap.mapper.TermMapper;
 import com.sap.mapper.UserMapper;
 import com.sap.mapper.UserRoleMapper;
 import com.sap.util.PasswordUtil;
@@ -39,6 +40,7 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock UserRoleMapper userRoleMapper;
     @Mock SettingMapper settingMapper;
     @Mock CacheService cacheService;
+    @Mock TermMapper termMapper;
 
     @InjectMocks AuthService service;
 

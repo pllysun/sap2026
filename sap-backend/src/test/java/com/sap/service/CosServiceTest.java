@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 class CosServiceTest {
 
     @Mock SettingService settingService;
+    @Mock TrafficService trafficService;
 
     @InjectMocks CosService service;
 

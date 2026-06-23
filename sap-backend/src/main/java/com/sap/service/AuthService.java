@@ -85,18 +85,14 @@ public class AuthService {
         return s != null && "true".equalsIgnoreCase(s.getSettingValue());
     }
 
-    /** 取客户端 IP（经 nginx 反代取 X-Forwarded-For 首段，否则 RemoteAddr）。 */
+    /** 取客户端 IP：统一走 {@link com.sap.util.IpUtil}（采信可信 X-Real-IP，避免 XFF 首段被伪造绕过锁定）。 */
     private String clientIp() {
         try {
             org.springframework.web.context.request.ServletRequestAttributes attr =
                     (org.springframework.web.context.request.ServletRequestAttributes)
                             org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
             if (attr == null) return "unknown";
-            jakarta.servlet.http.HttpServletRequest req = attr.getRequest();
-            String xff = req.getHeader("X-Forwarded-For");
-            if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
-            String ip = req.getRemoteAddr();
-            return ip != null ? ip : "unknown";
+            return com.sap.util.IpUtil.clientIp(attr.getRequest());
         } catch (Exception e) {
             return "unknown";
         }
@@ -108,9 +104,13 @@ public class AuthService {
         String key = dto.getStudentId() + "|" + clientIp();
         long now = System.currentTimeMillis();
         long[] rec = key != null ? loginAttempts.get(key) : null;
-        if (rec != null && rec[1] > now) {
-            long mins = (rec[1] - now) / 60000 + 1;
-            throw new BusinessException("登录失败次数过多，账号已临时锁定，请约 " + mins + " 分钟后再试");
+        if (rec != null) {
+            long lockUntil;
+            synchronized (rec) { lockUntil = rec[1]; } // 与 recordLoginFail 的写同锁，保证可见性
+            if (lockUntil > now) {
+                long mins = (lockUntil - now) / 60000 + 1;
+                throw new BusinessException("登录失败次数过多，账号已临时锁定，请约 " + mins + " 分钟后再试");
+            }
         }
 
         User user = userMapper.selectOne(

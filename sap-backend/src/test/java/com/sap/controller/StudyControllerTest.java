@@ -173,11 +173,16 @@ class StudyControllerTest extends BaseUnitTest {
     // ===================== 成员加入（含 StpUtil） =====================
 
     @Test
-    void autoJoin_usesParamUserIdWhenProvided() {
+    void autoJoin_ignoresParamUserId_forcesSelf() {
+        // 安全修复(HIGH-2)：即便请求体带 userId，也强制用当前登录用户，杜绝代他人加入
         Map<String, Long> params = new HashMap<>();
         params.put("userId", 88L);
-        controller.autoJoin(params);
-        verify(studyService).autoJoinLatest(88L);
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(1L);
+            controller.autoJoin(params);
+            verify(studyService).autoJoinLatest(1L);
+            verify(studyService, never()).autoJoinLatest(88L);
+        }
     }
 
     @Test
@@ -199,12 +204,17 @@ class StudyControllerTest extends BaseUnitTest {
     }
 
     @Test
-    void memberJoin_usesProvidedUserId() {
+    void memberJoin_ignoresProvidedUserId_forcesSelf() {
+        // 安全修复(HIGH-2)：即便请求体带 userId，也强制用当前登录用户
         Map<String, Long> params = new HashMap<>();
         params.put("activityId", 1L);
         params.put("userId", 50L);
-        controller.memberJoin(params);
-        verify(studyService).memberJoin(1L, 50L);
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(1L);
+            controller.memberJoin(params);
+            verify(studyService).memberJoin(1L, 1L);
+            verify(studyService, never()).memberJoin(1L, 50L);
+        }
     }
 
     @Test
