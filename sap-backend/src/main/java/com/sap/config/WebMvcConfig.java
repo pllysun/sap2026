@@ -35,8 +35,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @org.springframework.beans.factory.annotation.Autowired
     private ApiStatInterceptor apiStatInterceptor;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private RateLimitInterceptor rateLimitInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 限流最先执行：登录/注册等异常刷量在鉴权之前就被挡掉，避免无谓占用后端资源
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/ping", "/api/file/uploads/**");
+
         registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
