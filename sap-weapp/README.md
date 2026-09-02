@@ -5,7 +5,7 @@
 
 ## 技术栈
 - 微信原生（WXML / WXSS / JS），无第三方框架/组件库。
-- 后端：`sap-backend`（Spring Boot + Sa-Token），教务数据由后端代抓（WebVPN→CAS→强智）。
+- 后端：`sap-backend`（Spring Boot + Sa-Token），教务数据由后端代抓（优先 WebVPN→CAS→强智，WebVPN 启动失败时回退直连 CAS）。
 
 ## 目录结构
 ```

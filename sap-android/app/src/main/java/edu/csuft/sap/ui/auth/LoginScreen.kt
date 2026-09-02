@@ -175,7 +175,7 @@ fun LoginScreen(
                     .padding(horizontal = 22.dp, vertical = 26.dp),
             ) {
                 Text(
-                    "会员登录",
+                    "账号登录",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,

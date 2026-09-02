@@ -50,12 +50,21 @@ Page({
     evalTerm: '',           // 当前评教学期（可空，后端给默认）
     evalTerms: [],          // 可切学期 string[]
     evalTermLabel: '全部',
+    evalTaskId: null,
+    evalRestrictHighest: false,
+    evalRestrictLowest: false,
     tasks: [],
     hasUnEvaluated: false,
     showEvalTermSheet: false,
     evalResults: [],        // 一键评教结果弹层
     showEvalResult: false,
     autoLoading: false,
+    showEvalForm: false,
+    formLoading: false,
+    submitLoading: false,
+    manualForm: null,
+    manualQuestions: [],
+    manualTotal: '0',
   },
 
   onLoad() { this.boot() },
@@ -277,18 +286,27 @@ Page({
   renderEval(dto, syncedAt) {
     const d = dto || {}
     const tasks = (d.tasks || []).map((t) => ({
+      taskId: t.taskId || d.taskId,
+      courseId: t.courseId,
+      courseCode: t.courseCode,
+      courseName: t.courseName,
       teacherNo: t.teacherNo,
       teacher: t.teacher,
       college: t.college,
       typeName: t.typeName,
       evaluated: t.evaluated,
+      status: t.status == null ? (t.evaluated ? 1 : 0) : t.status,
+      canEvaluate: (t.status == null ? (t.evaluated ? 1 : 0) : t.status) === 0,
       score: t.score,
-      statusText: t.evaluated ? (t.score != null && t.score !== '' ? String(t.score) : '已评') : '未评',
+      statusText: t.statusText || (t.evaluated ? (t.score != null && t.score !== '' ? String(t.score) : '已评') : '未评'),
     }))
-    const hasUn = tasks.some((t) => t.evaluated === false)
+    const hasUn = tasks.some((t) => t.canEvaluate)
     this.setData({
       tasks,
       hasUnEvaluated: hasUn,
+      evalTaskId: d.taskId || null,
+      evalRestrictHighest: !!d.restrictHighest,
+      evalRestrictLowest: !!d.restrictLowest,
       evalTerm: d.term || this.data.evalTerm || '',
       evalTerms: d.terms || [],
       evalTermLabel: d.term ? (term.isTerm(d.term) ? term.label(d.term) : d.term) : '全部',
@@ -323,12 +341,164 @@ Page({
     this.loadEval() // 切学期只读缓存
   },
 
-  /** 一键自动评教。 */
+  /** 打开单门课程的自定义评价表。 */
+  openEvalForm(e) {
+    if (this.data.formLoading || this.data.submitLoading) return
+    const taskId = Number(e.currentTarget.dataset.taskid || this.data.evalTaskId)
+    const courseId = Number(e.currentTarget.dataset.courseid)
+    if (!taskId || !courseId) return
+    this.setData({ formLoading: true })
+    wx.showLoading({ title: '加载量表…', mask: true })
+    api.evalForm(this.data.account, taskId, courseId).then((res) => {
+      wx.hideLoading()
+      this.setData({ formLoading: false })
+      if (res.code !== 200) {
+        wx.showToast({ title: res.message || '量表加载失败', icon: 'none' })
+        return
+      }
+      const form = res.data || {}
+      const questions = (form.questions || []).map((q) => ({
+        indexId: q.indexId,
+        order: q.order,
+        section: q.section,
+        type: q.type,
+        title: q.title,
+        remark: q.remark,
+        required: !!q.required,
+        scored: !!q.scored,
+        maxScore: q.maxScore,
+        scoringType: q.scoringType,
+        options: q.options || [],
+        value: q.type === '问答题' ? (form.defaultComment || '') : '',
+        optionId: '',
+        optionIds: [],
+      }))
+      this.setData({
+        manualForm: form,
+        manualQuestions: questions,
+        manualTotal: '0',
+        showEvalForm: true,
+      })
+      this.calcManualTotal()
+    }).catch((err) => {
+      wx.hideLoading()
+      this.setData({ formLoading: false })
+      wx.showToast({ title: (err && err.message) || '量表加载失败', icon: 'none' })
+    })
+  },
+
+  closeEvalForm() {
+    if (this.data.submitLoading) return
+    this.setData({ showEvalForm: false, manualForm: null, manualQuestions: [], manualTotal: '0' })
+  },
+
+  onEvalInput(e) {
+    const i = Number(e.currentTarget.dataset.index)
+    this.setData({ ['manualQuestions[' + i + '].value']: e.detail.value })
+    this.calcManualTotal()
+  },
+
+  onEvalRadio(e) {
+    const i = Number(e.currentTarget.dataset.index)
+    this.setData({ ['manualQuestions[' + i + '].optionId']: e.detail.value })
+    this.calcManualTotal()
+  },
+
+  onEvalCheckbox(e) {
+    const i = Number(e.currentTarget.dataset.index)
+    this.setData({ ['manualQuestions[' + i + '].optionIds']: e.detail.value || [] })
+  },
+
+  calcManualTotal() {
+    let total = 0
+    ;(this.data.manualQuestions || []).forEach((q) => {
+      if (!q.scored) return
+      if (q.type === '打分题') {
+        const n = Number(q.value)
+        if (q.value !== '' && !isNaN(n)) total += n
+      } else if (q.type === '单选题') {
+        const option = (q.options || []).find((o) => String(o.id) === String(q.optionId))
+        if (option && !isNaN(Number(option.score))) total += Number(option.score)
+      }
+    })
+    this.setData({ manualTotal: String(Math.round(total * 100) / 100) })
+  },
+
+  submitManualEval() {
+    if (this.data.submitLoading || !this.data.manualForm) return
+    const answers = []
+    for (const q of this.data.manualQuestions) {
+      const a = { indexId: q.indexId }
+      if (q.type === '打分题') {
+        if (q.required && (q.value == null || String(q.value).trim() === '')) return this.evalFormError('第' + q.order + '题为必填项')
+        if (q.value !== '') {
+          const n = Number(q.value)
+          if (isNaN(n) || n < 0 || n > Number(q.maxScore)) return this.evalFormError('第' + q.order + '题分数应在 0～' + q.maxScore + ' 之间')
+          a.score = n
+        }
+      } else if (q.type === '单选题') {
+        if (q.required && !q.optionId) return this.evalFormError('请选择第' + q.order + '题')
+        if (q.optionId) a.optionId = Number(q.optionId)
+      } else if (q.type === '多选题') {
+        if (q.required && !(q.optionIds || []).length) return this.evalFormError('请选择第' + q.order + '题')
+        a.optionIds = (q.optionIds || []).map(Number)
+      } else if (q.type === '填空题') {
+        a.values = String(q.value || '').split('|').map((v) => v.trim())
+        if (q.required && a.values.some((v) => !v)) return this.evalFormError('请完整填写第' + q.order + '题')
+      } else {
+        a.text = String(q.value || '').trim()
+        if (q.required && !a.text) return this.evalFormError('第' + q.order + '题为必填项')
+      }
+      answers.push(a)
+    }
+    wx.showModal({
+      title: '确认提交评价',
+      content: '本次总分 ' + this.data.manualTotal + '，提交后通常无法修改，确定继续？',
+      success: (r) => { if (r.confirm) this.doSubmitManual(answers) },
+    })
+  },
+
+  doSubmitManual(answers) {
+    const form = this.data.manualForm
+    this.setData({ submitLoading: true })
+    wx.showLoading({ title: '提交中…', mask: true })
+    api.evalSubmit({
+      account: this.data.account,
+      taskId: form.taskId,
+      courseId: form.courseId,
+      answers,
+    }).then((res) => {
+      wx.hideLoading()
+      this.setData({ submitLoading: false })
+      if (res.code !== 200) return this.evalFormError(res.message || '评价提交失败')
+      const result = res.data || {}
+      this.setData({
+        showEvalForm: false,
+        manualForm: null,
+        manualQuestions: [],
+        evalResults: [result],
+        showEvalResult: true,
+      })
+      this.syncEval()
+    }).catch((err) => {
+      wx.hideLoading()
+      this.setData({ submitLoading: false })
+      this.evalFormError((err && err.message) || '评价提交失败')
+    })
+  },
+
+  evalFormError(message) {
+    wx.showToast({ title: message, icon: 'none', duration: 2600 })
+  },
+
+  /** 一键提交平台允许的最高评分。 */
   autoEval() {
     if (this.data.autoLoading) return
     wx.showModal({
-      title: '一键自动评教',
-      content: '将对所有未评教任务自动提交评价，确定继续？',
+      title: '一键满评',
+      content: this.data.evalRestrictHighest
+        ? '平台禁止所有题都选最高分。本功能会对全部待评课程提交最高合法分（当前量表通常为 99.99）和好评，提交后不可修改。确定继续？'
+        : '将对全部待评课程提交满分和好评，提交后不可修改。确定继续？',
       success: (r) => { if (r.confirm) this.doAutoEval() },
     })
   },
@@ -336,11 +506,13 @@ Page({
   doAutoEval() {
     this.setData({ autoLoading: true })
     wx.showLoading({ title: '评教中…', mask: true })
-    api.evalAuto({ account: this.data.account, term: this.data.evalTerm || null, comment: '' }).then((res) => {
+    api.evalAuto({ account: this.data.account, taskId: this.data.evalTaskId, term: this.data.evalTerm || null, comment: '' }).then((res) => {
       wx.hideLoading()
       this.setData({ autoLoading: false })
       if (res.code === 200) {
         const results = (res.data || []).map((x) => ({
+          courseId: x.courseId,
+          courseName: x.courseName,
           teacher: x.teacher,
           typeName: x.typeName,
           success: x.success,

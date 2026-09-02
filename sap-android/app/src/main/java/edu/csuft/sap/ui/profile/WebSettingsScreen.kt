@@ -48,12 +48,13 @@ import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.common.ScreenHeader
+import edu.csuft.sap.ui.feedback.FeedbackScreen
 
-private enum class WebRoute { HOME, PROFILE_EDIT, THEME, PRIVACY, CHANGELOG }
+private enum class WebRoute { HOME, PROFILE_EDIT, FEEDBACK, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG }
 
 /**
  * Web 模式底栏「设置」页：个人信息(登录账号) + 修改主题色 + 隐私协议 + 退出登录。
- * 会员还可在此切回教务模式(非会员强制 WEB，不显示该开关)。复用 ProfileViewModel / ThemeScreen / PrivacyScreen。
+ * 完整 App 能力下还可在此切回教务模式。复用 ProfileViewModel / ThemeScreen / PrivacyScreen。
  */
 @Composable
 fun WebSettingsScreen(
@@ -100,7 +101,7 @@ fun WebSettingsScreen(
                     LoadingBox()
                 } else {
                     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                        // 个人信息（当前登录账号）；在线时点击进编辑（会员/非会员都可改资料）；离线兜底时显示「离线模式」不可点
+                        // 个人信息：在线时可编辑；离线兜底时显示「离线模式」且不可点。
                         SapCard(onClick = if (ConnectivityState.online) ({ route = WebRoute.PROFILE_EDIT }) else null) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -155,13 +156,22 @@ fun WebSettingsScreen(
                                 }
                             }
                         }
-                        // 隐私协议
+                        // 课表公告：联网刷新，断网时仍可查看最近一次缓存。
                         Box(Modifier.padding(top = 12.dp)) {
-                            SapCard(onClick = { route = WebRoute.PRIVACY }) {
+                            SapCard(onClick = { route = WebRoute.ANNOUNCEMENTS }) {
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
+                                    Text("课表公告", fontSize = 15.sp, modifier = Modifier.weight(1f))
+                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                        }
+                        // 隐私协议
+                        Box(Modifier.padding(top = 12.dp)) {
+                            SapCard(onClick = { route = WebRoute.PRIVACY }) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Text("隐私协议", fontSize = 15.sp, modifier = Modifier.weight(1f))
                                     Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
                                 }
@@ -179,8 +189,25 @@ fun WebSettingsScreen(
                                 }
                             }
                         }
-                        // 模式切换：仅会员可见（非会员强制 Web 模式）
-                        if (MemberState.isMember) {
+                        // 所有已登录账号均可反馈；具体防滥用规则由接口在真正触发时返回提示。
+                        Box(Modifier.padding(top = 12.dp)) {
+                            SapCard(onClick = if (ConnectivityState.online) ({ route = WebRoute.FEEDBACK }) else null) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text("意见反馈", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                                        Text(
+                                            if (ConnectivityState.online) "提交建议并查看维护者处理进度"
+                                            else "当前离线，联网后可提交和查看反馈",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(top = 2.dp))
+                                    }
+                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                        }
+                        // 完整 App 能力下可在两种数据模式之间切换。
+                        if (MemberState.hasFullAppFeatures) {
                             Box(Modifier.padding(top = 12.dp)) {
                                 SapCard {
                                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -217,7 +244,9 @@ fun WebSettingsScreen(
                 }
             }
             WebRoute.PROFILE_EDIT -> ProfileEditScreen(modifier = modifier, vm = vm, onBack = { route = WebRoute.HOME })
+            WebRoute.FEEDBACK -> FeedbackScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
             WebRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
+            WebRoute.ANNOUNCEMENTS -> AnnouncementScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
             WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME }, web = true, offline = !ConnectivityState.online)
             WebRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
         }

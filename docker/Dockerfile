@@ -35,7 +35,20 @@ RUN mvn dependency:go-offline -B
 
 # 拷贝源码并编译
 COPY sap-backend/src ./src
-RUN mvn package -DskipTests -B
+# Maven Central 偶尔会在大依赖传输途中断开连接。把重试放在同一个镜像层内，
+# 这样已成功下载的依赖会被复用，失败的文件则由 Maven 在下一轮继续解析。
+RUN set -eu; \
+    attempt=1; \
+    while ! mvn package -DskipTests -B -Dmaven.wagon.http.retryHandler.count=5; do \
+        if [ "$attempt" -ge 5 ]; then \
+            echo "Maven build failed after ${attempt} attempts" >&2; \
+            exit 1; \
+        fi; \
+        echo "Maven download interrupted; retrying build (${attempt}/5)..." >&2; \
+        find /root/.m2/repository -name '*.lastUpdated' -delete; \
+        attempt=$((attempt + 1)); \
+        sleep $((attempt * 2)); \
+    done
 
 # ----- Stage 3: 运行时 -----
 # 使用 eclipse-temurin JRE (Ubuntu jammy 基础镜像)
@@ -87,7 +100,7 @@ EXPOSE 80 443
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget -qO- http://localhost:80/ || exit 1
+    CMD wget --no-check-certificate -qO- https://localhost:443/ || exit 1
 
 # 安全说明：本容器当前以 root 用户运行。
 #   原因：同一容器内的 Nginx 与 Certbot 需要 root 权限监听 80/443

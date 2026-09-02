@@ -120,20 +120,6 @@
           <p style="font-size:12px;color:#aaa;margin-top:8px;">审核通过入会申请时，将自动记录此金额为收入</p>
         </div>
 
-        <!-- 非会员登录开关 -->
-        <div class="zen-card">
-          <div class="card-header">
-            <span class="card-header__icon">🔓</span>
-            <span class="card-header__title">非会员登录</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <p style="flex:1;font-size:13px;color:#666;margin:0;">
-              开启后，非协会会员也可登录 App（仅课表功能，需自行 WebVPN 导入）；关闭则仅会员可登录。
-            </p>
-            <el-switch v-model="guestLogin" :loading="guestSaving" @change="handleSaveGuestLogin" />
-          </div>
-        </div>
-
         <!-- 招新群配置 -->
         <div class="zen-card">
           <div class="card-header">
@@ -337,10 +323,6 @@ const originalFee = ref(30)
 const feeSaving = ref(false)
 const feeChanged = computed(() => membershipFee.value !== originalFee.value)
 
-// 非会员登录开关
-const guestLogin = ref(false)
-const guestSaving = ref(false)
-
 const roleCodeLabel = (code) => {
   const map = { 0: '超管', 1: '会长', 2: '管理员', 3: '成员', 4: '游客' }
   return map[code] || code
@@ -372,27 +354,7 @@ onMounted(async () => {
   loadFooterConfig()
   loadCurrentGrade()
   loadMembershipFee()
-  loadGuestLogin()
 })
-
-const loadGuestLogin = async () => {
-  try {
-    const res = await getSettingValue('allow_guest_login')
-    guestLogin.value = res.data === 'true' || res.data === true
-  } catch (e) {}
-}
-
-const handleSaveGuestLogin = async (val) => {
-  guestSaving.value = true
-  try {
-    await updateSetting({ settingKey: 'allow_guest_login', settingValue: String(val) })
-    ElMessage.success(val ? '已开放非会员登录' : '已关闭非会员登录')
-  } catch (e) {
-    guestLogin.value = !val // 失败回滚开关
-  } finally {
-    guestSaving.value = false
-  }
-}
 
 const loadCurrentGrade = async () => {
   try {
@@ -625,5 +587,3 @@ const handleSaveFooterConfig = async () => {
   }
 }
 </script>
-
-

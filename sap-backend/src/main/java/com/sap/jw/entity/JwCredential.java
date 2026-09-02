@@ -38,6 +38,11 @@ public class JwCredential {
             columnDefinition = "VARCHAR(512) COMMENT '学校密码(AES加密)'")
     private String jwPasswordEnc;
 
+    /** 用户自定义备注名；跟随“会员账号 + 教务账号”服务端持久化。 */
+    @jakarta.persistence.Column(name = "remark", length = 40,
+            columnDefinition = "VARCHAR(40) COMMENT '教务账号备注名'")
+    private String remark;
+
     /** 状态：0禁用 1正常 */
     @jakarta.persistence.Column(name = "status",
             columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态 0禁用 1正常'")

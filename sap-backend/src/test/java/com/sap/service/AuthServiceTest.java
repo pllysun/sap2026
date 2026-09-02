@@ -41,6 +41,7 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock SettingMapper settingMapper;
     @Mock CacheService cacheService;
     @Mock TermMapper termMapper;
+    @Mock AppAccessService appAccessService;
 
     @InjectMocks AuthService service;
 
@@ -78,6 +79,49 @@ class AuthServiceTest extends BaseUnitTest {
             assertEquals(1L, vo.getId());
             assertEquals("S-ok", vo.getStudentId());
             st.verify(() -> StpUtil.login(1L));
+        }
+    }
+
+    @Test
+    void appLogin_guestLevelZero_isRejectedWithoutChangingRole() {
+        User u = user(101L, "guest-zero", "pw", 1);
+        when(userMapper.selectOne(any())).thenReturn(u);
+        when(userRoleMapper.selectRoleCodesByUserId(101L)).thenReturn(List.of(4));
+        when(appAccessService.guestAccessLevel()).thenReturn(0);
+
+        try (MockedStatic<StpUtil> ignored = mockStatic(StpUtil.class)) {
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> service.appLogin(loginDto("guest-zero", "pw")));
+            assertEquals(403, ex.getCode());
+        }
+    }
+
+    @Test
+    void appLogin_guestLevelTwo_getsFullAppLevelButKeepsGuestRole() {
+        User u = user(102L, "guest-full", "pw", 1);
+        when(userMapper.selectOne(any())).thenReturn(u);
+        when(userRoleMapper.selectRoleCodesByUserId(102L)).thenReturn(List.of(4));
+        when(appAccessService.guestAccessLevel()).thenReturn(2);
+
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getTokenValue).thenReturn("app-token");
+            Map<String, Object> result = service.appLogin(loginDto("guest-full", "pw"));
+            assertEquals(2, result.get("appAccessLevel"));
+            assertEquals(List.of(4), result.get("roles"));
+        }
+    }
+
+    @Test
+    void appLogin_realMemberAlwaysGetsFullLevel() {
+        User u = user(103L, "member", "pw", 1);
+        when(userMapper.selectOne(any())).thenReturn(u);
+        when(userRoleMapper.selectRoleCodesByUserId(103L)).thenReturn(List.of(3));
+
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getTokenValue).thenReturn("app-token");
+            Map<String, Object> result = service.appLogin(loginDto("member", "pw"));
+            assertEquals(2, result.get("appAccessLevel"));
+            verify(appAccessService, never()).guestAccessLevel();
         }
     }
 

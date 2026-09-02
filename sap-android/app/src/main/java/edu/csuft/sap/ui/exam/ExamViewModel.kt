@@ -10,6 +10,7 @@ import edu.csuft.sap.di.Graph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,9 @@ class ExamViewModel : ViewModel() {
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch { acc.active.collect { loadCache() } }
+        viewModelScope.launch {
+            combine(acc.active, acc.contextVersion) { _, _ -> Unit }.collect { loadCache() }
+        }
         // 教务短信验证通过后自动重试同步
         viewModelScope.launch { JwMfaState.passedTick.drop(1).collect { sync() } }
     }

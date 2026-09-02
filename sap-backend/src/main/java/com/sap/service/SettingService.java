@@ -38,7 +38,10 @@ public class SettingService {
         insertIfAbsent("join_qq_group_url", "", "入会-新生群二维码");
         insertIfAbsent("join_qq_group_name", "", "入会-新生群名称");
         insertIfAbsent("join_group_link", "", "入会-一键加群链接");
-        insertIfAbsent("allow_guest_login", "false", "是否允许非会员(游客)登录App");
+        // 旧版只有 allow_guest_login(bool)。首次升级时无损映射：false→0，true→1；
+        // 后续统一由 guest_access_level(0关闭/1基础/2完整App能力)维护。
+        insertIfAbsent("allow_guest_login", "false", "旧版非会员登录开关（仅用于迁移）");
+        migrateGuestAccessLevel();
 
         // 安卓 App 在线升级（由管理端「App 版本发布」页维护，APK 走 COS）
         insertIfAbsent("app_version_code", "0", "App 最新 versionCode（0=未发布）");
@@ -65,6 +68,27 @@ public class SettingService {
             existing.setDescription(description);
             settingMapper.updateById(existing);
         }
+    }
+
+    private void migrateGuestAccessLevel() {
+        Setting existing = settingMapper.selectOne(
+                new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey,
+                        AppAccessService.GUEST_ACCESS_LEVEL_KEY));
+        String description = "软协课表游客权限等级：0关闭、1基础、2完整App能力";
+        if (existing != null) {
+            if (existing.getDescription() == null || existing.getDescription().trim().isEmpty()) {
+                existing.setDescription(description);
+                settingMapper.updateById(existing);
+            }
+            return;
+        }
+        Setting legacy = settingMapper.selectOne(
+                new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, "allow_guest_login"));
+        Setting level = new Setting();
+        level.setSettingKey(AppAccessService.GUEST_ACCESS_LEVEL_KEY);
+        level.setSettingValue(legacy != null && "true".equalsIgnoreCase(legacy.getSettingValue()) ? "1" : "0");
+        level.setDescription(description);
+        settingMapper.insert(level);
     }
 
     public String getValue(String key) {

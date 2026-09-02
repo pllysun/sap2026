@@ -4,6 +4,8 @@
 >
 > DockerHub: [pllysun/sap](https://hub.docker.com/r/pllysun/sap) · License: [MIT](LICENSE)
 
+Android App 的 AI/人工测试构建与在线发布统一遵循 [APP_BUILD_RELEASE.md](APP_BUILD_RELEASE.md)。
+
 ---
 
 ## 📋 目录

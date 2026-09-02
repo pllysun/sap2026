@@ -1,8 +1,11 @@
 package edu.csuft.sap.update
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -117,7 +120,41 @@ private fun ChangelogBody(info: AppVersionDto) {
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        val log = info.changelog?.takeIf { it.isNotBlank() } ?: "优化与修复。"
-        Text(log, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp), lineHeight = 20.sp)
+        Spacer(Modifier.height(10.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            changelogItems(info.changelog).forEach { item ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Text(
+                        "•",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        item,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                    )
+                }
+            }
+        }
     }
+}
+
+private val CHANGELOG_ITEM_PREFIX = Regex("^(?:[-*•·●▪◦]+|\\d+[.)、])\\s*")
+
+/**
+ * 服务端约定每行是一条更新内容，项目符号属于客户端展示样式。
+ * 同时容忍管理端手工输入的项目符号，避免出现重复符号。
+ */
+internal fun changelogItems(changelog: String?): List<String> {
+    val items = changelog.orEmpty()
+        .lineSequence()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .map { it.replaceFirst(CHANGELOG_ITEM_PREFIX, "").trim() }
+        .filter { it.isNotEmpty() }
+        .toList()
+    return items.ifEmpty { listOf("优化与修复。") }
 }

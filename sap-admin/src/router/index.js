@@ -73,10 +73,14 @@ const routes = [
         meta: { title: '入会管理' }
       },
       {
+        path: 'schedule-app',
+        name: 'ScheduleApp',
+        component: () => import('../views/ScheduleAppView.vue'),
+        meta: { title: '软协课表' }
+      },
+      {
         path: 'app-release',
-        name: 'AppRelease',
-        component: () => import('../views/AppReleaseView.vue'),
-        meta: { title: 'App 版本发布' }
+        redirect: { path: '/schedule-app', query: { tab: 'release' } }
       }
     ]
   }

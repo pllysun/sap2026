@@ -2,6 +2,8 @@
 
 中南林业软件协会 App：会员登录（永久免密）+ 课表 / 成绩 / 考试，数据来自 `sap-backend` 的 `/api/jw/*` 教务接口。
 
+AI、人工与 GitHub Actions 的测试打包、正式构建和在线发布统一遵循仓库根目录 [`APP_BUILD_RELEASE.md`](../APP_BUILD_RELEASE.md)。测试包自动递增构建号但不发布；正式流程会再次递增、全新构建，并把同一份更新日志写入 App 与升级平台。
+
 ## 技术栈
 - Kotlin + Jetpack Compose（Material 3）
 - Retrofit + OkHttp + Gson（网络）
