@@ -37,6 +37,26 @@ export const publishAppVersion = (formData) => request.post('/api/app/version/pu
   headers: { 'Content-Type': 'multipart/form-data' }
 })
 
+// ===== 软协课表意见反馈 Issue 中心 =====
+export const getScheduleAppSummary = (days) => request.get('/api/app/feedback/admin/summary', { params: { days } })
+export const getFeedbackIssues = (params) => request.get('/api/app/feedback/issues', { params })
+export const getFeedbackIssue = (id) => request.get(`/api/app/feedback/issues/${id}`)
+export const replyFeedbackIssue = (id, content, parentId = null) =>
+  request.post(`/api/app/feedback/issues/${id}/comments`, { content, parentId })
+export const updateFeedbackStatus = (id, status) => request.put(`/api/app/feedback/admin/issues/${id}/status`, { status })
+export const deleteFeedbackIssue = (id) => request.delete(`/api/app/feedback/admin/issues/${id}`)
+
+// ===== 软协课表云控（游客能力等级 + 公告） =====
+export const getScheduleCloud = () => request.get('/api/app/cloud/admin')
+export const updateGuestAccessLevel = (level) =>
+  request.put('/api/app/cloud/admin/guest-access-level', { level })
+export const createScheduleAnnouncement = (data) =>
+  request.post('/api/app/cloud/admin/announcements', data)
+export const updateScheduleAnnouncement = (id, data) =>
+  request.put(`/api/app/cloud/admin/announcements/${id}`, data)
+export const deleteScheduleAnnouncement = (id) =>
+  request.delete(`/api/app/cloud/admin/announcements/${id}`)
+
 // ===== 身份 =====
 export const getPositions = () => request.get('/api/position/list')
 export const addPosition = (data) => request.post('/api/position', data)

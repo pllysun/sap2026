@@ -23,6 +23,8 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <fastjson2.version>2.0.47</fastjson2.version>
         <knife4j.version>4.5.0</knife4j.version>
+        <!-- Spring Boot 3.2.5 管理的 1.18.32 无法兼容当前 JDK 21 补丁版本。 -->
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencies>
@@ -165,6 +167,21 @@
 
     <build>
         <plugins>
+            <!-- 显式声明 Lombok 注解处理器，避免 JDK/Maven 升级后依赖自动发现失效，
+                 造成 DTO/VO 的 getter、setter 在镜像构建阶段随机缺失。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

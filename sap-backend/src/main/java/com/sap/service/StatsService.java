@@ -57,7 +57,7 @@ public class StatsService {
         return s.length() >= 10 ? s.substring(0, 10) : s;
     }
 
-    /** 概览卡片：总上传/下载字节、总请求数、活跃用户数。 */
+    /** 概览卡片：总上传/下载字节、总请求数、活跃用户数、课程表使用人数。 */
     public Map<String, Object> overview(int days) {
         LocalDate start = startOf(days);
         Map<String, Object> cos = cosTrafficMapper.totals(start);
@@ -66,10 +66,18 @@ public class StatsService {
         r.put("downloadBytes", toLong(ci(cos, "downloadBytes")));
         Long total = apiRequestStatMapper.totalRequests(start);
         Long active = apiRequestStatMapper.activeUsers(start);
+        Long scheduleUsers = apiRequestStatMapper.scheduleUsers(start);
         r.put("totalRequests", total != null ? total : 0L);
         r.put("activeUsers", active != null ? active : 0L);
+        r.put("scheduleUsers", scheduleUsers != null ? scheduleUsers : 0L);
         r.put("days", days <= 0 ? 7 : days);
         return r;
+    }
+
+    /** 软协课表专属页：统计窗口内访问课表接口的去重登录用户数。 */
+    public long scheduleUsers(int days) {
+        Long count = apiRequestStatMapper.scheduleUsers(startOf(days));
+        return count == null ? 0L : count;
     }
 
     public List<Map<String, Object>> cosByUser(int days) {

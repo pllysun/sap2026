@@ -14,8 +14,8 @@ android {
         applicationId = "edu.csuft.sap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 35
-        versionName = "1.26"
+        versionCode = 71
+        versionName = "1.36"
         // 后端地址：模拟器用 10.0.2.2 指向宿主机；真机改成局域网IP或部署域名
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081\"")
     }
@@ -114,4 +114,4 @@ tasks.register<Copy>("copyReleaseApk") {
     into(releaseOutDir)
     doLast { println("✓ release APK + mapping -> $releaseOutDir") }
 }
-tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy("copyReleaseApk") }
+// 不自动归档：测试包和正式发布包的目录/命名由 build-release.sh 按显式模式控制。

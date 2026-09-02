@@ -1,0 +1,156 @@
+name: Android 测试包
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "sap-android/**"
+      - "APP_BUILD_RELEASE.md"
+      - ".github/workflows/android-test.yml"
+      - ".github/workflows/android-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-app-version
+  cancel-in-progress: false
+
+jobs:
+  build-test-apk:
+    name: 递增版本并构建测试 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: 检出默认分支
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.APP_VERSION_PAT || github.token }}
+
+      - name: 限制在默认分支运行
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" != "branch" || "$GITHUB_REF_NAME" != "$DEFAULT_BRANCH" ]]; then
+            echo "测试打包只能在默认分支 $DEFAULT_BRANCH 运行，当前为 $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: 配置 JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: 配置 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 安装 Android 构建工具
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: 配置 Gradle 8.9
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+
+      - name: 配置发布签名
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "$ANDROID_KEYSTORE_BASE64" ]] || missing+=("ANDROID_KEYSTORE_BASE64")
+          [[ -n "$ANDROID_KEYSTORE_PASSWORD" ]] || missing+=("ANDROID_KEYSTORE_PASSWORD")
+          [[ -n "$ANDROID_KEY_ALIAS" ]] || missing+=("ANDROID_KEY_ALIAS")
+          [[ -n "$ANDROID_KEY_PASSWORD" ]] || missing+=("ANDROID_KEY_PASSWORD")
+          if (( ${#missing[@]} > 0 )); then
+            printf '缺少 GitHub Actions Secret: %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/sap-release.jks"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/sap-release.jks"
+            printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+          } > sap-android/keystore.properties
+
+      - name: 预留下一个测试版本号
+        id: version
+        run: |
+          set -euo pipefail
+          ./sap-android/build-release.sh --test --prepare-only
+          version_code="$(sed -nE 's/.*versionCode = ([0-9]+).*/\1/p' sap-android/app/build.gradle.kts | head -1)"
+          version_name="$(sed -nE 's/.*versionName = "([^"]+)".*/\1/p' sap-android/app/build.gradle.kts | head -1)"
+          [[ -n "$version_code" && -n "$version_name" ]]
+          printf 'code=%s\n' "$version_code" >> "$GITHUB_OUTPUT"
+          printf 'name=%s\n' "$version_name" >> "$GITHUB_OUTPUT"
+
+      - name: 持久化测试版本号
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sap-android/app/build.gradle.kts
+          if git diff --cached --quiet; then
+            echo "versionCode 没有发生变化，拒绝复用测试版本号"
+            exit 1
+          fi
+          git commit -m "chore(android): reserve test build ${VERSION_CODE} [skip ci]"
+          git pull --rebase origin "$DEFAULT_BRANCH"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+
+      - name: 全新构建测试 APK
+        env:
+          GRADLE_BIN: gradle
+        run: ./sap-android/build-release.sh --test --no-bump
+
+      - name: 校验 APK 版本与签名
+        id: apk
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -euo pipefail
+          apk="release/test/sap-test-${VERSION_NAME}-${VERSION_CODE}.apk"
+          [[ -f "$apk" ]]
+          badging="$("$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk" | head -1)"
+          grep -Fq "versionCode='${VERSION_CODE}'" <<< "$badging"
+          grep -Fq "versionName='${VERSION_NAME}'" <<< "$badging"
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs "$apk"
+          printf 'sha256=%s\n' "$(sha256sum "$apk" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: 保存测试产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: sap-test-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}
+          path: release/test/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: 写入任务摘要
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          APK_SHA256: ${{ steps.apk.outputs.sha256 }}
+        run: |
+          {
+            echo "## Android 测试包构建完成"
+            echo
+            echo "- 版本：${VERSION_NAME} (${VERSION_CODE})"
+            echo "- SHA-256：\`${APK_SHA256}\`"
+            echo "- 用途：仅供测试，未写更新日志，也未上传在线升级平台"
+          } >> "$GITHUB_STEP_SUMMARY"

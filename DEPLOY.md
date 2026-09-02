@@ -106,25 +106,18 @@ keytool -genkeypair -v -keystore sap-release.jks -alias sap \
 ```
 > **keystore 丢失 = 永远无法发布升级包**，务必异地备份。已配置：缺 `keystore.properties` 时回退 debug 签名（不可上架）。
 
-### 4.2 出混淆包（必须走脚本，自动升版本号）
-**正式打包统一用脚本** `sap-android/build-release.sh`。
-> 🟦 **版本号约定（重要）**：`versionName`（1.13 → 1.14 …）= **对外发布版本**，每次发布递增，是用户看到的「版本」；`versionCode`（21、22…）= **内部构建号**，仅内部使用，每次构建自动 +1（在线升级只靠它比大小判更新）。
+### 4.2 测试包与正式发布包
 
-脚本默认升「对外版本」`versionName` 末位、`versionCode` 始终内部 +1，再 R8 混淆+资源压缩+正式签名打包，按版本归档到 `release/`，杜绝"忘了升版本号"：
+完整且优先级最高的流程见仓库根目录 [`APP_BUILD_RELEASE.md`](APP_BUILD_RELEASE.md)。构建必须显式选择模式：
+
 ```bash
 cd sap-android
-./build-release.sh                # 发对外新版本：versionName 末位 +1（1.13→1.14）、versionCode 内部 +1
-./build-release.sh --name 2.0     # 指定 versionName=2.0（大版本跳号）、versionCode 内部 +1
-./build-release.sh --build-only   # 仅内部构建：versionCode +1、versionName 不变（不对外发版）
-./build-release.sh --no-bump      # 仅重打当前版本（慎用，用户端识别不到更新）
+./build-release.sh --test                 # 测试：升 versionCode，不写/不校验更新日志，不得上传平台
+./build-release.sh --release              # 正式发布：升版本并强制校验 App 更新日志
+./build-release.sh --release --name 2.0   # 指定正式 versionName
 ```
-脚本做了：升版本号 → **校验更新日志（条目的 (versionCode, versionName) 必须与本次构建完全一致）** → `clean :app:assembleRelease` → 产物归档 `release/sap-<vn>-<vc>.apk` + `mapping-<vn>-<vc>.txt` → 打印 大小/SHA-256/签名证书。缺 `keystore.properties` 会直接中止（不会出 debug 签名包）。可用 `JAVA_HOME`/`GRADLE_BIN` 覆盖工具路径（跨机/CI）。
 
-> 🔴 **打包铁律：每个版本都要写「更新日志」**。即将发布的 `(versionCode, versionName)` 必须在
-> `sap-android/app/src/main/java/edu/csuft/sap/update/Changelog.kt` 的 `entries` 里有**完全匹配**的条目，**否则 `build-release.sh` 直接中止**（与"强制 versionCode +1"同级的硬约束）。
-> - 发版前先在 `Changelog.kt` 的 `entries`【最前面】加一条（`versionCode` 与 `versionName` 写同一行）：`ChangelogEntry(versionCode = <新号>, versionName = "<对外版本>", date = "<yyyy-MM-dd>", changes = listOf("...", "..."))`，再跑脚本。
-> - 该更新日志**内置在 App 内**，用户在「设置 → 更新日志」可查看全部历史版本（教务 / Web / 离线模式均可见，离线也能看）。
-> - 这与下方 §4.4「版本台账」是两份独立记录：台账给我们维护用、Changelog.kt 给用户看，**每次发版两者都要更新**。
+所有 APK 都要有递增的 `versionCode`。只有真正上传在线升级平台的正式版本才写 `Changelog.kt`；测试包输出到 `release/test/`，不得制造用户更新日志。
 
 - `isMinifyEnabled=true` + `isShrinkResources=true`；`proguard-rules.pro` 已 keep 全部 Gson 反射模型
   （`data.remote.dto / data.schedule / data.local / data.account` + 枚举 + Tink），实测 12.5MB→**~3.0MB**。
@@ -151,14 +144,16 @@ cd sap-android
 > - keystore 必须用同一把（见 4.1），否则用户无法覆盖升级。
 
 发版步骤：
-0. **先写更新日志**：在 `sap-android/app/.../update/Changelog.kt` 的 `entries` 最前面加好新 `versionCode` 的 `ChangelogEntry`（不写脚本会中止）。
-1. `cd sap-android && ./build-release.sh`（要改展示版本名时加 `--name X.Y`）。脚本自动升 `versionCode`、校验更新日志、打包、归档 `release/sap-<vn>-<vc>.apk` + `mapping`，并打印 versionCode/版本名/SHA-256。
-2. 管理端 **「App 版本发布」** 页：选脚本产出的 APK + 填脚本打印的 **versionCode/版本名** + 更新说明 → 发布。后端自动传 COS、算 sha256/size、入库；用户开 App 自动收到更新提示。
-3. 在下方**版本台账**追加一行（勿删历史）。
+
+1. 查询线上版本，汇总自该版本以来的全部改动，只为本次正式版本在 `Changelog.kt` 新增一条记录。
+2. `cd sap-android && ./build-release.sh --release` 构建正式包。
+3. 使用 `publish-release.sh --apk <APK>` 发布。它会直接提取同一条 App 更新日志写入平台，并核对线上版本号、SHA-256 和文件大小。
+4. 重新查询线上版本并验证下载 URL。未完成上传与核验时不得称为“已发布”。
 
 #### 版本台账（每次发版必须追加）
 | versionCode | versionName | 日期 | 主要变更 | 状态 |
 |---|---|---|---|---|
+| 42 | 1.33 | 2026-07-12 | 优化教学评价入口与同步、支持按评教学年切换与缓存、教务缓存按账号隔离、优化课表周次显示、修复升级后启动闪退 | 已发布线上（SHA-256 `2cb1d6d7229260368a6493ffc247511c4b826493e54826c258b056e72a8b57cd`） |
 | 2 | 1.1 | 2026-06-15 | 接入下载流量计量(走 `/api/file/go`)、在线升级链路 | 已发布线上 |
 | 3 | 1.2 | 2026-06-16 | 新 logo 图标、登录按钮修复、页面过渡动画、教务密码错误识别、课表"----"多周解析、备注重复老师去重 | 已打包(`release/软协课表-1.2.apk`)，待发布（下载依赖自定义域名，见 §8） |
 | 6 | 1.4 | 2026-06-16 | 教学周历自动定开学日期、成绩/考试学期切换收敛近4学年、退出登录即时化+我的页直达入口、重新扫描确认弹窗+加载动画、图标安全区内边距修正、`build-release.sh` 自动升版本脚本 | 已打包(`release/sap-1.4-6.apk`)，待发布 |
@@ -178,8 +173,7 @@ cd sap-android
 | 25 | 1.16 | 2026-06-18 | 身份只显示最高届 + 加「届」(如 2022届会长) + **多账号本地状态按会员账号隔离**(教务激活号/用户&头像缓存各账号一份，修“切号丢教务选择”“切号显示上一个账号信息”) + 按钮整块按下高亮(替代文字行灰条)。**纯 App 端，后端无需变(仍 1.4.4)** | 已打包(`release/sap-1.16-25.apk`，SHA-256 `e736bc363005847e6469d06699b3714d8c3bf9e80db0c797a26591dcc19e7695`)，待发布 |
 | 26 | **1.17** | 2026-06-18 | **修“换头像后 App 不刷新”**：头像显示 URL 附 `?v=updatedAt` 缓存破坏(固定 URL 原地换图也能刷新) + 头像上传失败显示真实原因(不再静默)。**配套后端 ≥ 1.4.5**(updateProfile 显式刷新 updated_at) | 已打包(`release/sap-1.17-26.apk`，SHA-256 `fa2b1ac9737a061e5e257f65e492f3863a7fd741e13674173fe67ac6b70aae71`)，**当前最新·待发布** |
 
-> versionCode 由 `build-release.sh` 自动递增，**当前已到 26**（19、20 为中间产物/跳过；21、22 为 1.13 内部构建，工作已并入对外版 1.14）。
-> **对外版本号约定（自 1.14 起执行）**：`versionName` 为对外发布版本（用户看到的「版本」），每次对外发版 `./build-release.sh` 默认 **versionName 末位 +1**（下次即 1.16→**1.17**、versionCode→26，脚本会要求先在 `Changelog.kt` 加好 `(26, "1.17")` 条目，否则中止）；只想出内部测试包用 `--build-only`（versionName 不变、仅 versionCode +1）。
+> 当前版本号以 `sap-android/app/build.gradle.kts` 为准。测试构建统一使用 `--test`，仅正式发布使用 `--release` 并写用户更新日志。
 >
 > **后端镜像台账**（⚠️镜像 tag 由多会话并行推进，本文件易滞后——发版前先问清线上实际 tag）：线上实际跑到过 **`pllysun/sap:1.3.2`** → **`pllysun/sap:1.4.0`**(2026-06-16，amd64，短信MFA闭环 + cas 失败判别/captcha failN 修复 + 备注解析去重) → **`1.4.2`**(永久免密：appLogin timeout=-1 + 内置 Redis 持久化 + `/api/ping`) → **`1.4.3`**(2026-06-18，amd64，**关键修复**：全局 `sa-token.active-timeout` 3600→-1，根除"长时间空闲被冻结→401→跳登录"；App 1.14 配套) → **`1.4.4`**(2026-06-18，amd64，含 1.4.3 全部 + 新增 `GET /api/auth/info/light`〔无头像+identities身份+updatedAt〕、`/info` 补 identities+updatedAt；App 1.15 配套) → **`1.4.5`**(2026-06-18，amd64，**修复**：`updateProfile` 显式 `setUpdatedAt(now)`——MyBatis-Plus `strictUpdateFill` 只填 null，selectById 读出的旧 updatedAt 被写回导致改资料/换头像后 updatedAt 不变、App 永不重取头像；App 1.17 配套) → **`1.4.6`**(2026-06-18，amd64，**修复 APK/文件下载**：`/api/file/go` 不再追加 `response-content-disposition`——COS 对匿名公开 GET 拒绝该参数〔InvalidRequest〕、自定义 CDN 域名又不能预签名，导致走 CDN 下载 400；改为直接 302 直链) → **`1.4.7`**(2026-06-18，amd64，**拉数据路径 MFA**：`getSession` 遇短信验证不再只提示"重新绑定"，改抛 `JwMfaPendingException`→全局返回 `code=428 + challengeId/phone`，App 拦截后弹全局短信框续验、验证通过自动重试；配套 App 1.19)。`1.2.0` 作废勿用。
 >

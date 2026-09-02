@@ -53,6 +53,7 @@ fun AppSettingsScreen(
     mode: AppMode,
     onToggleMode: (Boolean) -> Unit,
     onTheme: () -> Unit,
+    onAnnouncements: () -> Unit,
     onPrivacy: () -> Unit,
     onChangelog: () -> Unit,
     onAbout: () -> Unit,
@@ -62,7 +63,7 @@ fun AppSettingsScreen(
     val ctx = LocalContext.current
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("设置", onBack)
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
             Card {
                 ThemeRow(onTheme)
             }
@@ -76,7 +77,7 @@ fun AppSettingsScreen(
                     Column(Modifier.weight(1f)) {
                         Text("Web 模式", fontSize = 16.sp)
                         Text(
-                            "开启后用网页(WebVPN)课表，仅保留课表与设置；关闭则为教务模式",
+                            "开启后用网页登录课表，仅保留课表与设置；关闭则为教务模式",
                             fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 2.dp),
                         )
@@ -106,17 +107,20 @@ fun AppSettingsScreen(
             }
             Spacer(Modifier.height(12.dp))
             Card {
+                NavRow("课表公告", onAnnouncements)
+                RowDivider()
                 NavRow("隐私协议", onPrivacy)
                 RowDivider()
                 NavRow("更新日志", onChangelog)
                 RowDivider()
                 NavRow("关于", onAbout)
             }
-            OutlinedButton(
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth().padding(top = 28.dp),
-            ) { Text("退出登录", color = MaterialTheme.colorScheme.error) }
+            Spacer(Modifier.height(20.dp))
         }
+        OutlinedButton(
+            onClick = onLogout,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        ) { Text("退出登录", color = MaterialTheme.colorScheme.error) }
     }
 }
 
@@ -134,11 +138,15 @@ fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, web: Boolea
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Para("软协课表（以下简称“本应用”）非常重视你的隐私。本协议说明我们收集哪些信息、如何使用与存储，以及你拥有的权利。")
             Section("一、我们收集的信息")
-            Para("1. 协会会员账号：用于登录本应用、校验会员身份。\n" +
-                "2. 学校教务账号与密码：用于代你登录学校教务系统，抓取你的课表、成绩、考试安排、评教等数据。")
+            Para("1. 平台账号：用于登录本应用及校验账号身份。\n" +
+                "2. 学校教务账号与密码：用于代你登录学校教务系统，抓取你的课表、成绩、考试安排、评教等数据。\n" +
+                "3. 意见反馈：用户主动提交反馈时，会保存反馈内容、所选图片附件及 App 版本。只有点击上传图片后才会打开系统图片选择器，并仅获得你所选图片的读取权限；不会读取其他照片或收集设备唯一标识。\n" +
+                "4. 课表背景：只有你主动点击选择图片时才会打开系统照片选择器，仅处理选中的图片并在裁剪后保存到本机 App 私有目录，不会上传服务器。")
             Section("二、信息如何使用与存储")
             Para("· 你的教务密码经 AES 加密后存储在本应用后端服务器，仅用于自动登录学校教务系统抓取你本人的教务数据，不会明文保存、不会用于其他用途、不会提供给任何第三方。\n" +
-                "· 登录凭证及课表/成绩/考试/评教等数据会缓存在你的设备本地（加密存储），以便离线查看并减少对教务系统的请求。")
+                "· 登录凭证及课表/成绩/考试/评教等数据会缓存在你的设备本地（加密存储），以便离线查看并减少对教务系统的请求。\n" +
+                "· 反馈标题、正文、所选图片附件与讨论会在 Issue 中心共享展示。\n" +
+                "· 课表背景图仅保存于你的设备本地，替换、移除背景或删除课表时会删除对应的私有副本。")
             Section("三、数据来源")
             Para("本应用所有教务数据均来自学校教务系统（统一身份认证 / 强智教务），本应用仅做代理抓取、整理与展示，不修改你的教务数据（评教功能除外，且评教仅在你主动点击后提交）。")
             Section("四、你的权利")
@@ -159,11 +167,14 @@ fun WebPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Para("软协课表（以下简称「本应用」）非常重视你的隐私。Web 模式下本应用仅在你的设备本地处理数据。本协议说明 Web 模式收集哪些信息、如何使用与存储，以及你拥有的权利。")
             Section("一、我们收集的信息")
-            Para("1. 协会会员账号（如已登录）：用于校验身份。\n" +
-                "2. Web 模式不收集、不存储你的学校教务账号与密码。你在应用内置网页（WebVPN / 统一身份认证）中自行登录，本应用不读取、不上传你的账号密码。")
+            Para("1. 平台账号（如已登录）：用于校验身份。\n" +
+                "2. Web 模式不收集、不存储你的学校教务账号与密码。你在应用内置的统一身份认证网页中自行登录，本应用不读取、不上传你的账号密码。\n" +
+                "3. 用户主动提交意见反馈时，会保存反馈内容、所选图片附件及 App 版本。图片只在你点击上传并通过系统选择器选中后读取，不包含设备唯一标识。\n" +
+                "4. 你主动选择的课表背景只会在本机裁剪并保存，不会上传服务器。")
             Section("二、信息如何使用与存储")
             Para("· 你的网页登录态（Cookie）仅保存在你的设备本地，用于免重复登录，本应用不会上传到服务器。\n" +
-                "· 仅在你主动点击「导入课表」后，本应用在你的设备上（端侧）解析当前网页中的课表数据并保存在本地，用于离线展示；课表数据不上传服务器。")
+                "· 仅在你主动点击「导入课表」后，本应用在你的设备上（端侧）解析当前网页中的课表数据并保存在本地，用于离线展示；课表数据不上传服务器。\n" +
+                "· 课表背景的裁剪副本仅保存在 App 私有目录。")
             Section("三、数据范围")
             Para("Web 模式仅抓取并展示你的课表，不抓取成绩、考试安排等其它教务数据（这与教务模式不同）。")
             Section("四、你的权利")
@@ -184,9 +195,10 @@ fun OfflinePrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Para("软协课表（以下简称「本应用」）非常重视你的隐私。当前为离线模式：本应用未连接任何服务器，不收集、不上传、不存储你的任何个人信息。")
             Section("一、我们不收集任何信息")
-            Para("离线模式下，本应用不收集你的协会会员账号、学校教务账号与密码、设备标识、位置等任何个人信息，也不会发起任何网络请求或数据上传。")
+            Para("离线模式下，本应用不收集你的平台账号、学校教务账号与密码、设备标识、位置等任何个人信息，也不会发起任何网络请求或数据上传。")
             Section("二、数据如何处理")
             Para("· 本应用仅在你的设备本地读取此前已缓存的课表数据用于离线展示。\n" +
+                "· 你主动选择并裁剪的课表背景仅保存在 App 私有目录。\n" +
                 "· 所有数据均保存在你的设备本地，不会离开你的设备。")
             Section("三、数据范围")
             Para("离线模式仅展示你设备本地已有的课表，不抓取、不更新任何教务数据；恢复联网后才会按你所选模式重新提供在线功能。")
@@ -264,7 +276,7 @@ fun AboutScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     InfoRow("开发", "中南林业科技大学软件协会")
                 }
             }
-            Para("面向协会会员的校园教务助手，提供课表、成绩、考试安排与一键评教等功能。" +
+            Para("面向校内用户的校园教务助手，提供课表、成绩、考试安排与教学评价等功能。" +
                 "教务数据均来自学校教务系统，仅供本人查看，请勿用于非法用途。")
             Text(
                 "© 2026 中南林业科技大学软件协会",
@@ -286,7 +298,7 @@ fun AboutScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 // ---------- 共用小组件 ----------
 
 @Composable
-private fun SettingsTopBar(title: String, onBack: () -> Unit) {
+internal fun SettingsTopBar(title: String, onBack: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 8.dp, vertical = 8.dp),

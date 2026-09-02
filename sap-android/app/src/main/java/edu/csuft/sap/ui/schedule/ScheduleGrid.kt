@@ -31,23 +31,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Periods
+import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.ui.theme.customCourseColor
 import edu.csuft.sap.ui.theme.paletteColor
 import java.time.LocalDate
 import java.time.LocalTime
 
 private val dividerHeight = 18.dp
-private val timeColWidth = 34.dp
 private val hairline = Color(0x12000000)
 private val nonWeekBg = Color(0xFFF0F1F3)
 private val nonWeekFg = Color(0xFF9AA0A6)
@@ -75,13 +79,14 @@ fun ScheduleGrid(
     courses: List<DisplayCourse>,
     periodCount: Int,
     showNowLine: Boolean,
-    rowHeight: Dp,
-    cardScale: Float,
+    settings: ScheduleSettings,
     onCourseClick: (DisplayCourse) -> Unit,
     onEmptyClick: (day: Int, startNode: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val count = periodCount.coerceIn(8, 16)
+    val rowHeight = settings.rowHeightDp.dp
+    val timeColWidth = settings.sidebarWidthDp.dp
     val tops = remember(count, rowHeight) { nodeTops(count, rowHeight) }
     val totalH = tops[count - 1] + rowHeight
 
@@ -108,7 +113,7 @@ fun ScheduleGrid(
         ) {
             for (node in 1..count) {
                 Row(Modifier.fillMaxWidth().height(rowHeight)) {
-                    TimeCell(node, rowHeight)
+                    TimeCell(node, rowHeight, timeColWidth, settings.cardScale)
                     for (day in days) {
                         Box(
                             Modifier
@@ -143,7 +148,7 @@ fun ScheduleGrid(
             Spacer(Modifier.width(timeColWidth))
             for (day in days) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
-                    DayCards(courses.filter { it.day == day }, day, todayDay, now, tops, rowHeight, cardScale, onCourseClick)
+                    DayCards(courses.filter { it.day == day }, day, todayDay, now, tops, rowHeight, settings, onCourseClick)
                 }
             }
         }
@@ -197,18 +202,20 @@ private fun isOngoing(course: DisplayCourse, day: Int, todayDay: Int, now: Local
 }
 
 @Composable
-private fun TimeCell(node: Int, rowHeight: Dp) {
+private fun TimeCell(node: Int, rowHeight: Dp, width: Dp, textScale: Float) {
     // 读 Periods.revision 作为 key：节次时间一改（save）即重算并重组，无需重进 App
     val p = remember(node, Periods.revision) { Periods.period(node) }
     Column(
-        Modifier.width(timeColWidth).height(rowHeight),
+        Modifier.width(width).height(rowHeight),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("$node", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+        Text("$node", fontSize = (14f * textScale).sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         if (p != null) {
-            Text(p.start, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 10.sp)
-            Text(p.end, fontSize = 8.sp, color = MaterialTheme.colorScheme.outline, lineHeight = 10.sp)
+            Text(p.start, fontSize = (8f * textScale).sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = (10f * textScale).sp, maxLines = 1)
+            Text(p.end, fontSize = (8f * textScale).sp, color = MaterialTheme.colorScheme.outline,
+                lineHeight = (10f * textScale).sp, maxLines = 1)
         }
     }
 }
@@ -234,7 +241,7 @@ private fun DayCards(
     now: LocalTime,
     tops: List<Dp>,
     rowHeight: Dp,
-    cardScale: Float,
+    settings: ScheduleSettings,
     onCourseClick: (DisplayCourse) -> Unit,
 ) {
     // 本周课优先占格；与已占课重叠的课不再单独画，但给主卡记一个折角
@@ -249,7 +256,7 @@ private fun DayCards(
     for ((c, conflicts) in placed) {
         val top = tops[(c.startNode - 1).coerceIn(0, tops.size - 1)]
         val bottom = tops[(c.endNode - 1).coerceIn(0, tops.size - 1)] + rowHeight
-        CourseCard(c, top, bottom - top, conflicts > 0, isOngoing(c, day, todayDay, now), cardScale) { onCourseClick(c) }
+        CourseCard(c, top, bottom - top, conflicts > 0, isOngoing(c, day, todayDay, now), settings) { onCourseClick(c) }
     }
 }
 
@@ -257,50 +264,74 @@ private fun overlaps(a: DisplayCourse, b: DisplayCourse): Boolean =
     a.startNode <= b.endNode && b.startNode <= a.endNode
 
 @Composable
-private fun CourseCard(course: DisplayCourse, top: Dp, height: Dp, conflict: Boolean, ongoing: Boolean, cardScale: Float, onClick: () -> Unit) {
+private fun CourseCard(
+    course: DisplayCourse,
+    top: Dp,
+    height: Dp,
+    conflict: Boolean,
+    ongoing: Boolean,
+    settings: ScheduleSettings,
+    onClick: () -> Unit,
+) {
     val color = course.customColor?.let { customCourseColor(it) } ?: paletteColor(course.colorIndex)
     val bg = if (course.isThisWeek) color.container else nonWeekBg
     val fg = if (course.isThisWeek) color.onContainer else nonWeekFg
-    val shape = RoundedCornerShape(7.dp)
+    val radius = settings.cornerRadiusDp.dp
+    val shape = RoundedCornerShape(radius)
+    val textAlign = if (settings.centerTextHorizontally) TextAlign.Center else TextAlign.Start
+    val horizontalAlignment = if (settings.centerTextHorizontally) Alignment.CenterHorizontally else Alignment.Start
+    val verticalArrangement = if (settings.centerTextVertically) Arrangement.Center else Arrangement.Top
+    val nameSize = settings.cardFontSizeSp * settings.cardScale
+    val detailSize = (settings.cardFontSizeSp - 2f).coerceAtLeast(7f) * settings.cardScale
     Box(
         Modifier
             .fillMaxWidth()
             .offset(y = top)
             .height(height)
-            .padding(1.5.dp)
-            .background(bg, shape)
+            .padding(settings.outerSpacingDp.dp)
+            .background(bg.copy(alpha = settings.opacityFraction), shape)
+            .courseBorder(settings.borderStyle, fg, radius, shape)
             .then(if (ongoing) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape) else Modifier)
             .clickable(onClick = onClick),
     ) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 5.dp)) {
+        Column(
+            Modifier.fillMaxSize().padding(settings.innerPaddingDp.dp),
+            horizontalAlignment = horizontalAlignment,
+            verticalArrangement = verticalArrangement,
+        ) {
             Text(
                 course.name,
-                fontSize = (11f * cardScale).sp,
+                fontSize = nameSize.sp,
                 fontWeight = FontWeight.Medium,
                 color = fg,
-                lineHeight = (13f * cardScale).sp,
+                lineHeight = (nameSize * 1.18f).sp,
                 maxLines = 4,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = textAlign,
+                modifier = Modifier.fillMaxWidth(),
             )
-            if (course.location.isNotBlank()) {
+            if (!settings.hideLocation && course.location.isNotBlank()) {
                 Text(
                     "@" + course.location,
-                    fontSize = (9f * cardScale).sp,
+                    fontSize = detailSize.sp,
                     color = fg.copy(alpha = 0.85f),
-                    lineHeight = (11f * cardScale).sp,
+                    lineHeight = (detailSize * 1.2f).sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
+                    textAlign = textAlign,
+                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                 )
             }
-            if (course.teacher.isNotBlank()) {
+            if (!settings.hideTeacher && course.teacher.isNotBlank()) {
                 Text(
                     course.teacher,
-                    fontSize = (9f * cardScale).sp,
+                    fontSize = detailSize.sp,
                     color = fg.copy(alpha = 0.85f),
-                    lineHeight = (11f * cardScale).sp,
+                    lineHeight = (detailSize * 1.2f).sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = textAlign,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -324,4 +355,24 @@ private fun CourseCard(course: DisplayCourse, top: Dp, height: Dp, conflict: Boo
             )
         }
     }
+}
+
+private fun Modifier.courseBorder(
+    style: Int,
+    color: Color,
+    radius: Dp,
+    shape: RoundedCornerShape,
+): Modifier = when (style) {
+    1 -> border(1.dp, color.copy(alpha = 0.55f), shape)
+    2 -> drawBehind {
+        drawRoundRect(
+            color = color.copy(alpha = 0.65f),
+            cornerRadius = CornerRadius(radius.toPx()),
+            style = Stroke(
+                width = 1.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())),
+            ),
+        )
+    }
+    else -> this
 }

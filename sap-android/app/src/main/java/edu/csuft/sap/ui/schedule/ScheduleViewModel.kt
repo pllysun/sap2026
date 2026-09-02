@@ -11,6 +11,7 @@ import edu.csuft.sap.data.account.AccountManager
 import edu.csuft.sap.data.account.JwMfaState
 import edu.csuft.sap.data.account.MemberState
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.combine
 import edu.csuft.sap.data.schedule.AccountData
 import edu.csuft.sap.data.schedule.CachedCourse
 import edu.csuft.sap.data.schedule.CustomCourse
@@ -59,7 +60,7 @@ class ScheduleViewModel : ViewModel() {
         val selectedWeek: Int = 1,
         val display: List<DisplayCourse> = emptyList(),
         val remarks: List<Remark> = emptyList(),
-        val isLocalSource: Boolean = false, // 当前是本地「WebVPN 课表」源（数据靠 WebView 导入）
+        val isLocalSource: Boolean = false, // 当前是本地「网页课表」源（数据靠 WebView 导入）
     )
 
     private val acc = Graph.accountManager
@@ -71,11 +72,14 @@ class ScheduleViewModel : ViewModel() {
 
     private var userPickedWeek = false
     private var lastReschedKey: String? = null // 当前渲染课表的指纹，变化即重排上课提醒
+    /** 本次会话内捕获到的「学期→开学日期(教务教学周历)」，用于 profile 创建后补刷。 */
+    private val termStarts = HashMap<String, String>()
 
     init {
         viewModelScope.launch {
-            acc.active.collect { account ->
+            combine(acc.active, acc.contextVersion) { account, _ -> account }.collect { account ->
                 userPickedWeek = false
+                termStarts.clear()
                 if (account == null) {
                     _state.value = UiState(loading = false, error = "请先在「我的」里绑定教务账号")
                 } else {
@@ -147,7 +151,7 @@ class ScheduleViewModel : ViewModel() {
         }
     }
 
-    /** 重新扫描该学号的所有有数据学期。本地 WebVPN 源不扫描（靠导入）。 */
+    /** 重新扫描该学号的所有有数据学期。本地网页源不扫描（靠导入）。 */
     fun rescan() {
         val account = acc.activeAccount ?: return
         if (AccountManager.isLocal(account)) return
@@ -221,8 +225,15 @@ class ScheduleViewModel : ViewModel() {
             return
         }
         val data0 = (first as Outcome.Success).data
-        val currentTerm = data0.term
-        val labels = data0.terms.associate { it.value to it.label }
+        // 新版课表查询父页返回的学期下拉是权威列表；不要仅按当前学期前后推算，
+        // 否则中间存在空学期时会提前停止，历史课表也不会建立对应的本地课表。
+        val listedTerms = data0.terms.map { it.value.trim() }
+            .filter { TermUtil.isTerm(it) }
+            .distinct()
+        val currentTerm = data0.term?.trim()?.takeIf { TermUtil.isTerm(it) }
+            ?: data0.terms.firstOrNull { it.current }?.value?.trim()?.takeIf { TermUtil.isTerm(it) }
+            ?: listedTerms.firstOrNull()
+        val labels = data0.terms.associate { it.value.trim() to it.label }
         fun profileOf(term: String) = ScheduleProfile(
             id = "term:$term",
             name = labels[term]?.takeIf { it.isNotBlank() } ?: TermUtil.label(term),
@@ -241,6 +252,32 @@ class ScheduleViewModel : ViewModel() {
             return
         }
         cacheTermData(account, currentTerm, data0)
+
+        // 新版父查询页能够一次给出全部可查询学期。逐项请求并缓存，按学期建立
+        // TERM profile；请求失败的学期仍保留 profile，界面显示“暂无内容”，不影响
+        // 其它学期，也不会把已有缓存覆盖为空。
+        if (listedTerms.isNotEmpty()) {
+            val allTerms = (listedTerms + currentTerm).distinct().sortedDescending()
+            for (listed in allTerms) {
+                if (listed == currentTerm) continue
+                when (val result = jw.schedule(account, listed)) {
+                    is Outcome.Success -> {
+                        // 后端会把请求学期写回 data.term；这里再做一次保护，防止
+                        // 源站忽略参数而回显当前学期时污染历史学期缓存。
+                        if (result.data.term?.trim() == listed) cacheTermData(account, listed, result.data)
+                    }
+                    is Outcome.Error -> Unit // 保留旧缓存/空 profile，继续扫描其它学期
+                }
+            }
+            store.replaceTermProfiles(account, allTerms.map { profileOf(it) })
+            val month = java.time.LocalDate.now().monthValue
+            val def = TermScan.defaultTerm(currentTerm, allTerms, month) ?: allTerms.firstOrNull()
+            def?.let { store.setActiveProfile(account, "term:$it") }
+            applyAutoStarts(account)
+            _state.value = _state.value.copy(scanning = false, loading = false)
+            render()
+            return
+        }
 
         // 以当前学期为锚扫描；hasData 抓取并缓存某学期、返回是否有课
         val withData = TermScan.scanAround(currentTerm) { term ->
@@ -278,7 +315,8 @@ class ScheduleViewModel : ViewModel() {
         val activeId = data.activeProfileId?.takeIf { id -> profiles.any { it.id == id } }
             ?: profiles.firstOrNull()?.id
         val active = profiles.firstOrNull { it.id == activeId }
-        val settings = active?.settings ?: ScheduleSettings()
+        val settings = active?.let { store.effectiveSettings(it.settings) }
+            ?: ScheduleSettings()
         val cw = WeekUtil.currentWeek(settings.semesterStartDate)
         val sel = if (!userPickedWeek) (cw ?: _state.value.selectedWeek).coerceIn(1, settings.totalWeeks)
         else _state.value.selectedWeek.coerceIn(1, settings.totalWeeks)
@@ -371,9 +409,6 @@ class ScheduleViewModel : ViewModel() {
         ProfileKind.TERM -> store.accountData(account).termCourses[p.termValue] ?: emptyList()
         ProfileKind.CUSTOM -> p.frozenCourses
     }
-
-    /** 本次会话内捕获到的「学期→开学日期(教务教学周历)」，用于 profile 创建后补刷。 */
-    private val termStarts = HashMap<String, String>()
 
     private fun cacheTermData(account: String, term: String?, data: ScheduleData) {
         if (term == null) return

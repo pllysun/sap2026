@@ -55,9 +55,9 @@
           <el-icon><TrendCharts /></el-icon>
           <span>流量统计</span>
         </el-menu-item>
-        <el-menu-item v-if="isLeaderOrSuper" index="/app-release">
+        <el-menu-item v-if="isAdmin" index="/schedule-app">
           <el-icon><Cellphone /></el-icon>
-          <span>App 版本发布</span>
+          <span>软协课表</span>
         </el-menu-item>
         <el-menu-item v-if="isLeaderOrSuper" index="/settings">
           <el-icon><Setting /></el-icon>
@@ -123,6 +123,7 @@ const userRoles = ref([])
 const currentRoute = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title || '首页')
 const isLeaderOrSuper = computed(() => userRoles.value.includes(0) || userRoles.value.includes(1))
+const isAdmin = computed(() => isLeaderOrSuper.value || userRoles.value.includes(2))
 
 onMounted(async () => {
   try {
@@ -144,5 +145,4 @@ const handleLogout = async () => {
   router.push('/login')
 }
 </script>
-
 

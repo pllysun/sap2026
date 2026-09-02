@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.account.BoundAccount
 import edu.csuft.sap.data.account.MemberState
 import edu.csuft.sap.data.schedule.Periods
+import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.WeekUtil
 import android.content.Intent
@@ -81,6 +82,8 @@ fun ScheduleSettingsScreen(
     onDelete: () -> Unit,
     onRescan: () -> Unit,
     onWebImport: () -> Unit,
+    previewCourses: List<DisplayCourse>,
+    previewWeek: Int,
     onSave: (ScheduleSettings) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -89,9 +92,8 @@ fun ScheduleSettingsScreen(
     var showWeeks by remember { mutableStateOf(false) }
     var showPeriods by remember { mutableStateOf(false) }
     var showPeriodTimes by remember { mutableStateOf(false) }
+    var showPersonalization by remember { mutableStateOf(false) }
     var showLead by remember { mutableStateOf(false) }
-    var showRowHeight by remember { mutableStateOf(false) }
-    var showCardScale by remember { mutableStateOf(false) }
     var showRescanConfirm by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var reminderOn by remember { mutableStateOf(ReminderPrefs.enabled(context)) }
@@ -138,6 +140,16 @@ fun ScheduleSettingsScreen(
         )
         return
     }
+    if (showPersonalization) {
+        SchedulePersonalizationScreen(
+            settings = settings,
+            courses = previewCourses,
+            selectedWeek = previewWeek,
+            onSave = onSave,
+            onBack = { showPersonalization = false },
+        )
+        return
+    }
 
     val currentName = profiles.firstOrNull { it.id == activeProfileId }?.name ?: "未选择"
 
@@ -152,7 +164,7 @@ fun ScheduleSettingsScreen(
             Text("课表设置", fontSize = 18.sp, fontWeight = FontWeight.Medium)
         }
 
-        // 教务账号多账号切换：仅教务模式，且只列真实教务账号（不含本地 WebVPN 源）
+        // 教务账号多账号切换：仅教务模式，且只列真实教务账号（不含本地网页源）
         val jwAccounts = accounts.filter { !it.isLocal }
         if (MemberState.isJw && jwAccounts.isNotEmpty()) {
             SectionHeader("教务账号")
@@ -171,13 +183,14 @@ fun ScheduleSettingsScreen(
 
         SectionHeader("课表")
         Card {
-            // 多课表管理(切换/另存为/重命名)：教务模式 + 会员 Web 模式；非会员 Web 单课表，仅可删除
-            val multiProfile = MemberState.isJw || MemberState.isMember
-            if (multiProfile) {
+            // 已有课表始终可切换与管理；新增副本只在完整能力下开放。
+            if (profiles.isNotEmpty()) {
                 NavRow("切换课表", currentName) { showSwitcher = true }
                 RowDivider()
-                ActionRow("另存为新课表", "把当前课表（含自建课）冻结成独立课表", onSaveAs)
-                RowDivider()
+                if (MemberState.hasFullAppFeatures) {
+                    ActionRow("另存为新课表", "把当前课表（含自建课）冻结成独立课表", onSaveAs)
+                    RowDivider()
+                }
                 ActionRow("重命名当前课表", null, onRename)
                 RowDivider()
             }
@@ -188,15 +201,15 @@ fun ScheduleSettingsScreen(
             }
             ActionRow(
                 "删除当前课表",
-                if (MemberState.isWeb && !MemberState.isMember) "Web 模式仅保留一份课表，可删除后重新导入" else null,
+                null,
                 onDelete,
             )
-            // WebVPN 导入：仅 Web 模式（教务模式不显示）
+            // 网页导入：仅 Web 模式（教务模式不显示）
             if (MemberState.isWeb) {
                 RowDivider()
                 ActionRow(
-                    "WebVPN 导入课表",
-                    if (MemberState.isMember) "在网页登录教务、抓取并新增/更新该学期课表" else "在网页登录教务、抓取并覆盖当前课表",
+                    "网页登录导入课表",
+                    "在网页登录教务并更新课表内容",
                     onWebImport,
                 )
             }
@@ -221,15 +234,7 @@ fun ScheduleSettingsScreen(
                 value = Periods.tableFor(settings.dailyPeriods).let { "${it.first().start}–${it.last().end}" },
                 onClick = { showPeriodTimes = true })
             RowDivider()
-            SettingRow("课格高度", "调整每节课格子的高度", value = "${settings.rowHeightDp} dp", onClick = { showRowHeight = true })
-            RowDivider()
-            SettingRow("课程卡字号", "调整课表里课程文字大小", value = "${(settings.cardScale * 100).toInt()}%", onClick = { showCardScale = true })
-            RowDivider()
-            SwitchRow("是否显示周末", "如果周末有课程，可打开该设置",
-                checked = settings.showWeekend, onChange = { onSave(settings.copy(showWeekend = it)) })
-            RowDivider()
-            SwitchRow("是否显示非本周课程", "开启后单双周课程都能看见（灰显）",
-                checked = settings.showNonWeek, onChange = { onSave(settings.copy(showNonWeek = it)) })
+            NavRow("个性化", "课表外观与布局") { showPersonalization = true }
             RowDivider()
             SwitchRow("点课显示其他周课程", "点某节课时，一并列出该时段在其他周的不同课程（方便对照修改）；关闭则只看本周",
                 checked = settings.showOtherWeekInDetail, onChange = { onSave(settings.copy(showOtherWeekInDetail = it)) })
@@ -322,13 +327,6 @@ fun ScheduleSettingsScreen(
 
     if (showPeriods) OptionSheet("一天的总课时数", (8..16).toList(), settings.dailyPeriods, { "$it 节" },
         onPick = { onSave(settings.copy(periodsPerDay = it)) }, onDismiss = { showPeriods = false })
-
-    if (showRowHeight) OptionSheet("课格高度", (40..88 step 4).toList(), settings.rowHeightDp, { "$it dp" },
-        onPick = { onSave(settings.copy(rowHeight = it)) }, onDismiss = { showRowHeight = false })
-
-    if (showCardScale) OptionSheet("课程卡字号", listOf(80, 90, 100, 110, 125, 140),
-        (settings.cardScale * 100).toInt(), { "$it%" },
-        onPick = { onSave(settings.copy(cardTextScale = it)) }, onDismiss = { showCardScale = false })
 
     if (showLead) OptionSheet("提前提醒", listOf(5, 10, 15, 20, 30, 45, 60), lead, { "$it 分钟" },
         onPick = { lead = it; ReminderPrefs.setLead(context, it); ReminderScheduler.reschedule(context) },

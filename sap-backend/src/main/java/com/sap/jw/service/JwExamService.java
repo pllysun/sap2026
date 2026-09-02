@@ -4,6 +4,7 @@ import com.sap.common.BusinessException;
 import com.sap.jw.client.JwHttpSession;
 import com.sap.jw.config.JwProperties;
 import com.sap.jw.parser.ExamParser;
+import com.sap.jw.util.JwErrorMessages;
 import com.sap.jw.vo.ExamVO;
 import org.springframework.stereotype.Service;
 
@@ -57,16 +58,17 @@ public class JwExamService {
 
     private String fetchList(JwHttpSession session, String term) {
         try {
-            return session.postForm(props.getJwglBase() + LIST_PATH,
+            return session.postForm(session.getJwglBase() + LIST_PATH,
                     Map.of("xnxqid", term == null ? "" : term, "xqlb", "")).body();
         } catch (Exception e) {
-            throw new BusinessException("获取考试安排失败：" + e.getMessage());
+            throw new BusinessException("获取考试安排失败：" + JwErrorMessages.userDetail(
+                    e, "学校考试系统暂时异常，请稍后重试"));
         }
     }
 
     private String defaultTerm(JwHttpSession session) {
         try {
-            String html = session.get(props.getJwglBase() + QUERY_PATH).body();
+            String html = session.get(session.getJwglBase() + QUERY_PATH).body();
             Matcher m = SELECTED_TERM.matcher(html);
             return m.find() ? m.group(1) : "";
         } catch (Exception e) {

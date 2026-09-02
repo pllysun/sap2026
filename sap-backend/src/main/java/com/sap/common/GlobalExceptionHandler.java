@@ -6,6 +6,8 @@ import cn.dev33.satoken.exception.NotRoleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -31,7 +33,7 @@ public class GlobalExceptionHandler {
      * 让 App 弹短信输入框续验（调 /api/jw/bind/mfa）后重试原请求。
      */
     @ExceptionHandler(com.sap.jw.client.JwMfaPendingException.class)
-    public Result<?> handleJwMfaPending(com.sap.jw.client.JwMfaPendingException e) {
+    public ResponseEntity<Result<?>> handleJwMfaPending(com.sap.jw.client.JwMfaPendingException e) {
         Result<java.util.Map<String, Object>> r = new Result<>();
         r.setCode(428);
         r.setMessage("教务登录需短信二次验证，请输入短信验证码");
@@ -39,7 +41,9 @@ public class GlobalExceptionHandler {
                 "needMfa", true,
                 "challengeId", e.getChallengeId(),
                 "phone", e.getPhone() == null ? "" : e.getPhone()));
-        return r;
+        // 必须使用真实 HTTP 428。若返回 HTTP 200，Retrofit 会先把 MFA 的对象型 data
+        // 按成绩/课表接口声明的数组型 data 反序列化，业务码尚未读取就会抛类型异常。
+        return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(r);
     }
 
     @ExceptionHandler(NotLoginException.class)

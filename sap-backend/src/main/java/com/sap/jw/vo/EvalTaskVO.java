@@ -2,11 +2,18 @@ package com.sap.jw.vo;
 
 import lombok.Data;
 
-/** 一条学生评教任务（某学期某批次下、对某教师某教学班的评价）。 */
+/** 新教学质量保障系统中的一门待评/已评课程。 */
 @Data
 public class EvalTaskVO {
-    /** 学年学期，如 "2023-2024-1" */
+    /** 任务名称（兼容旧客户端的 term 字段）。 */
     private String term;
+    /** 平台评教任务 id。 */
+    private Long taskId;
+    /** 学生课程记录 id，单门评价的稳定标识。 */
+    private Long courseId;
+    private String courseCode;
+    private String courseName;
+    private String classNo;
     /** 教师工号 */
     private String teacherNo;
     /** 教师姓名 */
@@ -21,8 +28,11 @@ public class EvalTaskVO {
     private boolean evaluated;
     /** 是否已提交（提交后不可改） */
     private boolean submitted;
-    /** 进入评教表单的相对路径（xspj_edit.do?...），自动评教/查看详情均用它 */
+    /** 平台状态：0 未评价、1 已评价、2 评价中。 */
+    private Integer status;
+    private String statusText;
+    /** 旧强智字段，保留仅为旧客户端 JSON 兼容。 */
     private String editUrl;
-    /** 教学班 id（jx0404id），任务唯一标识 */
+    /** 兼容旧客户端：值等于 courseId。 */
     private String jx0404id;
 }

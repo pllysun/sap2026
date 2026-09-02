@@ -71,4 +71,52 @@ class WebScheduleParserTest {
     fun returnsNullWhenNoKbtable() {
         assertEquals(null, WebScheduleParser.parse("<html><body>not logged in</body></html>"))
     }
+
+    @Test
+    fun acceptsNewTableClassAndDirectCellContent() {
+        val html = """
+            <select name="xnxq01id"><option value="2026-2027-1" selected>2026-2027-1</option></select>
+            <table class="schedule-kbtable">
+              <tr><td>周一</td><td>周二</td><td>周三</td><td>周四</td><td>周五</td></tr>
+              <tr><th>第1节</th>
+                <td><font title="教师">新老师</font><br><font title="周次">1-8周</font><br><font title="地点">新教室</font></td>
+                <td></td><td></td><td></td><td></td>
+              </tr>
+            </table>
+        """.trimIndent()
+        val r = WebScheduleParser.parse(html)
+        assertNotNull(r)
+        assertEquals("2026-2027-1", r!!.term)
+        assertEquals(1, r.courses.size)
+        assertEquals("新老师", r.courses[0].teacher)
+        assertEquals("新教室", r.courses[0].location)
+    }
+
+    @Test
+    fun parsesCurrentQzWeeklyTableLayoutWithoutShiftingSunday() {
+        val html = """
+            <select name="xnxq01id"><option value="2025-2026-2" selected>2025-2026-2</option></select>
+            <table class="qz-weeklyTable"><thead><tr>
+              <th class="qz-weeklyTable-label">周次</th><th>星期一</th><th>星期二</th><th>星期三</th>
+              <th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th>
+            </tr></thead><tbody><tr>
+              <td class="qz-weeklyTable-label"><div class="index-title">第1，2节</div></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="qz-hasCourse"><ul class="courselists"><li class="courselists-item qz-hasCourse-1">
+                <div class="qz-hasCourse-title">新版课程</div>
+                <p class="qz-hasCourse-detaillists"><span>老师:王老师;时间:1-8周[1-2节];地点:北教A101</span></p>
+              </li></ul></td>
+            </tr></tbody></table>
+        """.trimIndent()
+        val r = WebScheduleParser.parse(html)
+        assertNotNull(r)
+        assertEquals(1, r!!.courses.size)
+        val c = r.courses.single()
+        assertEquals("新版课程", c.name)
+        assertEquals(7, c.day)
+        assertEquals(1, c.sectionIndex)
+        assertEquals("王老师", c.teacher)
+        assertEquals("1-8周", c.weeksRaw)
+        assertEquals("北教A101", c.location)
+    }
 }

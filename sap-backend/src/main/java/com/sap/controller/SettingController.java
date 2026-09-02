@@ -24,7 +24,7 @@ public class SettingController {
 
     /** 敏感配置项：禁止通过通用 value 接口读取，管理端请走脱敏的 /cos-config */
     private static final java.util.Set<String> SENSITIVE_KEYS =
-            java.util.Set.of("cos_secret_id", "cos_secret_key");
+            java.util.Set.of("cos_secret_id", "cos_secret_key", "guest_access_level", "allow_guest_login");
 
     @GetMapping("/value")
     @OperationLog("查询系统设置值")
@@ -47,6 +47,11 @@ public class SettingController {
     @OperationLog("修改系统设置")
     @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> update(@RequestBody Setting setting) {
+        // 课表云控只能走专用接口并由超级管理员修改，避免会长通过通用设置接口绕过权限。
+        if (java.util.Set.of("guest_access_level", "allow_guest_login")
+                .contains(setting.getSettingKey())) {
+            throw new com.sap.common.BusinessException(403, "请在软协课表的课表云控中修改该设置");
+        }
         settingService.updateSetting(setting);
         return Result.ok("更新成功");
     }
@@ -86,4 +91,3 @@ public class SettingController {
         return Result.ok("缓存已刷新");
     }
 }
-
