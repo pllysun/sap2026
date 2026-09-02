@@ -55,7 +55,12 @@ class AppViewModel : ViewModel() {
         when (val r = apiData { Graph.probeApi.me() }) {
             is Outcome.Success -> {
                 ConnectivityState.online = true
-                MemberState.setRoles(r.data.roles)
+                MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
+                if (!MemberState.isMember && MemberState.appAccessLevel == 0) {
+                    Graph.authRepository.clearLocalToken()
+                    _gate.value = Gate.LOGIN
+                    return
+                }
                 Graph.accountManager.refresh()
                 _gate.value = Gate.APP
             }

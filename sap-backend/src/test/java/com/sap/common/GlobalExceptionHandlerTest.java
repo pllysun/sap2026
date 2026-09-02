@@ -3,10 +3,13 @@ package com.sap.common;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
+import com.sap.jw.client.JwMfaPendingException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -40,6 +43,23 @@ class GlobalExceptionHandlerTest {
         Result<?> r = handler.handleBusinessException(ex);
         assertEquals(500, r.getCode());
         assertEquals("出错了", r.getMessage());
+    }
+
+    @Test
+    void handleJwMfaPending_returnsRealHttp428WithChallenge() {
+        ResponseEntity<Result<?>> response = handler.handleJwMfaPending(
+                new JwMfaPendingException("challenge-1", "138****0000"));
+
+        assertEquals(HttpStatus.PRECONDITION_REQUIRED, response.getStatusCode());
+        Result<?> body = response.getBody();
+        assertNotNull(body);
+        assertEquals(428, body.getCode());
+        assertEquals("教务登录需短信二次验证，请输入短信验证码", body.getMessage());
+        assertInstanceOf(java.util.Map.class, body.getData());
+        java.util.Map<?, ?> data = (java.util.Map<?, ?>) body.getData();
+        assertEquals(true, data.get("needMfa"));
+        assertEquals("challenge-1", data.get("challengeId"));
+        assertEquals("138****0000", data.get("phone"));
     }
 
     @Test

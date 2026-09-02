@@ -44,6 +44,7 @@ fun TermSelector(
     selected: String?,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
+    sheetTitle: String = "选择学期",
 ) {
     if (terms.isEmpty()) return
     var showSheet by remember { mutableStateOf(false) }
@@ -53,7 +54,7 @@ fun TermSelector(
         AssistChip(
             onClick = { showSheet = true },
             label = { Text(label) },
-            trailingIcon = { Icon(AppIcons.DropDown, contentDescription = "选择学期") },
+            trailingIcon = { Icon(AppIcons.DropDown, contentDescription = sheetTitle) },
         )
     }
 
@@ -64,7 +65,7 @@ fun TermSelector(
             sheetState = sheetState,
         ) {
             Text(
-                "选择学期",
+                sheetTitle,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),

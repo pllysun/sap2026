@@ -1,29 +1,20 @@
 #!/usr/bin/env bash
 #
-# 软协课表 App —— 正式包一键构建脚本
+# 软协课表 App —— 测试/正式签名包构建脚本
 # ---------------------------------------------------------------------------
-# 版本号约定（重要）：
-#   • versionName（如 1.13 → 1.14）= 对外发布版本，每次发布递增——这是用户看到的「版本」。
-#   • versionCode（21、22…）       = 内部构建号，仅内部使用，每次构建自动 +1（驱动「检查更新」的比对）。
-#
-# 每次运行都会：
-#   1) 默认升「对外版本」versionName 末位 +1（如 1.13→1.14）；versionCode 始终内部 +1
-#   2) 校验「更新日志」：即将发布的 (versionCode, versionName) 必须在
-#      app/.../update/Changelog.kt 里有完全匹配的条目，缺失/不一致则拒绝打包（每个版本都要写更新日志）
-#   3) R8 混淆 + 资源压缩 + 正式 keystore 签名 打 release 包
-#   4) 产物按版本归档到  <repo>/release/sap-<versionName>-<versionCode>.apk
-#      连同 mapping.txt（崩溃栈反混淆用）
-#   5) 打印 大小 / SHA-256 / 签名证书，供管理平台「App 版本发布」填写
-#
-# ⚠️ 发版前先在 Changelog.kt 顶部加好「本次 (versionCode, versionName)」的更新日志，否则脚本会中止。
+# 必须显式选择模式：
+#   • --test     调试/测试包：versionCode +1，versionName 默认不变；不要求、不写 App 更新日志；禁止上传平台。
+#   • --release  正式发布包：versionCode +1，versionName 默认递增；必须先写 App 更新日志，之后上传升级平台。
 #
 # 用法：
-#   ./build-release.sh                 # 发对外新版本：versionName 末位 +1（1.13→1.14）、versionCode 内部 +1
-#   ./build-release.sh --name 2.0      # 指定 versionName=2.0（大版本跳号）、versionCode 内部 +1
-#   ./build-release.sh --build-only    # 仅内部构建：versionCode +1、versionName 不变（不对外发版）
-#   ./build-release.sh --no-bump       # 仅重打当前版本（慎用：不升任何号，用户端识别不到更新）
+#   ./build-release.sh --test
+#   ./build-release.sh --release
+#   ./build-release.sh --release --name 2.0
+#   ./build-release.sh --test --prepare-only     # CI 先预留递增版本号，不构建
+#   ./build-release.sh --release --prepare-only  # CI 先预留递增版本号/版本名，不构建
+#   ./build-release.sh --release --no-bump  # 仅重打尚未上线的当前版本
 #
-# 可用环境变量覆盖（跨机器/CI）：JAVA_HOME、GRADLE_BIN
+# 完整规则见仓库根目录 APP_BUILD_RELEASE.md。
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -33,18 +24,110 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"                    # = 仓库根 sap20
 RELEASE_DIR="$REPO_ROOT/release"
 BUILD_GRADLE="$APP_DIR/app/build.gradle.kts"
 
+MODE=""
 NEW_NAME=""
-BUMP_VN=1     # 默认：升对外版本 versionName 末位（1.13→1.14）
-BUMP_VC=1     # versionCode 始终内部 +1（仅 --no-bump 时为 0）
+NO_BUMP=0
+PREPARE_ONLY=0
+
+set_mode() {
+  if [ -n "$MODE" ] && [ "$MODE" != "$1" ]; then
+    echo "✗ --test 与 --release 不能同时使用"
+    exit 1
+  fi
+  MODE="$1"
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
-    --name) NEW_NAME="${2:-}"; BUMP_VN=0; shift 2 ;;   # 显式指定 versionName（不再自动末位 +1）
-    --build-only) BUMP_VN=0; shift ;;                  # 仅内部构建：versionName 不变、versionCode +1
-    --no-bump) BUMP_VN=0; BUMP_VC=0; shift ;;          # 仅重打：什么都不升
-    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    --test|--build-only) set_mode test; shift ;;        # --build-only 为旧命令兼容别名
+    --release) set_mode release; shift ;;
+    --name)
+      [ -n "${2:-}" ] || { echo "✗ --name 缺少版本名"; exit 1; }
+      NEW_NAME="$2"; shift 2 ;;
+    --no-bump) NO_BUMP=1; shift ;;
+    --prepare-only) PREPARE_ONLY=1; shift ;;
+    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
     *) echo "✗ 未知参数: $1（-h 看用法）"; exit 1 ;;
   esac
 done
+
+if [ -z "$MODE" ]; then
+  echo "✗ 必须显式指定 --test 或 --release"
+  echo "  测试：./build-release.sh --test"
+  echo "  发布：./build-release.sh --release"
+  exit 1
+fi
+[ "$PREPARE_ONLY" -eq 0 ] || [ "$NO_BUMP" -eq 0 ] || {
+  echo "✗ --prepare-only 与 --no-bump 不能同时使用"
+  exit 1
+}
+[ "$MODE" = "release" ] || [ -z "$NEW_NAME" ] || {
+  echo "✗ --name 只适用于正式发布"
+  exit 1
+}
+
+if [ "$NO_BUMP" -eq 1 ]; then
+  BUMP_VC=0
+  BUMP_VN=0
+else
+  BUMP_VC=1
+  if [ "$MODE" = "release" ] && [ -z "$NEW_NAME" ]; then BUMP_VN=1; else BUMP_VN=0; fi
+fi
+
+# ---- 前置检查 ----
+[ -f "$BUILD_GRADLE" ] || { echo "✗ 不存在 $BUILD_GRADLE"; exit 1; }
+
+# ---- 读当前版本 ----
+CUR_VC="$(grep -E 'versionCode = [0-9]+' "$BUILD_GRADLE" | head -1 | sed -E 's/[^0-9]//g')"
+CUR_VN="$(grep -E 'versionName = "' "$BUILD_GRADLE" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
+[ -n "$CUR_VC" ] || { echo "✗ 读不到 versionCode"; exit 1; }
+
+if [ "$BUMP_VC" -eq 1 ]; then NEW_VC=$((CUR_VC + 1)); else NEW_VC="$CUR_VC"; fi
+if [ -n "$NEW_NAME" ]; then
+  NEW_VN="$NEW_NAME"                                 # 显式指定（--name）
+elif [ "$BUMP_VN" -eq 1 ]; then
+  NEW_VN="${CUR_VN%.*}.$(( ${CUR_VN##*.} + 1 ))"     # 对外版本末位 +1：1.13 → 1.14
+else
+  NEW_VN="$CUR_VN"                                   # --build-only / --no-bump：不变
+fi
+
+# ---- 仅正式构建校验 App 内更新日志；prepare-only 先预留版本，日志由 CI 随后注入 ----
+CHANGELOG_KT="$APP_DIR/app/src/main/java/edu/csuft/sap/update/Changelog.kt"
+if [ "$MODE" = "release" ] && [ "$PREPARE_ONLY" -eq 0 ]; then
+  [ -f "$CHANGELOG_KT" ] || { echo "✗ 找不到更新日志数据源 $CHANGELOG_KT。已中止。"; exit 1; }
+  VN_RE="$(printf '%s' "$NEW_VN" | sed 's/[.]/\\./g')"
+  if ! grep -qE "versionCode[[:space:]]*=[[:space:]]*${NEW_VC},[[:space:]]*versionName[[:space:]]*=[[:space:]]*\"${VN_RE}\"" "$CHANGELOG_KT"; then
+    echo "✗ 正式发布缺少 App 更新日志：(versionCode=${NEW_VC}, versionName=\"${NEW_VN}\")"
+    echo "  请把自上一个线上版本以来的全部变更写入 Changelog.kt，再重新构建。"
+    exit 1
+  fi
+  echo "▶ 正式发布日志校验通过：${NEW_VN} (${NEW_VC})"
+else
+  if [ "$MODE" = "release" ]; then
+    echo "▶ 正式版本预留：暂不校验更新日志（CI 将在正式构建前注入并再次强制校验）"
+  else
+    echo "▶ 测试构建：不校验、不新增 App 更新日志"
+  fi
+fi
+
+# ---- 原子写回 build.gradle.kts（先写临时文件并校验，再替换，失败不破坏原文件）----
+TMP="$(mktemp)"
+sed -E \
+  -e "s/(versionCode = )[0-9]+/\\1${NEW_VC}/" \
+  -e "s/(versionName = )\"[^\"]*\"/\\1\"${NEW_VN}\"/" \
+  "$BUILD_GRADLE" > "$TMP"
+grep -qE "versionCode = ${NEW_VC}\b" "$TMP" || { echo "✗ versionCode 写回失败，已回滚"; rm -f "$TMP"; exit 1; }
+grep -qE "versionName = \"${NEW_VN}\"" "$TMP" || { echo "✗ versionName 写回失败，已回滚"; rm -f "$TMP"; exit 1; }
+mv "$TMP" "$BUILD_GRADLE"
+echo "▶ 版本：${CUR_VC}(${CUR_VN})  →  ${NEW_VC}(${NEW_VN})"
+
+if [ "$PREPARE_ONLY" -eq 1 ]; then
+  echo
+  echo "✅ 版本号预留完成（尚未构建 APK）"
+  echo "  versionCode=${NEW_VC}"
+  echo "  versionName=${NEW_VN}"
+  exit 0
+fi
 
 # ---- 定位 JDK21 ----
 if [ -z "${JAVA_HOME:-}" ] || [ ! -d "${JAVA_HOME:-}" ]; then
@@ -63,66 +146,37 @@ if [ -z "$GRADLE_BIN" ]; then
   else echo "✗ 找不到 gradle，请设 GRADLE_BIN"; exit 1; fi
 fi
 
-# ---- 前置检查 ----
-[ -f "$BUILD_GRADLE" ] || { echo "✗ 不存在 $BUILD_GRADLE"; exit 1; }
 if [ ! -f "$APP_DIR/keystore.properties" ]; then
   echo "✗ 缺 keystore.properties → release 会回退 debug 签名、不可分发也不能覆盖升级。已中止。"
   exit 1
 fi
 
-# ---- 读当前版本 ----
-CUR_VC="$(grep -E 'versionCode = [0-9]+' "$BUILD_GRADLE" | head -1 | sed -E 's/[^0-9]//g')"
-CUR_VN="$(grep -E 'versionName = "' "$BUILD_GRADLE" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
-[ -n "$CUR_VC" ] || { echo "✗ 读不到 versionCode"; exit 1; }
-
-if [ "$BUMP_VC" -eq 1 ]; then NEW_VC=$((CUR_VC + 1)); else NEW_VC="$CUR_VC"; fi
-if [ -n "$NEW_NAME" ]; then
-  NEW_VN="$NEW_NAME"                                 # 显式指定（--name）
-elif [ "$BUMP_VN" -eq 1 ]; then
-  NEW_VN="${CUR_VN%.*}.$(( ${CUR_VN##*.} + 1 ))"     # 对外版本末位 +1：1.13 → 1.14
+# ---- 构建；正式发布额外强制单元测试与 lint ----
+if [ "$MODE" = "release" ]; then
+  echo "▶ 正式发布检查（单元测试 + lint）并构建签名 release…"
+  ( cd "$APP_DIR" && "$GRADLE_BIN" clean :app:testDebugUnitTest :app:lintDebug :app:assembleRelease -q )
 else
-  NEW_VN="$CUR_VN"                                   # --build-only / --no-bump：不变
+  echo "▶ 构建测试签名 release（R8 混淆 + 资源压缩）…"
+  ( cd "$APP_DIR" && "$GRADLE_BIN" clean :app:assembleRelease -q )
 fi
-
-# ---- 打包铁律：每个版本必须写「更新日志」----
-# 即将发布的 (versionCode, versionName) 必须在 Changelog.kt 里有完全匹配的条目，否则拒绝打包
-# （与"强制 versionCode +1"同级的硬约束，杜绝发版忘写更新日志/版本名对不上）。在改动版本号之前先校验。
-CHANGELOG_KT="$APP_DIR/app/src/main/java/edu/csuft/sap/update/Changelog.kt"
-[ -f "$CHANGELOG_KT" ] || { echo "✗ 找不到更新日志数据源 $CHANGELOG_KT。已中止（未改动版本号）。"; exit 1; }
-VN_RE="$(printf '%s' "$NEW_VN" | sed 's/[.]/\\./g')"   # 转义点号，精确匹配版本名
-if ! grep -qE "versionCode[[:space:]]*=[[:space:]]*${NEW_VC},[[:space:]]*versionName[[:space:]]*=[[:space:]]*\"${VN_RE}\"" "$CHANGELOG_KT"; then
-  echo "✗ 更新日志缺失/不匹配：Changelog.kt 没有 (versionCode=${NEW_VC}, versionName=\"${NEW_VN}\") 的条目。"
-  echo "  打包铁律——每个版本都要写更新日志，且 versionCode/versionName 必须与本次发布一致。"
-  echo "  请在 Changelog.kt 的 entries【最前面】新增一条后重试（versionCode 与 versionName 写同一行）："
-  echo "    ChangelogEntry(versionCode = ${NEW_VC}, versionName = \"${NEW_VN}\", date = \"YYYY-MM-DD\", changes = listOf(\"...\"))"
-  echo "  已中止（未改动版本号）。"
-  exit 1
-fi
-echo "▶ 更新日志校验通过：Changelog.kt 已含 (versionCode=${NEW_VC}, versionName=\"${NEW_VN}\") 条目"
-
-# ---- 原子写回 build.gradle.kts（先写临时文件并校验，再替换，失败不破坏原文件）----
-TMP="$(mktemp)"
-sed -E \
-  -e "s/(versionCode = )[0-9]+/\\1${NEW_VC}/" \
-  -e "s/(versionName = )\"[^\"]*\"/\\1\"${NEW_VN}\"/" \
-  "$BUILD_GRADLE" > "$TMP"
-grep -qE "versionCode = ${NEW_VC}\b" "$TMP" || { echo "✗ versionCode 写回失败，已回滚"; rm -f "$TMP"; exit 1; }
-grep -qE "versionName = \"${NEW_VN}\"" "$TMP" || { echo "✗ versionName 写回失败，已回滚"; rm -f "$TMP"; exit 1; }
-mv "$TMP" "$BUILD_GRADLE"
-echo "▶ 版本：${CUR_VC}(${CUR_VN})  →  ${NEW_VC}(${NEW_VN})"
-
-# ---- 构建 ----
-echo "▶ 构建 release（R8 混淆 + 资源压缩 + 正式签名）…"
-( cd "$APP_DIR" && "$GRADLE_BIN" clean :app:assembleRelease -q )
 
 APK="$APP_DIR/app/build/outputs/apk/release/app-release.apk"
 MAP="$APP_DIR/app/build/outputs/mapping/release/mapping.txt"
 [ -f "$APK" ] || { echo "✗ 未生成 APK"; exit 1; }
 
-# ---- 归档 ----
-mkdir -p "$RELEASE_DIR"
-OUT_APK="$RELEASE_DIR/sap-${NEW_VN}-${NEW_VC}.apk"
-OUT_MAP="$RELEASE_DIR/mapping-${NEW_VN}-${NEW_VC}.txt"
+# ---- 按模式归档，避免把测试包误当成可发布包 ----
+if [ "$MODE" = "release" ]; then
+  OUT_DIR="$RELEASE_DIR"
+  OUT_APK="$OUT_DIR/sap-${NEW_VN}-${NEW_VC}.apk"
+  OUT_MAP="$OUT_DIR/mapping-${NEW_VN}-${NEW_VC}.txt"
+  TYPE_LABEL="正式发布"
+else
+  OUT_DIR="$RELEASE_DIR/test"
+  OUT_APK="$OUT_DIR/sap-test-${NEW_VN}-${NEW_VC}.apk"
+  OUT_MAP="$OUT_DIR/mapping-test-${NEW_VN}-${NEW_VC}.txt"
+  TYPE_LABEL="测试"
+fi
+mkdir -p "$OUT_DIR"
 cp "$APK" "$OUT_APK"
 [ -f "$MAP" ] && cp "$MAP" "$OUT_MAP" || true
 
@@ -135,6 +189,7 @@ CERT=""
 
 echo
 echo "✅ 打包完成"
+echo "  类型:     ${TYPE_LABEL}"
 echo "  APK:      $OUT_APK"
 echo "  版本:     versionCode=${NEW_VC}  versionName=${NEW_VN}"
 echo "  大小:     ${SIZE} bytes ($(awk -v b="$SIZE" 'BEGIN{printf "%.1f", b/1024/1024}')MB)"
@@ -142,4 +197,8 @@ echo "  SHA-256:  ${SHA}"
 [ -f "$OUT_MAP" ] && echo "  mapping:  $OUT_MAP"
 [ -n "$CERT" ] && echo "  签名:     $CERT"
 echo
-echo "下一步：管理平台「App 版本发布」上传 $OUT_APK，填 versionCode=${NEW_VC} / versionName=${NEW_VN}（sha256/size 后端自动算）。"
+if [ "$MODE" = "release" ]; then
+  echo "下一步：用 publish-release.sh 上传；脚本会把 App 内同一份更新日志写入升级平台。"
+else
+  echo "测试包禁止上传在线升级平台；确认功能后再用 --release 构建正式发布包。"
+fi

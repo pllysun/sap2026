@@ -30,7 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edu.csuft.sap.data.account.AppMode
+import edu.csuft.sap.data.account.AccountManager
 import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.data.account.ConnectivityState
+import edu.csuft.sap.data.schedule.AccountData
+import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.icons.AppIcons
 import edu.csuft.sap.ui.grade.GradeScreen
 import edu.csuft.sap.ui.profile.ProfileScreen
@@ -45,6 +49,11 @@ private enum class Tab(val label: String, val icon: ImageVector, val iconFilled:
     Profile("我的", AppIcons.Profile, AppIcons.ProfileFilled),
     WebSettings("设置", AppIcons.Settings, AppIcons.SettingsFilled),
 }
+
+/** 选择降级快照来源；仅“从未导入过”的空 Web 空间允许用上次教务缓存做旧版本兼容恢复。 */
+internal fun downgradeSnapshotSource(active: String?, lastJw: String?, web: AccountData): String? =
+    active?.takeUnless(AccountManager::isLocal)
+        ?: lastJw?.takeIf { web.profiles.isEmpty() && !web.scanned }
 
 @Composable
 fun HomeScreen(onLoggedOut: () -> Unit) {
@@ -63,13 +72,40 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
         listOf(Tab.Schedule, Tab.WebSettings)
     val idx = current.coerceIn(0, visibleTabs.size - 1)
     // 切换模式后回到首个 Tab(课表)，避免停留在已消失的 Tab
-    LaunchedEffect(mode) { current = 0 }
+    LaunchedEffect(
+        mode,
+        MemberState.appAccessLevel,
+        MemberState.isMember,
+        MemberState.accessResolved,
+        ConnectivityState.online,
+    ) {
+        current = 0
+        // 云控 2→1 时先把当前教务缓存无损继承到 Web 本地空间，再切换数据源。
+        // 源教务缓存与服务端绑定均保留；再次升到 2 仍可原样恢复并继续同步。
+        // 冷启动会先乐观进入首页；身份尚未从服务端解析前不能执行继承，否则真实会员会被误当成游客。
+        if (ConnectivityState.online && MemberState.accessResolved) {
+            if (mode == AppMode.WEB) {
+                val active = Graph.accountManager.activeAccount
+                if (!MemberState.hasFullAppFeatures) {
+                    // 兼容已被旧版本直接切到空 Web 源的用户。scanned=true 但无 profile 代表用户主动删空，
+                    // 此时不能擅自恢复；只有从未导入过的全新空空间才尝试上次教务缓存。
+                    val source = downgradeSnapshotSource(
+                        active,
+                        Graph.accountManager.lastJwAccount(),
+                        Graph.scheduleStore.accountData(AccountManager.WEBVIEW_ACCOUNT),
+                    )
+                    source?.let(Graph.scheduleStore::inheritIntoWebview)
+                }
+                Graph.accountManager.useWebview()
+            } else Graph.accountManager.activateJwAccount()
+        }
+    }
 
-    // 仅会员才检查更新（非会员不能更新软件）
+    // 完整 App 能力账号检查更新；真实角色不参与界面文案。
     val updateVm: UpdateViewModel = viewModel()
     val context = LocalContext.current
-    LaunchedEffect(MemberState.isMember) {
-        if (MemberState.isMember) updateVm.check(manual = false)
+    LaunchedEffect(MemberState.hasFullAppFeatures) {
+        if (MemberState.hasFullAppFeatures) updateVm.check(manual = false)
     }
 
     Scaffold(

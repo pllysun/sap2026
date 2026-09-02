@@ -63,7 +63,8 @@ INSERT IGNORE INTO sys_setting (setting_key, setting_value, description) VALUES
 ('qr_qq_group_url', '', 'QQ群二维码图片URL'),
 ('qr_qq_group_name', '', 'QQ群二维码名称'),
 ('qr_qq_account_url', '', 'QQ号二维码图片URL'),
-('qr_qq_account_name', '', 'QQ号二维码名称');
+('qr_qq_account_name', '', 'QQ号二维码名称'),
+('guest_access_level', '0', '软协课表游客权限等级：0关闭、1基础、2完整App能力');
 
 -- 5. 身份表
 CREATE TABLE IF NOT EXISTS sys_position (
@@ -243,6 +244,56 @@ CREATE TABLE IF NOT EXISTS join_application (
     approved_by BIGINT COMMENT '审核人ID',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '入会申请';
+
+-- 19. 软协课表意见反馈 Issue
+CREATE TABLE IF NOT EXISTS app_feedback_issue (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    reporter_id BIGINT NOT NULL COMMENT '反馈账号ID',
+    title VARCHAR(120) NOT NULL COMMENT '标题',
+    content MEDIUMTEXT NOT NULL COMMENT '反馈正文',
+    image_urls TEXT COMMENT '反馈图片COS URL JSON数组，最多4张',
+    category VARCHAR(24) NOT NULL DEFAULT 'OTHER' COMMENT 'BUG/FEATURE/EXPERIENCE/OTHER',
+    status VARCHAR(16) NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN/CLOSED',
+    app_version_name VARCHAR(32) COMMENT '反馈时App版本名',
+    app_version_code INT COMMENT '反馈时App构建号',
+    device_info VARCHAR(255) COMMENT '旧版兼容列，新反馈不再保存运行环境',
+    closed_by BIGINT COMMENT '关闭操作人ID',
+    closed_at DATETIME COMMENT '关闭时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_feedback_status_updated (status, updated_at),
+    INDEX idx_feedback_reporter (reporter_id),
+    INDEX idx_feedback_reporter_pending (reporter_id, status, deleted)
+) COMMENT '软协课表意见反馈Issue';
+
+-- 20. 软协课表意见反馈时间线回复
+CREATE TABLE IF NOT EXISTS app_feedback_comment (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    issue_id BIGINT NOT NULL COMMENT 'Issue ID',
+    author_id BIGINT NOT NULL COMMENT '回复人ID',
+    parent_id BIGINT COMMENT '一级回复ID，NULL为根回复',
+    content TEXT NOT NULL COMMENT '回复内容',
+    admin_reply TINYINT NOT NULL DEFAULT 0 COMMENT '是否指定维护者账号回复',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_feedback_comment_issue (issue_id, created_at),
+    INDEX idx_feedback_comment_parent (issue_id, parent_id, created_at),
+    INDEX idx_feedback_comment_handled (issue_id, admin_reply, deleted)
+) COMMENT '软协课表意见反馈回复';
+
+-- 21. 软协课表公告
+CREATE TABLE IF NOT EXISTS app_announcement (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(120) NOT NULL COMMENT '公告标题',
+    content MEDIUMTEXT NOT NULL COMMENT '公告正文',
+    published TINYINT NOT NULL DEFAULT 1 COMMENT '是否在App展示',
+    created_by BIGINT NOT NULL COMMENT '创建人ID',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_app_announcement_published (published, updated_at)
+) COMMENT '软协课表公告';
 
 -- ============================================
 -- 初始管理员账号

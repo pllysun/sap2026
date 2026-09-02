@@ -1,6 +1,6 @@
 <template>
-  <div class="app-release-page zen-fade-in">
-    <div class="page-header">
+  <div class="app-release-page" :class="{ 'zen-fade-in': !embedded, embedded }">
+    <div v-if="!embedded" class="page-header">
       <h2>App 版本发布</h2>
       <p>上传新版 APK 并发布，安卓 App 将自动检查更新。APK 走平台对象存储(COS)，不占后端带宽。</p>
     </div>
@@ -97,6 +97,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { getUserInfo, getAppVersion, getCosStatus, publishAppVersion } from '../api'
 
+const { embedded } = defineProps({ embedded: { type: Boolean, default: false } })
+
 const router = useRouter()
 const fileInput = ref(null)
 const apkFile = ref(null)
@@ -120,8 +122,10 @@ onMounted(async () => {
     const res = await getUserInfo()
     userRoles.value = (res.data?.roles || []).map(Number)
     if (!isLeaderOrSuper.value) {
-      ElMessage.warning('无权访问此页面')
-      router.push('/dashboard')
+      if (!embedded) {
+        ElMessage.warning('无权访问此页面')
+        router.push('/dashboard')
+      }
       return
     }
   } catch (e) { return }
@@ -201,4 +205,5 @@ const shortSha = (s) => (!s ? '-' : (s.length > 20 ? s.slice(0, 16) + '…' + s.
 .link { color: var(--el-color-primary); }
 .changelog { margin: 0; white-space: pre-wrap; font-family: inherit; font-size: 13px; }
 @media (max-width: 1000px) { .release-layout { grid-template-columns: 1fr; } }
+.embedded { padding-top: 4px; }
 </style>

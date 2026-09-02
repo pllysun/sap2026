@@ -62,15 +62,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.account.BoundAccount
+import edu.csuft.sap.data.account.ConnectivityState
 import edu.csuft.sap.data.account.MemberState
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.common.ScreenHeader
+import edu.csuft.sap.ui.feedback.FeedbackScreen
 import edu.csuft.sap.ui.icons.AppIcons
 import kotlinx.coroutines.launch
 
-private enum class ProfileRoute { NONE, PROFILE_EDIT, JW_ACCOUNTS, SETTINGS, THEME, PRIVACY, CHANGELOG, ABOUT }
+private enum class ProfileRoute { NONE, PROFILE_EDIT, JW_ACCOUNTS, FEEDBACK, SETTINGS, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG, ABOUT }
 
 @Composable
 fun ProfileScreen(
@@ -86,7 +88,8 @@ fun ProfileScreen(
     // 拦截系统返回键：子页逐级回退（主题/隐私/关于→设置，设置→我的），避免一按返回就退到桌面
     BackHandler(enabled = route != ProfileRoute.NONE) {
         route = when (route) {
-            ProfileRoute.THEME, ProfileRoute.PRIVACY, ProfileRoute.CHANGELOG, ProfileRoute.ABOUT -> ProfileRoute.SETTINGS
+            ProfileRoute.THEME, ProfileRoute.ANNOUNCEMENTS, ProfileRoute.PRIVACY,
+            ProfileRoute.CHANGELOG, ProfileRoute.ABOUT -> ProfileRoute.SETTINGS
             else -> ProfileRoute.NONE
         }
     }
@@ -96,7 +99,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
             title = { Text("退出登录") },
-            text = { Text("退出后需重新输入会员账号密码登录。确定退出？") },
+            text = { Text("退出后需重新输入平台账号密码登录。确定退出？") },
             confirmButton = {
                 TextButton(onClick = { showLogoutConfirm = false; vm.logout(onLoggedOut) }) {
                     Text("退出登录", color = MaterialTheme.colorScheme.error)
@@ -127,6 +130,9 @@ fun ProfileScreen(
                 ProfileRoute.JW_ACCOUNTS -> JwAccountsScreen(
                     modifier = modifier, vm = vm, onBack = { route = ProfileRoute.NONE },
                 )
+                ProfileRoute.FEEDBACK -> FeedbackScreen(
+                    modifier = modifier, onBack = { route = ProfileRoute.NONE },
+                )
                 ProfileRoute.SETTINGS -> AppSettingsScreen(
                     modifier = modifier,
                     mode = MemberState.mode,
@@ -136,6 +142,7 @@ fun ProfileScreen(
                         if (on) Graph.accountManager.useWebview() else Graph.accountManager.activateJwAccount()
                     },
                     onTheme = { route = ProfileRoute.THEME },
+                    onAnnouncements = { route = ProfileRoute.ANNOUNCEMENTS },
                     onPrivacy = { route = ProfileRoute.PRIVACY },
                     onChangelog = { route = ProfileRoute.CHANGELOG },
                     onAbout = { route = ProfileRoute.ABOUT },
@@ -143,6 +150,7 @@ fun ProfileScreen(
                     onBack = { route = ProfileRoute.NONE },
                 )
                 ProfileRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
+                ProfileRoute.ANNOUNCEMENTS -> AnnouncementScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.ABOUT -> AboutScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
@@ -177,7 +185,7 @@ fun ProfileScreen(
                         }
                     }
                     Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                        Text(state.user?.name ?: state.user?.nickname ?: "会员", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                        Text(state.user?.name ?: state.user?.nickname ?: "当前账号", fontSize = 18.sp, fontWeight = FontWeight.Medium)
                         state.user?.studentId?.let {
                             Text("学号 $it", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
                         }
@@ -201,6 +209,24 @@ fun ProfileScreen(
                             Text(
                                 if (boundCount > 0) "已绑定 $boundCount 个学号，点击管理" else "未绑定，点击绑定",
                                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                    }
+                }
+            }
+
+            Box(Modifier.padding(top = 12.dp)) {
+                SapCard(onClick = if (ConnectivityState.online) ({ route = ProfileRoute.FEEDBACK }) else null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.weight(1f)) {
+                            Text("意见反馈", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                            Text(
+                                if (ConnectivityState.online) "提交建议、查看 Issue 与维护者处理进度"
+                                else "当前离线，联网后可提交和查看反馈",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp),
                             )
                         }
@@ -256,10 +282,12 @@ private fun JwAccountsScreen(modifier: Modifier, vm: ProfileViewModel, onBack: (
                 SapCard {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text("已绑定学号", fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                        if (bound.isNotEmpty()) TextButton(onClick = { showBind = true }) { Text("添加") }
+                        if (bound.isNotEmpty() && MemberState.isMember) {
+                            TextButton(onClick = { showBind = true }) { Text("添加") }
+                        }
                     }
                     if (bound.isEmpty()) {
-                        Text("绑定后即可查看课表、成绩与考试安排；可绑定多个学号并随时切换。", fontSize = 13.sp,
+                        Text("绑定后即可查看课表、成绩与考试安排。", fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
                         Button(onClick = { showBind = true }, modifier = Modifier.padding(top = 12.dp)) { Text("绑定教务账号") }
                     } else {
@@ -268,7 +296,10 @@ private fun JwAccountsScreen(modifier: Modifier, vm: ProfileViewModel, onBack: (
                                 account = a,
                                 active = a.account == state.activeAccount,
                                 onSwitch = { vm.switchAccount(a.account) },
-                                onNickname = { nicknameTarget = a },
+                                onNickname = {
+                                    vm.clearNicknameError()
+                                    nicknameTarget = a
+                                },
                                 onUnbind = { vm.unbind(a.account) },
                             )
                         }
@@ -294,8 +325,15 @@ private fun JwAccountsScreen(modifier: Modifier, vm: ProfileViewModel, onBack: (
     nicknameTarget?.let { target ->
         NicknameDialog(
             account = target,
-            onConfirm = { nick -> vm.setNickname(target.account, nick); nicknameTarget = null },
-            onDismiss = { nicknameTarget = null },
+            loading = state.nicknameSaving,
+            error = state.nicknameError,
+            onConfirm = { nick -> vm.setNickname(target.account, nick) { nicknameTarget = null } },
+            onDismiss = {
+                if (!state.nicknameSaving) {
+                    vm.clearNicknameError()
+                    nicknameTarget = null
+                }
+            },
         )
     }
 }
@@ -549,6 +587,8 @@ private fun CaptchaImage(base64: String) {
 @Composable
 private fun NicknameDialog(
     account: BoundAccount,
+    loading: Boolean,
+    error: String?,
     onConfirm: (String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -559,11 +599,36 @@ private fun NicknameDialog(
         text = {
             Column {
                 Text("给学号 ${account.account} 起个好认的名字（留空则不显示）", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(nickname, { nickname = it }, label = { Text("备注名") }, singleLine = true,
+                OutlinedTextField(
+                    nickname,
+                    { if (it.length <= 40) nickname = it },
+                    label = { Text("备注名") },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
+                error?.let {
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(nickname.ifBlank { null }) }) { Text("保存") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        confirmButton = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (loading) {
+                    CircularProgressIndicator(
+                        Modifier.padding(end = 8.dp).size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                TextButton(
+                    onClick = { onConfirm(nickname.ifBlank { null }) },
+                    enabled = !loading,
+                ) { Text("保存") }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !loading) { Text("取消") } },
     )
 }

@@ -1,0 +1,245 @@
+name: Android 正式发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "对外版本名；留空时自动递增末位，例如 1.34 → 1.35"
+        required: false
+        type: string
+      changelog:
+        description: "用户可见更新日志；逐行填写，或用 || 分隔多条"
+        required: true
+        type: string
+      force_update:
+        description: "是否强制更新"
+        required: true
+        default: false
+        type: boolean
+      min_supported_version_code:
+        description: "最低支持的 versionCode"
+        required: true
+        default: "1"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-app-version
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    name: 重新构建并发布正式 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 检出默认分支
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.APP_VERSION_PAT || github.token }}
+
+      - name: 限制在默认分支运行
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" != "branch" || "$GITHUB_REF_NAME" != "$DEFAULT_BRANCH" ]]; then
+            echo "正式发布只能从默认分支 $DEFAULT_BRANCH 发起，当前为 $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: 校验发布凭据
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          SAP_ADMIN_TOKEN: ${{ secrets.SAP_ADMIN_TOKEN }}
+          SAP_ADMIN_ACCOUNT: ${{ secrets.SAP_ADMIN_ACCOUNT }}
+          SAP_ADMIN_PASSWORD: ${{ secrets.SAP_ADMIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "$ANDROID_KEYSTORE_BASE64" ]] || missing+=("ANDROID_KEYSTORE_BASE64")
+          [[ -n "$ANDROID_KEYSTORE_PASSWORD" ]] || missing+=("ANDROID_KEYSTORE_PASSWORD")
+          [[ -n "$ANDROID_KEY_ALIAS" ]] || missing+=("ANDROID_KEY_ALIAS")
+          [[ -n "$ANDROID_KEY_PASSWORD" ]] || missing+=("ANDROID_KEY_PASSWORD")
+          if (( ${#missing[@]} > 0 )); then
+            printf '缺少 GitHub Actions Secret: %s\n' "${missing[*]}"
+            exit 1
+          fi
+          if [[ -z "$SAP_ADMIN_TOKEN" && ( -z "$SAP_ADMIN_ACCOUNT" || -z "$SAP_ADMIN_PASSWORD" ) ]]; then
+            echo "请配置 SAP_ADMIN_TOKEN，或同时配置 SAP_ADMIN_ACCOUNT 与 SAP_ADMIN_PASSWORD"
+            exit 1
+          fi
+
+      - name: 配置 JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: 配置 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 安装 Android 构建工具
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: 配置 Gradle 8.9
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+
+      - name: 配置发布签名
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/sap-release.jks"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/sap-release.jks"
+            printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+          } > sap-android/keystore.properties
+
+      - name: 预留下一个正式版本
+        id: version
+        env:
+          REQUESTED_VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          set -euo pipefail
+          args=(--release --prepare-only)
+          if [[ -n "$REQUESTED_VERSION_NAME" ]]; then
+            args+=(--name "$REQUESTED_VERSION_NAME")
+          fi
+          ./sap-android/build-release.sh "${args[@]}"
+          version_code="$(sed -nE 's/.*versionCode = ([0-9]+).*/\1/p' sap-android/app/build.gradle.kts | head -1)"
+          version_name="$(sed -nE 's/.*versionName = "([^"]+)".*/\1/p' sap-android/app/build.gradle.kts | head -1)"
+          [[ -n "$version_code" && -n "$version_name" ]]
+          printf 'code=%s\n' "$version_code" >> "$GITHUB_OUTPUT"
+          printf 'name=%s\n' "$version_name" >> "$GITHUB_OUTPUT"
+
+      - name: 持久化正式版本号
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sap-android/app/build.gradle.kts
+          if git diff --cached --quiet; then
+            echo "正式版本号没有发生变化，拒绝复用已有版本"
+            exit 1
+          fi
+          git commit -m "chore(android): reserve release ${VERSION_NAME}-${VERSION_CODE} [skip ci]"
+          git pull --rebase origin "$DEFAULT_BRANCH"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+
+      - name: 写入 App 内更新日志
+        env:
+          CHANGELOG_INPUT: ${{ inputs.changelog }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$CHANGELOG_INPUT" > "$RUNNER_TEMP/app-changelog.txt"
+          release_date="$(TZ=Asia/Shanghai date +%F)"
+          python3 sap-android/scripts/prepare_changelog.py \
+            --changelog sap-android/app/src/main/java/edu/csuft/sap/update/Changelog.kt \
+            --version-code "$VERSION_CODE" \
+            --version-name "$VERSION_NAME" \
+            --date "$release_date" \
+            --changes-file "$RUNNER_TEMP/app-changelog.txt"
+
+      - name: 全新构建正式 APK
+        env:
+          GRADLE_BIN: gradle
+        run: ./sap-android/build-release.sh --release --no-bump
+
+      - name: 校验 APK 版本与签名
+        id: apk
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -euo pipefail
+          apk="release/sap-${VERSION_NAME}-${VERSION_CODE}.apk"
+          [[ -f "$apk" ]]
+          badging="$("$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk" | head -1)"
+          grep -Fq "versionCode='${VERSION_CODE}'" <<< "$badging"
+          grep -Fq "versionName='${VERSION_NAME}'" <<< "$badging"
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs "$apk"
+          printf 'path=%s\n' "$apk" >> "$GITHUB_OUTPUT"
+          printf 'sha256=%s\n' "$(sha256sum "$apk" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: 发布到 App 升级平台
+        env:
+          SAP_BASE_URL: ${{ vars.SAP_BASE_URL || 'https://csuftsap.top' }}
+          SAP_ADMIN_TOKEN: ${{ secrets.SAP_ADMIN_TOKEN }}
+          SAP_ADMIN_ACCOUNT: ${{ secrets.SAP_ADMIN_ACCOUNT }}
+          SAP_ADMIN_PASSWORD: ${{ secrets.SAP_ADMIN_PASSWORD }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          FORCE_UPDATE: ${{ inputs.force_update }}
+          MIN_SUPPORTED_VERSION_CODE: ${{ inputs.min_supported_version_code }}
+        run: |
+          set -euo pipefail
+          export AAPT="$ANDROID_HOME/build-tools/34.0.0/aapt"
+          args=(--apk "$APK_PATH" --min-supported "$MIN_SUPPORTED_VERSION_CODE")
+          if [[ "$FORCE_UPDATE" == "true" ]]; then
+            args+=(--force-update)
+          fi
+          ./sap-android/publish-release.sh "${args[@]}" --dry-run
+          ./sap-android/publish-release.sh "${args[@]}"
+
+      - name: 发布成功后持久化 App 更新日志
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -euo pipefail
+          git add sap-android/app/src/main/java/edu/csuft/sap/update/Changelog.kt
+          if git diff --cached --quiet; then
+            echo "Changelog.kt 没有新增正式版本记录"
+            exit 1
+          fi
+          git commit -m "docs(android): release ${VERSION_NAME}-${VERSION_CODE} changelog [skip ci]"
+          git pull --rebase origin "$DEFAULT_BRANCH"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+
+      - name: 保存正式产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: sap-release-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}
+          path: |
+            release/sap-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}.apk
+            release/mapping-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}.txt
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: 写入任务摘要
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          APK_SHA256: ${{ steps.apk.outputs.sha256 }}
+          SAP_BASE_URL: ${{ vars.SAP_BASE_URL || 'https://csuftsap.top' }}
+        run: |
+          {
+            echo "## Android 正式版本发布完成"
+            echo
+            echo "- 版本：${VERSION_NAME} (${VERSION_CODE})"
+            echo "- SHA-256：\`${APK_SHA256}\`"
+            echo "- 发布平台：${SAP_BASE_URL}"
+            echo "- App 内与发布页使用同一份更新日志"
+          } >> "$GITHUB_STEP_SUMMARY"

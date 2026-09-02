@@ -20,9 +20,13 @@ public class CalendarParser {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CalendarParser.class);
 
-    private static final Pattern FULL_DATE = Pattern.compile("(\\d{1,2})月(\\d{1,2})日");
+    /** 教学日历日期：新版仍显示“03月14日”，部分节点会输出“03/14”或“03-14”。 */
+    private static final Pattern FULL_DATE = Pattern.compile(
+            "(\\d{1,2})\\s*(?:月|[/-])\\s*(\\d{1,2})\\s*日?");
     private static final Pattern TERM = Pattern.compile("(\\d{4})-(\\d{4})-(\\d)");
-    private static final Pattern WEEK_NO = Pattern.compile("^\\s*(\\d{1,2})\\s*$");
+    /** 旧版周次单元格是“1”，新版页面显示为“第1周”（可能夹有空格）。 */
+    private static final Pattern WEEK_NO = Pattern.compile("(?:第\\s*)?(\\d{1,2})\\s*(?:周|週)");
+    private static final Pattern PLAIN_WEEK_NO = Pattern.compile("^\\s*(\\d{1,2})\\s*$");
 
     /**
      * @param html jxzl_query 页面 HTML
@@ -56,9 +60,8 @@ public class CalendarParser {
         for (Element row : table.select("tr")) {
             Elements tds = row.select("td");
             if (tds.size() < 8) continue;                       // 周次 + 7 天(+备注)
-            Matcher wm = WEEK_NO.matcher(tds.get(0).text());
-            if (!wm.matches()) continue;                        // 跳过表头/页脚行
-            int week = Integer.parseInt(wm.group(1));
+            Integer week = parseWeekNumber(tds.get(0).text());
+            if (week == null) continue;                          // 跳过表头/页脚行
             for (int col = 1; col <= 7 && col < tds.size(); col++) {  // col: 1=周一 … 7=周日
                 Matcher dm = FULL_DATE.matcher(tds.get(col).text());
                 if (!dm.find()) continue;
@@ -74,6 +77,14 @@ public class CalendarParser {
             }
         }
         return null;
+    }
+
+    private static Integer parseWeekNumber(String text) {
+        if (text == null) return null;
+        Matcher labeled = WEEK_NO.matcher(text);
+        if (labeled.find()) return Integer.parseInt(labeled.group(1));
+        Matcher plain = PLAIN_WEEK_NO.matcher(text);
+        return plain.matches() ? Integer.parseInt(plain.group(1)) : null;
     }
 
     /** 含"周次/星期"表头的那张表。 */

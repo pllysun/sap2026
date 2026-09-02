@@ -145,19 +145,28 @@
       <view class="sync-btn" bindtap="onSync"><view class="ic-refresh"></view><text>同步</text></view>
     </view>
 
-    <!-- 一键自动评教 -->
-    <button wx:if="{{hasUnEvaluated}}" class="btn-accent auto-btn" bindtap="autoEval">一键自动评教</button>
+    <!-- 一键最高合法分 -->
+    <view wx:if="{{hasUnEvaluated}}" class="eval-auto-card">
+      <text class="eval-auto-title">一键满评</text>
+      <text class="eval-auto-desc">{{evalRestrictHighest ? '平台禁止全选最高分，将自动提交最高合法分（当前通常为 99.99）' : '自动提交满分和默认好评'}}</text>
+      <button class="btn-accent auto-btn" loading="{{autoLoading}}" disabled="{{autoLoading}}" bindtap="autoEval">一键满评全部待评课程</button>
+    </view>
 
     <block wx:if="{{tasks.length}}">
-      <view wx:for="{{tasks}}" wx:key="teacherNo" class="card eval-card">
+      <view wx:for="{{tasks}}" wx:key="courseId" class="card eval-card">
         <view class="eval-top">
-          <text class="eval-teacher">{{item.teacher}}</text>
+          <view class="eval-main">
+            <text class="eval-course">{{item.courseName || '未命名课程'}}</text>
+            <text class="eval-teacher">{{item.teacher || '未知教师'}}</text>
+          </view>
           <text class="eval-status {{item.evaluated ? 'done' : 'todo'}}">{{item.statusText}}</text>
         </view>
         <view class="eval-sub">
           <text class="t-sec t-sm">{{item.college}}</text>
           <text wx:if="{{item.typeName}}" class="eval-type">{{item.typeName}}</text>
         </view>
+        <button wx:if="{{item.canEvaluate}}" class="eval-manual-btn" data-taskid="{{item.taskId}}"
+                data-courseid="{{item.courseId}}" bindtap="openEvalForm">手动填写评价</button>
       </view>
     </block>
     <view wx:elif="{{evalSync.state!=='syncing'}}" class="empty">
@@ -204,11 +213,66 @@
     <scroll-view scroll-y class="sheet-scroll">
       <view wx:for="{{evalResults}}" wx:key="index" class="res-row">
         <view class="res-left">
-          <text class="res-teacher">{{item.teacher}}</text>
+          <text class="res-course">{{item.courseName || item.teacher}}</text>
+          <text wx:if="{{item.courseName && item.teacher}}" class="res-teacher">{{item.teacher}}</text>
           <text wx:if="{{item.typeName}}" class="t-ter t-sm">{{item.typeName}}</text>
         </view>
         <text class="res-flag {{item.success ? 'ok' : 'bad'}}">{{item.success ? '✓ ' + (item.score!=null && item.score!=='' ? item.score : '成功') : '✗ ' + item.message}}</text>
       </view>
     </scroll-view>
+  </view>
+</view>
+
+<!-- 单门课程手动评价表 -->
+<view wx:if="{{showEvalForm && manualForm}}" class="mask" bindtap="closeEvalForm">
+  <view class="sheet eval-form-sheet" catchtap="noop">
+    <view class="sheet-head">
+      <view class="eval-form-heading">
+        <text>{{manualForm.courseName}}</text>
+        <text class="eval-form-teacher">{{manualForm.teacher}} · {{manualForm.typeName}}</text>
+      </view>
+      <text class="sheet-act" bindtap="closeEvalForm">关闭</text>
+    </view>
+    <view class="eval-score-bar">
+      <text>当前总分</text>
+      <text class="eval-score-value">{{manualTotal}} / {{manualForm.maxTotal}}</text>
+    </view>
+    <view wx:if="{{manualForm.restrictHighest}}" class="eval-rule-tip">系统不允许所有评分题均为最高分，请至少调整一项；也可使用“一键满评”自动取最高合法分。</view>
+    <scroll-view scroll-y class="eval-form-scroll">
+      <view wx:for="{{manualQuestions}}" wx:for-item="q" wx:for-index="qi" wx:key="indexId" class="eval-question">
+        <text wx:if="{{q.section}}" class="eval-section">{{q.section}}</text>
+        <view class="eval-question-title">
+          <text>{{q.order}}. {{q.title}}</text><text wx:if="{{q.required}}" class="required"> *</text>
+        </view>
+        <text wx:if="{{q.remark}}" class="eval-remark">{{q.remark}}</text>
+
+        <view wx:if="{{q.type==='打分题'}}" class="score-input-wrap">
+          <input class="eval-input" type="digit" value="{{q.value}}" data-index="{{qi}}"
+                 bindinput="onEvalInput" placeholder="0～{{q.maxScore}}" />
+          <text class="score-unit">/ {{q.maxScore}} 分</text>
+        </view>
+
+        <radio-group wx:elif="{{q.type==='单选题'}}" data-index="{{qi}}" bindchange="onEvalRadio">
+          <label wx:for="{{q.options}}" wx:for-item="opt" wx:key="id" class="eval-option">
+            <radio value="{{opt.id}}" checked="{{opt.id==q.optionId}}" color="#2E9BEF" />
+            <text>{{opt.title}}{{q.scored ? '（' + opt.score + '分）' : ''}}</text>
+          </label>
+        </radio-group>
+
+        <checkbox-group wx:elif="{{q.type==='多选题'}}" data-index="{{qi}}" bindchange="onEvalCheckbox">
+          <label wx:for="{{q.options}}" wx:for-item="opt" wx:key="id" class="eval-option">
+            <checkbox value="{{opt.id}}" color="#2E9BEF" /><text>{{opt.title}}</text>
+          </label>
+        </checkbox-group>
+
+        <input wx:elif="{{q.type==='填空题'}}" class="eval-input" value="{{q.value}}" data-index="{{qi}}"
+               bindinput="onEvalInput" placeholder="多个空请用 | 分隔" />
+
+        <textarea wx:else class="eval-textarea" value="{{q.value}}" data-index="{{qi}}"
+                  bindinput="onEvalInput" maxlength="1000" auto-height placeholder="请输入自定义评价" />
+      </view>
+    </scroll-view>
+    <button class="btn-accent eval-submit-btn" loading="{{submitLoading}}" disabled="{{submitLoading}}"
+            bindtap="submitManualEval">确认提交本课程评价</button>
   </view>
 </view>

@@ -14,14 +14,79 @@ data class ChangelogEntry(
  * 版本号约定：versionName（如 1.13/1.14）= 对外发布版本，每次发布递增（用户看到的「版本」）；
  *            versionCode（21/22…）     = 内部构建号，仅内部使用、每次构建自动 +1（驱动「检查更新」比对）。
  *
- * ⚠️ 打包铁律：每次发布必须在列表【最前面】新增一条记录，其 (versionCode, versionName) 必须与本次构建完全一致，
- *    否则 build-release.sh 会拒绝打包（与"强制 versionCode +1"同级的硬约束，杜绝发版忘写更新日志）。
- *    最新版本放最前；date 用实际发布日期。
+ * ⚠️ 只有通过在线升级平台正式发布给用户的版本，才在列表【最前面】新增记录。
+ *    调试/测试构建虽有独立 versionCode，但不得写入这里。正式发布时 (versionCode, versionName)
+ *    必须与 APK 完全一致，且 changes 必须覆盖自上一个线上版本以来的全部变更；最新版本放最前。
  *
  * 文案规范（用户 2026-06-18 定）：只列「新增 / 优化 / 修复 了什么」，一条一句、不写原因与解释、不暴露内部细节。
  */
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
+        ChangelogEntry(
+            versionCode = 59, versionName = "1.36", date = "2026-08-14",
+            changes = listOf(
+                "新增课表公告，支持查看最新公告与历史公告",
+                "优化账号登录后的功能与使用模式适配",
+                "优化 Web 模式下课表的切换、替换与管理体验",
+                "修复使用模式调整后课表可能为空并需要重新导入",
+                "优化设置页面布局与退出登录入口",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 56, versionName = "1.35", date = "2026-08-10",
+            changes = listOf(
+                "新增课表个性化中心，支持实时预览与周次切换",
+                "支持调整课表尺寸、文字对齐、课程信息显示及课程卡样式",
+                "新增课表背景图片，支持从相册选择、缩放与裁剪",
+                "优化个性化配置，切换账号或学期后仍然生效，并支持一键恢复默认",
+                "优化意见反馈讨论，支持用户头像、身份标签与分层回复",
+                "支持反馈发起人主动关闭自己的 Issue，关闭后不再接受回复",
+                "修复教务账号备注无法持久保存",
+                "修复部分教务账号无法通过 WebVPN 同步成绩",
+                "修复网页登录后可能跳错页面导致课表导入失败",
+                "优化软件更新弹窗的日志排版",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 44, versionName = "1.34", date = "2026-07-20",
+            changes = listOf(
+                "优化教学评价手动填写与一键满评的兼容性",
+                "支持根据学校平台限制自动调整评价分数",
+                "优化评价提交异常提示并保留未提交内容",
+                "修复课表分享图片可能显示旧周次",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 42, versionName = "1.33", date = "2026-07-12",
+            changes = listOf(
+                "优化教学评价入口与同步体验",
+                "支持按评教学年切换并缓存评价信息",
+                "优化教务缓存账号隔离",
+                "优化课表周次选择显示",
+                "修复更新后启动闪退",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 38, versionName = "1.29", date = "2026-07-11",
+            changes = listOf(
+                "修复若干 bug",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 37, versionName = "1.28", date = "2026-07-10",
+            changes = listOf(
+                "新增意见反馈图片附件",
+                "优化反馈提交页与图片授权方式",
+            ),
+        ),
+        ChangelogEntry(
+            versionCode = 36, versionName = "1.27", date = "2026-07-10",
+            changes = listOf(
+                "新增会员意见反馈 Issue 中心",
+                "支持查看维护者回复与反馈关闭进度",
+                "更新教学评价入口，支持手动评价与一键满评",
+            ),
+        ),
         ChangelogEntry(
             versionCode = 35, versionName = "1.26", date = "2026-06-19",
             changes = listOf(

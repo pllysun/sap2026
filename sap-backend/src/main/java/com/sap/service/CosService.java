@@ -289,6 +289,19 @@ public class CosService {
         return cdn != null && h.equals(cdn.toLowerCase());
     }
 
+    /** 反馈附件只允许引用当前系统自己的 Bucket 或 CDN，不能由客户端注入其他公网图片。 */
+    public boolean isOwnedPublicHost(String host) {
+        if (host == null || host.isBlank()) return false;
+        String h = host.trim().toLowerCase();
+        String cdn = cdnHost();
+        if (cdn != null && h.equals(cdn.toLowerCase())) return true;
+        String bucket = settingService.getValue(KEY_BUCKET);
+        String region = settingService.getValue(KEY_REGION);
+        if (isBlank(bucket) || isBlank(region)) return false;
+        String regionName = region.startsWith("cos.") ? region.substring(4) : region;
+        return h.equals((bucket + ".cos." + regionName + ".myqcloud.com").toLowerCase());
+    }
+
     public Map<String, String> getMaskedConfig() {
         Map<String, String> config = new HashMap<>();
         config.put("bucketName", settingService.getValue(KEY_BUCKET));

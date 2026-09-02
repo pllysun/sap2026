@@ -12,6 +12,8 @@ import edu.csuft.sap.data.local.TokenStore
 import edu.csuft.sap.data.local.UserStore
 import edu.csuft.sap.data.remote.ApiClient
 import edu.csuft.sap.data.repository.AuthRepository
+import edu.csuft.sap.data.repository.AnnouncementRepository
+import edu.csuft.sap.data.repository.FeedbackRepository
 import edu.csuft.sap.data.repository.JwRepository
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleStore
@@ -39,6 +41,10 @@ object Graph {
         private set
     lateinit var jwRepository: JwRepository
         private set
+    lateinit var feedbackRepository: FeedbackRepository
+        private set
+    lateinit var announcementRepository: AnnouncementRepository
+        private set
     lateinit var accountManager: AccountManager
         private set
     lateinit var scheduleStore: ScheduleStore
@@ -63,6 +69,8 @@ object Graph {
             connectTimeoutSec = 3, readTimeoutSec = 3)
         authRepository = AuthRepository(api, tokenStore, userStore)
         jwRepository = JwRepository(api)
+        feedbackRepository = FeedbackRepository(api)
+        announcementRepository = AnnouncementRepository(context.applicationContext, api)
         accountManager = AccountManager(context.applicationContext, jwRepository)
         // 会员账号切换（登录/登出）时，让 AccountManager 切到对应账号的教务激活号命名空间。
         // drop(1) 跳过订阅即发的当前值（构造时已读取，无需重复重载）。

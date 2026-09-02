@@ -4,13 +4,21 @@ import lombok.Data;
 
 import java.util.List;
 
-/** 评教总览：某学期(批次)下的全部评教任务 + 可切换的学期列表。 */
+/** 教学质量保障系统评教总览。 */
 @Data
 public class EvalOverviewVO {
-    /** 当前展示的学年学期 */
+    /** 当前任务名称；兼容旧客户端的 term 字段。 */
     private String term;
-    /** 全部有评教批次的学年学期（供切换），新→旧 */
+    /** 全部任务名称；兼容旧客户端的学期选择器。 */
     private List<String> terms;
-    /** 该学期下的全部评教任务（已评 + 未评） */
+    private Long taskId;
+    private String taskName;
+    private String startTime;
+    private String endTime;
+    private String status;
+    private boolean restrictHighest;
+    private boolean restrictLowest;
+    private List<EvalRoundVO> rounds;
+    /** 当前任务下的课程评价（已评 + 未评）。 */
     private List<EvalTaskVO> tasks;
 }

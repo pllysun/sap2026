@@ -81,6 +81,21 @@ public class JwCredentialService {
         mapper.physicalDelete(userId, account.trim());
     }
 
+    /** 保存教务账号备注；绑定记录天然按 (userId, account) 隔离。空白值表示清除。 */
+    public String updateRemark(Long userId, String account, String remark) {
+        String cleanAccount = account == null ? null : account.trim();
+        JwCredential credential = required(userId, cleanAccount);
+        String cleanRemark = remark == null ? null : remark.trim();
+        if (cleanRemark != null && cleanRemark.isBlank()) cleanRemark = null;
+        if (cleanRemark != null && cleanRemark.length() > 40) {
+            throw new BusinessException(400, "备注不能超过 40 个字符");
+        }
+        credential.setRemark(cleanRemark);
+        credential.setUpdatedAt(LocalDateTime.now());
+        mapper.updateById(credential);
+        return cleanRemark;
+    }
+
     public void markSynced(Long userId, String account) {
         JwCredential c = get(userId, account);
         if (c != null) {

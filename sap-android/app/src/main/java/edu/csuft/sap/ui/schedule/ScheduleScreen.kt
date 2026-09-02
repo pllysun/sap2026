@@ -71,7 +71,6 @@ import edu.csuft.sap.ui.theme.colorIndexOf
 import edu.csuft.sap.ui.theme.paletteColor
 import edu.csuft.sap.webview.WebImportScreen
 import kotlinx.coroutines.flow.drop
-import java.time.LocalDate
 
 private sealed interface Route {
     data object None : Route
@@ -89,8 +88,6 @@ private sealed interface Route {
     data object Settings : Route
     data object WebImport : Route
 }
-
-private val dayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
 @Composable
 fun ScheduleScreen(
@@ -133,10 +130,11 @@ fun ScheduleScreen(
                         days = days,
                         periodCount = s.dailyPeriods,
                         courses = weekCourses,
+                        settings = s,
                     )
                 },
             )
-            WeekHeader(days, WeekUtil.datesOfWeek(s.semesterStartDate, state.selectedWeek))
+            ScheduleWeekHeader(days, WeekUtil.datesOfWeek(s.semesterStartDate, state.selectedWeek), s)
             Box(Modifier.weight(1f)) {
                 when {
                     // 扫描期间（含「重新扫描」）始终盖住旧数据显示动画，拿到新数据后才覆盖呈现
@@ -162,56 +160,58 @@ fun ScheduleScreen(
                             val target = (state.selectedWeek - 1).coerceIn(0, totalWeeks - 1)
                             if (pagerState.currentPage != target) pagerState.animateScrollToPage(target)
                         }
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                        ) { page ->
-                            val week = page + 1
-                            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                                if (s.semesterStartDate == null) {
-                                    SetupHint { route = Route.Settings }
-                                }
-                                // 派生集合用 remember 缓存：仅在源数据/周/设置变化时重算，
-                                // 开弹窗、翻页吸附、分钟刷新等无关重组不再重复 map/copy/filter。
-                                val weekCourses = remember(state.display, week, s.showNonWeek) {
-                                    state.display.mapNotNull { c ->
-                                        val thisWeek = c.weeks.isEmpty() || c.weeks.contains(week)
-                                        when {
-                                            thisWeek -> c.copy(isThisWeek = true)
-                                            s.showNonWeek -> c.copy(isThisWeek = false)
-                                            else -> null
+                        Box(Modifier.fillMaxSize()) {
+                            ScheduleBackgroundLayer(s, Modifier.fillMaxSize())
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                            ) { page ->
+                                val week = page + 1
+                                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                                    if (s.semesterStartDate == null) {
+                                        SetupHint { route = Route.Settings }
+                                    }
+                                    // 派生集合用 remember 缓存：仅在源数据/周/设置变化时重算，
+                                    // 开弹窗、翻页吸附、分钟刷新等无关重组不再重复 map/copy/filter。
+                                    val weekCourses = remember(state.display, week, s.showNonWeek) {
+                                        state.display.mapNotNull { c ->
+                                            val thisWeek = c.weeks.isEmpty() || c.weeks.contains(week)
+                                            when {
+                                                thisWeek -> c.copy(isThisWeek = true)
+                                                s.showNonWeek -> c.copy(isThisWeek = false)
+                                                else -> null
+                                            }
                                         }
                                     }
-                                }
-                                ScheduleGrid(
-                                    days = days,
-                                    courses = weekCourses,
-                                    periodCount = s.dailyPeriods,
-                                    showNowLine = s.showNowLine,
-                                    rowHeight = s.rowHeightDp.dp,
-                                    cardScale = s.cardScale,
-                                    onCourseClick = { c -> detail = slotCourses(state.display, c, week, s.showOtherWeekInDetail) },
-                                    onEmptyClick = { day, node -> route = Route.Edit(null, day, node) },
-                                    modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
-                                )
-                                // 备注里的“无固定时间”课：按本周过滤；已被排进网格（同名自建课）的不再重复显示
-                                val weekRemarks = remember(state.remarks, state.display, week) {
-                                    val placedNames = state.display.filter { it.isCustom }.map { it.name }.toSet()
-                                    state.remarks.filter { r ->
-                                        if (r.name in placedNames) return@filter false
-                                        val w = WeekUtil.parseWeeks(r.weeks)
-                                        w.isEmpty() || w.contains(week)
-                                    }
-                                }
-                                if (weekRemarks.isNotEmpty()) WeekRemarks(weekRemarks) { r ->
-                                    route = Route.Edit(
-                                        initial = null,
-                                        prefillName = r.name,
-                                        prefillTeacher = r.teacher,
-                                        prefillWeeks = WeekUtil.parseWeeks(r.weeks).toSet().ifEmpty { null },
+                                    ScheduleGrid(
+                                        days = days,
+                                        courses = weekCourses,
+                                        periodCount = s.dailyPeriods,
+                                        showNowLine = s.showNowLine,
+                                        settings = s,
+                                        onCourseClick = { c -> detail = slotCourses(state.display, c, week, s.showOtherWeekInDetail) },
+                                        onEmptyClick = { day, node -> route = Route.Edit(null, day, node) },
+                                        modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
                                     )
+                                    // 备注里的“无固定时间”课：按本周过滤；已被排进网格（同名自建课）的不再重复显示
+                                    val weekRemarks = remember(state.remarks, state.display, week) {
+                                        val placedNames = state.display.filter { it.isCustom }.map { it.name }.toSet()
+                                        state.remarks.filter { r ->
+                                            if (r.name in placedNames) return@filter false
+                                            val w = WeekUtil.parseWeeks(r.weeks)
+                                            w.isEmpty() || w.contains(week)
+                                        }
+                                    }
+                                    if (weekRemarks.isNotEmpty()) WeekRemarks(weekRemarks) { r ->
+                                        route = Route.Edit(
+                                            initial = null,
+                                            prefillName = r.name,
+                                            prefillTeacher = r.teacher,
+                                            prefillWeeks = WeekUtil.parseWeeks(r.weeks).toSet().ifEmpty { null },
+                                        )
+                                    }
+                                    Spacer(Modifier.height(80.dp))
                                 }
-                                Spacer(Modifier.height(80.dp))
                             }
                         }
                     }
@@ -287,6 +287,8 @@ fun ScheduleScreen(
                 onDelete = { route = Route.None; showDelete = true },
                 onRescan = { route = Route.None; vm.rescan() },
                 onWebImport = { route = Route.WebImport },
+                previewCourses = state.display,
+                previewWeek = state.selectedWeek,
                 onSave = vm::saveSettings,
                 onBack = { route = Route.None },
             )
@@ -384,39 +386,6 @@ private fun TopBar(
 }
 
 @Composable
-private fun WeekHeader(days: List<Int>, dates: List<LocalDate>?) {
-    val today = LocalDate.now()
-    Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(bottom = 8.dp),
-    ) {
-        Spacer(Modifier.width(34.dp))
-        for (day in days) {
-            val date = dates?.getOrNull(day - 1)
-            val isToday = date != null && date == today
-            Column(
-                Modifier.weight(1f).padding(horizontal = 1.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    dayNames[day - 1],
-                    fontSize = 12.sp,
-                    fontWeight = if (isToday) FontWeight.Medium else FontWeight.Normal,
-                    color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (date != null) {
-                    Text(
-                        "${date.monthValue}/${date.dayOfMonth.toString().padStart(2, '0')}",
-                        fontSize = 10.sp,
-                        color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.padding(top = 1.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun FullScreen(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
@@ -437,6 +406,9 @@ private fun WeekPickerDialog(
         title = { Text("选择周次") },
         text = {
             Column {
+                // 本周/已过周不再使用过白的容器色，弱化层级仍在但日光下更容易辨认。
+                val currentWeekBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+                val pastWeekBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.94f)
                 val rows = (1..total).chunked(5)
                 rows.forEach { week ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -445,17 +417,17 @@ private fun WeekPickerDialog(
                             val isCur = current != null && w == current
                             val past = current != null && w < current
                             val future = current != null && w > current
-                            // 选中=蓝；今日所在周=过渡色(浅蓝)；已过去的周=灰；未到的周=白(描边)
+                            // 选中=蓝；本周=中等蓝；已过去的周=更清晰的灰；未到的周=白(描边)
                             val bg = when {
                                 sel -> MaterialTheme.colorScheme.primary
-                                isCur -> MaterialTheme.colorScheme.primaryContainer
-                                past -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                                isCur -> currentWeekBg
+                                past -> pastWeekBg
                                 else -> MaterialTheme.colorScheme.surface
                             }
                             val fg = when {
                                 sel -> MaterialTheme.colorScheme.onPrimary
-                                isCur -> MaterialTheme.colorScheme.onPrimaryContainer
-                                past -> MaterialTheme.colorScheme.onSurfaceVariant
+                                isCur -> MaterialTheme.colorScheme.primary
+                                past -> MaterialTheme.colorScheme.onSurface
                                 else -> MaterialTheme.colorScheme.onSurface
                             }
                             Box(
@@ -483,8 +455,8 @@ private fun WeekPickerDialog(
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         LegendItem(MaterialTheme.colorScheme.primary, "选中", false)
-                        LegendItem(MaterialTheme.colorScheme.primaryContainer, "本周", false)
-                        LegendItem(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), "已过", false)
+                        LegendItem(currentWeekBg, "本周", false)
+                        LegendItem(pastWeekBg, "已过", false)
                         LegendItem(MaterialTheme.colorScheme.surface, "未到", true)
                     }
                 }
@@ -549,7 +521,7 @@ private fun RescanLoading() {
     }
 }
 
-/** 本地「WebVPN 课表」源还没数据时的引导：去 WebView 导入。 */
+/** 本地「网页课表」源还没数据时的引导：去 WebView 导入。 */
 @Composable
 private fun LocalImportHint(onClick: () -> Unit) {
     Column(
@@ -559,7 +531,7 @@ private fun LocalImportHint(onClick: () -> Unit) {
     ) {
         Text("还没有课表数据", fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Text(
-            "通过 WebVPN 登录学校教务，端上直接导入课表（不经服务器）",
+            "通过学校统一身份认证登录教务，端上直接导入课表（不经服务器）",
             fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),
         )

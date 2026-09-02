@@ -42,6 +42,9 @@ class RateLimitInterceptorTest {
         assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("POST", "/api/activity/create")));
         assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("DELETE", "/api/activity/1")));
         assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("PUT", "/api/activity/1")));
+        assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("POST", "/api/app/feedback/issues")));
+        assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("POST", "/api/app/feedback/images")));
+        assertEquals(RateLimitInterceptor.Category.WRITE, it.categorize(req("DELETE", "/api/app/feedback/admin/issues/1")));
         assertNull(it.categorize(req("GET", "/api/activity/list")));  // 普通读不限流
         assertNull(it.categorize(req("OPTIONS", "/api/auth/login"))); // CORS 预检不限流
         assertNull(it.categorize(req("POST", "/other/x")));           // 非 /api 写不限流

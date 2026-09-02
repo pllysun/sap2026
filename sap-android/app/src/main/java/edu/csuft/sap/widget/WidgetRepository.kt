@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ProfileKind
 import edu.csuft.sap.data.schedule.ScheduleRoot
+import edu.csuft.sap.data.schedule.ScheduleStore
 import edu.csuft.sap.data.schedule.WeekUtil
 import edu.csuft.sap.ui.theme.colorIndexOf
 import java.time.LocalDate
@@ -40,8 +41,10 @@ object WidgetRepository {
 
     private const val ACCOUNT_PREFS = "sap_account"
     private const val ACCOUNT_KEY = "active_account"
+    private const val SESSION_PREFS = "sap_session"
+    private const val SESSION_UID_KEY = "current_uid"
     private const val SCHEDULE_PREFS = "sap_schedule"
-    private const val SCHEDULE_KEY = "root_v3"
+    private const val SCHEDULE_KEY = "root_v4"
 
     private val gson = Gson()
 
@@ -50,6 +53,10 @@ object WidgetRepository {
         val account = context.getSharedPreferences(ACCOUNT_PREFS, Context.MODE_PRIVATE)
             .getString(ACCOUNT_KEY, null)
             ?: return WidgetData(false, "", null, emptyList())
+        val memberAccount = context.getSharedPreferences(SESSION_PREFS, Context.MODE_PRIVATE)
+            .getString(SESSION_UID_KEY, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: "_"
 
         val json = context.getSharedPreferences(SCHEDULE_PREFS, Context.MODE_PRIVATE)
             .getString(SCHEDULE_KEY, null)
@@ -61,7 +68,8 @@ object WidgetRepository {
             null
         } ?: return WidgetData(true, "", null, emptyList())
 
-        val data = root.accounts[account] ?: return WidgetData(true, "", null, emptyList())
+        val data = root.accounts[ScheduleStore.accountStorageKey(memberAccount, account)]
+            ?: return WidgetData(true, "", null, emptyList())
         val profile = data.profiles.firstOrNull { it.id == data.activeProfileId }
             ?: data.profiles.firstOrNull()
             ?: return WidgetData(true, "", null, emptyList())

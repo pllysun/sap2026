@@ -1,11 +1,14 @@
 package com.sap.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.sap.common.Result;
+import com.sap.service.AppAccessService;
 import com.sap.service.CosService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -25,6 +28,7 @@ import static org.mockito.Mockito.*;
 class FileControllerTest {
 
     @Mock CosService cosService;
+    @Mock AppAccessService appAccessService;
 
     @InjectMocks FileController controller;
 
@@ -54,8 +58,12 @@ class FileControllerTest {
         Map<String, String> uploaded = Map.of("url", "https://x.myqcloud.com/a.jpg");
         when(cosService.upload(any())).thenReturn(uploaded);
 
-        Result<?> result = controller.upload(file);
-        assertSame(uploaded, result.getData());
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            Result<?> result = controller.upload(file);
+            assertSame(uploaded, result.getData());
+        }
+        verify(appAccessService).requireBasicAccess(7L);
     }
 
     // ===================== batchUpload =====================
@@ -66,21 +74,28 @@ class FileControllerTest {
         MockMultipartFile f2 = new MockMultipartFile("files", "c.jpg", "image/jpeg", "y".getBytes());
         when(cosService.upload(any())).thenReturn(Map.of("url", "u"));
 
-        Result<?> result = controller.batchUpload(new MultipartFile[]{f1, empty, f2});
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, String>> data = (List<Map<String, String>>) result.getData();
-        assertEquals(2, data.size());
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            Result<?> result = controller.batchUpload(new MultipartFile[]{f1, empty, f2});
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> data = (List<Map<String, String>>) result.getData();
+            assertEquals(2, data.size());
+        }
+        verify(appAccessService).requireBasicAccess(7L);
         verify(cosService, times(2)).upload(any());
     }
 
     @Test
     void batchUpload_allEmpty_returnsEmptyList() {
         MockMultipartFile empty = new MockMultipartFile("files", "b.jpg", "image/jpeg", new byte[0]);
-        Result<?> result = controller.batchUpload(new MultipartFile[]{empty});
-        @SuppressWarnings("unchecked")
-        List<Map<String, String>> data = (List<Map<String, String>>) result.getData();
-        assertTrue(data.isEmpty());
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            Result<?> result = controller.batchUpload(new MultipartFile[]{empty});
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> data = (List<Map<String, String>>) result.getData();
+            assertTrue(data.isEmpty());
+        }
+        verify(appAccessService).requireBasicAccess(7L);
         verify(cosService, never()).upload(any());
     }
 

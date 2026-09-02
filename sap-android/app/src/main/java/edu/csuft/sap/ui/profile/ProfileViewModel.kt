@@ -34,6 +34,8 @@ class ProfileViewModel : ViewModel() {
         val mfaChallenge: String? = null,
         val profileSaving: Boolean = false,  // 个人信息保存中
         val profileError: String? = null,
+        val nicknameSaving: Boolean = false,
+        val nicknameError: String? = null,
     )
 
     private var pendingAccount: String? = null
@@ -208,7 +210,31 @@ class ProfileViewModel : ViewModel() {
 
     fun switchAccount(account: String) = acc.setActive(account)
 
-    fun setNickname(account: String, nickname: String?) = acc.setNickname(account, nickname)
+    fun setNickname(account: String, nickname: String?, onDone: () -> Unit) {
+        val clean = nickname?.trim()?.takeIf(String::isNotBlank)
+        if (clean != null && clean.length > 40) {
+            _state.value = _state.value.copy(nicknameError = "备注不能超过 40 个字符")
+            return
+        }
+        if (_state.value.nicknameSaving) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(nicknameSaving = true, nicknameError = null)
+            when (val result = acc.setNickname(account, clean)) {
+                is Outcome.Success -> {
+                    _state.value = _state.value.copy(nicknameSaving = false, nicknameError = null)
+                    onDone()
+                }
+                is Outcome.Error -> _state.value = _state.value.copy(
+                    nicknameSaving = false,
+                    nicknameError = result.message ?: "备注保存失败",
+                )
+            }
+        }
+    }
+
+    fun clearNicknameError() {
+        _state.value = _state.value.copy(nicknameError = null)
+    }
 
     fun consumeBindResult() {
         pendingAccount = null
@@ -228,6 +254,6 @@ class ProfileViewModel : ViewModel() {
         Graph.appScope.launch { runCatching { Graph.authRepository.logoutRemote() } }
         // 注意：绝不在退出登录里调 CookieManager/WebStorage.getInstance()——那是 App 首次触碰 WebView 时
         // 在主线程同步初始化 Chromium 的重操作，会卡住「切回登录页」的重组导致“退不出去”。
-        // 网页(WebVPN)登录态由 WebImportScreen 离开时自行清理（且每次进入需重新登录），此处无需处理。
+        // 网页 CAS 登录态由 WebImportScreen 离开时自行清理（且每次进入需重新登录），此处无需处理。
     }
 }

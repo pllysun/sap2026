@@ -38,6 +38,8 @@ public class AuthService {
     private CacheService cacheService;
     @Autowired
     private TermMapper termMapper;
+    @Autowired
+    private AppAccessService appAccessService;
 
     /** 登录失败锁定：达到阈值后锁定一段时间，缓解在线暴力破解 */
     private static final int MAX_FAIL_ATTEMPTS = 5;
@@ -62,11 +64,13 @@ public class AuthService {
      */
     public Map<String, Object> appLogin(LoginDTO dto) {
         User user = authenticate(dto);
-        // 非会员(仅游客角色 4)登录受管理端「非会员登录」开关控制；会员(角色≤3)不受限
+        // 三级课表云控只影响游客的 App 能力，不改变用户真实角色；真实会员始终完整开放。
         List<Integer> roles = userRoleMapper.selectRoleCodesByUserId(user.getId());
-        boolean isMember = roles.stream().anyMatch(r -> r <= 3);
-        if (!isMember && !guestLoginAllowed()) {
-            throw new BusinessException(403, "当前暂未开放非会员登录，请先完成入会或联系软件协会");
+        if (roles == null) roles = List.of();
+        boolean isMember = roles.stream().anyMatch(r -> r != null && r <= 3);
+        int appAccessLevel = isMember ? AppAccessService.FULL : appAccessService.guestAccessLevel();
+        if (appAccessLevel == AppAccessService.CLOSED) {
+            throw new BusinessException(403, "当前暂未开放登录，请稍后再试或联系软件协会");
         }
         StpUtil.login(user.getId(), new cn.dev33.satoken.stp.SaLoginModel()
                 .setDevice("app")
@@ -74,15 +78,8 @@ public class AuthService {
                 .setActiveTimeout(-1));
         Map<String, Object> result = loginResult(user);
         result.put("roles", roles); // 客户端据此判定会员/非会员并门控功能
+        result.put("appAccessLevel", appAccessLevel);
         return result;
-    }
-
-    /** 管理端「非会员登录」开关（Setting: allow_guest_login）。 */
-    private boolean guestLoginAllowed() {
-        Setting s = settingMapper.selectOne(
-                new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, "allow_guest_login")
-        );
-        return s != null && "true".equalsIgnoreCase(s.getSettingValue());
     }
 
     /** 取客户端 IP：统一走 {@link com.sap.util.IpUtil}（采信可信 X-Real-IP，避免 XFF 首段被伪造绕过锁定）。 */
@@ -242,6 +239,7 @@ public class AuthService {
             vo.setAvatar(null); // 轻量版不下发头像，App 用本地缓存
         }
         List<Integer> roles = userRoleMapper.selectRoleCodesByUserId(userId);
+        if (roles == null) roles = List.of();
         // 平台身份：换届表(届 grade + 身份 position) 逐条，如 2025/宣传部部长、2026/会长；无记录=游客
         List<Map<String, Object>> identities = new ArrayList<>();
         for (Term t : termMapper.selectList(
@@ -254,6 +252,8 @@ public class AuthService {
         Map<String, Object> result = new HashMap<>();
         result.put("user", vo);
         result.put("roles", roles);
+        result.put("appAccessLevel", roles.stream().anyMatch(role -> role != null && role <= 3)
+                ? AppAccessService.FULL : appAccessService.guestAccessLevel());
         result.put("identities", identities);
         result.put("updatedAt", user.getUpdatedAt() == null ? null
                 : user.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());

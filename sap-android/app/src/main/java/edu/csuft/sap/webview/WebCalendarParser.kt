@@ -11,9 +11,12 @@ import java.time.LocalDate
  */
 object WebCalendarParser {
 
-    private val FULL_DATE = Regex("(\\d{1,2})月(\\d{1,2})日")
+    /** 新版仍常显示“03月14日”，同时兼容部分节点的“03/14”“03-14”。 */
+    private val FULL_DATE = Regex("(\\d{1,2})\\s*(?:月|[/-])\\s*(\\d{1,2})\\s*日?")
     private val TERM = Regex("(\\d{4})-(\\d{4})-(\\d)")
-    private val WEEK_NO = Regex("^\\s*(\\d{1,2})\\s*$")
+    /** 旧版是“1”，新版周次列显示“第1周”（允许空格）。 */
+    private val WEEK_NO = Regex("(?:第\\s*)?(\\d{1,2})\\s*(?:周|週)")
+    private val PLAIN_WEEK_NO = Regex("^\\s*(\\d{1,2})\\s*$")
 
     /** @return 第 1 周周一 ISO 日期(如 "2026-03-09")；解析不出/学期对不上返回 null。 */
     fun parseSemesterStart(html: String?, term: String?): String? {
@@ -32,8 +35,7 @@ object WebCalendarParser {
         for (row in table.select("tr")) {
             val tds = row.select("td")
             if (tds.size < 8) continue                          // 周次 + 7 天(+备注)
-            val wm = WEEK_NO.matchEntire(tds[0].text()) ?: continue
-            val week = wm.groupValues[1].toInt()
+            val week = parseWeekNumber(tds[0].text()) ?: continue
             for (col in 1..minOf(7, tds.size - 1)) {            // col 1=周一 … 7=周日
                 val dm = FULL_DATE.find(tds[col].text()) ?: continue
                 val month = dm.groupValues[1].toInt()
@@ -50,6 +52,10 @@ object WebCalendarParser {
         }
         return null
     }
+
+    private fun parseWeekNumber(text: String): Int? =
+        WEEK_NO.find(text)?.groupValues?.getOrNull(1)?.toIntOrNull()
+            ?: PLAIN_WEEK_NO.matchEntire(text)?.groupValues?.getOrNull(1)?.toIntOrNull()
 
     private fun findTable(doc: Document): Element? {
         for (t in doc.select("table")) {

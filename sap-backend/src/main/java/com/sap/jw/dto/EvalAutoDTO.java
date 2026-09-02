@@ -9,6 +9,8 @@ public class EvalAutoDTO {
     private String account;
     /** 评教学期；省略取最新有评教任务的学期 */
     private String term;
-    /** 固定评语（须≥30汉字）；省略用后端默认评语 */
+    /** 新平台任务 id；优先于 term。 */
+    private Long taskId;
+    /** 固定评语；省略用后端默认评语。 */
     private String comment;
 }

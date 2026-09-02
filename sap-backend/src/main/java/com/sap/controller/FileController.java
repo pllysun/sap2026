@@ -1,7 +1,6 @@
 package com.sap.controller;
 
-import cn.dev33.satoken.annotation.SaCheckRole;
-import cn.dev33.satoken.annotation.SaMode;
+import cn.dev33.satoken.stp.StpUtil;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.service.CosService;
@@ -26,6 +25,9 @@ public class FileController {
     @Autowired
     private com.sap.service.TrafficService trafficService;
 
+    @Autowired
+    private com.sap.service.AppAccessService appAccessService;
+
     /**
      * 对象存储是否已配置（供前端上传前预检，未配置时给出明确引导）
      */
@@ -36,19 +38,19 @@ public class FileController {
         return Result.ok(data);
     }
 
-    // 上传仅限正式成员及以上(排除游客 role 4)，配合 CosService 内的每日配额，遏制 COS 盗刷
+    // App 基础等级即可维护头像等个人资料；真实角色不发生变化，COS 每日配额继续兜底防滥用。
     @PostMapping("/upload")
     @OperationLog("上传文件")
-    @SaCheckRole(value = {"0", "1", "2", "3"}, mode = SaMode.OR)
     public Result<?> upload(@RequestParam("file") MultipartFile file) {
+        appAccessService.requireBasicAccess(StpUtil.getLoginIdAsLong());
         Map<String, String> result = cosService.upload(file);
         return Result.ok(result);
     }
 
     @PostMapping("/upload/batch")
     @OperationLog("批量上传文件")
-    @SaCheckRole(value = {"0", "1", "2", "3"}, mode = SaMode.OR)
     public Result<?> batchUpload(@RequestParam("files") MultipartFile[] files) {
+        appAccessService.requireBasicAccess(StpUtil.getLoginIdAsLong());
         if (files != null && files.length > 10) {
             return Result.error("单次最多上传 10 个文件");
         }

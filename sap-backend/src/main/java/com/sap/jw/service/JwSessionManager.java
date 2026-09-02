@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 教务登录会话的内存缓存与复用。
- * <p>学校 WebVPN 会话约 30 分钟，故按 (会员id, 教务学号) 缓存已登录会话（默认 25 分钟 TTL），
+ * <p>学校 CAS/教务会话存在有效期，故按 (会员id, 教务学号) 缓存已登录会话（默认 25 分钟 TTL），
  * 期间复用免重复登录；过期或首次访问时用该学号的账密自动重登。同一 key 的登录串行化。</p>
  */
 @Service

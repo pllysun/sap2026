@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,8 @@ class SettingServiceTest extends BaseUnitTest {
 
         service.initDefaultSettings();
 
-        // 27 default keys are inserted when none exist
-        verify(settingMapper, times(27)).insert(any(Setting.class));
+        // 27 legacy/current defaults plus the migrated three-level App access setting.
+        verify(settingMapper, times(28)).insert(any(Setting.class));
         verify(settingMapper, never()).updateById(any());
     }
 
@@ -69,7 +70,7 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(27)).updateById(any(Setting.class));
+        verify(settingMapper, times(28)).updateById(any(Setting.class));
     }
 
     @Test
@@ -80,7 +81,20 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(27)).updateById(any(Setting.class));
+        verify(settingMapper, times(28)).updateById(any(Setting.class));
+    }
+
+    @Test
+    void migrateGuestAccessLevel_mapsLegacyEnabledToBasicLevel() {
+        Setting legacy = setting("allow_guest_login", "true", "legacy");
+        when(settingMapper.selectOne(any())).thenReturn(null, legacy);
+
+        ReflectionTestUtils.invokeMethod(service, "migrateGuestAccessLevel");
+
+        ArgumentCaptor<Setting> captor = ArgumentCaptor.forClass(Setting.class);
+        verify(settingMapper).insert(captor.capture());
+        assertEquals(AppAccessService.GUEST_ACCESS_LEVEL_KEY, captor.getValue().getSettingKey());
+        assertEquals("1", captor.getValue().getSettingValue());
     }
 
     // ===================== getValue =====================

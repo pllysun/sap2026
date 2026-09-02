@@ -58,6 +58,11 @@ public interface ApiRequestStatMapper extends BaseMapper<ApiRequestStat> {
     @Select("SELECT COUNT(DISTINCT user_id) FROM stat_api_request WHERE stat_date >= #{start} AND user_id <> 0")
     Long activeUsers(@Param("start") LocalDate start);
 
+    /** 窗口内访问过课程表接口的去重用户数（排除匿名 0）。 */
+    @Select("SELECT COUNT(DISTINCT user_id) FROM stat_api_request " +
+            "WHERE stat_date >= #{start} AND user_id <> 0 AND endpoint = '/api/jw/schedule'")
+    Long scheduleUsers(@Param("start") LocalDate start);
+
     /** 有统计记录的用户列表（供下钻选择器）。 */
     @Select("SELECT DISTINCT user_id userId, user_name userName FROM stat_api_request " +
             "WHERE user_id <> 0 ORDER BY user_name")

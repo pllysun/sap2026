@@ -12,6 +12,8 @@ public class PendingCas {
     public final String mfaState;
     public final String fpId;
     public volatile String execution;
+    /** 短信 MFA 校验成功后才置 true，并随最终 CAS 登录表单提交。 */
+    public volatile boolean trustAgent;
     /** 安全手机短信 MFA：initByType 拿到的鉴权服务器地址与组 id（发码/校验都要带）。 */
     public volatile String attestServerUrl;
     public volatile String gid;

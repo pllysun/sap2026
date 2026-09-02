@@ -28,7 +28,8 @@ fi
 # 非敏感配置仍走命令行参数；数据源连接信息（含密码）改为通过环境变量传递，
 # 避免出现在进程列表 (ps) 与命令行参数中。Spring 的 relaxed binding 会自动
 # 将 SPRING_DATASOURCE_* 映射到 spring.datasource.* 属性。
-JAVA_OPTS=""
+# 保留 docker run 注入的 JVM 参数；未设置时再回退为空。
+JAVA_OPTS="${JAVA_OPTS:-}"
 
 if [ -n "$MYSQL_URL" ]; then
     echo "[DB] 使用外部 MySQL 数据库"
@@ -354,12 +355,11 @@ nginx
 echo "[APP] 启动 Spring Boot..."
 # JAVA_OPTS 仅承载非敏感的额外 JVM/Spring 参数；为空时不传入空参数。
 if [ -n "$JAVA_OPTS" ]; then
-    # 此处依赖按空白拆分以传递多个参数，故 JAVA_OPTS 不加引号。
+    # JVM 参数必须位于 -jar 之前；此处依赖按空白拆分以传递多个参数。
     # shellcheck disable=SC2086
-    exec java -jar /app/app.jar \
+    exec java $JAVA_OPTS -jar /app/app.jar \
         --spring.profiles.active=docker \
-        --file.upload.path=/app/uploads/ \
-        $JAVA_OPTS
+        --file.upload.path=/app/uploads/
 else
     exec java -jar /app/app.jar \
         --spring.profiles.active=docker \

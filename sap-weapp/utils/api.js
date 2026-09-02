@@ -35,5 +35,7 @@ module.exports = {
   grades: (account) => r.get('api/jw/grades' + qs({ account })),
   exams: (account, term) => r.get('api/jw/exams' + qs({ account, term })),
   evalList: (account, term) => r.get('api/jw/eval/list' + qs({ account, term })),
+  evalForm: (account, taskId, courseId) => r.get('api/jw/eval/form' + qs({ account, taskId, courseId })),
+  evalSubmit: (body) => r.post('api/jw/eval/submit', body),
   evalAuto: (body) => r.post('api/jw/eval/auto', body),
 }

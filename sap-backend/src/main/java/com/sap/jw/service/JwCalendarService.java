@@ -63,7 +63,7 @@ public class JwCalendarService {
         try {
             JwHttpSession session = sessionManager.getSession(userId, account);
             // jsxsd 全站学期参数为 xnxq01id（与课表 xskb_list.do 一致）；旧用 xnxqh 会被忽略→回默认学期→对不上→null
-            String url = props.getJwglBase() + JXZL_PATH
+            String url = session.getJwglBase() + JXZL_PATH
                     + "?xnxq01id=" + URLEncoder.encode(term, StandardCharsets.UTF_8);
             HttpResponse<byte[]> resp = session.getFollow(url, 6);
             String body = decode(resp.body());
