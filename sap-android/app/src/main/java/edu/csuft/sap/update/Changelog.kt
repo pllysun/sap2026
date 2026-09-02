@@ -23,6 +23,15 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            versionCode = 73, versionName = "2.0", date = "2026-09-02",
+            changes = listOf(
+                "完成教务课表全面迁移，统一适配新版课表",
+                "优化课表导入与学期切换，提升课表数据完整性",
+                "优化成绩同步体验，适配新版教务成绩信息",
+                "修复部分账号课表无法加载或显示为空的问题",
+            ),
+        ),
+        ChangelogEntry(
             versionCode = 59, versionName = "1.36", date = "2026-08-14",
             changes = listOf(
                 "新增课表公告，支持查看最新公告与历史公告",
