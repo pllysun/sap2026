@@ -74,6 +74,21 @@ public class JwSessionManager {
         }
     }
 
+    /**
+     * 用一次性账密建立不写入会话缓存的教务会话。
+     *
+     * <p>班级课表管理端的手动采集和自动采集配置使用该入口，密码只在当前请求/任务的
+     * 内存中存在，避免把管理员输入的密码误写入会员绑定表或长期会话缓存。图形验证码仍需
+     * 在 App 的教务账号页完成绑定；短信二次验证会原样抛出，由管理端采集弹窗继续完成。</p>
+     */
+    public JwHttpSession loginEphemeral(String account, String rawPassword) {
+        try {
+            return authClient.login(account, rawPassword);
+        } catch (CaptchaRequiredException e) {
+            throw new BusinessException("教务登录需要验证码，请先在 App 的教务账号页完成绑定后再采集");
+        }
+    }
+
     /** 缓存一个已认证的会话（人工验证码续登成功后调用）。 */
     public void cache(Long userId, String account, JwHttpSession session) {
         sessions.put(key(userId, account), session);

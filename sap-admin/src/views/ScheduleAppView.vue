@@ -91,6 +91,10 @@
           <ScheduleCloudPanel :can-edit="isSuperAdmin" />
         </el-tab-pane>
 
+        <el-tab-pane label="班级课表" name="class-schedule" lazy>
+          <ClassSchedulePanel :can-edit="isAdmin" />
+        </el-tab-pane>
+
         <el-tab-pane v-if="isLeaderOrSuper" label="版本发布" name="release" lazy>
           <AppReleaseView embedded />
         </el-tab-pane>
@@ -157,7 +161,7 @@
                   <span>{{ formatDate(thread.root.createdAt) }}</span>
                 </div>
                 <div class="comment-content">{{ thread.root.content }}</div>
-                <div v-if="detail.status === 'OPEN'" class="comment-tools">
+                <div v-if="detail.status === 'OPEN' || isAdmin" class="comment-tools">
                   <el-button link type="primary" @click="beginReply(thread.root)">回复</el-button>
                 </div>
               </article>
@@ -178,7 +182,7 @@
                     <span>{{ formatDate(comment.createdAt) }}</span>
                   </div>
                   <div class="comment-content">{{ comment.content }}</div>
-                  <div v-if="detail.status === 'OPEN'" class="comment-tools">
+                  <div v-if="detail.status === 'OPEN' || isAdmin" class="comment-tools">
                     <el-button link type="primary" @click="beginReply(comment)">回复</el-button>
                   </div>
                 </article>
@@ -198,7 +202,7 @@
         </div>
 
         <section class="reply-box">
-          <template v-if="detail.status === 'OPEN'">
+          <template v-if="detail.status === 'OPEN' || isAdmin">
             <div class="reply-label">
               <span>{{ replyTarget ? `回复 ${replyTarget.authorName}` : '维护者回复' }}</span>
               <el-button v-if="replyTarget" link @click="replyTarget = null">取消回复</el-button>
@@ -215,11 +219,11 @@
                        :disabled="replyLoading || deleteLoading" @click="changeStatus('CLOSED')">
               关闭 Issue
             </el-button>
-            <el-button v-else type="success" plain :loading="statusLoading"
+            <el-button v-else class="issue-reopen-button" type="success" plain :loading="statusLoading"
                        :disabled="replyLoading || deleteLoading" @click="changeStatus('OPEN')">
               重新打开
             </el-button>
-            <el-button v-if="detail.status === 'OPEN'" type="primary" :loading="replyLoading" :disabled="statusLoading || deleteLoading"
+            <el-button v-if="detail.status === 'OPEN' || isAdmin" type="primary" :loading="replyLoading" :disabled="statusLoading || deleteLoading"
                        @click="submitReply">发表回复</el-button>
           </div>
         </section>
@@ -239,6 +243,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, Refresh, Search } from '@element-plus/icons-vue'
 import AppReleaseView from './AppReleaseView.vue'
 import ScheduleCloudPanel from './ScheduleCloudPanel.vue'
+import ClassSchedulePanel from './ClassSchedulePanel.vue'
 import {
   deleteFeedbackIssue,
   getFeedbackIssue,
@@ -370,7 +375,7 @@ async function openIssue(row) {
 }
 
 async function submitReply() {
-  if (detail.value?.status !== 'OPEN') return ElMessage.warning('该 Issue 已关闭，不能继续回复')
+  if (detail.value?.status !== 'OPEN' && !isAdmin.value) return ElMessage.warning('该 Issue 已关闭，不能继续回复')
   const text = replyText.value.trim()
   if (!text) return ElMessage.warning('请先填写回复内容')
   replyLoading.value = true
@@ -397,7 +402,7 @@ const commentThreads = computed(() => {
 })
 
 function beginReply(comment) {
-  if (detail.value?.status !== 'OPEN') return
+  if (detail.value?.status !== 'OPEN' && !isAdmin.value) return
   replyTarget.value = comment
 }
 
@@ -502,9 +507,9 @@ const categoryType = (category) => ({ BUG: 'danger', FEATURE: 'primary', EXPERIE
 .issue-attachments { color: var(--el-color-primary); font-size: 11px; margin-top: 4px; }
 .comment-count { color: var(--zen-text-secondary); font-size: 12px; }
 .pagination-wrap { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; color: var(--zen-text-muted); font-size: 12px; }
-:deep(.el-drawer__body) { padding: 0; overflow: hidden; }
+:deep(.el-drawer__body) { padding: 0; overflow: hidden; color: var(--zen-text); background: var(--zen-card); }
 .issue-detail { height: 100%; min-height: 0; display: flex; flex-direction: column; }
-.issue-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; }
+.issue-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; color: var(--zen-text); background: var(--zen-card); }
 .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--zen-border-light); padding-bottom: 18px; }
 .detail-kicker { color: var(--zen-text-muted); font-size: 12px; }
 .detail-head h3 { margin: 5px 0 10px; font-size: 22px; line-height: 1.35; }
@@ -512,14 +517,14 @@ const categoryType = (category) => ({ BUG: 'danger', FEATURE: 'primary', EXPERIE
 .issue-body { margin-top: 20px; border: 1px solid var(--zen-border-light); border-radius: 12px; overflow: hidden; }
 .author-line { display: flex; align-items: center; gap: 9px; background: var(--zen-bg); padding: 11px 14px; font-size: 13px; }
 .author-line span { color: var(--zen-text-muted); }
-.issue-content, .comment-content { padding: 16px; white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 14px; }
+.issue-content, .comment-content { padding: 16px; white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 14px; color: var(--zen-text); background: var(--zen-card); }
 .issue-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 0 16px 16px; }
 .issue-image { width: 100%; height: 128px; border-radius: 10px; cursor: zoom-in; background: var(--zen-bg); }
 .environment { margin-top: 16px; }
 .timeline-title { margin: 24px 0 12px; font-weight: 600; font-size: 14px; }
 .comment-list { display: grid; gap: 12px; }
 .comment-thread { display: grid; gap: 8px; }
-.comment-card { border: 1px solid var(--zen-border-light); border-radius: 12px; overflow: hidden; }
+.comment-card { border: 1px solid var(--zen-border-light); border-radius: 12px; overflow: hidden; color: var(--zen-text); background: var(--zen-card); }
 .comment-card.nested { border-radius: 10px; background: color-mix(in srgb, var(--zen-bg) 65%, white); }
 .comment-card.maintainer { border-color: color-mix(in srgb, var(--el-color-primary) 35%, white); }
 .comment-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; background: var(--zen-bg); color: var(--zen-text-muted); font-size: 12px; }
@@ -536,6 +541,10 @@ const categoryType = (category) => ({ BUG: 'danger', FEATURE: 'primary', EXPERIE
 /* 全局 default 按钮覆盖会同时命中 Element 的 danger/default 类；这里显式保留危险操作的可见性。 */
 :deep(.delete-action.el-button.el-button--danger) { background: var(--el-color-danger) !important; border-color: var(--el-color-danger) !important; color: #fff !important; }
 :deep(.delete-action.el-button.el-button--danger:hover), :deep(.delete-action.el-button.el-button--danger:focus) { background: #dc2626 !important; border-color: #dc2626 !important; color: #fff !important; }
+/* 关闭后的 Issue 仍可由管理端重新打开；显式设置浅色背景和深色文字，
+   避免主题/Element plain 样式把按钮渲染成白底白字。 */
+:deep(.issue-reopen-button.el-button.el-button--success) { color: #15803d !important; background: #f0fdf4 !important; border-color: #86efac !important; }
+:deep(.issue-reopen-button.el-button.el-button--success:hover), :deep(.issue-reopen-button.el-button.el-button--success:focus) { color: #fff !important; background: #16a34a !important; border-color: #16a34a !important; }
 .drawer-loading { min-height: 320px; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--zen-text-muted); font-size: 13px; }
 @media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 700px) {

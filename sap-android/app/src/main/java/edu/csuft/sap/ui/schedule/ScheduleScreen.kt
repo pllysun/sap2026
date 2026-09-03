@@ -87,6 +87,7 @@ private sealed interface Route {
     ) : Route
     data object Settings : Route
     data object WebImport : Route
+    data object ClassPicker : Route
 }
 
 @Composable
@@ -140,6 +141,8 @@ fun ScheduleScreen(
                     // 扫描期间（含「重新扫描」）始终盖住旧数据显示动画，拿到新数据后才覆盖呈现
                     state.scanning -> RescanLoading()
                     state.loading && state.display.isEmpty() -> LoadingBox()
+                    state.isClassSource && state.display.isEmpty() ->
+                        ClassSchedulePickerHint { route = Route.ClassPicker }
                     state.isLocalSource && state.display.isEmpty() ->
                         LocalImportHint { route = Route.WebImport }
                     state.error != null && state.display.isEmpty() -> ErrorRetry(state.error!!, vm::retry)
@@ -190,7 +193,7 @@ fun ScheduleScreen(
                                         showNowLine = s.showNowLine,
                                         settings = s,
                                         onCourseClick = { c -> detail = slotCourses(state.display, c, week, s.showOtherWeekInDetail) },
-                                        onEmptyClick = { day, node -> route = Route.Edit(null, day, node) },
+                                        onEmptyClick = { day, node -> if (!state.isClassSource) route = Route.Edit(null, day, node) },
                                         modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
                                     )
                                     // 备注里的“无固定时间”课：按本周过滤；已被排进网格（同名自建课）的不再重复显示
@@ -219,18 +222,23 @@ fun ScheduleScreen(
             }
         }
 
-        FloatingActionButton(
-            onClick = { route = Route.Edit(null, null, null) },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ) { Icon(AppIcons.Add, "添加课程") }
+        if (!state.isClassSource) {
+            FloatingActionButton(
+                onClick = { route = Route.Edit(null, null, null) },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) { Icon(AppIcons.Add, "添加课程") }
+        }
     }
 
     detail?.let { list ->
         CourseDetailSheet(
             courses = list,
             onEdit = { c ->
+                if (state.isClassSource) {
+                    detail = null
+                } else {
                 // 自建课→编辑原课；教务课→把数据反填进"添加课程"表单(保存即生成自建课覆盖该时段)
                 route = if (c.isCustom && c.customId != null) {
                     Route.Edit(initial = c.toCustom())
@@ -248,8 +256,9 @@ fun ScheduleScreen(
                     )
                 }
                 detail = null
+                }
             },
-            onAdd = { val c = list.first(); route = Route.Edit(null, c.day, c.startNode); detail = null },
+            onAdd = { if (!state.isClassSource) { val c = list.first(); route = Route.Edit(null, c.day, c.startNode) }; detail = null },
             onDismiss = { detail = null },
         )
     }
@@ -287,6 +296,7 @@ fun ScheduleScreen(
                 onDelete = { route = Route.None; showDelete = true },
                 onRescan = { route = Route.None; vm.rescan() },
                 onWebImport = { route = Route.WebImport },
+                onClassPicker = { route = Route.ClassPicker },
                 previewCourses = state.display,
                 previewWeek = state.selectedWeek,
                 onSave = vm::saveSettings,
@@ -295,6 +305,9 @@ fun ScheduleScreen(
         }
         Route.WebImport -> FullScreen(onDismiss = { route = Route.None }) {
             WebImportScreen(onClose = { route = Route.None }, onImported = { route = Route.None })
+        }
+        Route.ClassPicker -> FullScreen(onDismiss = { route = Route.None }) {
+            ClassSchedulePickerScreen(onBack = { route = Route.None }, onSelected = { route = Route.None })
         }
         Route.None -> Unit
     }
@@ -539,6 +552,25 @@ private fun LocalImportHint(onClick: () -> Unit) {
             onClick = onClick,
             modifier = Modifier.padding(top = 20.dp),
         ) { Text("导入课表", modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)) }
+    }
+}
+
+@Composable
+private fun ClassSchedulePickerHint(onClick: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("还没有班级课表", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(
+            "选择学期、学院、专业和班级即可查看公共课表；已下载的班级支持离线切换",
+            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Button(onClick = onClick, modifier = Modifier.padding(top = 20.dp)) {
+            Text("选择班级", modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp))
+        }
     }
 }
 

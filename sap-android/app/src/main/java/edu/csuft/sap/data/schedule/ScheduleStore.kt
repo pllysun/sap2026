@@ -25,6 +25,19 @@ class ScheduleStore(context: Context) {
 
     fun accountData(account: String): AccountData = _root.value.accounts[storageAccountKey(account)] ?: AccountData()
 
+    /** 已下载的班级缓存槽；用于离线打开选择器并切换历史班级。 */
+    fun cachedClassAccounts(): List<Pair<String, String>> {
+        val prefix = accountStorageKey(CurrentAccount.key, AccountManager.CLASS_ACCOUNT_PREFIX)
+        return _root.value.accounts
+            .filterKeys { it.startsWith(prefix) }
+            .mapNotNull { (stored, data) ->
+                val account = stored.removePrefix("${CurrentAccount.key}\u001F")
+                val name = data.profiles.firstOrNull()?.name ?: return@mapNotNull null
+                account to name
+            }
+            .sortedBy { it.second }
+    }
+
     /**
      * 把当前教务账号的本地课表缓存继承到 Web 本地空间。
      *
@@ -33,7 +46,7 @@ class ScheduleStore(context: Context) {
      * 这里只复制设备上的缓存：不解绑教务账号、不删除源数据，也不发起任何网络请求。
      */
     fun inheritIntoWebview(sourceAccount: String): Boolean {
-        if (sourceAccount.isBlank() || AccountManager.isLocal(sourceAccount)) return false
+        if (sourceAccount.isBlank() || AccountManager.isLocalOrClass(sourceAccount)) return false
         val current = _root.value
         val source = current.accounts[storageAccountKey(sourceAccount)] ?: return false
         if (source.profiles.isEmpty()) return false
@@ -194,6 +207,37 @@ class ScheduleStore(context: Context) {
         )
     }
 
+    /** 写入一个班级缓存槽。account 通常是 AccountManager.CLASS_ACCOUNT_PREFIX + 选择摘要，
+     * 因而不同班级互不覆盖，可在无网时直接切换已经下载过的槽。 */
+    fun importClass(
+        account: String,
+        term: String,
+        className: String,
+        courses: List<CachedCourse>,
+        startDate: String?,
+        displayName: String = className,
+    ) = mutate(account) { data ->
+        val old = data.profiles.firstOrNull { it.kind == ProfileKind.TERM && it.termValue == term }
+        val settings = (old?.settings ?: ScheduleSettings()).let {
+            if (it.semesterStartDateManual || startDate.isNullOrBlank()) it
+            else it.copy(semesterStartDate = startDate, semesterStartDateManual = false)
+        }
+        val profile = ScheduleProfile(
+            id = old?.id ?: "class:$term",
+            name = displayName.ifBlank { className.ifBlank { termLabel(term) } },
+            kind = ProfileKind.TERM,
+            termValue = term,
+            settings = settings,
+            customCourses = old?.customCourses ?: emptyList(),
+        )
+        data.copy(
+            termCourses = data.termCourses + (term to courses),
+            profiles = data.profiles.filterNot { it.id == profile.id } + profile,
+            activeProfileId = profile.id,
+            scanned = true,
+        )
+    }
+
     /** 自动开学日期写到对应学期课表（不覆盖用户手动设过的）。供网页登录导入后回填教学周历开学日。 */
     fun setSemesterStart(account: String, term: String, startIso: String) =
         mutate(account) { data ->
@@ -221,6 +265,15 @@ class ScheduleStore(context: Context) {
                 else d.activeProfileId,
             )
         }
+    }
+
+    /** 清空一个本地来源账号及其所有学期数据。用于删除班级课表缓存时避免残留旧课表。 */
+    fun clearAccount(account: String) {
+        val cur = _root.value
+        val key = storageAccountKey(account)
+        if (!cur.accounts.containsKey(key)) return
+        val accounts = cur.accounts.toMutableMap().apply { remove(key) }
+        persist(cur.copy(accounts = accounts))
     }
 
     // ---- 课表级 ----
