@@ -72,6 +72,26 @@ public class JwCredentialService {
     }
 
     /**
+     * 解密一个由本服务生成的凭据密文。仅供后台任务在内存中短暂使用，绝不向接口返回。
+     * 班级课表自动采集配置也使用同一套 AES 密钥，因此解密逻辑集中在这里，避免业务层
+     * 直接依赖密钥配置。
+     */
+    public String decryptEncryptedPassword(String encrypted) {
+        if (encrypted == null || encrypted.isBlank()) return null;
+        try {
+            return AesUtil.decrypt(props.getAesKey(), encrypted);
+        } catch (RuntimeException e) {
+            throw new BusinessException("教务密码密文已损坏，请重新保存自动采集凭据");
+        }
+    }
+
+    /** 使用运行时配置的 AES 密钥加密一次性密码，供其它需要同等保护的配置使用。 */
+    public String encryptPassword(String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) return null;
+        return AesUtil.encrypt(props.getAesKey(), rawPassword);
+    }
+
+    /**
      * 解绑：物理删除该学号的密文凭据。
      * <p>不走逻辑删除——一是隐私合规（解绑须真正从服务器删除学校密码），
      * 二是软删行会占着唯一索引 uk_user_account 导致同一学号无法重新绑定。</p>

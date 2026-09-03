@@ -61,6 +61,7 @@ class ScheduleViewModel : ViewModel() {
         val display: List<DisplayCourse> = emptyList(),
         val remarks: List<Remark> = emptyList(),
         val isLocalSource: Boolean = false, // 当前是本地「网页课表」源（数据靠 WebView 导入）
+        val isClassSource: Boolean = false, // 当前是本地班级课表缓存（数据来自班级选择器）
     )
 
     private val acc = Graph.accountManager
@@ -94,6 +95,11 @@ class ScheduleViewModel : ViewModel() {
     }
 
     private suspend fun onAccountSelected(account: String) {
+        if (AccountManager.isClass(account)) {
+            // 班级模式只读本地缓存；没有缓存时由 ScheduleScreen 打开班级选择器。
+            render()
+            return
+        }
         if (AccountManager.isLocal(account)) {
             if (MemberState.isJw) {
                 // 教务模式落到本地 Web 源（如重启残留）：自动切回上次的教务账号；
@@ -136,7 +142,7 @@ class ScheduleViewModel : ViewModel() {
     /** 刷新：仅重拉当前 TERM 课表的教务底本；CUSTOM 课表为冻结，不刷新。 */
     fun refresh() {
         val account = acc.activeAccount ?: return
-        if (AccountManager.isLocal(account)) return // 本地源靠 WebView 导入刷新，不走后端
+        if (AccountManager.isLocalOrClass(account)) return // Web/班级源均由各自导入/选择器更新
         val p = activeProfile(account) ?: return
         if (p.kind != ProfileKind.TERM || p.termValue == null) return
         viewModelScope.launch {
@@ -154,7 +160,7 @@ class ScheduleViewModel : ViewModel() {
     /** 重新扫描该学号的所有有数据学期。本地网页源不扫描（靠导入）。 */
     fun rescan() {
         val account = acc.activeAccount ?: return
-        if (AccountManager.isLocal(account)) return
+        if (AccountManager.isLocalOrClass(account)) return
         viewModelScope.launch { scanTerms(account) }
     }
 
@@ -182,7 +188,13 @@ class ScheduleViewModel : ViewModel() {
 
     fun deleteProfile(id: String) {
         val account = acc.activeAccount ?: return
-        store.removeProfile(account, id)
+        if (AccountManager.isClass(account)) {
+            // 班级模式的“清除缓存”必须连同该班级的学期底本一起删除，避免清空后仍能显示旧数据。
+            store.clearAccount(account)
+            acc.useClass("default")
+        } else {
+            store.removeProfile(account, id)
+        }
     }
 
     fun saveSettings(settings: ScheduleSettings) {
@@ -207,6 +219,7 @@ class ScheduleViewModel : ViewModel() {
     fun retry() {
         val account = acc.activeAccount
         if (account == null) viewModelScope.launch { acc.refresh() }
+        else if (AccountManager.isClass(account)) render()
         else viewModelScope.launch { scanTerms(account) }
     }
 
@@ -338,6 +351,7 @@ class ScheduleViewModel : ViewModel() {
             display = display,
             remarks = remarks,
             isLocalSource = AccountManager.isLocal(account),
+            isClassSource = AccountManager.isClass(account),
             error = if (profiles.isEmpty() && !_state.value.scanning) _state.value.error else null,
         )
         // 让上课提醒始终以「当前渲染的课表」为准：账号/课表/模式/开学日期 + 课程内容（增删改任一字段）变化即重排。

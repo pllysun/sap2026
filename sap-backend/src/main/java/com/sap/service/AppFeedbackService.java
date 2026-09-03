@@ -187,6 +187,22 @@ public class AppFeedbackService {
         if (CLOSED.equals(issue.getStatus())) {
             throw new BusinessException(409, "该反馈已关闭，如问题仍存在请新建反馈");
         }
+        return insertComment(viewerId, admin, issue, dto);
+    }
+
+    /**
+     * 管理端专用回复入口。管理端可以在 Issue 关闭后补充处理说明，App 端仍只能调用
+     * {@link #comment(long, boolean, Long, FeedbackCommentCreateDTO)}，因此不会获得该能力。
+     */
+    @Transactional
+    public FeedbackIssueVO adminComment(long adminId, Long issueId, FeedbackCommentCreateDTO dto) {
+        AppFeedbackIssue issue = requireIssue(issueId);
+        return insertComment(adminId, true, issue, dto);
+    }
+
+    private FeedbackIssueVO insertComment(long viewerId, boolean admin, AppFeedbackIssue issue,
+                                          FeedbackCommentCreateDTO dto) {
+        Long issueId = issue.getId();
         String content = dto.getContent() == null ? "" : dto.getContent().trim();
         if (content.isBlank() || content.length() > 2000) {
             throw new BusinessException(400, "回复内容须为 1～2000 个字符");
@@ -303,7 +319,7 @@ public class AppFeedbackService {
         vo.setCommentCount(commentCount);
         boolean mine = Objects.equals(issue.getReporterId(), viewerId);
         vo.setMine(mine);
-        // 关闭状态严格只读：会员与管理端都不能继续回复。
+        // App 与管理端的共同展示字段只描述会员端可否继续留言；管理端回复按钮由管理端页面的角色权限控制。
         vo.setCanComment(OPEN.equals(issue.getStatus()));
         // App 端关闭接口只面向发起人；管理端使用独立状态接口。
         vo.setCanClose(OPEN.equals(issue.getStatus()) && mine);

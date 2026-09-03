@@ -7,6 +7,8 @@ import edu.csuft.sap.data.remote.dto.BindRequest
 import edu.csuft.sap.data.remote.dto.BindResult
 import edu.csuft.sap.data.remote.dto.CaptchaRequest
 import edu.csuft.sap.data.remote.dto.CourseDto
+import edu.csuft.sap.data.remote.dto.ClassScheduleTermDto
+import edu.csuft.sap.data.remote.dto.ClassOptionDto
 import edu.csuft.sap.data.remote.dto.EvalAutoRequest
 import edu.csuft.sap.data.remote.dto.EvalFormDto
 import edu.csuft.sap.data.remote.dto.EvalOverviewDto
@@ -119,6 +121,27 @@ interface ApiService {
 
     @POST("api/jw/eval/auto")
     suspend fun evalAuto(@Body body: EvalAutoRequest): ApiResult<List<EvalResultDto>>
+
+    /** 班级课表：学期、班级选择器和已合并课表。 */
+    @GET("api/class-schedule/terms")
+    suspend fun classScheduleTerms(): ApiResult<List<ClassScheduleTermDto>>
+
+    @GET("api/class-schedule/classes")
+    suspend fun classScheduleClasses(
+        @Query("term") term: String,
+        @Query("college") college: String?,
+        @Query("major") major: String?,
+        @Query("grade") grade: String?,
+    ): ApiResult<List<ClassOptionDto>>
+
+    @GET("api/class-schedule/schedule")
+    suspend fun classSchedule(
+        @Query("term") term: String,
+        @Query("college") college: String,
+        @Query("major") major: String,
+        @Query("grade") grade: String?,
+        @Query("className") className: String,
+    ): ApiResult<ScheduleData>
 
     /** 应用内升级：取最新版本元数据（需登录，按当前 App 能力决定是否检查）。 */
     @GET("api/app/latest")

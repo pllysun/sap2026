@@ -82,6 +82,7 @@ fun ScheduleSettingsScreen(
     onDelete: () -> Unit,
     onRescan: () -> Unit,
     onWebImport: () -> Unit,
+    onClassPicker: () -> Unit,
     previewCourses: List<DisplayCourse>,
     previewWeek: Int,
     onSave: (ScheduleSettings) -> Unit,
@@ -164,7 +165,7 @@ fun ScheduleSettingsScreen(
             Text("课表设置", fontSize = 18.sp, fontWeight = FontWeight.Medium)
         }
 
-        // 教务账号多账号切换：仅教务模式，且只列真实教务账号（不含本地网页源）
+        // 教务账号多账号切换：仅教务模式，且只列真实教务账号（不含本地网页/班级缓存源）
         val jwAccounts = accounts.filter { !it.isLocal }
         if (MemberState.isJw && jwAccounts.isNotEmpty()) {
             SectionHeader("教务账号")
@@ -183,6 +184,11 @@ fun ScheduleSettingsScreen(
 
         SectionHeader("课表")
         Card {
+            if (MemberState.isClass) {
+                ClassScheduleRow(currentName, onClassPicker)
+                RowDivider()
+                ActionRow("清除当前班级缓存", "仅删除本机缓存，之后仍可重新选择", onDelete)
+            } else {
             // 已有课表始终可切换与管理；新增副本只在完整能力下开放。
             if (profiles.isNotEmpty()) {
                 NavRow("切换课表", currentName) { showSwitcher = true }
@@ -212,6 +218,7 @@ fun ScheduleSettingsScreen(
                     "在网页登录教务并更新课表内容",
                     onWebImport,
                 )
+            }
             }
         }
 
@@ -409,6 +416,28 @@ private fun ActionRow(title: String, subtitle: String?, onClick: () -> Unit) {
             }
         }
         Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+    }
+}
+
+/** 班级模式的当前选择行：完整显示班级路径，长文本自然换行，不再挤在右侧被省略。 */
+@Composable
+private fun ClassScheduleRow(currentName: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("当前班级课表", fontSize = 16.sp)
+            Text(
+                currentName.takeUnless { it == "未选择" } ?: "尚未选择班级课表",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 19.sp,
+                modifier = Modifier.padding(top = 3.dp),
+            )
+        }
+        Text("更换", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 12.dp))
     }
 }
 

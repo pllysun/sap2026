@@ -295,6 +295,119 @@ CREATE TABLE IF NOT EXISTS app_announcement (
     INDEX idx_app_announcement_published (published, updated_at)
 ) COMMENT '软协课表公告';
 
+-- 22. 班级课表采集：四个来源表分开保存，查询时以班级表为主关联补全
+CREATE TABLE IF NOT EXISTS jw_class_schedule_term (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    term_value VARCHAR(32) NOT NULL UNIQUE,
+    term_label VARCHAR(80),
+    semester_start_date VARCHAR(16),
+    row_count INT DEFAULT 0,
+    class_count INT DEFAULT 0,
+    teacher_count INT DEFAULT 0,
+    room_count INT DEFAULT 0,
+    course_count INT DEFAULT 0,
+    last_collected_at DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 班级、教师、教室、课程四个 *_ifr 接口的统一字段；raw_json 用于后续适配新字段。
+CREATE TABLE IF NOT EXISTS jw_class_schedule_class (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    term_value VARCHAR(32) NOT NULL,
+    source_key VARCHAR(96) NOT NULL,
+    external_id VARCHAR(96),
+    course_no VARCHAR(64), course_name VARCHAR(255), week_range VARCHAR(128),
+    weekday VARCHAR(32), section VARCHAR(32), room_name VARCHAR(255), teacher_name VARCHAR(1024),
+    college VARCHAR(255), grade VARCHAR(32), major VARCHAR(255), class_name VARCHAR(1024),
+    course_dept VARCHAR(255), category VARCHAR(128), course_attr VARCHAR(128), course_nature VARCHAR(128),
+    exam_method VARCHAR(128), group_name VARCHAR(255), hours DECIMAL(10,2), credit DECIMAL(10,2),
+    raw_json LONGTEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_jw_class_schedule_class_term (term_value),
+    INDEX idx_jw_class_schedule_class_class (term_value, college, major, class_name(191)),
+    INDEX idx_jw_class_schedule_class_filter (term_value, college, grade, major, class_name(191)),
+    INDEX idx_jw_class_schedule_class_join (term_value, external_id, weekday, section, week_range),
+    UNIQUE (term_value, source_key)
+);
+
+CREATE TABLE IF NOT EXISTS jw_class_schedule_teacher (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    term_value VARCHAR(32) NOT NULL,
+    source_key VARCHAR(96) NOT NULL,
+    external_id VARCHAR(96),
+    course_no VARCHAR(64), course_name VARCHAR(255), week_range VARCHAR(128),
+    weekday VARCHAR(32), section VARCHAR(32), room_name VARCHAR(255), teacher_name VARCHAR(1024),
+    college VARCHAR(255), grade VARCHAR(32), major VARCHAR(255), class_name VARCHAR(1024),
+    course_dept VARCHAR(255), category VARCHAR(128), course_attr VARCHAR(128), course_nature VARCHAR(128),
+    exam_method VARCHAR(128), group_name VARCHAR(255), hours DECIMAL(10,2), credit DECIMAL(10,2),
+    raw_json LONGTEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_jw_class_schedule_teacher_term (term_value),
+    INDEX idx_jw_class_schedule_teacher_class (term_value, college, major, class_name(191)),
+    INDEX idx_jw_class_schedule_teacher_filter (term_value, college, grade, major, class_name(191)),
+    INDEX idx_jw_class_schedule_teacher_join (term_value, external_id, weekday, section, week_range),
+    UNIQUE (term_value, source_key)
+);
+
+CREATE TABLE IF NOT EXISTS jw_class_schedule_room (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    term_value VARCHAR(32) NOT NULL,
+    source_key VARCHAR(96) NOT NULL,
+    external_id VARCHAR(96),
+    course_no VARCHAR(64), course_name VARCHAR(255), week_range VARCHAR(128),
+    weekday VARCHAR(32), section VARCHAR(32), room_name VARCHAR(255), teacher_name VARCHAR(1024),
+    college VARCHAR(255), grade VARCHAR(32), major VARCHAR(255), class_name VARCHAR(1024),
+    course_dept VARCHAR(255), category VARCHAR(128), course_attr VARCHAR(128), course_nature VARCHAR(128),
+    exam_method VARCHAR(128), group_name VARCHAR(255), hours DECIMAL(10,2), credit DECIMAL(10,2),
+    raw_json LONGTEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_jw_class_schedule_room_term (term_value),
+    INDEX idx_jw_class_schedule_room_class (term_value, college, major, class_name(191)),
+    INDEX idx_jw_class_schedule_room_filter (term_value, college, grade, major, class_name(191)),
+    INDEX idx_jw_class_schedule_room_join (term_value, external_id, weekday, section, week_range),
+    UNIQUE (term_value, source_key)
+);
+
+CREATE TABLE IF NOT EXISTS jw_class_schedule_course (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    term_value VARCHAR(32) NOT NULL,
+    source_key VARCHAR(96) NOT NULL,
+    external_id VARCHAR(96),
+    course_no VARCHAR(64), course_name VARCHAR(255), week_range VARCHAR(128),
+    weekday VARCHAR(32), section VARCHAR(32), room_name VARCHAR(255), teacher_name VARCHAR(1024),
+    college VARCHAR(255), grade VARCHAR(32), major VARCHAR(255), class_name VARCHAR(1024),
+    course_dept VARCHAR(255), category VARCHAR(128), course_attr VARCHAR(128), course_nature VARCHAR(128),
+    exam_method VARCHAR(128), group_name VARCHAR(255), hours DECIMAL(10,2), credit DECIMAL(10,2),
+    raw_json LONGTEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_jw_class_schedule_course_term (term_value),
+    INDEX idx_jw_class_schedule_course_class (term_value, college, major, class_name(191)),
+    INDEX idx_jw_class_schedule_course_filter (term_value, college, grade, major, class_name(191)),
+    INDEX idx_jw_class_schedule_course_join (term_value, external_id, weekday, section, week_range),
+    UNIQUE (term_value, source_key)
+);
+
+CREATE TABLE IF NOT EXISTS jw_class_schedule_pull_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    batch_id VARCHAR(64) NOT NULL,
+    term_value VARCHAR(32), source_type VARCHAR(20), trigger_type VARCHAR(20) NOT NULL,
+    actor_id BIGINT, actor_name VARCHAR(80), status VARCHAR(20) NOT NULL,
+    message VARCHAR(1000), row_count INT DEFAULT 0,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP, finished_at DATETIME,
+    INDEX idx_pull_batch (batch_id), INDEX idx_pull_time (started_at)
+);
+
+CREATE TABLE IF NOT EXISTS jw_class_schedule_pull_schedule (
+    id TINYINT PRIMARY KEY,
+    enabled TINYINT NOT NULL DEFAULT 0,
+    schedule_type VARCHAR(16) NOT NULL DEFAULT 'DAILY',
+    hour_num TINYINT NOT NULL DEFAULT 0, minute_num TINYINT NOT NULL DEFAULT 0,
+    day_of_week TINYINT, day_of_month TINYINT, run_at DATETIME,
+    owner_user_id BIGINT, jw_account VARCHAR(32), jw_password_enc VARCHAR(512), created_by BIGINT, updated_by BIGINT, last_run_key VARCHAR(80),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+INSERT IGNORE INTO jw_class_schedule_pull_schedule (id) VALUES (1);
+
 -- ============================================
 -- 初始管理员账号
 -- 由后端启动时的数据初始化逻辑（DataInitializer）自动创建，
