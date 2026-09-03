@@ -15,6 +15,7 @@ import edu.csuft.sap.data.repository.AuthRepository
 import edu.csuft.sap.data.repository.AnnouncementRepository
 import edu.csuft.sap.data.repository.FeedbackRepository
 import edu.csuft.sap.data.repository.JwRepository
+import edu.csuft.sap.data.repository.ClassScheduleRepository
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleStore
 import edu.csuft.sap.ui.theme.ThemeState
@@ -40,6 +41,8 @@ object Graph {
     lateinit var authRepository: AuthRepository
         private set
     lateinit var jwRepository: JwRepository
+        private set
+    lateinit var classScheduleRepository: ClassScheduleRepository
         private set
     lateinit var feedbackRepository: FeedbackRepository
         private set
@@ -69,6 +72,7 @@ object Graph {
             connectTimeoutSec = 3, readTimeoutSec = 3)
         authRepository = AuthRepository(api, tokenStore, userStore)
         jwRepository = JwRepository(api)
+        classScheduleRepository = ClassScheduleRepository(api)
         feedbackRepository = FeedbackRepository(api)
         announcementRepository = AnnouncementRepository(context.applicationContext, api)
         accountManager = AccountManager(context.applicationContext, jwRepository)

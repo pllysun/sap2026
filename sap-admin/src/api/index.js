@@ -42,7 +42,7 @@ export const getScheduleAppSummary = (days) => request.get('/api/app/feedback/ad
 export const getFeedbackIssues = (params) => request.get('/api/app/feedback/issues', { params })
 export const getFeedbackIssue = (id) => request.get(`/api/app/feedback/issues/${id}`)
 export const replyFeedbackIssue = (id, content, parentId = null) =>
-  request.post(`/api/app/feedback/issues/${id}/comments`, { content, parentId })
+  request.post(`/api/app/feedback/admin/issues/${id}/comments`, { content, parentId })
 export const updateFeedbackStatus = (id, status) => request.put(`/api/app/feedback/admin/issues/${id}/status`, { status })
 export const deleteFeedbackIssue = (id) => request.delete(`/api/app/feedback/admin/issues/${id}`)
 
@@ -56,6 +56,15 @@ export const updateScheduleAnnouncement = (id, data) =>
   request.put(`/api/app/cloud/admin/announcements/${id}`, data)
 export const deleteScheduleAnnouncement = (id) =>
   request.delete(`/api/app/cloud/admin/announcements/${id}`)
+
+// ===== 班级课表采集与定时任务 =====
+export const getClassScheduleAdmin = () => request.get('/api/class-schedule/admin')
+export const getClassScheduleLogs = (limit = 100) => request.get('/api/class-schedule/admin/logs', { params: { limit } })
+// 全量班级课表按学期串行读取并写入四张表，首次采集可能持续数分钟；
+// 单独放宽该请求超时，避免管理端误判为失败后重复点击，造成重复采集日志。
+export const pullClassSchedule = (data = {}) => request.post('/api/class-schedule/admin/pull', data, { timeout: 1800000 })
+export const submitClassScheduleMfa = (data = {}) => request.post('/api/class-schedule/admin/pull/mfa', data)
+export const resendClassScheduleMfa = (data = {}) => request.post('/api/class-schedule/admin/pull/mfa/resend', data)
 
 // ===== 身份 =====
 export const getPositions = () => request.get('/api/position/list')

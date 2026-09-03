@@ -11,10 +11,12 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -66,6 +68,7 @@ fun WebSettingsScreen(
     val ctx = LocalContext.current
     var route by remember { mutableStateOf(WebRoute.HOME) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showModeInfo by remember { mutableStateOf(false) }
 
     // 拦截系统返回键：子页回退到设置首页，避免退到桌面
     BackHandler(enabled = route != WebRoute.HOME) { route = WebRoute.HOME }
@@ -100,7 +103,10 @@ fun WebSettingsScreen(
                 if (state.loading && state.user == null) {
                     LoadingBox()
                 } else {
-                    Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
+                    // 让退出入口与内容处于同一滚动容器：内容不足一屏时由最小高度推到页面底部，
+                    // 内容超出一屏时随设置内容自然滚动，不会固定遮挡或脱离上下文。
+                    BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().heightIn(min = maxHeight).verticalScroll(rememberScrollState()).padding(16.dp)) {
                         // 个人信息：在线时可编辑；离线兜底时显示「离线模式」且不可点。
                         SapCard(onClick = if (ConnectivityState.online) ({ route = WebRoute.PROFILE_EDIT }) else null) {
                             Row(
@@ -206,37 +212,56 @@ fun WebSettingsScreen(
                                 }
                             }
                         }
-                        // 完整 App 能力下可在两种数据模式之间切换。
-                        if (MemberState.hasFullAppFeatures) {
+                        // 可用模式由云控决定；此处也支持游客在 Web 与班级课表间切换。
+                        if (MemberState.availableModes.size > 1) {
                             Box(Modifier.padding(top = 12.dp)) {
                                 SapCard {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                                        Column(Modifier.weight(1f)) {
-                                            Text("Web 模式", fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                                            Text("关闭切回教务模式（课表/成绩/我的）", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                                    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text("课表模式", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                                                Text("切换个人、网页或班级课表", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                                            }
+                                            TextButton(onClick = { showModeInfo = true }) { Text("模式说明") }
                                         }
-                                        Switch(
-                                            checked = MemberState.mode == AppMode.WEB,
-                                            onCheckedChange = { on ->
-                                                MemberState.setMode(ctx, if (on) AppMode.WEB else AppMode.JW)
-                                                if (on) Graph.accountManager.useWebview() else Graph.accountManager.activateJwAccount()
-                                            },
-                                        )
+                                        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                                            MemberState.availableModes.forEach { item ->
+                                                val label = when (item) {
+                                                    AppMode.JW -> "教务课表"
+                                                    AppMode.WEB -> "Web课表"
+                                                    AppMode.CLASS -> "班级课表"
+                                                }
+                                                androidx.compose.material3.FilterChip(
+                                                    selected = MemberState.effectiveMode == item,
+                                                    onClick = {
+                                                        MemberState.setMode(ctx, item)
+                                                        when (item) {
+                                                            AppMode.WEB -> Graph.accountManager.useWebview()
+                                                            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
+                                                            AppMode.JW -> Graph.accountManager.activateJwAccount()
+                                                        }
+                                                    },
+                                                    label = { Text(label, fontSize = 12.sp) },
+                                                    modifier = Modifier.weight(1f),
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    // 退出登录固定底部；离线模式下不显示（退出无意义，且离线不做登录态管理）
-                    if (ConnectivityState.online) {
-                        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                            SapCard(onClick = { showLogoutConfirm = true }) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text("退出登录", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp))
+                            // 离线模式下退出无意义；在线时作为滚动内容的最后一项。
+                            if (ConnectivityState.online) {
+                                Column(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp)) {
+                                    SapCard(onClick = { showLogoutConfirm = true }) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Text("退出登录", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
+                                            Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -250,5 +275,19 @@ fun WebSettingsScreen(
             WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME }, web = true, offline = !ConnectivityState.online)
             WebRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
         }
+    }
+    if (showModeInfo) {
+        AlertDialog(
+            onDismissRequest = { showModeInfo = false },
+            title = { Text("课表模式说明") },
+            text = {
+                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
+                    Text("教务课表\n自动采集个人各学期课表、成绩和考试安排；需要绑定教务账号。")
+                    Text("Web课表\n在学校网页中自行登录并导入个人课表；账号密码不经过服务器，但不会自动获取成绩。")
+                    Text("班级课表\n无需账号密码，按学期、学院、专业和班级选择公共课表；与个人课表可能因重修、选课而略有差异。")
+                }
+            },
+            confirmButton = { TextButton(onClick = { showModeInfo = false }) { Text("知道了") } },
+        )
     }
 }

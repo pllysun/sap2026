@@ -109,6 +109,28 @@ data class TermDto(
     val current: Boolean = false,
 )
 
+/** 班级课表采集后的学期元数据。 */
+data class ClassScheduleTermDto(
+    val value: String = "",
+    val label: String = "",
+    val semesterStartDate: String? = null,
+    val rowCount: Int = 0,
+    val classCount: Int = 0,
+    val teacherCount: Int = 0,
+    val roomCount: Int = 0,
+    val courseCount: Int = 0,
+    val lastCollectedAt: String? = null,
+)
+
+/** 班级课表选择器的一项。 */
+data class ClassOptionDto(
+    val term: String = "",
+    val college: String? = null,
+    val grade: String? = null,
+    val major: String? = null,
+    val className: String? = null,
+)
+
 data class CourseDto(
     val day: Int = 0,
     val dayName: String? = null,

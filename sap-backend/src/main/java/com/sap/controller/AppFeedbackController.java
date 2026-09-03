@@ -82,6 +82,16 @@ public class AppFeedbackController {
                 feedbackService.comment(access.userId(), access.admin(), id, dto));
     }
 
+    /** 管理端专属回复：即使 Issue 已关闭也允许补充维护说明，App 端不会调用此路径。 */
+    @PostMapping("/admin/issues/{id}/comments")
+    @OperationLog("管理端回复软协课表意见反馈")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> adminComment(@PathVariable Long id,
+                                  @Valid @RequestBody FeedbackCommentCreateDTO dto) {
+        return Result.ok("回复成功",
+                feedbackService.adminComment(StpUtil.getLoginIdAsLong(), id, dto));
+    }
+
     /** Issue 发起人主动关闭自己的反馈；只能关闭，不能重新打开或删除。 */
     @PutMapping("/issues/{id}/close")
     @OperationLog("关闭本人软协课表反馈")

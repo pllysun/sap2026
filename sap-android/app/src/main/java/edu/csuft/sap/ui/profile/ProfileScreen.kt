@@ -135,11 +135,14 @@ fun ProfileScreen(
                 )
                 ProfileRoute.SETTINGS -> AppSettingsScreen(
                     modifier = modifier,
-                    mode = MemberState.mode,
-                    onToggleMode = { on ->
-                        MemberState.setMode(ctx, if (on) AppMode.WEB else AppMode.JW)
-                        // 切 Web→本地源；切回教务→自动激活上次的教务账号（无则提示绑定）
-                        if (on) Graph.accountManager.useWebview() else Graph.accountManager.activateJwAccount()
+                    mode = MemberState.effectiveMode,
+                    onSelectMode = { selected ->
+                        MemberState.setMode(ctx, selected)
+                        when (selected) {
+                            AppMode.WEB -> Graph.accountManager.useWebview()
+                            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
+                            AppMode.JW -> Graph.accountManager.activateJwAccount()
+                        }
                     },
                     onTheme = { route = ProfileRoute.THEME },
                     onAnnouncements = { route = ProfileRoute.ANNOUNCEMENTS },
@@ -151,7 +154,12 @@ fun ProfileScreen(
                 )
                 ProfileRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.ANNOUNCEMENTS -> AnnouncementScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
-                ProfileRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
+                ProfileRoute.PRIVACY -> PrivacyScreen(
+                    modifier = modifier,
+                    onBack = { route = ProfileRoute.SETTINGS },
+                    web = MemberState.isWeb,
+                    offline = !ConnectivityState.online,
+                )
                 ProfileRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.ABOUT -> AboutScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.NONE -> Unit
@@ -196,23 +204,30 @@ fun ProfileScreen(
                 }
             }
 
-            // 教务账号：二级菜单（绑定 / 切换 / 备注 / 解绑 都在子页里管理）
-            val boundCount = state.accounts.count { !it.isLocal }
-            Box(Modifier.padding(top = 12.dp)) {
-                SapCard(onClick = { route = ProfileRoute.JW_ACCOUNTS }) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text("教务账号", fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                            Text(
-                                if (boundCount > 0) "已绑定 $boundCount 个学号，点击管理" else "未绑定，点击绑定",
-                                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 2.dp),
-                            )
+            // 教务账号：二级菜单（绑定 / 切换 / 备注 / 解绑 都在子页里管理）。
+            // Web/班级模式使用同一「我的」布局，但不展示与当前模式无关的教务账号入口。
+            if (MemberState.isJw) {
+                val boundCount = state.accounts.count { !it.isLocal }
+                Box(Modifier.padding(top = 12.dp)) {
+                    SapCard(onClick = { route = ProfileRoute.JW_ACCOUNTS }) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text("教务账号", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                                Text(
+                                    when {
+                                        boundCount > 0 -> "已绑定 $boundCount 个学号，点击管理"
+                                        MemberState.hasFullAppFeatures -> "未绑定，点击绑定"
+                                        else -> "教务课表暂不可用"
+                                    },
+                                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                            }
+                            Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
                         }
-                        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
                     }
                 }
             }
@@ -289,7 +304,9 @@ private fun JwAccountsScreen(modifier: Modifier, vm: ProfileViewModel, onBack: (
                     if (bound.isEmpty()) {
                         Text("绑定后即可查看课表、成绩与考试安排。", fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-                        Button(onClick = { showBind = true }, modifier = Modifier.padding(top = 12.dp)) { Text("绑定教务账号") }
+                        if (MemberState.hasFullAppFeatures) {
+                            Button(onClick = { showBind = true }, modifier = Modifier.padding(top = 12.dp)) { Text("绑定教务账号") }
+                        }
                     } else {
                         bound.forEach { a ->
                             AccountRow(

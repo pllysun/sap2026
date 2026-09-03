@@ -33,6 +33,19 @@ JAVA_OPTS="${JAVA_OPTS:-}"
 
 if [ -n "$MYSQL_URL" ]; then
     echo "[DB] 使用外部 MySQL 数据库"
+    # 班级课表采集会批量写入数万条记录。Connector/J 未开启批量重写时会把
+    # 每条 INSERT 分别发送到远程数据库，单次采集可能耗时数十分钟；追加该
+    # 连接参数后，JdbcTemplate 的批量 INSERT 会合并为多值语句，保持数据不变
+    # 的同时显著降低网络往返。调用方显式设置时保留其值。
+    case "$MYSQL_URL" in
+        *rewriteBatchedStatements=*) ;;
+        jdbc:mysql:*)
+            case "$MYSQL_URL" in
+                *\?*) MYSQL_URL="${MYSQL_URL}&rewriteBatchedStatements=true" ;;
+                *) MYSQL_URL="${MYSQL_URL}?rewriteBatchedStatements=true" ;;
+            esac
+            ;;
+    esac
     echo "[DB] URL: $MYSQL_URL"
     export SPRING_DATASOURCE_URL="$MYSQL_URL"
     export SPRING_DATASOURCE_USERNAME="${MYSQL_USER:-root}"
@@ -173,6 +186,10 @@ generate_https_config() {
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
+            # 班级课表四来源串行采集可能超过默认 60 秒，保持请求等待到任务完成。
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 1800s;
+            proxy_read_timeout 1800s;
             client_max_body_size 50M;
         }
     }
@@ -293,6 +310,10 @@ http {
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto https;
+            # 班级课表四来源串行采集可能超过默认 60 秒，保持请求等待到任务完成。
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 1800s;
+            proxy_read_timeout 1800s;
             client_max_body_size 50M;
         }
     }

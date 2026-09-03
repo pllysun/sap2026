@@ -38,7 +38,6 @@ import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.icons.AppIcons
 import edu.csuft.sap.ui.grade.GradeScreen
 import edu.csuft.sap.ui.profile.ProfileScreen
-import edu.csuft.sap.ui.profile.WebSettingsScreen
 import edu.csuft.sap.ui.schedule.ScheduleScreen
 import edu.csuft.sap.update.UpdateDialog
 import edu.csuft.sap.update.UpdateViewModel
@@ -47,19 +46,19 @@ private enum class Tab(val label: String, val icon: ImageVector, val iconFilled:
     Schedule("课表", AppIcons.Schedule, AppIcons.ScheduleFilled),
     Grade("成绩", AppIcons.Grades, AppIcons.GradesFilled),
     Profile("我的", AppIcons.Profile, AppIcons.ProfileFilled),
-    WebSettings("设置", AppIcons.Settings, AppIcons.SettingsFilled),
 }
 
 /** 选择降级快照来源；仅“从未导入过”的空 Web 空间允许用上次教务缓存做旧版本兼容恢复。 */
 internal fun downgradeSnapshotSource(active: String?, lastJw: String?, web: AccountData): String? =
-    active?.takeUnless(AccountManager::isLocal)
+    active?.takeUnless(AccountManager::isLocalOrClass)
         ?: lastJw?.takeIf { web.profiles.isEmpty() && !web.scanned }
 
 @Composable
 fun HomeScreen(onLoggedOut: () -> Unit) {
     var current by rememberSaveable { mutableIntStateOf(0) }
 
-    // 模式门控：JW(教务)=课表/(开启→成绩)/我的；WEB=课表/设置。非会员强制 WEB。
+    // 模式门控：三种模式都使用统一的「课表 / 成绩(仅教务) / 我的」布局。
+    // Web 与班级模式的设置从「我的→设置」进入，避免为不同模式维护两套入口。
     // 成绩属教务模式，是否显示由「我的→设置→显示成绩」控制（默认显示，关闭则只剩课表/我的）。
     val mode = MemberState.effectiveMode
     val visibleTabs = if (mode == AppMode.JW)
@@ -69,7 +68,7 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
             add(Tab.Profile)
         }
     else
-        listOf(Tab.Schedule, Tab.WebSettings)
+        listOf(Tab.Schedule, Tab.Profile)
     val idx = current.coerceIn(0, visibleTabs.size - 1)
     // 切换模式后回到首个 Tab(课表)，避免停留在已消失的 Tab
     LaunchedEffect(
@@ -83,8 +82,9 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
         // 云控 2→1 时先把当前教务缓存无损继承到 Web 本地空间，再切换数据源。
         // 源教务缓存与服务端绑定均保留；再次升到 2 仍可原样恢复并继续同步。
         // 冷启动会先乐观进入首页；身份尚未从服务端解析前不能执行继承，否则真实会员会被误当成游客。
-        if (ConnectivityState.online && MemberState.accessResolved) {
-            if (mode == AppMode.WEB) {
+        when (mode) {
+            AppMode.WEB -> {
+                if (ConnectivityState.online && MemberState.accessResolved) {
                 val active = Graph.accountManager.activeAccount
                 if (!MemberState.hasFullAppFeatures) {
                     // 兼容已被旧版本直接切到空 Web 源的用户。scanned=true 但无 profile 代表用户主动删空，
@@ -96,8 +96,13 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                     )
                     source?.let(Graph.scheduleStore::inheritIntoWebview)
                 }
+                }
+                // 掉线时也切到本地 Web 槽，避免仍拿着教务账号而触发网络扫描。
                 Graph.accountManager.useWebview()
-            } else Graph.accountManager.activateJwAccount()
+            }
+            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
+            AppMode.JW -> if (ConnectivityState.online) Graph.accountManager.activateJwAccount()
+                else Graph.accountManager.useWebview()
         }
     }
 
@@ -150,7 +155,6 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                     Tab.Schedule -> ScheduleScreen(Modifier.fillMaxSize())
                     Tab.Grade -> GradeScreen(Modifier.fillMaxSize())
                     Tab.Profile -> ProfileScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut)
-                    Tab.WebSettings -> WebSettingsScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut)
                 }
             }
         }

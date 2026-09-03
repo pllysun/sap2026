@@ -22,10 +22,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,7 +57,7 @@ import edu.csuft.sap.update.UpdateViewModel
 fun AppSettingsScreen(
     modifier: Modifier = Modifier,
     mode: AppMode,
-    onToggleMode: (Boolean) -> Unit,
+    onSelectMode: (AppMode) -> Unit,
     onTheme: () -> Unit,
     onAnnouncements: () -> Unit,
     onPrivacy: () -> Unit,
@@ -61,6 +67,7 @@ fun AppSettingsScreen(
     onBack: () -> Unit,
 ) {
     val ctx = LocalContext.current
+    var showModeInfo by remember { mutableStateOf(false) }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("设置", onBack)
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -68,21 +75,29 @@ fun AppSettingsScreen(
                 ThemeRow(onTheme)
             }
             Spacer(Modifier.height(12.dp))
-            // 模式切换：开 = Web 模式(网页课表，仅课表+设置)；关 = 教务模式(课表/成绩/我的)
+            // 三种课表模式统一入口；可见模式由云控与当前账号能力决定。
             Card {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Web 模式", fontSize = 16.sp)
-                        Text(
-                            "开启后用网页登录课表，仅保留课表与设置；关闭则为教务模式",
-                            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 2.dp),
+                Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("课表模式", fontSize = 16.sp)
+                            Text("选择你要使用的课表来源", fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp))
+                        }
+                        TextButton(onClick = { showModeInfo = true }) { Text("模式说明") }
+                    }
+                    MemberState.availableModes.forEachIndexed { index, item ->
+                        if (index > 0) RowDivider()
+                        ModeOptionRow(
+                            mode = item,
+                            selected = item == mode,
+                            onClick = { onSelectMode(item) },
                         )
                     }
-                    Switch(checked = mode == AppMode.WEB, onCheckedChange = onToggleMode)
                 }
             }
             // 显示成绩：教务模式专属；关闭后教务模式底栏仅「课表 / 我的」
@@ -121,6 +136,20 @@ fun AppSettingsScreen(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         ) { Text("退出登录", color = MaterialTheme.colorScheme.error) }
+    }
+    if (showModeInfo) {
+        AlertDialog(
+            onDismissRequest = { showModeInfo = false },
+            title = { Text("课表模式说明") },
+            text = {
+                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
+                    Text("教务课表\n自动采集个人各学期课表、成绩和考试安排；需要绑定教务账号。")
+                    Text("Web课表\n在学校网页中自行登录并导入个人课表；账号密码不经过服务器，但不会自动获取成绩。")
+                    Text("班级课表\n无需账号密码，按学期、学院、专业和班级选择公共课表；与个人课表可能因重修、选课而略有差异。")
+                }
+            },
+            confirmButton = { TextButton(onClick = { showModeInfo = false }) { Text("知道了") } },
+        )
     }
 }
 
@@ -332,6 +361,49 @@ private fun ThemeRow(onClick: () -> Unit) {
         Text("主题色", fontSize = 16.sp, modifier = Modifier.weight(1f))
         Box(Modifier.size(20.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
         Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 10.dp))
+    }
+}
+
+/** 课表模式切换行：在窄屏上纵向展示标题和说明，避免三个横向标签挤压或截断。 */
+@Composable
+private fun ModeOptionRow(mode: AppMode, selected: Boolean, onClick: () -> Unit) {
+    val title = when (mode) {
+        AppMode.JW -> "教务课表"
+        AppMode.WEB -> "Web课表"
+        AppMode.CLASS -> "班级课表"
+    }
+    val subtitle = when (mode) {
+        AppMode.JW -> "自动采集个人课表、成绩和考试安排"
+        AppMode.WEB -> "自行登录学校网页，导入个人课表"
+        AppMode.CLASS -> "无需账号，按班级查看公共课表"
+    }
+    Row(
+        Modifier.fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                fontSize = 15.sp,
+                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                subtitle,
+                fontSize = 12.sp,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        if (selected) {
+            Icon(AppIcons.Check, "当前模式", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
     }
 }
 

@@ -14,8 +14,8 @@ android {
         applicationId = "edu.csuft.sap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 73
-        versionName = "2.0"
+        versionCode = 74
+        versionName = "2.1"
         // 后端地址：模拟器用 10.0.2.2 指向宿主机；真机改成局域网IP或部署域名
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081\"")
     }

@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
  * 全局「后端可达性」状态（在线/离线兜底）。
  * 由 AppViewModel 在进场/切回前台探测后端后设置。
  * - online=true：后端可达 → 正常在线（按会员/手选模式）。
- * - online=false：后端不可达（宕机/没网）→ 离线模式：强制 [AppMode.WEB] 只看本地课表、隐藏所有在线功能，
+ * - online=false：后端不可达（宕机/没网）→ 离线模式：保留 Web 课表或已缓存的班级课表，只看本地内容、隐藏在线功能，
  *   且**绝不清登录态**；待下次进场重新探到可达即自动恢复在线。
  */
 object ConnectivityState {

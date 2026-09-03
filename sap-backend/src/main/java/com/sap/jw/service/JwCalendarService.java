@@ -58,10 +58,33 @@ public class JwCalendarService {
         return start;
     }
 
+    /**
+     * 使用调用方已经建立的会话读取教学周历。班级课表管理端可能只提供一次性账密，
+     * 该入口避免为了补全开学日期再次从绑定凭据表取密码。
+     */
+    public String getSemesterStart(JwHttpSession session, String term) {
+        if (term == null || term.isBlank() || session == null) return null;
+        String normTerm = term.trim();
+        String cached = settingService.getValue(CACHE_KEY_PREFIX + normTerm);
+        if (cached != null && !cached.isBlank()) return cached;
+        String start = fetchAndParse(session, normTerm);
+        if (start != null) cache(normTerm, start);
+        return start;
+    }
+
     /** 用教务会话抓教学周历并解析；任何失败返回 null。 */
     private String fetchAndParse(Long userId, String account, String term) {
         try {
             JwHttpSession session = sessionManager.getSession(userId, account);
+            return fetchAndParse(session, term);
+        } catch (Exception e) {
+            log.warn("[教学周历] term={} 抓取/解析失败: {}", term, e.toString());
+            return null;
+        }
+    }
+
+    private String fetchAndParse(JwHttpSession session, String term) {
+        try {
             // jsxsd 全站学期参数为 xnxq01id（与课表 xskb_list.do 一致）；旧用 xnxqh 会被忽略→回默认学期→对不上→null
             String url = session.getJwglBase() + JXZL_PATH
                     + "?xnxq01id=" + URLEncoder.encode(term, StandardCharsets.UTF_8);

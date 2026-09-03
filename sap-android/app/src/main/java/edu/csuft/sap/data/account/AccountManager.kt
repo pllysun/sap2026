@@ -39,6 +39,7 @@ class AccountManager(context: Context, private val jw: JwRepository) {
     // key 直接按当前账号算（不依赖 ns 缓存），避免登录瞬间 ns 未及时切换导致写错命名空间
     private fun keyActive() = "$KEY_ACTIVE${CurrentAccount.key}"
     private fun keyLastJw() = "$KEY_LAST_JW${CurrentAccount.key}"
+    private fun keyLastClass() = "$KEY_LAST_CLASS${CurrentAccount.key}"
 
     private val _accounts = MutableStateFlow(emptyList<BoundAccount>())
     val accounts: StateFlow<List<BoundAccount>> = _accounts.asStateFlow()
@@ -98,7 +99,8 @@ class AccountManager(context: Context, private val jw: JwRepository) {
                 val full = bound + webviewEntry
                 _accounts.value = full
                 val cur = _active.value
-                if (full.none { it.account == cur }) {
+                // 班级课表账号键由班级选择动态生成，不在教务绑定列表中；保留它才能离线切回上次班级缓存。
+                if (full.none { it.account == cur } && !isClass(cur)) {
                     setActive((bound.firstOrNull()?.account) ?: WEBVIEW_ACCOUNT)
                 }
                 bound.isNotEmpty()
@@ -114,6 +116,25 @@ class AccountManager(context: Context, private val jw: JwRepository) {
 
     /** 切到本地网页课表源。 */
     fun useWebview() = setActive(WEBVIEW_ACCOUNT)
+
+    /** 切到指定班级的本地缓存槽；首次使用时槽为空，选择器成功下载后写入。 */
+    fun useClass(selectionKey: String? = null) {
+        val key = selectionKey?.takeIf { it.isNotBlank() }
+            ?: prefs.getString(keyLastClass(), null)?.removePrefix(CLASS_ACCOUNT_PREFIX)
+            ?: "default"
+        setActive(CLASS_ACCOUNT_PREFIX + key)
+    }
+
+    /** 切换回班级模式时恢复最近一次选择，缓存存在时可直接离线显示。 */
+    fun activateClassAccount(): Boolean {
+        val saved = prefs.getString(keyLastClass(), null)
+        if (saved.isNullOrBlank()) {
+            useClass("default")
+            return false
+        }
+        setActive(saved)
+        return true
+    }
 
     /** 上次使用过的教务账号，仅用于云控降级时从对应的本地缓存恢复课表，不触发网络请求。 */
     fun lastJwAccount(): String? = prefs.getString(keyLastJw(), null)
@@ -141,7 +162,8 @@ class AccountManager(context: Context, private val jw: JwRepository) {
         prefs.edit().apply {
             if (account == null) remove(keyActive()) else putString(keyActive(), account)
             // 记住最近使用的教务账号（非本地），供 Web→教务 切回时自动激活
-            if (account != null && !isLocal(account)) putString(keyLastJw(), account)
+            if (account != null && !isLocal(account) && !isClass(account)) putString(keyLastJw(), account)
+            if (account != null && isClass(account)) putString(keyLastClass(), account)
         }.apply()
         mirrorActive(account) // 同步无后缀镜像，供小组件 / 上课提醒读取当前激活账号
     }
@@ -175,11 +197,16 @@ class AccountManager(context: Context, private val jw: JwRepository) {
         /** 本地「网页课表」源的账号键（非教务绑定，数据来自 WebView 端上导入）。 */
         const val WEBVIEW_ACCOUNT = "__webview__"
         fun isLocal(account: String?) = account == WEBVIEW_ACCOUNT
+        /** 本地班级课表缓存前缀；后缀是学院/年级/专业/班级的稳定摘要（跨学期复用）。 */
+        const val CLASS_ACCOUNT_PREFIX = "__class__:"
+        fun isClass(account: String?) = account?.startsWith(CLASS_ACCOUNT_PREFIX) == true
+        fun isLocalOrClass(account: String?) = isLocal(account) || isClass(account)
         private const val KEY_ACTIVE = "active_account_" // 实际 key 拼 CurrentAccount.key 后缀（按会员账号隔离）
         // 无后缀镜像 key：始终 = 当前激活教务号，供 WidgetRepository（小组件 / 上课提醒，跨进程取不到 CurrentAccount 后缀）读取
         private const val KEY_ACTIVE_MIRROR = "active_account"
         private const val KEY_NICK = "nicknames_"         // 备注按会员账号 + 教务号隔离
         private const val KEY_LAST_JW = "last_jw_"        // 同上，按会员账号隔离
+        private const val KEY_LAST_CLASS = "last_class_"  // 最近班级缓存槽，按会员账号隔离
     }
 
     private val webviewEntry = BoundAccount(WEBVIEW_ACCOUNT, "网页课表", isLocal = true)
