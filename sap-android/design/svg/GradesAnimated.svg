@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img">
+<title>成绩 · 动态</title>
+<style>g{transform-origin:12px 12px;animation:arrive .28s cubic-bezier(.2,.8,.2,1) both}@keyframes arrive{from{opacity:.35;transform:translateY(1px) scale(.9)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){g{animation:none}}</style>
+<g>
+  <path d="M4 4V18A2 2 0 0 0 6 20H20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 15V12M13 15V8M18 15V4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

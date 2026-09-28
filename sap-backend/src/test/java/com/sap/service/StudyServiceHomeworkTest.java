@@ -53,6 +53,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
     @Mock PositionMapper positionMapper;
     @Mock CacheService cacheService;
 
+    @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks StudyService service;
 
     private StudyActivity activity(int currentWeek) {

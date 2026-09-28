@@ -15,6 +15,25 @@ public class SysLogController {
     @Autowired
     private SysLogService sysLogService;
 
+    @Autowired private com.sap.service.LogAnalyticsService analytics;
+
+    @GetMapping("/explore")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> explore(@RequestParam(defaultValue="detail") String dimension,
+        @RequestParam(defaultValue="false") boolean archive,
+        @RequestParam(required=false) String source, @RequestParam(required=false) Long userId,
+        @RequestParam(required=false) String endpoint, @RequestParam(required=false) String method,
+        @RequestParam(required=false) java.time.LocalDate start, @RequestParam(required=false) java.time.LocalDate end,
+        @RequestParam(defaultValue="1") int current, @RequestParam(defaultValue="20") int size) {
+        return Result.ok(analytics.query(dimension,archive,source,userId,endpoint,method,start,end,current,size));
+    }
+
+    @GetMapping("/calendar-year")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> calendarYear(@RequestParam int year) {
+        return Result.ok(sysLogService.getCalendarYear(year));
+    }
+
     @GetMapping("/list")
     @OperationLog("查询操作日志")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)

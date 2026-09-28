@@ -6,6 +6,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import retrofit2.HttpException
+import kotlinx.coroutines.CancellationException
 
 private fun friendly(e: Throwable): String = when (e) {
     is SocketTimeoutException -> "连接超时，请稍后重试"
@@ -27,6 +28,7 @@ suspend fun <T> apiData(block: suspend () -> ApiResult<T>): Outcome<T> = try {
     if (r.code == 200 && d != null) Outcome.Success(d)
     else Outcome.Error(r.message ?: "请求失败", r.code)
 } catch (e: Throwable) {
+    if (e is CancellationException) throw e
     Outcome.Error(friendly(e), code = errorCode(e), offline = isOffline(e))
 }
 
@@ -36,5 +38,6 @@ suspend fun apiUnit(block: suspend () -> ApiResult<*>): Outcome<Unit> = try {
     if (r.code == 200) Outcome.Success(Unit)
     else Outcome.Error(r.message ?: "请求失败", r.code)
 } catch (e: Throwable) {
+    if (e is CancellationException) throw e
     Outcome.Error(friendly(e), code = errorCode(e), offline = isOffline(e))
 }

@@ -20,15 +20,15 @@
       <form @submit.prevent="handleRegister">
         <div class="form-group">
           <label class="form-label">学号</label>
-          <input v-model="form.studentId" type="text" class="input" placeholder="请输入学号" required />
+          <input v-model.trim="form.studentId" type="text" class="input" placeholder="请输入学号" maxlength="20" required />
         </div>
         <div class="form-group">
           <label class="form-label">密码</label>
-          <input v-model="form.password" type="password" class="input" placeholder="请输入密码" required />
+          <input v-model="form.password" type="password" class="input" placeholder="请输入密码" minlength="6" maxlength="64" required />
         </div>
         <div class="form-group">
           <label class="form-label">姓名</label>
-          <input v-model="form.name" type="text" class="input" placeholder="请输入真实姓名" required />
+          <input v-model.trim="form.name" type="text" class="input" placeholder="请输入真实姓名" maxlength="50" required />
         </div>
         <div class="form-group">
           <label class="form-label">性别</label>
@@ -39,19 +39,23 @@
         </div>
         <div class="form-group">
           <label class="form-label">QQ号</label>
-          <input v-model="form.qq" type="text" class="input" placeholder="请输入QQ号" required />
+          <input v-model.trim="form.qq" type="text" class="input" placeholder="请输入QQ号" inputmode="numeric" pattern="[1-9][0-9]{4,14}" maxlength="15" required />
         </div>
-        <!-- 验证码：默认隐藏，仅当后端风控判定该 IP 需要验证时才出现 -->
+        <!-- 后端返回挑战后展示；默认每次注册均需要验证码。 -->
         <div class="form-group" v-if="captchaRequired">
           <label class="form-label">验证码</label>
           <div class="captcha-row">
             <input v-model="form.captchaCode" type="text" class="input captcha-input"
-                   placeholder="请输入图中字符" maxlength="6" autocomplete="off" />
-            <img v-if="captchaImg" :src="captchaImg" class="captcha-img" alt="验证码"
-                 title="看不清？点击刷新" @click="loadCaptcha" />
+                   placeholder="请输入图中字符" maxlength="6" autocomplete="off" required />
+            <button type="button" class="captcha-refresh" :disabled="captchaLoading || loading"
+                    aria-label="刷新验证码" @click="loadCaptcha">
+              <img v-if="captchaImg" :src="captchaImg" class="captcha-img" alt="验证码，点击刷新" />
+              <span v-else>{{ captchaLoading ? '加载中…' : '点击获取验证码' }}</span>
+            </button>
           </div>
         </div>
-        <button type="submit" class="btn btn--primary btn--full btn--pill" :disabled="loading">
+        <button type="submit" class="btn btn--primary btn--full btn--pill"
+                :disabled="loading || captchaLoading || (captchaRequired && !captchaId)">
           {{ loading ? '注册中…' : '立即注册' }}
         </button>
       </form>
@@ -80,25 +84,32 @@ const successMsg = ref('')
 const captchaRequired = ref(false)
 const captchaImg = ref('')
 const captchaId = ref('')
+const captchaLoading = ref(false)
 
 async function loadCaptcha() {
+  if (captchaLoading.value) return
+  captchaLoading.value = true
+  captchaImg.value = ''; captchaId.value = ''; form.captchaCode = ''
   try {
     const res = await request.get('/api/auth/captcha')
     captchaImg.value = res.data.image
     captchaId.value = res.data.captchaId
-    form.captchaCode = ''
-  } catch (e) { /* 拉取失败忽略，用户可点击图片重试 */ }
+    return true
+  } catch (e) {
+    errorMsg.value = e.message || '验证码获取失败，请点击重新获取'
+    return false
+  } finally { captchaLoading.value = false }
 }
 
 async function handleRegister() {
+  if (loading.value || captchaLoading.value) return
   loading.value = true; errorMsg.value = ''; successMsg.value = ''
   try {
     const res = await userStore.register({ ...form, captchaId: captchaId.value })
     // 风控触发：后端要求验证码 → 展示验证码并提示重提（非注册成功）
     if (res?.data?.captchaRequired) {
       captchaRequired.value = true
-      await loadCaptcha()
-      errorMsg.value = '为确保账号安全，请输入下方验证码后重新提交'
+      if (await loadCaptcha()) errorMsg.value = '为确保账号安全，请输入下方验证码后重新提交'
       return
     }
     successMsg.value = '注册成功，正在跳转…'
@@ -114,10 +125,13 @@ async function handleRegister() {
 .captcha-row {
   display: flex; align-items: center; gap: 10px;
 }
-.captcha-input { flex: 1; }
+.captcha-input { flex: 1; min-width: 0; }
+.captcha-refresh {
+  padding: 0; width: 160px; height: 50px; flex-shrink: 0; overflow: hidden;
+  border: 1px solid var(--border, #e5e7eb); border-radius: 8px; background: white; cursor: pointer;
+}
 .captcha-img {
-  height: 40px; width: 120px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--border, #e5e7eb); object-fit: cover; flex-shrink: 0;
+  display: block; height: 50px; width: 160px; object-fit: contain;
 }
 .auth-logo-wrap {
   display: inline-flex; align-items: center; justify-content: center;

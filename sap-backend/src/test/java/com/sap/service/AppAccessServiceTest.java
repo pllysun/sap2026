@@ -25,6 +25,18 @@ class AppAccessServiceTest {
     @Mock UserRoleMapper userRoleMapper;
 
     @Test
+    void basicSchedulesStayAvailableAtEveryGuestCloudLevel() {
+        AppAccessService service = new AppAccessService(settingService, userRoleMapper);
+        when(userRoleMapper.selectRoleCodesByUserId(2L)).thenReturn(List.of(4));
+        for (int level = 0; level <= 2; level++) {
+            when(settingService.getValue(AppAccessService.GUEST_ACCESS_LEVEL_KEY)).thenReturn(String.valueOf(level));
+            assertTrue(service.hasBasicAccess(2L));
+            service.requireBasicAccess(2L);
+            assertEquals(level == 2, service.hasFullAccess(2L));
+        }
+    }
+
+    @Test
     void guestLevelIsClampedAndMalformedValueClosesAccess() {
         AppAccessService service = new AppAccessService(settingService, userRoleMapper);
         when(settingService.getValue(AppAccessService.GUEST_ACCESS_LEVEL_KEY))

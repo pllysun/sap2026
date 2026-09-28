@@ -15,6 +15,8 @@ import com.sap.mapper.TermMapper;
 import com.sap.mapper.UserMapper;
 import com.sap.mapper.UserRoleMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -41,6 +43,7 @@ class UserServiceTest extends BaseUnitTest {
     @Mock PositionMapper positionMapper;
     @Mock CacheService cacheService;
 
+    @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks UserService service;
 
     private User user(long id) {
@@ -145,31 +148,34 @@ class UserServiceTest extends BaseUnitTest {
 
     // ===================== updateUserRole =====================
 
-    @Test
-    void updateUserRole_superAdmin_canAssignAnyRole() {
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "1"})
+    void updateUserRole_leaderOrSuper_canAssignAnyRole(String callerRole) {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
-            st.when(StpUtil::getRoleList).thenReturn(List.of("0"));
+            st.when(StpUtil::getRoleList).thenReturn(List.of(callerRole));
+            when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(0));
 
-            service.updateUserRole(5L, List.of(1, 1, 3)); // dup 1 -> deduped
+            service.updateUserRole(5L, List.of(0, 1, 1, 3)); // dup 1 -> deduped
 
             verify(userRoleMapper).delete(any());
             ArgumentCaptor<UserRole> captor = ArgumentCaptor.forClass(UserRole.class);
-            verify(userRoleMapper, times(2)).insert(captor.capture());
+            verify(userRoleMapper, times(3)).insert(captor.capture());
             List<Integer> inserted = captor.getAllValues().stream().map(UserRole::getRoleCode).toList();
-            assertEquals(List.of(1, 3), inserted);
+            assertEquals(List.of(0, 1, 3), inserted);
         }
     }
 
     @Test
-    void updateUserRole_nonSuperAdmin_grantingHighRole_throws() {
+    void updateUserRole_admin_grantingHighRole_throws() {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
-            st.when(StpUtil::getRoleList).thenReturn(List.of("1"));
+            st.when(StpUtil::getRoleList).thenReturn(List.of("2"));
             when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(3));
 
             // grantMin = 1 -> blocked
             BusinessException ex = assertThrows(BusinessException.class,
                     () -> service.updateUserRole(5L, List.of(1, 3)));
             assertEquals("无权授予或修改高于自身权限的角色", ex.getMessage());
+            verify(userRoleMapper, never()).delete(any());
             verify(userRoleMapper, never()).insert(any());
         }
     }
@@ -228,15 +234,17 @@ class UserServiceTest extends BaseUnitTest {
 
     // ===================== resetPassword =====================
 
-    @Test
-    void resetPassword_superAdmin_resetsAnyAccount() {
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "1"})
+    void resetPassword_leaderOrSuper_resetsHighPrivilegeAccount(String callerRole) {
         User u = new User();
         u.setId(5L);
         u.setStudentId("20200001");
         u.setPassword("oldhash");
         when(userMapper.selectOne(any())).thenReturn(u);
+        when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(0));
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
-            st.when(StpUtil::getRoleList).thenReturn(List.of("0"));
+            st.when(StpUtil::getRoleList).thenReturn(List.of(callerRole));
 
             service.resetPassword("20200001", "newPass123");
 
@@ -249,12 +257,12 @@ class UserServiceTest extends BaseUnitTest {
     }
 
     @Test
-    void resetPassword_nonSuperAdmin_highPrivilegeTarget_throws() {
+    void resetPassword_admin_highPrivilegeTarget_throws() {
         User u = new User();
         u.setId(5L);
         when(userMapper.selectOne(any())).thenReturn(u);
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
-            st.when(StpUtil::getRoleList).thenReturn(List.of("1"));
+            st.when(StpUtil::getRoleList).thenReturn(List.of("2"));
             when(userRoleMapper.selectRoleCodesByUserId(5L)).thenReturn(List.of(0)); // 超管目标
 
             BusinessException ex = assertThrows(BusinessException.class,

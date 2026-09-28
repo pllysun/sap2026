@@ -2,6 +2,7 @@ package edu.csuft.sap.ui.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.snapshotFlow
 import edu.csuft.sap.data.remote.Outcome
 import edu.csuft.sap.data.remote.dto.CourseDto
 import edu.csuft.sap.data.remote.dto.RemarkDto
@@ -10,8 +11,15 @@ import edu.csuft.sap.data.remote.dto.TermDto
 import edu.csuft.sap.data.account.AccountManager
 import edu.csuft.sap.data.account.JwMfaState
 import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.data.account.ConnectivityState
+import edu.csuft.sap.data.account.CurrentAccount
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import edu.csuft.sap.data.schedule.AccountData
 import edu.csuft.sap.data.schedule.CachedCourse
 import edu.csuft.sap.data.schedule.CustomCourse
@@ -24,6 +32,8 @@ import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.TermScan
 import edu.csuft.sap.data.schedule.TermUtil
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.sourceId
+import edu.csuft.sap.data.schedule.visibleBase
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.notify.ReminderScheduler
 import edu.csuft.sap.ui.theme.colorIndexOf
@@ -75,16 +85,29 @@ class ScheduleViewModel : ViewModel() {
     private var lastReschedKey: String? = null // 当前渲染课表的指纹，变化即重排上课提醒
     /** 本次会话内捕获到的「学期→开学日期(教务教学周历)」，用于 profile 创建后补刷。 */
     private val termStarts = HashMap<String, String>()
+    private var requestJob: Job? = null
 
     init {
+        store.applyAcademicCalendar(Graph.academicCalendarRepository.cached())
+        // 首帧直接使用本地课表与校历，不能先发布默认的第 1 周。
+        render()
+        viewModelScope.launch { store.applyAcademicCalendar(Graph.academicCalendarRepository.dates()) }
         viewModelScope.launch {
-            combine(acc.active, acc.contextVersion) { account, _ -> account }.collect { account ->
+            combine(acc.active, acc.contextVersion, CurrentAccount.uid,
+                snapshotFlow { MemberState.effectiveMode to ConnectivityState.online }) { account, version, owner, access ->
+                ScheduleSourceContext(account, version, owner, access)
+            }.collectLatest { context ->
+                val account = context.account
+                requestJob?.cancel()
+                requestJob = null
+                _state.value = _state.value.copy(scanning = false, loading = false, error = null)
                 userPickedWeek = false
                 termStarts.clear()
+                render()
                 if (account == null) {
                     _state.value = UiState(loading = false, error = "请先在「我的」里绑定教务账号")
                 } else {
-                    onAccountSelected(account)
+                    requestJob = viewModelScope.launch { onAccountSelected(account) }
                 }
             }
         }
@@ -95,6 +118,10 @@ class ScheduleViewModel : ViewModel() {
     }
 
     private suspend fun onAccountSelected(account: String) {
+        if (!ConnectivityState.online) {
+            render()
+            return
+        }
         if (AccountManager.isClass(account)) {
             // 班级模式只读本地缓存；没有缓存时由 ScheduleScreen 打开班级选择器。
             render()
@@ -110,6 +137,7 @@ class ScheduleViewModel : ViewModel() {
             render() // Web 模式本地源：不扫教务，直接渲染本地数据（无则提示导入）
             return
         }
+        if (!MemberState.isJw) { render(); return }
         val data = store.accountData(account)
         if (!data.scanned || data.profiles.none { it.kind == ProfileKind.TERM }) {
             scanTerms(account)
@@ -129,27 +157,25 @@ class ScheduleViewModel : ViewModel() {
     fun selectWeek(week: Int) {
         userPickedWeek = true
         _state.value = _state.value.copy(
-            selectedWeek = week.coerceIn(1, _state.value.settings.totalWeeks),
+            selectedWeek = week.coerceIn(1, _state.value.settings.totalWeeks.coerceAtLeast(1)),
         )
-    }
-
-    fun gotoCurrentWeek() {
-        val cw = _state.value.currentWeek ?: return
-        userPickedWeek = true
-        _state.value = _state.value.copy(selectedWeek = cw.coerceIn(1, _state.value.settings.totalWeeks))
     }
 
     /** 刷新：仅重拉当前 TERM 课表的教务底本；CUSTOM 课表为冻结，不刷新。 */
     fun refresh() {
+        if (!ConnectivityState.online || !MemberState.isJw) return
         val account = acc.activeAccount ?: return
         if (AccountManager.isLocalOrClass(account)) return // Web/班级源均由各自导入/选择器更新
         val p = activeProfile(account) ?: return
         if (p.kind != ProfileKind.TERM || p.termValue == null) return
-        viewModelScope.launch {
-            _state.value = _state.value.copy(loading = true, error = null)
-            when (val r = jw.schedule(account, p.termValue)) {
+        val owner = CurrentAccount.key
+        requestJob?.cancel()
+        requestJob = viewModelScope.launch {
+            _state.value = _state.value.copy(scanning = false, loading = true, error = null)
+            when (val r = fetchSchedule(account, p.termValue, owner)) {
                 is Outcome.Success -> {
                     cacheTermData(account, p.termValue, r.data) // 触发 render
+                    if (r.data.term == p.termValue) store.finishScheduleSync(account, setOfNotNull(p.termValue))
                     _state.value = _state.value.copy(loading = false)
                 }
                 is Outcome.Error -> _state.value = _state.value.copy(loading = false, error = r.message)
@@ -159,9 +185,11 @@ class ScheduleViewModel : ViewModel() {
 
     /** 重新扫描该学号的所有有数据学期。本地网页源不扫描（靠导入）。 */
     fun rescan() {
+        if (!ConnectivityState.online || !MemberState.isJw) return
         val account = acc.activeAccount ?: return
         if (AccountManager.isLocalOrClass(account)) return
-        viewModelScope.launch { scanTerms(account) }
+        requestJob?.cancel()
+        requestJob = viewModelScope.launch { scanTerms(account) }
     }
 
     /** 另存为新课表：把当前展示（教务底本 + 自建课）冻结成独立 CUSTOM 课表，重拉不再覆盖。 */
@@ -176,6 +204,7 @@ class ScheduleViewModel : ViewModel() {
             termValue = p.termValue, // 记下来源学期，副本在三级菜单里挂到对应学年/学期下
             settings = p.settings,
             customCourses = p.customCourses,
+            hiddenSourceIds = p.hiddenSourceIds,
             frozenCourses = frozen,
         )
         store.addProfile(account, profile, makeActive = true)
@@ -190,8 +219,7 @@ class ScheduleViewModel : ViewModel() {
         val account = acc.activeAccount ?: return
         if (AccountManager.isClass(account)) {
             // 班级模式的“清除缓存”必须连同该班级的学期底本一起删除，避免清空后仍能显示旧数据。
-            store.clearAccount(account)
-            acc.useClass("default")
+            Graph.classScheduleCache.delete(setOf(account))
         } else {
             store.removeProfile(account, id)
         }
@@ -218,9 +246,12 @@ class ScheduleViewModel : ViewModel() {
 
     fun retry() {
         val account = acc.activeAccount
+        if (!ConnectivityState.online || !MemberState.isJw || AccountManager.isLocalOrClass(account)) {
+            render()
+            return
+        }
         if (account == null) viewModelScope.launch { acc.refresh() }
-        else if (AccountManager.isClass(account)) render()
-        else viewModelScope.launch { scanTerms(account) }
+        else rescan()
     }
 
     // ---------- 扫描有数据学期 ----------
@@ -231,13 +262,19 @@ class ScheduleViewModel : ViewModel() {
      * 与 WebView 抓取共用同一算法。
      */
     private suspend fun scanTerms(account: String) {
+        val owner = CurrentAccount.key
         _state.value = _state.value.copy(scanning = true, loading = true, error = null, account = account)
-        val first = jw.schedule(account, null)
+        val first = fetchSchedule(account, null, owner)
         if (first is Outcome.Error) {
             _state.value = _state.value.copy(scanning = false, loading = false, error = first.message)
             return
         }
         val data0 = (first as Outcome.Success).data
+        val syncedTerms = mutableSetOf<String>()
+        fun cacheSuccess(term: String, data: ScheduleData) {
+            cacheTermData(account, term, data)
+            syncedTerms += term
+        }
         // 新版课表查询父页返回的学期下拉是权威列表；不要仅按当前学期前后推算，
         // 否则中间存在空学期时会提前停止，历史课表也不会建立对应的本地课表。
         val listedTerms = data0.terms.map { it.value.trim() }
@@ -256,15 +293,16 @@ class ScheduleViewModel : ViewModel() {
 
         if (currentTerm == null || !TermUtil.isTerm(currentTerm)) {
             // 识别不出当前学期：退化为仅首个/当前学期
-            if (currentTerm != null) cacheTermData(account, currentTerm, data0)
+            if (currentTerm != null) cacheSuccess(currentTerm, data0)
             val fb = currentTerm?.let { profileOf(it) } ?: data0.terms.firstOrNull()?.let { termProfile(it) }
             store.replaceTermProfiles(account, listOfNotNull(fb))
             applyAutoStarts(account)
+            store.finishScheduleSync(account, syncedTerms)
             _state.value = _state.value.copy(scanning = false, loading = false)
             render()
             return
         }
-        cacheTermData(account, currentTerm, data0)
+        cacheSuccess(currentTerm, data0)
 
         // 新版父查询页能够一次给出全部可查询学期。逐项请求并缓存，按学期建立
         // TERM profile；请求失败的学期仍保留 profile，界面显示“暂无内容”，不影响
@@ -273,11 +311,11 @@ class ScheduleViewModel : ViewModel() {
             val allTerms = (listedTerms + currentTerm).distinct().sortedDescending()
             for (listed in allTerms) {
                 if (listed == currentTerm) continue
-                when (val result = jw.schedule(account, listed)) {
+                when (val result = fetchSchedule(account, listed, owner)) {
                     is Outcome.Success -> {
                         // 后端会把请求学期写回 data.term；这里再做一次保护，防止
                         // 源站忽略参数而回显当前学期时污染历史学期缓存。
-                        if (result.data.term?.trim() == listed) cacheTermData(account, listed, result.data)
+                        if (result.data.term?.trim() == listed) cacheSuccess(listed, result.data)
                     }
                     is Outcome.Error -> Unit // 保留旧缓存/空 profile，继续扫描其它学期
                 }
@@ -287,6 +325,7 @@ class ScheduleViewModel : ViewModel() {
             val def = TermScan.defaultTerm(currentTerm, allTerms, month) ?: allTerms.firstOrNull()
             def?.let { store.setActiveProfile(account, "term:$it") }
             applyAutoStarts(account)
+            store.finishScheduleSync(account, syncedTerms)
             _state.value = _state.value.copy(scanning = false, loading = false)
             render()
             return
@@ -295,11 +334,11 @@ class ScheduleViewModel : ViewModel() {
         // 以当前学期为锚扫描；hasData 抓取并缓存某学期、返回是否有课
         val withData = TermScan.scanAround(currentTerm) { term ->
             val courses: List<CourseDto> = if (term == currentTerm) data0.courses else {
-                when (val r = jw.schedule(account, term)) {
+                when (val r = fetchSchedule(account, term, owner)) {
                     // 仅当返回的就是所请求学期且非空才算有课；强智把无效学期回显当前学期的情况按“无课”处理
                     is Outcome.Success ->
                         if (r.data.term?.trim() == term && r.data.courses.isNotEmpty()) {
-                            cacheTermData(account, term, r.data); r.data.courses
+                            cacheSuccess(term, r.data); r.data.courses
                         } else emptyList()
                     is Outcome.Error -> emptyList()
                 }
@@ -315,8 +354,26 @@ class ScheduleViewModel : ViewModel() {
         val def = TermScan.defaultTerm(currentTerm, withData, month) ?: terms.firstOrNull()
         def?.let { store.setActiveProfile(account, "term:$it") }
         applyAutoStarts(account) // profiles 创建后补刷自动开学日期
+        store.finishScheduleSync(account, syncedTerms)
         _state.value = _state.value.copy(scanning = false, loading = false)
         render()
+    }
+
+    private suspend fun fetchSchedule(account: String, term: String?, owner: String): Outcome<ScheduleData> {
+        fun validate() {
+            if (!scheduleRequestStillCurrent(owner, account, CurrentAccount.key, acc.activeAccount,
+                    MemberState.isJw, ConnectivityState.online)) throw CancellationException("课表来源已切换")
+        }
+        validate()
+        val result = jw.schedule(account, term)
+        currentCoroutineContext().ensureActive()
+        validate()
+        return result
+    }
+
+    override fun onCleared() {
+        requestJob?.cancel()
+        super.onCleared()
     }
 
     // ---------- 渲染 ----------
@@ -330,9 +387,11 @@ class ScheduleViewModel : ViewModel() {
         val active = profiles.firstOrNull { it.id == activeId }
         val settings = active?.let { store.effectiveSettings(it.settings) }
             ?: ScheduleSettings()
-        val cw = WeekUtil.currentWeek(settings.semesterStartDate)
-        val sel = if (!userPickedWeek) (cw ?: _state.value.selectedWeek).coerceIn(1, settings.totalWeeks)
-        else _state.value.selectedWeek.coerceIn(1, settings.totalWeeks)
+        if (account != _state.value.account || activeId != _state.value.activeProfileId) {
+            userPickedWeek = false
+        }
+        val weekState = ScheduleWeekState.from(settings.semesterStartDate, settings.totalWeeks)
+        val sel = weekState.resolveSelection(_state.value.selectedWeek, userPickedWeek)
         val remarks = if (active?.kind == ProfileKind.TERM)
             (data.termRemarks ?: emptyMap())[active.termValue] ?: emptyList()
         else emptyList()
@@ -346,7 +405,7 @@ class ScheduleViewModel : ViewModel() {
             activeProfileName = active?.name ?: "",
             activeIsCustom = active?.kind == ProfileKind.CUSTOM,
             settings = settings,
-            currentWeek = cw,
+            currentWeek = weekState.currentWeek,
             selectedWeek = sel,
             display = display,
             remarks = remarks,
@@ -373,7 +432,7 @@ class ScheduleViewModel : ViewModel() {
             ProfileKind.CUSTOM -> p.frozenCourses
         }
         val out = ArrayList<DisplayCourse>(base.size + p.customCourses.size)
-        for (c in base) {
+        for (c in p.visibleBase(base)) {
             val nodes = Periods.nodesOfSection(c.sectionIndex)
             out.add(
                 DisplayCourse(
@@ -386,6 +445,7 @@ class ScheduleViewModel : ViewModel() {
                     weeks = WeekUtil.parseWeeks(c.weeksRaw),
                     colorIndex = if (c.colorIndex > 0) c.colorIndex else colorIndexOf(c.name),
                     isCustom = false,
+                    sourceId = c.sourceId(),
                     weeksLabel = c.weeksRaw,
                 ),
             )
@@ -476,3 +536,10 @@ class ScheduleViewModel : ViewModel() {
         termValue = t.value,
     )
 }
+
+internal fun scheduleRequestStillCurrent(owner: String, account: String, currentOwner: String,
+    currentAccount: String?, academic: Boolean, online: Boolean): Boolean =
+    owner == currentOwner && account == currentAccount && academic && online
+
+private data class ScheduleSourceContext(val account: String?, val version: Long, val owner: String?,
+    val access: Pair<edu.csuft.sap.data.account.AppMode, Boolean>)

@@ -53,14 +53,44 @@ class AppFeedbackServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(issueMapper.selectForUpdate(any())).thenAnswer(inv -> issueMapper.selectById((Long) inv.getArgument(0)));
         service = new AppFeedbackService(issueMapper, commentMapper, userMapper, statsService,
                 appVersionService, cosService);
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "emailHooks", org.mockito.Mockito.mock(com.sap.service.mail.EmailBusinessHooks.class));
         reporter = new User();
         reporter.setId(11L);
         reporter.setStudentId("20250011");
         reporter.setName("测试会员");
         reporter.setNickname("课表用户");
         reporter.setAvatar("https://cdn.example.test/avatar.png");
+    }
+
+    @Test
+    void contactFieldsExistOnlyOnAdminViewEvenWhenAppViewerIsAdmin() throws Exception {
+        AppFeedbackIssue issue = new AppFeedbackIssue();
+        issue.setId(7L);
+        issue.setReporterId(11L);
+        issue.setStatus("OPEN");
+        issue.setCategory("bug");
+        reporter.setQq("123456789");
+        when(issueMapper.selectById(7L)).thenReturn(issue);
+        when(commentMapper.selectList(any())).thenReturn(List.of());
+        when(userMapper.selectBatchIds(any())).thenReturn(List.of(reporter));
+        when(userMapper.selectById(11L)).thenReturn(reporter);
+        var admin = service.adminDetail(1L, 7L);
+        assertEquals("20250011", admin.getReporterAccount());
+        assertEquals("123456789", admin.getReporterQq());
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        for (boolean isAdmin : List.of(false, true)) {
+            String json = mapper.writeValueAsString(service.detail(1L, isAdmin, 7L));
+            assertFalse(json.contains("reporterAccount"));
+            assertFalse(json.contains("reporterQq"));
+            assertFalse(json.contains("123456789"));
+        }
+        var annotation = com.sap.controller.AppFeedbackController.class
+                .getMethod("adminDetail", Long.class)
+                .getAnnotation(cn.dev33.satoken.annotation.SaCheckRole.class);
+        assertEquals(List.of("0", "1", "2"), List.of(annotation.value()));
     }
 
     @Test

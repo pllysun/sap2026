@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sap.common.Result;
 import com.sap.entity.User;
 import com.sap.service.UserService;
+import com.sap.service.MemberProfileService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,8 +23,25 @@ import static org.mockito.Mockito.*;
 class UserControllerTest {
 
     @Mock UserService userService;
+    @Mock MemberProfileService memberProfileService;
 
     @InjectMocks UserController controller;
+
+    @Test void memberProfileEndpointsRequireAdminAndDelegatePagination() throws Exception {
+        var profile = java.util.Map.<String,Object>of("user", java.util.Map.of("id", 5L));
+        when(memberProfileService.profile(5L)).thenReturn(profile);
+        assertSame(profile, controller.profile(5L).getData());
+        var page = java.util.Map.<String,Object>of("records", List.of(), "total", 0);
+        when(memberProfileService.relations(5L,"study",2,12)).thenReturn(page);
+        assertSame(page, controller.profileRelations(5L,"study",2,12).getData());
+        for (var method : UserController.class.getDeclaredMethods()) {
+            if (!method.getName().startsWith("profile")) continue;
+            var role = method.getAnnotation(cn.dev33.satoken.annotation.SaCheckRole.class);
+            assertNotNull(role);
+            assertArrayEquals(new String[]{"0","1","2"},role.value());
+            assertEquals(cn.dev33.satoken.annotation.SaMode.OR,role.mode());
+        }
+    }
 
     @Test
     void list_returnsPage() {

@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleSettings
-import edu.csuft.sap.ui.theme.customCourseColor
-import edu.csuft.sap.ui.theme.paletteColor
+import edu.csuft.sap.data.schedule.groupCourseArrangements
+import edu.csuft.sap.ui.theme.scheduleCourseColor
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -80,6 +80,7 @@ fun ScheduleGrid(
     periodCount: Int,
     showNowLine: Boolean,
     settings: ScheduleSettings,
+    weekDates: List<LocalDate>? = null,
     onCourseClick: (DisplayCourse) -> Unit,
     onEmptyClick: (day: Int, startNode: Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -141,14 +142,15 @@ fun ScheduleGrid(
             }
         }
         val now = nowTick
-        val todayDay = LocalDate.now().dayOfWeek.value
+        val today = LocalDate.now()
 
         // 课卡层：与背景同样的列结构，卡片在各天列内按偏移绝对定位
         Row(Modifier.fillMaxSize()) {
             Spacer(Modifier.width(timeColWidth))
             for (day in days) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
-                    DayCards(courses.filter { it.day == day }, day, todayDay, now, tops, rowHeight, settings, onCourseClick)
+                    val date = weekDates?.getOrNull(day - 1)
+                    DayCards(courses.filter { it.day == day }, date, today, now, tops, rowHeight, settings, onCourseClick)
                 }
             }
         }
@@ -193,9 +195,10 @@ private fun nowLineY(now: LocalTime, count: Int, tops: List<Dp>, rowHeight: Dp):
 private fun parseTime(s: String?): LocalTime? =
     s?.let { try { LocalTime.parse(it) } catch (_: Exception) { null } }
 
-/** 课程此刻是否正在上（今日 + 本周 + 当前时间落在其节次时段内）。 */
-private fun isOngoing(course: DisplayCourse, day: Int, todayDay: Int, now: LocalTime): Boolean {
-    if (day != todayDay || !course.isThisWeek) return false
+/** 课程此刻是否正在上（展示周的实际日期是今天 + 本周 + 当前时间在节次内）。 */
+private fun isOngoing(course: DisplayCourse, date: LocalDate?, today: LocalDate, now: LocalTime): Boolean {
+    // 仅比较星期几会把未来周/过去周的同一星期课程误标为当前课程。
+    if (date == null || date != today || !course.isThisWeek) return false
     val s = parseTime(Periods.period(course.startNode)?.start) ?: return false
     val e = parseTime(Periods.period(course.endNode)?.end) ?: return false
     return !now.isBefore(s) && now.isBefore(e)
@@ -203,8 +206,8 @@ private fun isOngoing(course: DisplayCourse, day: Int, todayDay: Int, now: Local
 
 @Composable
 private fun TimeCell(node: Int, rowHeight: Dp, width: Dp, textScale: Float) {
-    // 读 Periods.revision 作为 key：节次时间一改（save）即重算并重组，无需重进 App
-    val p = remember(node, Periods.revision) { Periods.period(node) }
+    // 与日历/详情读取同一份可观察配置，避免保存或重新载入后的旧时间缓存。
+    val p = Periods.period(node)
     Column(
         Modifier.width(width).height(rowHeight),
         verticalArrangement = Arrangement.Center,
@@ -236,8 +239,8 @@ private fun DividerRow(label: String) {
 @Composable
 private fun DayCards(
     dayCourses: List<DisplayCourse>,
-    day: Int,
-    todayDay: Int,
+    date: LocalDate?,
+    today: LocalDate,
     now: LocalTime,
     tops: List<Dp>,
     rowHeight: Dp,
@@ -245,7 +248,13 @@ private fun DayCards(
     onCourseClick: (DisplayCourse) -> Unit,
 ) {
     // 本周课优先占格；与已占课重叠的课不再单独画，但给主卡记一个折角
-    val ordered = dayCourses.sortedWith(
+    val summaries = groupCourseArrangements(dayCourses).map { group ->
+        if (group.arrangements.size == 1) group.first else group.first.copy(
+            teacher = "${group.arrangements.size} 组安排 · 点按查看",
+            location = group.locationSummary,
+        )
+    }
+    val ordered = summaries.sortedWith(
         compareByDescending<DisplayCourse> { it.isThisWeek }.thenBy { it.startNode },
     )
     val placed = ArrayList<Pair<DisplayCourse, Int>>()
@@ -256,7 +265,7 @@ private fun DayCards(
     for ((c, conflicts) in placed) {
         val top = tops[(c.startNode - 1).coerceIn(0, tops.size - 1)]
         val bottom = tops[(c.endNode - 1).coerceIn(0, tops.size - 1)] + rowHeight
-        CourseCard(c, top, bottom - top, conflicts > 0, isOngoing(c, day, todayDay, now), settings) { onCourseClick(c) }
+        CourseCard(c, top, bottom - top, conflicts > 0, isOngoing(c, date, today, now), settings) { onCourseClick(c) }
     }
 }
 
@@ -273,7 +282,7 @@ private fun CourseCard(
     settings: ScheduleSettings,
     onClick: () -> Unit,
 ) {
-    val color = course.customColor?.let { customCourseColor(it) } ?: paletteColor(course.colorIndex)
+    val color = scheduleCourseColor(course, settings)
     val bg = if (course.isThisWeek) color.container else nonWeekBg
     val fg = if (course.isThisWeek) color.onContainer else nonWeekFg
     val radius = settings.cornerRadiusDp.dp

@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class JoinService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sap.service.mail.EmailBusinessHooks emailHooks;
 
     @Autowired private JoinManagerMapper joinManagerMapper;
     @Autowired private JoinApplicationMapper joinApplicationMapper;
@@ -396,6 +398,7 @@ public class JoinService {
         // 与 UserService.upgradeToMember 保持一致：写入当前年级的"成员"换届记录，
         // 避免经入会通道升级的成员在历届/年级统计中缺失
         ensureMemberTerm(userId);
+        if (exists == null) emailHooks.memberJoined(userId);
     }
 
     /** 确保用户在当前年级有"成员"身份的换届记录（缺则补，幂等） */

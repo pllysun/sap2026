@@ -31,10 +31,14 @@ class NextClassWidgetProvider : AppWidgetProvider() {
         if (!data.bound) {
             views.setTextViewText(R.id.next_label, "软协课表")
             views.setTextViewText(R.id.next_name, "未登录")
-            views.setTextViewText(R.id.next_info, "请在 App 登录并绑定教务")
+            views.setTextViewText(R.id.next_info, "请在 App 选择或导入课表")
             views.setInt(R.id.next_bar, "setBackgroundColor", GRAY)
         } else {
-            val c = WidgetRepository.nextClass(data)
+            val c = WidgetRepository.nextClass(data)?.let { raw ->
+                groupedWidgetCourses(WidgetRepository.todayCourses(data)).firstOrNull {
+                    it.name == raw.name && it.startNode == raw.startNode && it.endNode == raw.endNode
+                }
+            }
             if (c == null) {
                 views.setTextViewText(R.id.next_label, "今日")
                 views.setTextViewText(

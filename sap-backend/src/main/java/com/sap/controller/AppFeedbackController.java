@@ -56,6 +56,24 @@ public class AppFeedbackController {
         return Result.ok(feedbackService.detail(access.userId(), access.admin(), id));
     }
 
+    @GetMapping("/admin/issues")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> adminList(@RequestParam(defaultValue = "1") int current,
+                              @RequestParam(defaultValue = "20") int size,
+                              @RequestParam(required = false) String status,
+                              @RequestParam(required = false) String category,
+                              @RequestParam(required = false) String keyword,
+                              @RequestParam(defaultValue = "false") boolean mine) {
+        return Result.ok(feedbackService.adminList(StpUtil.getLoginIdAsLong(), current, size,
+                status, category, keyword, mine));
+    }
+
+    @GetMapping("/admin/issues/{id}")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> adminDetail(@PathVariable Long id) {
+        return Result.ok(feedbackService.adminDetail(StpUtil.getLoginIdAsLong(), id));
+    }
+
     @PostMapping("/issues")
     @OperationLog("提交软协课表意见反馈")
     public Result<?> create(@Valid @RequestBody FeedbackIssueCreateDTO dto) {

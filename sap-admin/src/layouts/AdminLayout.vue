@@ -47,6 +47,10 @@
           <el-icon><UserFilled /></el-icon>
           <span>入会管理</span>
         </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/email">
+          <el-icon><Message /></el-icon>
+          <span>邮件管理</span>
+        </el-menu-item>
         <el-menu-item index="/log">
           <el-icon><Document /></el-icon>
           <span>日志管理</span>
@@ -107,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getUserInfo, logout as logoutApi } from '../api'
 import { clearAuth } from '../utils/request'
@@ -115,7 +119,11 @@ import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
-const isCollapsed = ref(false)
+const compactViewport = window.matchMedia('(max-width: 900px)')
+const isCollapsed = ref(compactViewport.matches)
+const collapseOnNarrowScreen = event => { if (event.matches) isCollapsed.value = true }
+onMounted(() => compactViewport.addEventListener('change', collapseOnNarrowScreen))
+onBeforeUnmount(() => compactViewport.removeEventListener('change', collapseOnNarrowScreen))
 const userName = ref('')
 const userAvatar = ref('')
 const userRoles = ref([])
@@ -145,4 +153,3 @@ const handleLogout = async () => {
   router.push('/login')
 }
 </script>
-

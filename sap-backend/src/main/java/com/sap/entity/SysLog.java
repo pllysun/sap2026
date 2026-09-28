@@ -8,7 +8,12 @@ import java.time.LocalDateTime;
 @Data
 @TableName("sys_log")
 @Entity
-@Table(name = "sys_log")
+@Table(name = "sys_log", indexes = {
+    @Index(name="idx_sys_log_time_id", columnList="request_time,id"),
+    @Index(name="idx_sys_log_user_time", columnList="user_id,request_time"),
+    @Index(name="idx_sys_log_endpoint_time", columnList="endpoint,request_time"),
+    @Index(name="idx_sys_log_source_time", columnList="source,request_time")
+})
 public class SysLog {
     @TableId(type = IdType.AUTO)
     @Id
@@ -43,4 +48,12 @@ public class SysLog {
 
     @jakarta.persistence.Column(name = "request_time", columnDefinition = "DATETIME COMMENT '请求时间'")
     private LocalDateTime requestTime;
+
+    @Column(length=8)
+    private String source;
+    @Column(length=255)
+    private String endpoint;
+    /** HTTP 或业务结果码；旧数据 null 表示未记录，而非成功。 */
+    @Column(name = "result_code")
+    private Integer resultCode;
 }

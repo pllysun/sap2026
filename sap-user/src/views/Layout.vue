@@ -1,15 +1,15 @@
 <template>
   <div style="display: flex; flex-direction: column; min-height: 100vh;">
-    <nav class="nav" :class="{ 'nav--hidden': navHidden, 'nav--gradient': true }">
+    <nav class="nav nav--association" aria-label="主导航">
       <!-- Hamburger (mobile only) -->
-      <div class="nav__hamburger" @click="drawerOpen = true">
+      <button class="nav__hamburger" aria-label="打开导航菜单" :aria-expanded="drawerOpen" @click="drawerOpen = true">
         <span></span><span></span><span></span>
-      </div>
+      </button>
 
-      <div class="nav__brand">
+      <router-link to="/home" class="nav__brand">
         <img src="/logo.png" class="nav__logo" alt="Logo" />
-        <span class="nav__name">中南林业科技大学软件协会</span>
-      </div>
+        <span class="nav__name">软件协会<small>中南林业科技大学</small></span>
+      </router-link>
 
       <div class="nav__links-wrap">
         <router-link to="/home" class="nav__link" :class="{ active: $route.path === '/home' }">首页</router-link>
@@ -19,16 +19,17 @@
         <router-link to="/message-board" class="nav__link" :class="{ active: $route.path === '/message-board' }">留言板</router-link>
       </div>
 
-      <div class="nav__user" @click="userMenuOpen = !userMenuOpen" v-click-outside="() => userMenuOpen = false">
-        <img :src="userStore.user?.avatar || '/default-avatar.png'" class="nav__avatar" />
-        <span class="nav__username">{{ userStore.user?.nickname || '用户' }}</span>
-        <span style="font-size:0.7rem; color: rgba(255,255,255,0.7);">▼</span>
+      <div class="nav__user" v-click-outside="() => userMenuOpen = false">
+        <button class="nav__user-toggle" @click="userMenuOpen = !userMenuOpen" :aria-expanded="userMenuOpen" aria-label="用户菜单" @keydown.esc="userMenuOpen = false">
+          <UserAvatar :src="userStore.user?.avatar" :name="userName" />
+          <span class="nav__username">{{ userName }}</span><span class="nav__chevron">⌄</span>
+        </button>
         <div class="nav__dropdown-menu" :style="{
           opacity: userMenuOpen ? 1 : 0, pointerEvents: userMenuOpen ? 'auto' : 'none',
           top: 'calc(100% + 8px)', right: 0, left: 'auto', transform: 'none'
         }">
           <router-link to="/profile" class="nav__dropdown-item" @click="userMenuOpen = false">个人信息</router-link>
-          <span class="nav__dropdown-item" @click="handleLogout" style="cursor:pointer; color:var(--error);">退出登录</span>
+          <button class="nav__dropdown-item" @click="handleLogout" style="width:100%;text-align:left;color:var(--error);">退出登录</button>
         </div>
       </div>
     </nav>
@@ -37,10 +38,11 @@
     <teleport to="body">
       <template v-if="drawerOpen">
         <div class="mobile-drawer-overlay" @click="drawerOpen = false"></div>
-        <div class="mobile-drawer">
+        <div class="mobile-drawer" role="dialog" aria-modal="true" aria-label="导航菜单" @keydown.esc="drawerOpen = false">
           <div class="mobile-drawer__header">
             <img src="/logo.png" alt="Logo" />
             <span>软件协会</span>
+            <button class="drawer-close" aria-label="关闭导航菜单" @click="drawerOpen = false">×</button>
           </div>
           <div class="mobile-drawer__nav">
             <router-link to="/home" class="mobile-drawer__link" :class="{ active: $route.path === '/home' }" @click="drawerOpen = false">🏠 首页</router-link>
@@ -50,9 +52,9 @@
             <router-link to="/message-board" class="mobile-drawer__link" :class="{ active: $route.path === '/message-board' }" @click="drawerOpen = false">💬 留言板</router-link>
           </div>
           <div class="mobile-drawer__user">
-            <img :src="userStore.user?.avatar || '/default-avatar.png'" />
+            <UserAvatar :src="userStore.user?.avatar" :name="userName" :size="36" />
             <div class="mobile-drawer__user-info">
-              <div class="mobile-drawer__user-name">{{ userStore.user?.nickname || '用户' }}</div>
+              <div class="mobile-drawer__user-name">{{ userName }}</div>
             </div>
           </div>
           <div class="mobile-drawer__actions">
@@ -67,6 +69,7 @@
 
     <footer class="footer">
       <div class="footer__text">
+        <p class="footer__motto">万维网连接五大洲，二进制写尽天下事</p>
         <div class="footer__copyright">© 2018–{{ currentYear }} {{ footerSettings.footer_copyright || '中南林业科技大学软件协会' }}. All rights reserved.</div>
         <div v-if="footerSettings.footer_address">地址：{{ footerSettings.footer_address }}</div>
         <div v-if="footerSettings.footer_qq">官方 QQ：{{ footerSettings.footer_qq }}</div>
@@ -103,6 +106,7 @@ import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
+import UserAvatar from '@/components/UserAvatar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -110,11 +114,7 @@ const userStore = useUserStore()
 const userMenuOpen = ref(false)
 const drawerOpen = ref(false)
 const currentYear = ref(new Date().getFullYear())
-const navHidden = ref(false)
-const isGuest = computed(() => {
-  const roles = userStore.roles || []
-  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
-})
+const userName = computed(() => userStore.user?.nickname?.trim() || userStore.user?.name?.trim() || '软协同学')
 
 // 页脚设置
 const footerSettings = reactive({
@@ -139,25 +139,13 @@ onMounted(async () => {
 
 function handleLogout() { userStore.logout(); userMenuOpen.value = false; router.push('/login') }
 
-// Hero区域导航隐藏逻辑：仅在首页且在hero区域内隐藏
-function checkNavVisibility() {
-  if (route.path !== '/home') { navHidden.value = false; return }
-  const heroEl = document.querySelector('.home-hero')
-  if (!heroEl) { navHidden.value = false; return }
-  const heroBottom = heroEl.getBoundingClientRect().bottom
-  const navHeight = window.innerWidth <= 768 ? 56 : 72
-  navHidden.value = heroBottom > navHeight // 导航栏高度，hero底部还在视口内就隐藏
-}
-
-let scrollHandler = null
-onMounted(() => {
-  scrollHandler = () => checkNavVisibility()
-  window.addEventListener('scroll', scrollHandler, { passive: true })
-  checkNavVisibility()
+let previousOverflow = ''
+watch(drawerOpen, open => {
+  if (open) { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden' }
+  else document.body.style.overflow = previousOverflow
 })
-onUnmounted(() => { if (scrollHandler) window.removeEventListener('scroll', scrollHandler) })
-
-watch(() => route.path, () => { setTimeout(checkNavVisibility, 50) })
+watch(() => route.path, () => { drawerOpen.value = false; userMenuOpen.value = false })
+onUnmounted(() => { if (drawerOpen.value) document.body.style.overflow = previousOverflow })
 
 const vClickOutside = {
   mounted(el, binding) { el.__h = (e) => { if (!el.contains(e.target)) binding.value() }; document.addEventListener('click', el.__h) },
@@ -166,14 +154,9 @@ const vClickOutside = {
 </script>
 
 <style scoped>
-.nav--hidden {
-  transform: translateY(-100%);
-  opacity: 0;
-  pointer-events: none;
-}
-.nav {
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.nav--association{background:#f8fafbed;backdrop-filter:blur(18px);box-shadow:none;border-bottom:1px solid #dde3e9;padding-inline:max(32px,calc((100vw - 1400px)/2));gap:24px}
+.nav--association .nav__name{color:#222f3c;font-size:17px;letter-spacing:2px;line-height:1.3}.nav__name small{display:block;font-size:9px;letter-spacing:1.5px;color:#5d7791;font-weight:400;margin-top:4px}
+.nav--association .nav__links-wrap{position:static;transform:none;background:none;gap:5px;padding:0;margin-left:auto;margin-right:auto}.nav--association .nav__link{font-size:13px;color:#536b83;padding:9px 17px;border-radius:6px}.nav--association .nav__link:hover{color:#24384b;background:#e8edf2}.nav--association .nav__link.active{color:#24384b;background:#dfe7ee;box-shadow:none}.nav--association .nav__username{color:#394959;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav__user-toggle{display:flex;align-items:center;gap:9px}.nav__chevron{color:#577089;font-size:14px}.nav--association .nav__user:hover{background:#e8edf2}.nav--association .nav__hamburger span{background:#354453}.nav--association :is(a,button):focus-visible{outline:2px solid #39638d;outline-offset:3px}.drawer-close{margin-left:auto;font-size:27px;padding:0 7px;color:#51687f}
 .main-content {
   flex: 1;
   padding-top: 72px;
@@ -181,13 +164,6 @@ const vClickOutside = {
 @media (max-width: 768px) {
   .main-content { padding-top: 56px; }
 }
-.nav--gradient {
-  background: linear-gradient(135deg, #1a9a8a 0%, #2e8bc5 40%, #4a76b5 65%, #6366b0 85%, #7c5ba8 100%) !important;
-  box-shadow: 0 2px 16px rgba(26,154,138,0.18) !important;
-}
-.nav--gradient .nav__name { color: #fff !important; }
-.nav--gradient .nav__username { color: rgba(255,255,255,0.9) !important; }
-.nav--gradient .nav__avatar { border-color: rgba(255,255,255,0.3) !important; }
 .nav__logo {
   width: 32px;
   height: 32px;
@@ -201,19 +177,25 @@ const vClickOutside = {
   align-items: center;
   justify-content: center;
   position: relative;
+  gap:60px;
+  margin-top:0;
+  background:#eef7ff;
+  border-top:1px solid var(--border-blue);
+  color:var(--ink-500);
+  padding:45px 30px;
 }
+.footer__motto{font-size:16px;letter-spacing:2px;color:var(--ink-700);margin-bottom:17px}
+.footer .footer__copyright{color:var(--ink-500)}
+.footer a{color:var(--primary)}
 .footer__text {
   text-align: center;
 }
 /* 二维码固定在页脚五分之三处 */
 .qr-float {
-  position: absolute;
-  left: 75%;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
   display: flex;
   flex-direction: row;
-  gap: 72px;
+  gap: 20px;
 }
 .qr-float__item {
   display: flex;
@@ -223,8 +205,8 @@ const vClickOutside = {
 }
 .qr-float__thumb {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 82px;
+  height: 82px;
   border-radius: 14px;
   overflow: visible;
   cursor: pointer;
@@ -236,8 +218,8 @@ const vClickOutside = {
   transform: scale(1.05);
 }
 .qr-float__thumb > img {
-  width: 120px;
-  height: 120px;
+  width: 82px;
+  height: 82px;
   border-radius: 14px;
   object-fit: cover;
 }
@@ -278,8 +260,8 @@ const vClickOutside = {
 }
 .qr-float__label {
   font-size: 10px;
-  color: #666;
-  max-width: 60px;
+  color: var(--ink-500);
+  max-width: 100px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -287,6 +269,7 @@ const vClickOutside = {
 }
 
 @media (max-width: 768px) {
+  .nav--association{padding-inline:12px;gap:10px}.nav--association .nav__links-wrap{display:none}.nav--association .nav__name{font-size:14px}.nav__name small{font-size:8px}.nav--association .nav__brand{margin-right:auto;gap:8px}.nav--association .nav__user{padding-inline:3px}.nav--association .nav__username{display:none}.footer__motto{font-size:12px;letter-spacing:1px}.footer__copyright{font-size:10px}
   .nav__logo {
     width: 28px;
     height: 28px;

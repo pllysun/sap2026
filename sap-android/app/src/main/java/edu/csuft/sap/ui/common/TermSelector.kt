@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -131,7 +129,7 @@ private fun TermRow(
         Spacer(Modifier.weight(1f))
         if (isSelected) {
             Icon(
-                Icons.Filled.Check,
+                AppIcons.Check,
                 contentDescription = "已选",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp),

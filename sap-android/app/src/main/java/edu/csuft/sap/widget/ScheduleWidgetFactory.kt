@@ -29,14 +29,15 @@ class ScheduleWidgetFactory(
     override fun onDataSetChanged() {
         val data = WidgetRepository.load(context)
         mode = ScheduleWidgetProvider.mode(context, widgetId)
-        val week = (data.currentWeek ?: 1).coerceAtLeast(1)
-        val active = data.courses.filter { it.weeks.isEmpty() || it.weeks.contains(week) }
-        items = if (mode == ScheduleWidgetProvider.MODE_TODAY) {
+        val date = LocalDate.now()
+        val monday = date.minusDays((date.dayOfWeek.value - 1).toLong())
+        val active = (0..6).flatMap { WidgetRepository.coursesOn(data, monday.plusDays(it.toLong())) }
+        items = groupedWidgetCourses(if (mode == ScheduleWidgetProvider.MODE_TODAY) {
             val today = LocalDate.now().dayOfWeek.value
             active.filter { it.day == today }.sortedBy { it.startNode }
         } else {
             active.sortedWith(compareBy({ it.day }, { it.startNode }))
-        }
+        })
     }
 
     override fun onDestroy() {

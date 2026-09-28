@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img">
+  <title>设置 · 选中</title>
+  <path d="M6 7A3.5 3.5 0 1 0 13 7A3.5 3.5 0 1 0 6 7Z" fill="currentColor"/>
+  <path d="M11 17A3.5 3.5 0 1 0 18 17A3.5 3.5 0 1 0 11 17Z" fill="currentColor"/>
+  <path d="M4 7H20M4 17H20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,10 +1,7 @@
 package com.sap.jw.service;
 
 import com.sap.jw.client.JwHttpSession;
-import com.sap.jw.config.JwProperties;
-import com.sap.entity.Setting;
 import com.sap.jw.parser.CalendarParser;
-import com.sap.service.SettingService;
 import org.springframework.stereotype.Service;
 
 import java.net.URLEncoder;
@@ -22,21 +19,23 @@ public class JwCalendarService {
 
     private static final String JXZL_PATH = "/jsxsd/jxzl/jxzl_query";
     /** 学期开学日期缓存的 setting key 前缀，拼上学期值，如 {@code term_start_2025-2026-2}。 */
-    private static final String CACHE_KEY_PREFIX = "term_start_";
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwCalendarService.class);
 
+    public java.util.Map<String, String> storedDates() {
+        return store.list().stream().collect(java.util.stream.Collectors.toMap(
+                AcademicCalendarStore.Entry::term, AcademicCalendarStore.Entry::semesterStartDate));
+    }
+
     private final JwSessionManager sessionManager;
     private final CalendarParser parser;
-    private final JwProperties props;
-    private final SettingService settingService;
+    private final AcademicCalendarStore store;
 
     public JwCalendarService(JwSessionManager sessionManager, CalendarParser parser,
-                             JwProperties props, SettingService settingService) {
+                             AcademicCalendarStore store) {
         this.sessionManager = sessionManager;
         this.parser = parser;
-        this.props = props;
-        this.settingService = settingService;
+        this.store = store;
     }
 
     /**
@@ -44,11 +43,11 @@ public class JwCalendarService {
      * <p>先查 DB 缓存：命中直接返回，不再抓教学周历；未命中才用会话抓取并解析，
      * 解析成功后写入缓存（仅缓存成功结果，失败不写以便下次重试）。</p>
      */
-    public String getSemesterStart(Long userId, String account, String term) {
+    public synchronized String getSemesterStart(Long userId, String account, String term) {
         if (term == null || term.isBlank()) return null;
         String normTerm = term.trim();
 
-        String cached = settingService.getValue(CACHE_KEY_PREFIX + normTerm);
+        String cached = store.find(normTerm);
         if (cached != null && !cached.isBlank()) return cached;
 
         String start = fetchAndParse(userId, account, normTerm);
@@ -62,11 +61,12 @@ public class JwCalendarService {
      * 使用调用方已经建立的会话读取教学周历。班级课表管理端可能只提供一次性账密，
      * 该入口避免为了补全开学日期再次从绑定凭据表取密码。
      */
-    public String getSemesterStart(JwHttpSession session, String term) {
-        if (term == null || term.isBlank() || session == null) return null;
+    public synchronized String getSemesterStart(JwHttpSession session, String term) {
+        if (term == null || term.isBlank()) return null;
         String normTerm = term.trim();
-        String cached = settingService.getValue(CACHE_KEY_PREFIX + normTerm);
+        String cached = store.find(normTerm);
         if (cached != null && !cached.isBlank()) return cached;
+        if (session == null) return null;
         String start = fetchAndParse(session, normTerm);
         if (start != null) cache(normTerm, start);
         return start;
@@ -104,11 +104,7 @@ public class JwCalendarService {
     /** 落 sys_setting 缓存；写库失败不影响本次返回。 */
     private void cache(String term, String start) {
         try {
-            Setting s = new Setting();
-            s.setSettingKey(CACHE_KEY_PREFIX + term);
-            s.setSettingValue(start);
-            s.setDescription("学期开学日期(第1周周一)缓存");
-            settingService.updateSetting(s);
+            store.save(term, start, false, null);
         } catch (Exception ignore) {
             // 缓存写失败无所谓，下次再抓
         }

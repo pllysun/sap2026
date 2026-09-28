@@ -10,6 +10,9 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface AppFeedbackIssueMapper extends BaseMapper<AppFeedbackIssue> {
 
+    @Select("SELECT * FROM app_feedback_issue WHERE id = #{id} AND deleted = 0 FOR UPDATE")
+    AppFeedbackIssue selectForUpdate(@Param("id") Long id);
+
     /**
      * 未处理 = 仍开放且从未收到维护者回复。关闭或维护者回复都会立即释放一条额度；
      * 逻辑删除/彻底删除的记录均不计入。

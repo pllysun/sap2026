@@ -1,5 +1,7 @@
 package edu.csuft.sap.data.remote.dto
 
+data class AcademicCalendarDto(val term: String, val semesterStartDate: String)
+
 /** 后端统一返回：{ code, message, data } */
 data class ApiResult<T>(
     val code: Int = 0,
@@ -130,6 +132,12 @@ data class ClassOptionDto(
     val major: String? = null,
     val className: String? = null,
 )
+
+data class ClassSyncSelection(val key: String, val term: String, val college: String,
+    val grade: String, val major: String, val className: String, val revision: String?)
+data class ClassSyncRequest(val selections: List<ClassSyncSelection>, val force: Boolean = false)
+data class ClassSyncItem(val key: String, val revision: String, val data: ScheduleData?)
+data class ClassSyncResponse(val changed: Boolean, val items: List<ClassSyncItem>)
 
 data class CourseDto(
     val day: Int = 0,

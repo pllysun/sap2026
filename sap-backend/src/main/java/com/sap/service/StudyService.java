@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class StudyService {
+    @Autowired
+    private com.sap.service.mail.EmailBusinessHooks emailHooks;
 
     @Autowired private StudyActivityMapper studyActivityMapper;
     @Autowired private StudyLeaderMapper studyLeaderMapper;
@@ -676,6 +678,7 @@ public class StudyService {
         material.setFileName(fileName);
         material.setUserId(userId);
         studyMaterialMapper.insert(material);
+        emailHooks.studySubmission(activityId, week, userId);
     }
 
     /**

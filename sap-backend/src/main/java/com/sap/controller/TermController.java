@@ -41,14 +41,6 @@ public class TermController {
         return Result.ok("添加成功");
     }
 
-    @DeleteMapping("/{id}")
-    @OperationLog("删除换届记录")
-    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
-    public Result<?> delete(@PathVariable Long id) {
-        termService.deleteTerm(id);
-        return Result.ok("删除成功");
-    }
-
     @PostMapping("/changeover")
     @OperationLog("执行换届")
     @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)

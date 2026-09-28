@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img">
+  <title>班级课表</title>
+  <path d="M9 7.5A3 3 0 1 0 15 7.5A3 3 0 1 0 9 7.5Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.5 20V18A4.5 4.5 0 0 1 11 13.5H13A4.5 4.5 0 0 1 17.5 18V20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M5.5 5.5A2.5 2.5 0 0 0 5.5 10.5M18.5 5.5A2.5 2.5 0 0 1 18.5 10.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M5 14A3 3 0 0 0 2.5 17V18.5M19 14A3 3 0 0 1 21.5 17V18.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

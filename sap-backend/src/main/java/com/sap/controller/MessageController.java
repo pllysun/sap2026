@@ -43,8 +43,8 @@ public class MessageController {
         } catch (Exception e) {}
 
         Page<Message> page = messageMapper.selectPage(
-                new Page<>(current, size),
-                new LambdaQueryWrapper<Message>().orderByDesc(Message::getCreatedAt)
+                new Page<>(Math.max(1, current), Math.max(1, Math.min(size, 50))),
+                new LambdaQueryWrapper<Message>().orderByDesc(Message::getCreatedAt).orderByDesc(Message::getId)
         );
 
         List<Long> messageIds = page.getRecords().stream().map(Message::getId).collect(Collectors.toList());
@@ -100,7 +100,7 @@ public class MessageController {
             if (m.getUserId() != null) {
                 User user = userMapper.selectById(m.getUserId());
                 map.put("userId", m.getUserId());
-                map.put("userName", user != null ? user.getNickname() : "匿名");
+                map.put("userName", displayName(user));
                 map.put("avatar", user != null ? user.getAvatar() : null);
             } else {
                 map.put("userName", "匿名");
@@ -113,9 +113,9 @@ public class MessageController {
                 rm.put("id", r.getId());
                 rm.put("content", r.getContent());
                 rm.put("createdAt", r.getCreatedAt());
-                User replyUser = userMapper.selectById(r.getUserId());
+                User replyUser = r.getUserId() == null ? null : userMapper.selectById(r.getUserId());
                 rm.put("userId", r.getUserId());
-                rm.put("userName", replyUser != null ? replyUser.getNickname() : "匿名");
+                rm.put("userName", r.getUserId() == null ? "匿名" : displayName(replyUser));
                 rm.put("avatar", replyUser != null ? replyUser.getAvatar() : null);
 
                 // 回复点赞数
@@ -179,8 +179,16 @@ public class MessageController {
     @PostMapping("/like")
     @OperationLog("点赞")
     public Result<?> like(@RequestBody Map<String, Object> params) {
-        Integer targetType = Integer.valueOf(params.get("targetType").toString());
-        Long targetId = Long.valueOf(params.get("targetId").toString());
+        Integer targetType;
+        Long targetId;
+        try {
+            targetType = Integer.valueOf(String.valueOf(params.get("targetType")));
+            targetId = Long.valueOf(String.valueOf(params.get("targetId")));
+        } catch (NumberFormatException e) {
+            return Result.error(400, "点赞参数不正确");
+        }
+        Result<?> invalid = validateTarget(targetType, targetId);
+        if (invalid != null) return invalid;
         Long userId = StpUtil.getLoginIdAsLong();
 
         // 检查是否已点赞
@@ -190,7 +198,7 @@ public class MessageController {
                         .eq(MessageLike::getTargetType, targetType)
                         .eq(MessageLike::getTargetId, targetId)
         );
-        if (exist > 0) return Result.error("已点赞");
+        if (exist > 0) return likeState(userId, targetType, targetId);
 
         MessageLike like = new MessageLike();
         like.setTargetType(targetType);
@@ -199,15 +207,16 @@ public class MessageController {
         try {
             messageLikeMapper.insert(like);
         } catch (org.springframework.dao.DuplicateKeyException e) {
-            // 并发重复点赞：唯一约束兜底，视为已点赞
-            return Result.error("已点赞");
+            // POST 是“设为已点赞”，重复请求仍返回真实状态，而不是静默失败。
         }
-        return Result.ok("点赞成功");
+        return likeState(userId, targetType, targetId);
     }
 
     @DeleteMapping("/like")
     @OperationLog("取消点赞")
     public Result<?> unlike(@RequestParam Integer targetType, @RequestParam Long targetId) {
+        Result<?> invalid = validateTarget(targetType, targetId);
+        if (invalid != null) return invalid;
         Long userId = StpUtil.getLoginIdAsLong();
         messageLikeMapper.delete(
                 new LambdaQueryWrapper<MessageLike>()
@@ -215,7 +224,31 @@ public class MessageController {
                         .eq(MessageLike::getTargetType, targetType)
                         .eq(MessageLike::getTargetId, targetId)
         );
-        return Result.ok("取消点赞成功");
+        return likeState(userId, targetType, targetId);
+    }
+
+    static String displayName(User user) {
+        if (user == null) return "已注销用户";
+        if (user.getNickname() != null && !user.getNickname().isBlank()) return user.getNickname().strip();
+        if (user.getName() != null && !user.getName().isBlank()) return user.getName().strip();
+        return "软协同学";
+    }
+
+    private Result<?> validateTarget(Integer type, Long id) {
+        if (type == null || (type != 0 && type != 1) || id == null || id <= 0)
+            return Result.error(400, "点赞参数不正确");
+        if (type == 0 ? messageMapper.selectById(id) == null : messageReplyMapper.selectById(id) == null)
+            return Result.error(404, "留言或回复已不存在，请刷新页面");
+        return null;
+    }
+
+    private Result<?> likeState(Long userId, Integer type, Long id) {
+        long count = messageLikeMapper.selectCount(new LambdaQueryWrapper<MessageLike>()
+                .eq(MessageLike::getTargetType, type).eq(MessageLike::getTargetId, id));
+        boolean liked = messageLikeMapper.selectCount(new LambdaQueryWrapper<MessageLike>()
+                .eq(MessageLike::getTargetType, type).eq(MessageLike::getTargetId, id)
+                .eq(MessageLike::getUserId, userId)) > 0;
+        return Result.ok(Map.of("liked", liked, "likeCount", count));
     }
 
     @DeleteMapping("/{id}")

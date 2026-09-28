@@ -13,6 +13,7 @@ import com.sap.service.SettingService;
 import com.sap.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -47,9 +48,12 @@ public class DataInitializer implements CommandLineRunner {
             {"成员", 0, 99, 999, 3}
     };
 
-    /** 系统超级管理员账号（学号 + 初始密码）。账号不存在则创建，存在则确保拥有超管角色。 */
-    private static final String SUPER_ADMIN_STUDENT_ID = "20202753";
-    private static final String SUPER_ADMIN_PASSWORD = "1125887000f";
+    /** 仅在私有部署环境中显式配置；未配置时不创建、提权或重置任何账号。 */
+    @Value("${app.bootstrap.admin-student-id:}")
+    private String bootstrapAdminStudentId = "";
+
+    @Value("${app.bootstrap.admin-password:}")
+    private String bootstrapAdminPassword = "";
 
     private final RoleMapper roleMapper;
     private final PositionMapper positionMapper;
@@ -107,14 +111,17 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void ensureSuperAdmin() {
+        if (bootstrapAdminStudentId.isBlank() || bootstrapAdminPassword.isBlank()) {
+            return;
+        }
         User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getStudentId, SUPER_ADMIN_STUDENT_ID));
+                new LambdaQueryWrapper<User>().eq(User::getStudentId, bootstrapAdminStudentId.trim()));
 
         if (user == null) {
             // 账号不存在 → 创建并赋予超级管理员角色
             user = new User();
-            user.setStudentId(SUPER_ADMIN_STUDENT_ID);
-            user.setPassword(PasswordUtil.encode(SUPER_ADMIN_PASSWORD));
+            user.setStudentId(bootstrapAdminStudentId.trim());
+            user.setPassword(PasswordUtil.encode(bootstrapAdminPassword));
             user.setName("超级管理员");
             user.setNickname("超级管理员");
             user.setQq("10000");
@@ -125,7 +132,7 @@ public class DataInitializer implements CommandLineRunner {
             user.setGrade(grade != null ? grade : "2026");
             userMapper.insert(user);
             grantRole(user.getId(), 0);
-            log.warn("[DataInitializer] 已创建超级管理员账号: 学号={}", SUPER_ADMIN_STUDENT_ID);
+            log.warn("[DataInitializer] 已根据私有配置创建初始超级管理员，请移除引导环境变量");
             return;
         }
 
@@ -135,12 +142,9 @@ public class DataInitializer implements CommandLineRunner {
                         .eq(UserRole::getUserId, user.getId())
                         .eq(UserRole::getRoleCode, 0));
         if (hasRole0 == null || hasRole0 == 0) {
-            // 首次提升为超管：同时将密码重置为约定初始密码以保证可登录。
-            // 之后该账号已是超管则不再改动密码，避免覆盖用户自行修改的密码。
-            user.setPassword(PasswordUtil.encode(SUPER_ADMIN_PASSWORD));
-            userMapper.updateById(user);
+            // 显式配置可补齐角色，但绝不覆盖现有账号密码。
             grantRole(user.getId(), 0);
-            log.warn("[DataInitializer] 已将学号 {} 提升为超级管理员", SUPER_ADMIN_STUDENT_ID);
+            log.warn("[DataInitializer] 已根据私有配置补齐超级管理员角色，原密码保持不变");
         }
     }
 

@@ -63,7 +63,7 @@ object ApiClient {
         readTimeoutSec: Long = 60,
     ): ApiService {
         val authInterceptor = Interceptor { chain ->
-            val builder = chain.request().newBuilder()
+            val builder = chain.request().newBuilder().header("X-SAP-Client", "app")
             tokenProvider()?.takeIf { it.isNotBlank() }?.let {
                 builder.addHeader("sap-token", it)
             }

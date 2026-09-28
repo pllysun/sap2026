@@ -164,10 +164,9 @@ class RateLimiterServiceTest {
     }
 
     @Test
-    void 清理移除空闲内存桶() {
-        svc.tryAcquire("k", 1, 0.0);
-        @SuppressWarnings("unchecked")
-        Map<String, double[]> buckets = (Map<String, double[]>) ReflectionTestUtils.getField(svc, "buckets");
+    void 清理移除已补满的空闲内存桶() {
+        svc.tryAcquire("k", 1, 1.0);
+        Map<?, ?> buckets = (Map<?, ?>) ReflectionTestUtils.getField(svc, "buckets");
         assertEquals(1, buckets.size());
         advance(400_000); // > 5 分钟未访问
         svc.sweep();
@@ -179,8 +178,87 @@ class RateLimiterServiceTest {
         svc.tryAcquire("k", 1, 1.0);
         advance(1000); // 仍活跃
         svc.sweep();
-        @SuppressWarnings("unchecked")
-        Map<String, double[]> buckets = (Map<String, double[]>) ReflectionTestUtils.getField(svc, "buckets");
+        Map<?, ?> buckets = (Map<?, ?>) ReflectionTestUtils.getField(svc, "buckets");
         assertEquals(1, buckets.size());
+    }
+
+    @Test
+    void 低速率注册请求桶不会因清理获得额外额度() {
+        for (int i = 0; i < 10; i++) assertTrue(svc.tryAcquireEnforced("register", 10, 1.0 / 60));
+        advance(360_000); // 六分钟只恢复六次，清理不能恢复为十次。
+        svc.sweep();
+        for (int i = 0; i < 6; i++) assertTrue(svc.tryAcquireEnforced("register", 10, 1.0 / 60));
+        assertFalse(svc.tryAcquireEnforced("register", 10, 1.0 / 60));
+        advance(600_001);
+        svc.sweep();
+        assertTrue(((Map<?, ?>) ReflectionTestUtils.getField(svc, "buckets")).isEmpty());
+    }
+
+    @Test
+    void 注册窗口拒绝不延长时限且到期重置() {
+        assertTrue(svc.tryAcquireWindow("registration", 2, 60));
+        assertTrue(svc.tryAcquireWindow("registration", 2, 60));
+        assertFalse(svc.tryAcquireWindow("registration", 2, 60));
+        advance(59_999);
+        assertFalse(svc.tryAcquireWindow("registration", 2, 60));
+        advance(1);
+        assertTrue(svc.tryAcquireWindow("registration", 2, 60));
+    }
+
+    @Test
+    void 日额度不会因空闲五分钟被清理重置() {
+        assertTrue(svc.tryAcquireWindow("day", 1, 86400));
+        advance(600_000);
+        svc.sweep();
+        assertFalse(svc.tryAcquireWindow("day", 1, 86400));
+        advance(86_400_000);
+        svc.sweep();
+        assertTrue(((Map<?, ?>) ReflectionTestUtils.getField(svc, "windows")).isEmpty());
+        assertTrue(svc.tryAcquireWindow("day", 1, 86400));
+    }
+
+    @Test
+    void 注册窗口高并发不会超额() throws Exception {
+        try (var pool = Executors.newFixedThreadPool(24)) {
+            CountDownLatch start = new CountDownLatch(1);
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (int i = 0; i < 24; i++) futures.add(pool.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                return svc.tryAcquireWindow("registration", 3, 3600);
+            }));
+            start.countDown();
+            int successes = 0;
+            for (var future : futures) if (future.get(5, TimeUnit.SECONDS)) successes++;
+            assertEquals(3, successes);
+        }
+    }
+
+    @Test
+    void 注册窗口Redis共享限额与过期参数() {
+        StringRedisTemplate redis = wireRedisMock();
+        when(redis.execute(any(RedisScript.class), anyList(), any(), any())).thenReturn(1L, 0L);
+        assertTrue(svc.tryAcquireWindow("registration", 3, 86400));
+        assertFalse(svc.tryAcquireWindow("registration", 3, 86400));
+        verify(redis, times(2)).execute(any(RedisScript.class), eq(Collections.singletonList("registration")),
+                eq("3"), eq("86400000"));
+    }
+
+    @Test
+    void 注册窗口Redis故障仍限流并进入冷却() {
+        StringRedisTemplate redis = wireRedisMock();
+        when(redis.execute(any(RedisScript.class), anyList(), any(), any())).thenThrow(new RuntimeException("offline"));
+        assertTrue(svc.tryAcquireWindow("registration", 1, 3600));
+        assertFalse(svc.tryAcquireWindow("registration", 1, 3600));
+        verify(redis, times(1)).execute(any(RedisScript.class), anyList(), any(), any());
+    }
+
+    @Test
+    void 注册窗口Redis空结果仍限流且参数不可无效() {
+        StringRedisTemplate redis = wireRedisMock();
+        when(redis.execute(any(RedisScript.class), anyList(), any(), any())).thenReturn(null);
+        assertTrue(svc.tryAcquireWindow("registration", 1, 3600));
+        assertFalse(svc.tryAcquireWindow("registration", 1, 3600));
+        assertThrows(IllegalArgumentException.class, () -> svc.tryAcquireWindow("k", 0, 3600));
+        assertThrows(IllegalArgumentException.class, () -> svc.tryAcquireWindow("k", 1, 0));
     }
 }

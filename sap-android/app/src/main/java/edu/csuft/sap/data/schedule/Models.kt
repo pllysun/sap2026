@@ -1,5 +1,7 @@
 package edu.csuft.sap.data.schedule
 
+import kotlin.math.roundToInt
+
 /** 用户自建课程（本地存储）。node 为“节”序号 1-12（WakeUp 风格，按节排）。 */
 data class CustomCourse(
     val id: String,
@@ -44,6 +46,9 @@ data class ScheduleSettings(
     val cardInnerPadding: Int = 0,          // 课程卡内部填充(dp)
     val cardOuterSpacing: Int = 0,          // 课程卡外部间距(dp)
     val cardOpacity: Int = 0,               // 课程卡不透明度百分比
+    val cardColorIntensity: Int = 0,        // 旧版浓淡，仅用于读取并换算历史设置；旧 0/100 使用新默认值
+    val cardColorIntensityPercent: Int? = null, // 新标尺 0..200；null=未设置，100 对应旧版 165
+    val colorIntensityAffectsCustom: Boolean = false, // 是否同时调整用户自建课程（含预设颜色）
     val backgroundImagePath: String? = null, // 裁剪后复制到 App 私有目录的背景图
 ) {
     /** 有效每日节数：兼容旧数据缺该字段(Gson 反序列化为 0) → 默认 10，并夹在 8..16。 */
@@ -61,6 +66,12 @@ data class ScheduleSettings(
     val innerPaddingDp: Int get() = cardInnerPadding.takeIf { it in ScheduleAppearanceLimits.INNER_PADDING } ?: 4
     val outerSpacingDp: Int get() = cardOuterSpacing.takeIf { it in ScheduleAppearanceLimits.OUTER_SPACING } ?: 2
     val opacityFraction: Float get() = (cardOpacity.takeIf { it in ScheduleAppearanceLimits.OPACITY } ?: 100) / 100f
+    val colorIntensityPercent: Int
+        get() = cardColorIntensityPercent?.let {
+            it.takeIf { value -> value in ScheduleAppearanceLimits.COLOR_INTENSITY } ?: 100
+        } ?: if (cardColorIntensity in 25..200 && cardColorIntensity != 100) {
+            (cardColorIntensity * 100f / ScheduleAppearanceLimits.LEGACY_COLOR_BASELINE).roundToInt()
+        } else 100
 }
 
 /** 设备级课表显示配置；不包含必须随学期变化的开学日期和总周数。 */
@@ -85,6 +96,9 @@ data class ScheduleDisplaySettings(
     val cardInnerPadding: Int = 0,
     val cardOuterSpacing: Int = 0,
     val cardOpacity: Int = 0,
+    val cardColorIntensity: Int = 0,
+    val cardColorIntensityPercent: Int? = null,
+    val colorIntensityAffectsCustom: Boolean = false,
     val backgroundImagePath: String? = null,
 )
 
@@ -109,6 +123,8 @@ fun ScheduleSettings.toDisplaySettings() = ScheduleDisplaySettings(
     cardInnerPadding = cardInnerPadding,
     cardOuterSpacing = cardOuterSpacing,
     cardOpacity = cardOpacity,
+    cardColorIntensityPercent = colorIntensityPercent,
+    colorIntensityAffectsCustom = colorIntensityAffectsCustom,
     backgroundImagePath = backgroundImagePath,
 )
 
@@ -134,6 +150,9 @@ fun ScheduleSettings.withDisplaySettings(display: ScheduleDisplaySettings) = cop
     cardInnerPadding = display.cardInnerPadding,
     cardOuterSpacing = display.cardOuterSpacing,
     cardOpacity = display.cardOpacity,
+    cardColorIntensity = display.cardColorIntensity,
+    cardColorIntensityPercent = display.cardColorIntensityPercent,
+    colorIntensityAffectsCustom = display.colorIntensityAffectsCustom,
     backgroundImagePath = display.backgroundImagePath,
 )
 
@@ -157,6 +176,9 @@ fun ScheduleSettings.withDefaultPersonalization(): ScheduleSettings {
         cardInnerPadding = defaults.cardInnerPadding,
         cardOuterSpacing = defaults.cardOuterSpacing,
         cardOpacity = defaults.cardOpacity,
+        cardColorIntensity = defaults.cardColorIntensity,
+        cardColorIntensityPercent = defaults.cardColorIntensityPercent,
+        colorIntensityAffectsCustom = defaults.colorIntensityAffectsCustom,
         backgroundImagePath = defaults.backgroundImagePath,
     )
 }
@@ -172,6 +194,8 @@ object ScheduleAppearanceLimits {
     val INNER_PADDING = 1..12
     val OUTER_SPACING = 1..8
     val OPACITY = 30..100
+    val COLOR_INTENSITY = 0..200
+    const val LEGACY_COLOR_BASELINE = 165
 }
 
 /**
@@ -192,6 +216,7 @@ data class DisplayCourse(
     val weeksLabel: String? = null,
     val isThisWeek: Boolean = true,
     val customColor: Long? = null, // 自建课自定义颜色(ARGB)；非空时优先
+    val sourceId: String? = null, // 导入底本的稳定标识；编辑时用于替换而不是复制
 )
 
 /** 课表类型：教务学期课表（可重拉刷新） / 自定义课表（另存为，冻结、不被重拉覆盖）。 */
@@ -221,6 +246,7 @@ data class ScheduleProfile(
     val settings: ScheduleSettings = ScheduleSettings(),
     val customCourses: List<CustomCourse> = emptyList(),
     val frozenCourses: List<CachedCourse> = emptyList(),
+    val hiddenSourceIds: Set<String>? = null, // 可空兼容旧缓存；本地替换/删除不修改学校原始数据
 )
 
 /** 课表备注（无固定时间格的实验/实习/集中实践课）。 */
@@ -233,6 +259,8 @@ data class Remark(
 
 /** 单个教务学号名下的全部本地数据（课表、当前选中、教务课快照、备注、是否已扫描过有数据学期）。 */
 data class AccountData(
+    val classIdentity: ClassIdentity? = null,
+    val classRevisions: Map<String, String>? = null,
     val activeProfileId: String? = null,
     val profiles: List<ScheduleProfile> = emptyList(),
     val termCourses: Map<String, List<CachedCourse>> = emptyMap(),
@@ -247,6 +275,17 @@ data class AccountData(
 data class ScheduleRoot(
     val accounts: Map<String, AccountData> = emptyMap(),
     val displaySettings: ScheduleDisplaySettings? = null,
+)
+
+/** 三种来源共用校历，保留手动日期和自建课表。 */
+fun ScheduleRoot.withAcademicCalendar(dates: Map<String, String>): ScheduleRoot = copy(
+    accounts = accounts.mapValues { (_, data) ->
+        data.copy(profiles = data.profiles.map { profile ->
+            val date = dates[profile.termValue]
+            if (profile.kind != ProfileKind.TERM || profile.settings.semesterStartDateManual || date == null) profile
+            else profile.copy(settings = profile.settings.copy(semesterStartDate = date))
+        })
+    },
 )
 
 /** 把全局显示配置同步进所有 profile，兼容仍直接读取 profile.settings 的后台/小组件代码。 */

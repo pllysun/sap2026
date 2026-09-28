@@ -43,6 +43,9 @@ import retrofit2.http.Query
 
 /** 后端 API（对接 sap-backend 的 /api/auth 与 /api/jw） */
 interface ApiService {
+    @GET("api/academic-calendar")
+    suspend fun academicCalendar(): ApiResult<List<edu.csuft.sap.data.remote.dto.AcademicCalendarDto>>
+
 
     /** 健康探针：免登录、极轻，用于「在线/离线」连通性探测。 */
     @GET("api/ping")
@@ -50,6 +53,16 @@ interface ApiService {
 
     @POST("api/auth/app/login")
     suspend fun appLogin(@Body body: LoginRequest): ApiResult<LoginData>
+
+    // data 在注册成功时是字符串，要求验证码时是对象，不能按固定对象反序列化。
+    @POST("api/auth/app/register")
+    suspend fun register(@Body body: edu.csuft.sap.data.remote.dto.RegisterRequest): ApiResult<com.google.gson.JsonElement>
+
+    @POST("api/auth/app/register/email-code")
+    suspend fun registrationEmailCode(@Body body: edu.csuft.sap.data.remote.dto.RegisterEmailRequest): ApiResult<edu.csuft.sap.data.remote.dto.RegistrationEmailData>
+
+    @GET("api/auth/captcha")
+    suspend fun registrationCaptcha(): ApiResult<edu.csuft.sap.data.remote.dto.RegistrationCaptchaDto>
 
     @GET("api/auth/info")
     suspend fun me(): ApiResult<MeData>
@@ -125,6 +138,10 @@ interface ApiService {
     /** 班级课表：学期、班级选择器和已合并课表。 */
     @GET("api/class-schedule/terms")
     suspend fun classScheduleTerms(): ApiResult<List<ClassScheduleTermDto>>
+
+    @POST("api/class-schedule/sync")
+    suspend fun syncClassSchedules(@Body request: edu.csuft.sap.data.remote.dto.ClassSyncRequest):
+        ApiResult<edu.csuft.sap.data.remote.dto.ClassSyncResponse>
 
     @GET("api/class-schedule/classes")
     suspend fun classScheduleClasses(

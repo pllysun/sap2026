@@ -14,10 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -54,14 +53,15 @@ fun CourseDetailSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text("课程详情", fontSize = 17.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                Icon(
-                    AppIcons.Add, "在该格新增课程",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
-                        .padding(2.dp)
-                        .clickable { onAdd() },
-                )
+                IconButton(onClick = onAdd) {
+                    Icon(
+                        AppIcons.Add, "在该格新增课程",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), CircleShape)
+                            .padding(2.dp),
+                    )
+                }
             }
             courses.forEach { c -> CourseDetailItem(c, onEdit) }
         }

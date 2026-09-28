@@ -52,6 +52,16 @@ public class SettingService {
         insertIfAbsent("app_apk_sha256", "", "APK SHA-256");
         insertIfAbsent("app_apk_size", "0", "APK 字节数");
         insertIfAbsent("app_download_url", "", "APK 下载地址(COS/CDN)");
+
+        // QQ SMTP 邮件配置。授权码只保存 AES-GCM 密文，管理端读取时仅返回是否已配置。
+        insertIfAbsent("email_smtp_host", "smtp.qq.com", "邮件 SMTP 服务器");
+        insertIfAbsent("email_smtp_port", "465", "邮件 SMTP 端口");
+        insertIfAbsent("email_smtp_username", "", "邮件 SMTP 发件账号");
+        insertIfAbsent("email_smtp_password", "", "邮件 SMTP 授权码（加密）");
+        insertIfAbsent("email_smtp_from_name", "中南林业科技大学软件协会", "邮件默认发件人名称");
+        insertIfAbsent("email_smtp_ssl", "true", "邮件 SMTP SSL 开关");
+        insertIfAbsent("email_smtp_starttls", "false", "邮件 SMTP STARTTLS 开关");
+        insertIfAbsent("email_smtp_enabled", "true", "邮件发送总开关");
     }
 
     private void insertIfAbsent(String key, String value, String description) {
@@ -92,17 +102,22 @@ public class SettingService {
     }
 
     public String getValue(String key) {
+        requireGenericSetting(key);
         Setting setting = settingMapper.selectOne(
                 new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, key)
         );
+        // 数据库排序规则可能忽略大小写或重音，必须再检查实际命中的键。
+        if (setting != null) requireGenericSetting(setting.getSettingKey());
         return setting != null ? setting.getSettingValue() : null;
     }
 
     public void updateSetting(Setting setting) {
+        requireGenericSetting(setting.getSettingKey());
         Setting existing = settingMapper.selectOne(
                 new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, setting.getSettingKey())
         );
         if (existing != null) {
+            requireGenericSetting(existing.getSettingKey());
             existing.setSettingValue(setting.getSettingValue());
             if (setting.getDescription() != null) {
                 existing.setDescription(setting.getDescription());
@@ -110,6 +125,13 @@ public class SettingService {
             settingMapper.updateById(existing);
         } else {
             settingMapper.insert(setting);
+        }
+    }
+
+    private void requireGenericSetting(String key) {
+        String prefix = RegistrationProtectionSettingsService.PREFIX;
+        if (key != null && key.regionMatches(true, 0, prefix, 0, prefix.length())) {
+            throw new com.sap.common.BusinessException(403, "请通过注册防护专用接口读取或整组更新该设置");
         }
     }
 

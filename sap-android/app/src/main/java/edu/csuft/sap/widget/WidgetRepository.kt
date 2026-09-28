@@ -7,6 +7,7 @@ import edu.csuft.sap.data.schedule.ProfileKind
 import edu.csuft.sap.data.schedule.ScheduleRoot
 import edu.csuft.sap.data.schedule.ScheduleStore
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.visibleBase
 import edu.csuft.sap.ui.theme.colorIndexOf
 import java.time.LocalDate
 import java.time.LocalTime
@@ -30,6 +31,7 @@ data class WidgetData(
     val currentWeek: Int?,
     val courses: List<WidgetCourse>,
     val semesterStart: String? = null,
+    val totalWeeks: Int = 20,
 )
 
 /**
@@ -81,7 +83,7 @@ object WidgetRepository {
             ProfileKind.TERM -> data.termCourses[profile.termValue].orEmpty()
             ProfileKind.CUSTOM -> profile.frozenCourses
         }
-        for (c in base) {
+        for (c in profile.visibleBase(base)) {
             val nodes = Periods.nodesOfSection(c.sectionIndex)
             out.add(
                 WidgetCourse(
@@ -110,15 +112,18 @@ object WidgetRepository {
                 ),
             )
         }
-        return WidgetData(true, profile.name, currentWeek, out, profile.settings.semesterStartDate)
+        return WidgetData(true, profile.name, currentWeek, out, profile.settings.semesterStartDate, profile.settings.totalWeeks.coerceAtLeast(1))
     }
 
     /** 指定日期（按该日所在周生效）的课，按节次升序。 */
     fun coursesOn(data: WidgetData, date: LocalDate): List<WidgetCourse> {
         val dow = date.dayOfWeek.value // 1=周一 … 7=周日
-        val week = WeekUtil.currentWeek(data.semesterStart, date)
+        // 没有开学日期或日期仍在开学日前，无法确认课程周次；此时必须返回空，
+        // 否则“每周课”会被误当成本周课程，提醒会提前触发。
+        val week = WeekUtil.currentWeek(data.semesterStart, date) ?: return emptyList()
+        if (week > data.totalWeeks) return emptyList()
         return data.courses
-            .filter { it.day == dow && (it.weeks.isEmpty() || week == null || it.weeks.contains(week)) }
+            .filter { it.day == dow && (it.weeks.isEmpty() || it.weeks.contains(week)) }
             .sortedBy { it.startNode }
     }
 

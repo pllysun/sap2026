@@ -66,6 +66,31 @@ INSERT IGNORE INTO sys_setting (setting_key, setting_value, description) VALUES
 ('qr_qq_account_name', '', 'QQ号二维码名称'),
 ('guest_access_level', '0', '软协课表游客权限等级：0关闭、1基础、2完整App能力');
 
+-- 邮件配置：email_smtp_password 保存 AES-GCM 密文，管理端不回显授权码
+INSERT IGNORE INTO sys_setting (setting_key, setting_value, description) VALUES
+('email_smtp_host', 'smtp.qq.com', '邮件 SMTP 服务器'),
+('email_smtp_port', '465', '邮件 SMTP 端口'),
+('email_smtp_username', '', '邮件 SMTP 发件账号'),
+('email_smtp_password', '', '邮件 SMTP 授权码（加密）'),
+('email_smtp_from_name', '中南林业科技大学软件协会', '邮件默认发件人名称'),
+('email_smtp_ssl', 'true', '邮件 SMTP SSL 开关'),
+('email_smtp_starttls', 'false', '邮件 SMTP STARTTLS 开关'),
+('email_smtp_enabled', 'true', '邮件发送总开关');
+
+CREATE TABLE IF NOT EXISTS sys_email_template (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    template_key VARCHAR(80) NOT NULL UNIQUE COMMENT '模板标识',
+    template_name VARCHAR(120) NOT NULL COMMENT '模板名称',
+    subject VARCHAR(255) NOT NULL COMMENT '邮件主题',
+    html_content MEDIUMTEXT NOT NULL COMMENT 'HTML 邮件内容',
+    description VARCHAR(500) COMMENT '模板说明',
+    enabled TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '软删除标记',
+    INDEX idx_email_template_enabled (enabled, updated_at)
+) COMMENT 'HTML 邮件模板';
+
 -- 5. 身份表
 CREATE TABLE IF NOT EXISTS sys_position (
     id INT PRIMARY KEY AUTO_INCREMENT,

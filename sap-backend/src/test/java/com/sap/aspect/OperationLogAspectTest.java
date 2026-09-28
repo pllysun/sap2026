@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.sap.BaseUnitTest;
 import com.sap.annotation.OperationLog;
 import com.sap.entity.LogStats;
+import com.sap.entity.SysLog;
 import com.sap.entity.User;
 import com.sap.mapper.LogStatsMapper;
 import com.sap.mapper.SysLogMapper;
@@ -106,8 +107,7 @@ class OperationLogAspectTest extends BaseUnitTest {
             assertEquals(42, result);
             verify(sysLogMapper).insert(any());
             // 已有统计 -> 计数 +1 并更新
-            assertEquals(4, existing.getCount());
-            verify(logStatsMapper).updateById(existing);
+            verify(logStatsMapper).increment(existing.getId());
             verify(logStatsMapper, never()).insert(any());
         }
     }
@@ -144,8 +144,8 @@ class OperationLogAspectTest extends BaseUnitTest {
         RuntimeException thrown = assertThrows(RuntimeException.class,
                 () -> aspect.around(pjp, annotation()));
         assertSame(boom, thrown);
-        // proceed 抛异常时，after 段不会执行，故不写日志
-        verify(sysLogMapper, never()).insert(any());
+        // 失败调用也要记录，且不能吞掉原异常。
+        verify(sysLogMapper).insert(org.mockito.ArgumentMatchers.<SysLog>argThat(log -> log.getResultCode() == 500));
     }
 
     @Test

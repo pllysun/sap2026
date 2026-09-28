@@ -653,8 +653,7 @@ public class JwAuthClient {
     }
 
     /**
-     * 学校迁移期间新版 jwxt 与旧版 jwgl 可能短暂并存。每个入口都使用同一已完成的
-     * WebVPN 门户会话，但仅在新版没有建立强智会话时才回退旧入口。
+     * 使用已完成的 WebVPN 门户会话登录当前 jwxt，不再尝试旧教务源站。
      */
     private JwHttpSession completeWebvpnJwSso(JwHttpSession s, JwHttpSession.Route portalRoute,
                                               PortalBridge portalBridge) throws Exception {
@@ -699,12 +698,12 @@ public class JwAuthClient {
                     }
                     last = sso;
                     lastSsoUrl = jwSsoUrl;
-                    log.warn("[教务登录] 强智入口未建立会话，将尝试兼容入口 endpoint={} path={} status={} uri={}",
+                    log.warn("[教务登录] 当前强智入口未建立会话 endpoint={} path={} status={} uri={}",
                             endpoint.webvpnBase(), path, sso == null ? null : sso.statusCode(),
                             sso == null ? null : safeUri(sso.uri()));
                 } catch (Exception e) {
                     lastSsoUrl = jwSsoUrl;
-                    log.warn("[教务登录] 强智入口不可用，将尝试兼容入口 endpoint={} path={} reason={}",
+                    log.warn("[教务登录] 当前强智入口不可用 endpoint={} path={} reason={}",
                             endpoint.webvpnBase(), path, JwErrorMessages.userDetail(e, "请求失败"));
                 }
             }
@@ -1002,17 +1001,12 @@ public class JwAuthClient {
     }
 
     /**
-     * 新版 jwxt 的门户导航链接直达 xsMainV，而非旧版的 logonByZnlkd。
-     * 先按浏览器真实入口访问，再兼容历史 SSO 地址；旧 jwgl 保持原顺序。
+     * 当前 jwxt 的门户导航链接直达 xsMainV；同时保留配置中的新版 CAS 回调。
      */
     private static String[] webvpnEntryPaths(JwProperties.JwEndpoint endpoint) {
         String ssoPath = endpoint.ssoPath();
         if (endpoint.webvpnBase().contains("-jwxt-")) {
-            // 强智新版页面位于 /jsxsd/，但部分校方部署仍将 CAS 单点登录处理器
-            // 保留在站点根路径。先按用户在浏览器中可直接打开的首页尝试，再依次
-            // 兼容两种 SSO 地址，避免把根路径服务迁移误判成门户会话失效。
-            return new String[]{"/jsxsd/framework/xsMainV.htmlx", ssoPath,
-                    "/Logon.do?method=logonByZnlkd"};
+            return new String[]{"/jsxsd/framework/xsMainV.htmlx", ssoPath};
         }
         return new String[]{ssoPath};
     }

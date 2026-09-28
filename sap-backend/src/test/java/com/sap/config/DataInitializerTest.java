@@ -9,7 +9,9 @@ import com.sap.mapper.RoleMapper;
 import com.sap.mapper.UserMapper;
 import com.sap.mapper.UserRoleMapper;
 import com.sap.service.SettingService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -24,8 +26,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * DataInitializer 单元测试：覆盖角色 / 职位 / 超管账号的幂等初始化分支。
- * 超管逻辑：账号(学号 20202753)不存在则创建并赋超管；存在但无超管角色则
- * 重置密码并提升；已是超管则不动。
+ * 超管逻辑仅在私有环境显式配置后生效；补齐角色不重置现有密码。
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -38,6 +39,31 @@ class DataInitializerTest extends BaseUnitTest {
     @Mock SettingService settingService;
 
     @InjectMocks DataInitializer initializer;
+
+    @BeforeEach
+    void configureTestOnlyBootstrap() {
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminStudentId", "99000001");
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminPassword", "bootstrap-test-only-password");
+    }
+
+    @Test
+    void ensureSuperAdmin_disabledByDefault() {
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminStudentId", "");
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminPassword", "");
+        initializer.run();
+        verifyNoInteractions(userMapper, userRoleMapper);
+    }
+
+    @Test
+    void ensureSuperAdmin_requiresBothPrivateValues() {
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminPassword", " ");
+        initializer.run();
+        verifyNoInteractions(userMapper, userRoleMapper);
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminPassword", "test-only-password");
+        ReflectionTestUtils.setField(initializer, "bootstrapAdminStudentId", " ");
+        initializer.run();
+        verifyNoInteractions(userMapper, userRoleMapper);
+    }
 
     /** 让超管逻辑变为 no-op：账号已存在且已是超管 */
     private void superAdminAlreadyConfigured() {
@@ -112,11 +138,11 @@ class DataInitializerTest extends BaseUnitTest {
         ArgumentCaptor<User> userCap = ArgumentCaptor.forClass(User.class);
         verify(userMapper).insert(userCap.capture());
         User admin = userCap.getValue();
-        assertEquals("20202753", admin.getStudentId());
+        assertEquals("99000001", admin.getStudentId());
         assertEquals("超级管理员", admin.getName());
         assertEquals("2030", admin.getGrade());
         assertNotNull(admin.getPassword());
-        assertNotEquals("1125887000f", admin.getPassword(), "密码应被 BCrypt 加密");
+        assertNotEquals("bootstrap-test-only-password", admin.getPassword(), "密码应被 BCrypt 加密");
         assertTrue(admin.getPassword().startsWith("$2"), "应为 BCrypt 哈希");
 
         ArgumentCaptor<UserRole> urCap = ArgumentCaptor.forClass(UserRole.class);
@@ -140,23 +166,21 @@ class DataInitializerTest extends BaseUnitTest {
     }
 
     @Test
-    void ensureSuperAdmin_promotesAndResetsPassword_whenExistsWithoutRole0() {
+    void ensureSuperAdmin_promotesWithoutResettingPassword_whenExplicitlyConfigured() {
         when(roleMapper.selectCount(any())).thenReturn(1L);
         when(positionMapper.selectCount(any())).thenReturn(1L);
         User existing = new User();
         existing.setId(5L);
-        existing.setStudentId("20202753");
+        existing.setStudentId("99000001");
         existing.setPassword("oldhash");
         when(userMapper.selectOne(any())).thenReturn(existing);
         when(userRoleMapper.selectCount(any())).thenReturn(0L); // 尚无超管角色
 
         initializer.run();
 
-        // 重置密码并提升
-        ArgumentCaptor<User> userCap = ArgumentCaptor.forClass(User.class);
-        verify(userMapper).updateById(userCap.capture());
-        assertNotEquals("oldhash", userCap.getValue().getPassword());
-        assertTrue(userCap.getValue().getPassword().startsWith("$2"));
+        // 只补齐角色，不能覆盖已有密码。
+        verify(userMapper, never()).updateById(any());
+        assertEquals("oldhash", existing.getPassword());
 
         ArgumentCaptor<UserRole> urCap = ArgumentCaptor.forClass(UserRole.class);
         verify(userRoleMapper).insert(urCap.capture());
