@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -28,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,11 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import coil.compose.AsyncImage
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,9 +47,11 @@ import edu.csuft.sap.data.account.ConnectivityState
 import edu.csuft.sap.data.account.MemberState
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.ui.common.LoadingBox
+import edu.csuft.sap.ui.common.ModeOptionRow
 import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.common.ScreenHeader
 import edu.csuft.sap.ui.feedback.FeedbackScreen
+import edu.csuft.sap.ui.icons.ChevronIcon
 
 private enum class WebRoute { HOME, PROFILE_EDIT, FEEDBACK, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG }
 
@@ -65,6 +66,8 @@ fun WebSettingsScreen(
     vm: ProfileViewModel = viewModel(),
 ) {
     val state by vm.state.collectAsState()
+    val avatarBitmap by vm.avatar.collectAsState()
+    LaunchedEffect(vm) { vm.refresh() }
     val ctx = LocalContext.current
     var route by remember { mutableStateOf(WebRoute.HOME) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
@@ -126,17 +129,7 @@ fun WebSettingsScreen(
                                         Text("服务器暂时连不上，仅本地课表可用，联网后自动恢复", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
                                     }
                                 } else {
-                                    val avatarUrl = avatarUrlOf(state.user?.avatar, state.avatarVersion)
-                                    Box(
-                                        Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        if (avatarUrl != null) {
-                                            AsyncImage(model = avatarUrl, contentDescription = "头像", contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp))
-                                        } else {
-                                            Text((state.user?.name ?: state.user?.nickname ?: "用").take(1), fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                        }
-                                    }
+                                    ProfileAvatar(avatarBitmap, state.user?.name ?: state.user?.nickname)
                                     Column(Modifier.weight(1f).padding(start = 14.dp)) {
                                         Text(state.user?.name ?: state.user?.nickname ?: "当前账号", fontSize = 18.sp, fontWeight = FontWeight.Medium)
                                         state.user?.studentId?.let {
@@ -145,7 +138,7 @@ fun WebSettingsScreen(
                                         // 平台身份（游客 / 2025正式成员 / 2025宣传部部长 / 2026会长…）
                                         IdentityTags(identityLabels(state.identities, MemberState.roleCodes))
                                     }
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                    ChevronIcon()
                                 }
                             }
                         }
@@ -158,7 +151,7 @@ fun WebSettingsScreen(
                                 ) {
                                     Text("主题色", fontSize = 15.sp, modifier = Modifier.weight(1f))
                                     Box(Modifier.size(20.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 10.dp))
+                                    ChevronIcon(Modifier.padding(start = 10.dp))
                                 }
                             }
                         }
@@ -170,7 +163,7 @@ fun WebSettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text("课表公告", fontSize = 15.sp, modifier = Modifier.weight(1f))
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                    ChevronIcon()
                                 }
                             }
                         }
@@ -179,7 +172,7 @@ fun WebSettingsScreen(
                             SapCard(onClick = { route = WebRoute.PRIVACY }) {
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Text("隐私协议", fontSize = 15.sp, modifier = Modifier.weight(1f))
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                    ChevronIcon()
                                 }
                             }
                         }
@@ -191,7 +184,7 @@ fun WebSettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text("更新日志", fontSize = 15.sp, modifier = Modifier.weight(1f))
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                    ChevronIcon()
                                 }
                             }
                         }
@@ -208,7 +201,7 @@ fun WebSettingsScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(top = 2.dp))
                                     }
-                                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                                    ChevronIcon()
                                 }
                             }
                         }
@@ -224,26 +217,11 @@ fun WebSettingsScreen(
                                             }
                                             TextButton(onClick = { showModeInfo = true }) { Text("模式说明") }
                                         }
-                                        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                                        Column(Modifier.fillMaxWidth().padding(top = 8.dp).selectableGroup()) {
                                             MemberState.availableModes.forEach { item ->
-                                                val label = when (item) {
-                                                    AppMode.JW -> "教务课表"
-                                                    AppMode.WEB -> "Web课表"
-                                                    AppMode.CLASS -> "班级课表"
+                                                ModeOptionRow(item, MemberState.effectiveMode == item, false, horizontalPadding = 0.dp) {
+                                                    MemberState.requestMode(ctx, item)
                                                 }
-                                                androidx.compose.material3.FilterChip(
-                                                    selected = MemberState.effectiveMode == item,
-                                                    onClick = {
-                                                        MemberState.setMode(ctx, item)
-                                                        when (item) {
-                                                            AppMode.WEB -> Graph.accountManager.useWebview()
-                                                            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
-                                                            AppMode.JW -> Graph.accountManager.activateJwAccount()
-                                                        }
-                                                    },
-                                                    label = { Text(label, fontSize = 12.sp) },
-                                                    modifier = Modifier.weight(1f),
-                                                )
                                             }
                                         }
                                     }
@@ -259,7 +237,7 @@ fun WebSettingsScreen(
                                             modifier = Modifier.fillMaxWidth(),
                                         ) {
                                             Text("退出登录", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
-                                            Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp))
+                                            ChevronIcon(Modifier.padding(start = 8.dp))
                                         }
                                     }
                                 }
@@ -272,7 +250,7 @@ fun WebSettingsScreen(
             WebRoute.FEEDBACK -> FeedbackScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
             WebRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
             WebRoute.ANNOUNCEMENTS -> AnnouncementScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
-            WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME }, web = true, offline = !ConnectivityState.online)
+            WebRoute.PRIVACY -> PrivacyScreen(modifier = modifier, onBack = { route = WebRoute.HOME }, offline = !ConnectivityState.online)
             WebRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = WebRoute.HOME })
         }
     }

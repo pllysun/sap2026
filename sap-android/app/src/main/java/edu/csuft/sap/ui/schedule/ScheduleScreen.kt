@@ -3,6 +3,7 @@ package edu.csuft.sap.ui.schedule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,16 +20,12 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -44,6 +41,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,22 +52,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.schedule.CustomCourse
 import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Remark
 import edu.csuft.sap.data.schedule.WeekUtil
-import androidx.compose.ui.platform.LocalContext
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.share.ScheduleShareRenderer
 import edu.csuft.sap.ui.common.ErrorRetry
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.ui.draw.rotate
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ModeIcon
+import edu.csuft.sap.ui.icons.SyncIcon
 import edu.csuft.sap.ui.theme.colorIndexOf
 import edu.csuft.sap.ui.theme.paletteColor
 import edu.csuft.sap.webview.WebImportScreen
@@ -112,16 +109,25 @@ fun ScheduleScreen(
             else -> (1..7).toList()
         }
     }
+    val totalWeeks = s.totalWeeks.coerceAtLeast(1)
+    val pagerState = androidx.compose.runtime.key(state.account, state.activeProfileId, s.semesterStartDate, totalWeeks) {
+        rememberPagerState(
+            initialPage = (state.selectedWeek - 1).coerceIn(0, totalWeeks - 1),
+            pageCount = { totalWeeks },
+        )
+    }
+    // 顶部周数与日期跟随正在滑过的页实时变化；ViewModel 的选周只在手势结束后持久化。
+    val visibleWeek = pagerState.currentPage + 1
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize()) {
             val shareCtx = LocalContext.current
             TopBar(
-                weekTitle = "第 ${state.selectedWeek} 周",
+                weekTitle = if (state.loading) "课表" else "第 $visibleWeek 周",
                 onSettings = { route = Route.Settings },
                 onWeekTitle = { showWeekPicker = true },
                 onShare = {
-                    val wk = state.selectedWeek
+                    val wk = visibleWeek
                     val weekCourses = state.display.filter { it.weeks.isEmpty() || it.weeks.contains(wk) }
                         .map { it.copy(isThisWeek = true) }
                     ScheduleShareRenderer.renderAndShare(
@@ -135,33 +141,35 @@ fun ScheduleScreen(
                     )
                 },
             )
-            ScheduleWeekHeader(days, WeekUtil.datesOfWeek(s.semesterStartDate, state.selectedWeek), s)
+            ScheduleWeekHeader(days, WeekUtil.datesOfWeek(s.semesterStartDate, visibleWeek), s)
             Box(Modifier.weight(1f)) {
                 when {
                     // 扫描期间（含「重新扫描」）始终盖住旧数据显示动画，拿到新数据后才覆盖呈现
                     state.scanning -> RescanLoading()
                     state.loading && state.display.isEmpty() -> LoadingBox()
-                    state.isClassSource && state.display.isEmpty() ->
+                    state.isClassSource && state.activeProfileId == null ->
                         ClassSchedulePickerHint { route = Route.ClassPicker }
                     state.isLocalSource && state.display.isEmpty() ->
                         LocalImportHint { route = Route.WebImport }
                     state.error != null && state.display.isEmpty() -> ErrorRetry(state.error!!, vm::retry)
                     else -> {
-                        val totalWeeks = s.totalWeeks.coerceAtLeast(1)
-                        val pagerState = rememberPagerState(
-                            initialPage = (state.selectedWeek - 1).coerceIn(0, totalWeeks - 1),
-                            pageCount = { totalWeeks },
-                        )
-                        // 用户滑动翻页 → 更新选中周（drop 首个=初始页，避免误标“手动选周”）
+                        val dragged by pagerState.interactionSource.collectIsDraggedAsState()
+                        // 仅真实拖动才回写选周；恢复/程序滚动绝不标记成手动操作。
                         LaunchedEffect(pagerState) {
-                            snapshotFlow { pagerState.settledPage }
-                                .drop(1)
-                                .collect { vm.selectWeek(it + 1) }
+                            var userDrag = false
+                            snapshotFlow { Triple(dragged, pagerState.isScrollInProgress, pagerState.settledPage) }
+                                .collect { (dragging, scrolling, page) ->
+                                    if (dragging) userDrag = true
+                                    if (userDrag && !dragging && !scrolling) {
+                                        userDrag = false
+                                        vm.selectWeek(page + 1)
+                                    }
+                                }
                         }
                         // 选周/回到本周等外部改周 → 平滑翻到对应页
-                        LaunchedEffect(state.selectedWeek) {
+                        LaunchedEffect(pagerState, state.selectedWeek) {
                             val target = (state.selectedWeek - 1).coerceIn(0, totalWeeks - 1)
-                            if (pagerState.currentPage != target) pagerState.animateScrollToPage(target)
+                            if (pagerState.currentPage != target) pagerState.scrollToPage(target)
                         }
                         Box(Modifier.fillMaxSize()) {
                             ScheduleBackgroundLayer(s, Modifier.fillMaxSize())
@@ -192,8 +200,9 @@ fun ScheduleScreen(
                                         periodCount = s.dailyPeriods,
                                         showNowLine = s.showNowLine,
                                         settings = s,
+                                        weekDates = WeekUtil.datesOfWeek(s.semesterStartDate, week),
                                         onCourseClick = { c -> detail = slotCourses(state.display, c, week, s.showOtherWeekInDetail) },
-                                        onEmptyClick = { day, node -> if (!state.isClassSource) route = Route.Edit(null, day, node) },
+                                        onEmptyClick = { day, node -> route = Route.Edit(null, day, node) },
                                         modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
                                     )
                                     // 备注里的“无固定时间”课：按本周过滤；已被排进网格（同名自建课）的不再重复显示
@@ -222,7 +231,7 @@ fun ScheduleScreen(
             }
         }
 
-        if (!state.isClassSource) {
+        if (!state.isClassSource || state.activeProfileId != null) {
             FloatingActionButton(
                 onClick = { route = Route.Edit(null, null, null) },
                 modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
@@ -236,11 +245,8 @@ fun ScheduleScreen(
         CourseDetailSheet(
             courses = list,
             onEdit = { c ->
-                if (state.isClassSource) {
-                    detail = null
-                } else {
-                // 自建课→编辑原课；教务课→把数据反填进"添加课程"表单(保存即生成自建课覆盖该时段)
-                route = if (c.isCustom && c.customId != null) {
+                // 自建课按 ID 更新；导入课程按底本标识覆盖，不能当作新增而留下原课。
+                route = if (c.customId != null || c.sourceId != null) {
                     Route.Edit(initial = c.toCustom())
                 } else {
                     Route.Edit(
@@ -256,9 +262,12 @@ fun ScheduleScreen(
                     )
                 }
                 detail = null
-                }
             },
-            onAdd = { if (!state.isClassSource) { val c = list.first(); route = Route.Edit(null, c.day, c.startNode) }; detail = null },
+            onAdd = {
+                val c = list.first()
+                route = Route.Edit(null, c.day, c.startNode)
+                detail = null
+            },
             onDismiss = { detail = null },
         )
     }
@@ -277,6 +286,7 @@ fun ScheduleScreen(
                 prefillColorIndex = r.prefillColorIndex,
                 maxWeeks = s.totalWeeks,
                 maxNodes = s.dailyPeriods,
+                settings = s,
                 onSave = { vm.upsertCourse(it); route = Route.None },
                 onDelete = { vm.deleteCourse(it); route = Route.None },
                 onBack = { route = Route.None },
@@ -314,11 +324,9 @@ fun ScheduleScreen(
 
     if (showWeekPicker) {
         WeekPickerDialog(
-            total = s.totalWeeks,
+            state = ScheduleWeekState.from(s.semesterStartDate, s.totalWeeks),
             selected = state.selectedWeek,
-            current = state.currentWeek,
             onPick = { vm.selectWeek(it); showWeekPicker = false },
-            onToday = { vm.gotoCurrentWeek(); showWeekPicker = false },
             onDismiss = { showWeekPicker = false },
         )
     }
@@ -356,11 +364,11 @@ private fun slotCourses(
         .sortedByDescending { it.isThisWeek }
 
 private fun DisplayCourse.toCustom(): CustomCourse? =
-    if (isCustom && customId != null) CustomCourse(
-        id = customId, name = name, teacher = teacher, location = location,
+    (customId ?: sourceId)?.let { id -> CustomCourse(
+        id = id, name = name, teacher = teacher, location = location,
         day = day, startNode = startNode, endNode = endNode, weeks = weeks, colorIndex = colorIndex,
         customColor = customColor,
-    ) else null
+    ) }
 
 @Composable
 private fun TopBar(
@@ -371,15 +379,13 @@ private fun TopBar(
 ) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // 左：分享课表
-        Icon(
-            AppIcons.Share, "分享课表",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp).clickable { onShare() },
-        )
+        IconButton(onClick = onShare) {
+            Icon(AppIcons.Share, "分享课表", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         // 中：周次（点开选周），居中
         Row(
             Modifier.weight(1f).clickable { onWeekTitle() },
@@ -390,11 +396,9 @@ private fun TopBar(
             Icon(AppIcons.DropDown, "选择周", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         // 右：设置（切换课表 / 切换账号 / 显示设置 都在里面）
-        Icon(
-            AppIcons.Settings, "课表设置",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp).clickable { onSettings() },
-        )
+        IconButton(onClick = onSettings) {
+            Icon(AppIcons.Settings, "课表设置", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -406,30 +410,29 @@ private fun FullScreen(onDismiss: () -> Unit, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun WeekPickerDialog(
-    total: Int,
+internal fun WeekPickerDialog(
+    state: ScheduleWeekState,
     selected: Int,
-    current: Int?,
     onPick: (Int) -> Unit,
-    onToday: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("选择周次") },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 // 本周/已过周不再使用过白的容器色，弱化层级仍在但日光下更容易辨认。
                 val currentWeekBg = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
                 val pastWeekBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.94f)
-                val rows = (1..total).chunked(5)
+                val rows = (1..state.totalWeeks).chunked(5)
                 rows.forEach { week ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         week.forEach { w ->
                             val sel = w == selected
-                            val isCur = current != null && w == current
-                            val past = current != null && w < current
-                            val future = current != null && w > current
+                            val status = state.statusOf(w)
+                            val isCur = status == WeekStatus.CURRENT
+                            val past = status == WeekStatus.PAST
+                            val outlined = !sel && (status == WeekStatus.UPCOMING || status == WeekStatus.UNKNOWN)
                             // 选中=蓝；本周=中等蓝；已过去的周=更清晰的灰；未到的周=白(描边)
                             val bg = when {
                                 sel -> MaterialTheme.colorScheme.primary
@@ -447,10 +450,19 @@ private fun WeekPickerDialog(
                                 Modifier.weight(1f).size(44.dp)
                                     .background(bg, RoundedCornerShape(10.dp))
                                     .then(
-                                        if (future) Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+                                        if (outlined) Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
                                         else Modifier,
                                     )
-                                    .clickable { onPick(w) },
+                                    .clickable { onPick(w) }
+                                    .semantics {
+                                        this.selected = sel
+                                        stateDescription = when (status) {
+                                            WeekStatus.CURRENT -> "本周"
+                                            WeekStatus.PAST -> "已过"
+                                            WeekStatus.UPCOMING -> "未到"
+                                            WeekStatus.UNKNOWN -> "未设置开学日期"
+                                        }
+                                    },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
@@ -464,19 +476,21 @@ private fun WeekPickerDialog(
                         repeat(5 - week.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
-                if (current != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        LegendItem(MaterialTheme.colorScheme.primary, "选中", false)
-                        LegendItem(currentWeekBg, "本周", false)
-                        LegendItem(pastWeekBg, "已过", false)
-                        LegendItem(MaterialTheme.colorScheme.surface, "未到", true)
-                    }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    LegendItem(MaterialTheme.colorScheme.primary, "选中", false)
+                    LegendItem(currentWeekBg, "本周", false)
+                    LegendItem(pastWeekBg, "已过", false)
+                    LegendItem(MaterialTheme.colorScheme.surface, "未到", true)
+                }
+                state.statusText?.let {
+                    Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp))
                 }
             }
         },
         confirmButton = {
-            if (current != null) TextButton(onClick = onToday) { Text("回到本周（第 $current 周）") }
+            TextButton(onClick = { onPick(state.defaultWeek) }) { Text(state.shortcutLabel) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("关闭") } },
     )
@@ -501,24 +515,12 @@ private fun LegendItem(color: androidx.compose.ui.graphics.Color, label: String,
 /** 重新扫描/初次扫描时的加载动画：旋转的刷新图标 + 文案，盖住旧数据直到新课表就绪。 */
 @Composable
 private fun RescanLoading() {
-    val transition = rememberInfiniteTransition(label = "rescan")
-    val angle by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 900, easing = LinearEasing)),
-        label = "spin",
-    )
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            AppIcons.Refresh,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(46.dp).rotate(angle),
-        )
+        SyncIcon(running = true, modifier = Modifier.size(42.dp))
         Text(
             "正在重新获取各学期课表…",
             fontSize = 14.sp,
@@ -542,6 +544,7 @@ private fun LocalImportHint(onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        ModeIcon(AppMode.WEB, Modifier.padding(bottom = 20.dp), size = 64.dp)
         Text("还没有课表数据", fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Text(
             "通过学校统一身份认证登录教务，端上直接导入课表（不经服务器）",
@@ -562,6 +565,7 @@ private fun ClassSchedulePickerHint(onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        ModeIcon(AppMode.CLASS, Modifier.padding(bottom = 20.dp), size = 64.dp)
         Text("还没有班级课表", fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Text(
             "选择学期、学院、专业和班级即可查看公共课表；已下载的班级支持离线切换",

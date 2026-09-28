@@ -1,5 +1,11 @@
 package edu.csuft.sap.ui.schedule
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -15,10 +21,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import edu.csuft.sap.ui.icons.AppIcons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -35,9 +37,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,17 +47,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.account.BoundAccount
 import edu.csuft.sap.data.account.MemberState
-import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.DisplayCourse
+import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.WeekUtil
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import edu.csuft.sap.notify.ReminderPermissions
 import edu.csuft.sap.notify.ReminderPrefs
 import edu.csuft.sap.notify.ReminderScheduler
 import edu.csuft.sap.ui.common.OptionSheet
+import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ChevronIcon
 import edu.csuft.sap.widget.ScheduleWidgetProvider
 import java.time.Instant
 import java.time.ZoneOffset
@@ -187,6 +185,10 @@ fun ScheduleSettingsScreen(
             if (MemberState.isClass) {
                 ClassScheduleRow(currentName, onClassPicker)
                 RowDivider()
+                if (profiles.size > 1) {
+                    NavRow("切换已下载学期", currentName) { showSwitcher = true }
+                    RowDivider()
+                }
                 ActionRow("清除当前班级缓存", "仅删除本机缓存，之后仍可重新选择", onDelete)
             } else {
             // 已有课表始终可切换与管理；新增副本只在完整能力下开放。
@@ -396,8 +398,7 @@ private fun NavRow(title: String, value: String, onClick: () -> Unit) {
         Spacer(Modifier.weight(1f))
         Text(value, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 180.dp))
-        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.padding(start = 8.dp))
+        ChevronIcon(Modifier.padding(start = 8.dp))
     }
 }
 
@@ -415,7 +416,7 @@ private fun ActionRow(title: String, subtitle: String?, onClick: () -> Unit) {
                     modifier = Modifier.padding(top = 2.dp))
             }
         }
-        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+        ChevronIcon()
     }
 }
 

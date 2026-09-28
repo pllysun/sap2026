@@ -1,0 +1,9 @@
+// Installs beside the real app and sends catalog requests only to a local fixture.
+allprojects {
+    plugins.withId('com.android.application') {
+        android.buildTypes.debug.applicationIdSuffix = '.classqa'
+        afterEvaluate {
+            android.buildTypes.debug.buildConfigField 'String', 'BASE_URL', '"http://10.0.2.2:18892"'
+        }
+    }
+}

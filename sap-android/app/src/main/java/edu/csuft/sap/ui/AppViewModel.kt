@@ -52,16 +52,22 @@ class AppViewModel : ViewModel() {
     }
 
     private suspend fun probeWithToken() {
-        when (val r = apiData { Graph.probeApi.me() }) {
+        val owner = edu.csuft.sap.data.account.CurrentAccount.key
+        val token = Graph.tokenStore.token
+        val result = apiData { Graph.probeApi.me() }
+        // 切号/重新登录后的旧响应不能覆盖当前角色，否则会员可能被旧游客能力降级。
+        if (edu.csuft.sap.data.account.CurrentAccount.key != owner || Graph.tokenStore.token != token) return
+        when (val r = result) {
             is Outcome.Success -> {
                 ConnectivityState.online = true
-                MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
-                if (!MemberState.isMember && MemberState.appAccessLevel == 0) {
-                    Graph.authRepository.clearLocalToken()
-                    _gate.value = Gate.LOGIN
-                    return
+                // 旧安装可能只有有效 token、没有 current_uid。以已验证的 /info 身份修复，
+                // 否则教务授权弹窗会因账号为 "_" 被跳过，表现为只有教务模式点不动。
+                if (MemberState.restoreVerifiedOwner(Graph.appContext, r.data.user?.studentId)) {
+                    Graph.accountManager.onUserChanged()
                 }
-                Graph.accountManager.refresh()
+                MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
+                Graph.classScheduleSync.request()
+                if (MemberState.isJw) Graph.accountManager.refresh()
                 _gate.value = Gate.APP
             }
             is Outcome.Error -> when {
@@ -73,7 +79,9 @@ class AppViewModel : ViewModel() {
     }
 
     private suspend fun probeNoToken() {
-        when (val r = apiData { Graph.probeApi.ping() }) {
+        val result = apiData { Graph.probeApi.ping() }
+        if (Graph.authRepository.hasLocalToken()) return
+        when (val r = result) {
             is Outcome.Success -> { ConnectivityState.online = true; _gate.value = Gate.LOGIN }
             is Outcome.Error ->
                 if (r.offline) { ConnectivityState.online = false; _gate.value = Gate.APP }               // 连不上 → 直接进离线 web
@@ -83,10 +91,12 @@ class AppViewModel : ViewModel() {
 
     fun onLoggedIn() {
         ConnectivityState.online = true
+        // 进入首页之前同步恢复新账号的来源与模式，避免短暂显示上一个账号的课表或发起教务请求。
+        Graph.accountManager.onUserChanged()
+        MemberState.load(Graph.appContext)
         viewModelScope.launch {
             Graph.authRepository.me()                 // 刷新会员角色
-            Graph.accountManager.onUserChanged()      // 切到该会员账号命名空间（重载其上次激活的教务号）后再拉取
-            Graph.accountManager.refresh()
+            if (MemberState.isJw) Graph.accountManager.refresh()
         }
         _gate.value = Gate.APP
     }

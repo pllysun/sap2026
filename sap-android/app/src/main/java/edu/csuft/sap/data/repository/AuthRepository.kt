@@ -9,6 +9,7 @@ import edu.csuft.sap.data.remote.Outcome
 import edu.csuft.sap.data.remote.apiData
 import edu.csuft.sap.data.remote.apiUnit
 import edu.csuft.sap.data.remote.dto.LoginRequest
+import edu.csuft.sap.data.remote.dto.LoginData
 import edu.csuft.sap.data.remote.dto.MeData
 import edu.csuft.sap.data.remote.dto.UpdateProfileRequest
 import edu.csuft.sap.data.remote.dto.UserDto
@@ -24,32 +25,45 @@ class AuthRepository(
 
     fun hasLocalToken(): Boolean = tokenStore.hasToken()
 
-    /** App 登录：成功后保存长效 token，返回用户信息。 */
-    suspend fun appLogin(studentId: String, password: String): Outcome<UserDto> {
+    /** 验证身份，协议确认前不保存登录凭证。 */
+    suspend fun appLogin(studentId: String, password: String): Outcome<LoginData> {
         return when (val r = apiData { api.appLogin(LoginRequest(studentId.trim(), password)) }) {
             is Outcome.Success -> {
                 val token = r.data.token
                 if (token.isNullOrBlank()) {
                     Outcome.Error("登录返回异常：缺少凭证")
                 } else {
-                    tokenStore.token = token
-                    // 切到该会员账号的本地命名空间（教务激活号 / 用户缓存按账号隔离）
-                    CurrentAccount.set(r.data.user?.studentId ?: studentId.trim())
-                    MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
-                    Outcome.Success(r.data.user ?: UserDto())
+                    Outcome.Success(r.data)
                 }
             }
             is Outcome.Error -> r
         }
     }
 
+    fun completeAppLogin(data: LoginData, studentId: String) {
+        require(!data.token.isNullOrBlank())
+        edu.csuft.sap.data.account.PrivacyConsents.accept(
+            data.user?.studentId?.takeIf { it.isNotBlank() } ?: studentId.trim(),
+            data.roles.any { it <= 3 } || data.appAccessLevel >= 2,
+        )
+        CurrentAccount.set(data.user?.studentId ?: studentId.trim())
+        tokenStore.saveConfirmed(data.token!!)
+        MemberState.setAccess(data.roles, data.appAccessLevel)
+    }
+
     /** 用本地 token 拉当前用户（启动免密校验）；顺带刷新会员态。 */
-    suspend fun me(): Outcome<UserDto> = when (val r = apiData { api.me() }) {
+    suspend fun me(): Outcome<UserDto> {
+        val owner = CurrentAccount.key
+        val token = tokenStore.token
+        val result = apiData { api.me() }
+        if (CurrentAccount.key != owner || tokenStore.token != token) return Outcome.Error("登录状态已变化")
+        return when (val r = result) {
         is Outcome.Success -> {
             MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
             Outcome.Success(r.data.user ?: UserDto())
         }
         is Outcome.Error -> r
+        }
     }
 
     /** 本地缓存的用户信息（含头像/身份/角色），用于即时展示与离线兜底。 */
@@ -61,29 +75,31 @@ class AuthRepository(
      * （Coil 命中磁盘缓存不重复下载）。任一步成功都刷新会员态并更新本地缓存；网络失败回退缓存（离线）。
      */
     suspend fun syncUser(): Outcome<MeData> {
+        val account = CurrentAccount.key
         val cached = userStore.cached()
         return when (val r = apiData { api.meLight() }) {
             is Outcome.Success -> {
+                if (CurrentAccount.key != account) return Outcome.Error("账号已切换")
                 val light = r.data
                 MemberState.setAccess(light.roles, light.appAccessLevel)
-                val cachedAvatar = cached?.user?.avatar
-                val avatarChanged = cachedAvatar.isNullOrBlank() ||
-                    cached?.updatedAt == null || light.updatedAt == null ||
-                    light.updatedAt > cached.updatedAt
-                if (avatarChanged) {
+                if (needsFullProfile(cached, light)) {
                     when (val full = apiData { api.me() }) {
                         is Outcome.Success -> {
+                            if (CurrentAccount.key != account) return Outcome.Error("账号已切换")
                             MemberState.setAccess(full.data.roles, full.data.appAccessLevel)
                             userStore.save(full.data)
                             Outcome.Success(full.data)
                         }
                         // 完整接口失败：用轻量文本 + 旧缓存头像兜底（不丢头像）
-                        is Outcome.Error -> light.copy(user = light.user?.copy(avatar = cachedAvatar))
-                            .also { userStore.save(it) }.let { Outcome.Success(it) }
+                        is Outcome.Error -> {
+                            if (CurrentAccount.key != account) return Outcome.Error("账号已切换")
+                            mergeProfileWithoutAvatar(cached, light)
+                                .also { userStore.save(it) }.let { Outcome.Success(it) }
+                        }
                     }
                 } else {
                     // 头像没变：只更新文本/身份/角色，沿用缓存头像（不请求头像 → 省流量）
-                    light.copy(user = light.user?.copy(avatar = cachedAvatar))
+                    mergeProfileWithoutAvatar(cached, light)
                         .also { userStore.save(it) }.let { Outcome.Success(it) }
                 }
             }

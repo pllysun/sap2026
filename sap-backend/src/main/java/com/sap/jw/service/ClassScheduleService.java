@@ -39,6 +39,11 @@ public class ClassScheduleService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ClassScheduleService.class);
     private static final int PAGE_SIZE = 50_000;
     private static final long REQUEST_INTERVAL_MS = 1_200L;
+    private static final String BATCH_ID_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    private static final String LOG_COLUMNS = "id,batch_id AS batchId,term_value AS term,source_type AS sourceType," +
+            "trigger_type AS triggerType,actor_id AS actorId,actor_name AS actorName,status,message,row_count AS rowCount," +
+            "phase,completed_pages AS completedPages,total_pages AS totalPages,fetched_rows AS fetchedRows," +
+            "reported_rows AS reportedRows,started_at AS startedAt,finished_at AS finishedAt";
     private static final String CLASS_PAGE = "/jsxsd/kbcx/kbxx_xzb";
     private static final String[][] TARGETS = {
             {"class", "/jsxsd/kbcx/kbxx_xzb_ifr"},
@@ -114,6 +119,12 @@ public class ClassScheduleService {
                 "status VARCHAR(20) NOT NULL, message VARCHAR(1000), row_count INT DEFAULT 0, " +
                 "started_at DATETIME DEFAULT CURRENT_TIMESTAMP, finished_at DATETIME, " +
                 "INDEX idx_pull_batch (batch_id), INDEX idx_pull_time (started_at))");
+        ensureColumn("jw_class_schedule_pull_log", "phase", "VARCHAR(24)");
+        ensureColumn("jw_class_schedule_pull_log", "completed_pages", "INT");
+        ensureColumn("jw_class_schedule_pull_log", "total_pages", "INT");
+        ensureColumn("jw_class_schedule_pull_log", "fetched_rows", "INT");
+        ensureColumn("jw_class_schedule_pull_log", "reported_rows", "INT");
+        ensureColumn("jw_class_schedule_pull_log", "term_count", "INT");
         jdbc.execute("CREATE TABLE IF NOT EXISTS jw_class_schedule_pull_schedule (" +
                 "id TINYINT PRIMARY KEY, enabled TINYINT NOT NULL DEFAULT 0, schedule_type VARCHAR(16) NOT NULL DEFAULT 'DAILY', " +
                 "hour_num TINYINT NOT NULL DEFAULT 0, minute_num TINYINT NOT NULL DEFAULT 0, " +
@@ -147,15 +158,26 @@ public class ClassScheduleService {
      */
     public Map<String, Object> pullAs(Long credentialUserId, String account, String term,
                                       String triggerType, Long actorId, String actorName) {
-        return pullAs(credentialUserId, account, term, triggerType, actorId, actorName, null);
+        return pullAs(credentialUserId, account, term, triggerType, actorId, actorName, null, null);
+    }
+
+    /** 短信续登复用同一个批次，前端进度不会被拆成两次采集。 */
+    public Map<String, Object> pullAs(Long credentialUserId, String account, String term,
+                                      String triggerType, Long actorId, String actorName, String batchId) {
+        return pullAs(credentialUserId, account, term, triggerType, actorId, actorName, null, batchId);
     }
 
     /** 使用一次性明文密码建立临时会话；密码不会保存到会员凭据或会话缓存。 */
     public Map<String, Object> pullWithCredentials(Long actorId, String account, String rawPassword,
                                                     String term, String triggerType, String actorName) {
+        return pullWithCredentials(actorId, account, rawPassword, term, triggerType, actorName, null);
+    }
+
+    public Map<String, Object> pullWithCredentials(Long actorId, String account, String rawPassword,
+                                                    String term, String triggerType, String actorName, String batchId) {
         if (account == null || account.isBlank()) throw new BusinessException(400, "请输入教务账号");
         if (rawPassword == null || rawPassword.isBlank()) throw new BusinessException(400, "请输入教务密码");
-        return pullAs(actorId, account.trim(), term, triggerType, actorId, actorName, rawPassword);
+        return pullAs(actorId, account.trim(), term, triggerType, actorId, actorName, rawPassword, batchId);
     }
 
     /** 自动任务读取数据库密文并在内存中解密，随后走一次性会话。 */
@@ -170,15 +192,15 @@ public class ClassScheduleService {
             log.warn("读取班级课表自动采集凭据失败", e);
         }
         String password = credentialService.decryptEncryptedPassword(encrypted);
-        return pullAs(credentialUserId, account, term, "AUTO", actorId, actorName, password);
+        return pullAs(credentialUserId, account, term, "AUTO", actorId, actorName, password, null);
     }
 
     private Map<String, Object> pullAs(Long credentialUserId, String account, String term,
                                        String triggerType, Long actorId, String actorName,
-                                       String rawPassword) {
+                                       String rawPassword, String requestedBatchId) {
         if (!pullLock.tryLock()) throw new BusinessException(409, "已有班级课表采集任务正在执行");
-        String batchId = Long.toString(System.currentTimeMillis(), 36) + "-" +
-                Integer.toHexString(System.identityHashCode(this));
+        String batchId = requestedBatchId != null && requestedBatchId.matches(BATCH_ID_PATTERN)
+                ? requestedBatchId : java.util.UUID.randomUUID().toString();
         String displayActor = actorName;
         try {
             // 先解析触发人，再解析教务账号；即使账号未绑定、请求被拒绝，失败日志也要保留真实操作者，
@@ -190,9 +212,13 @@ public class ClassScheduleService {
             String cleanAccount = account == null || account.isBlank()
                     ? credentialService.defaultAccount(credentialUserId) : account.trim();
             if (cleanAccount == null || cleanAccount.isBlank()) throw new BusinessException("当前账号尚未绑定教务账号，无法采集");
+            appendLog(batchId, term, "all", triggerType, actorId, displayActor,
+                    "RUNNING", "正在验证教务身份", 0, null, "AUTH", null, null);
             JwHttpSession session = rawPassword == null || rawPassword.isBlank()
                     ? sessionManager.getSession(credentialUserId, cleanAccount)
                     : sessionManager.loginEphemeral(cleanAccount, rawPassword);
+            appendLog(batchId, term, "all", triggerType, actorId, displayActor,
+                    "RUNNING", "教务身份已验证，正在读取学期列表", 0, null, "TERMS", null, null);
             List<TermOption> terms = discoverTerms(session);
             if (term != null && !term.isBlank()) {
                 String wanted = term.trim();
@@ -200,6 +226,10 @@ public class ClassScheduleService {
                 if (terms.isEmpty()) terms = List.of(new TermOption(wanted, wanted));
             }
             if (terms.isEmpty()) throw new BusinessException("教务系统未返回可用学期");
+
+            appendLog(batchId, term, "all", triggerType, actorId, displayActor,
+                    "RUNNING", "共 " + terms.size() + " 个学期，每个学期采集班级、教师、教室和课程四类数据",
+                    0, null, "COLLECT", null, terms.size());
 
             Map<String, Integer> totals = new LinkedHashMap<>();
             for (TermOption selected : terms) {
@@ -211,11 +241,12 @@ public class ClassScheduleService {
                 upsertTerm(selected, counts, session);
             }
             appendLog(batchId, term, "all", triggerType, actorId, displayActor, "SUCCESS",
-                    "采集完成：" + totals, totals.values().stream().mapToInt(Integer::intValue).sum(), LocalDateTime.now());
+                    "采集完成：" + totals, totals.values().stream().mapToInt(Integer::intValue).sum(), LocalDateTime.now(),
+                    "COMPLETE", null, terms.size());
             return Map.of("batchId", batchId, "terms", terms.size(), "counts", totals);
         } catch (MfaRequiredException e) {
             appendLog(batchId, term, "all", triggerType, actorId, displayActor,
-                    "PENDING", "等待短信二次验证", 0, LocalDateTime.now());
+                    "PENDING", "等待短信二次验证", 0, null, "AUTH", null, null);
             throw e;
         } catch (RuntimeException e) {
             appendLog(batchId, term, "all", triggerType, actorId, displayActor, "FAILED", safe(e.getMessage()), 0, LocalDateTime.now());
@@ -233,6 +264,8 @@ public class ClassScheduleService {
                                                  Long actorId, String actorName) throws Exception {
         Map<String, Map<String, String>> forms = new LinkedHashMap<>();
         for (String[] target : TARGETS) {
+            appendLog(batchId, term.value, target[0], triggerType, actorId, actorName,
+                    "RUNNING", "准备采集页面", 0, null, "PREPARING", null, null);
             throttle();
             String pageUrl = session.getJwglBase() + pageFor(target[0]);
             var response = session.getFollow(pageUrl, 6);
@@ -249,12 +282,16 @@ public class ClassScheduleService {
                     "RUNNING", "请求新版 JSON 数据", 0, null);
             try {
                 FetchResult fetched = fetchAll(session, target[1], pageFor(source),
-                        forms.getOrDefault(source, Map.of()), term.value);
+                        forms.getOrDefault(source, Map.of()), term.value, page ->
+                                appendLog(batchId, term.value, source, triggerType, actorId, actorName,
+                                        "RUNNING", "已解析 " + page.completedPages + " 页，读取 " + page.fetchedRows +
+                                                " 条，去重后 " + page.uniqueRows + " 条", page.uniqueRows, null,
+                                        "COLLECT", page, null));
                 fetchedSources.put(source, fetched);
                 appendLog(batchId, term.value, source, triggerType, actorId, actorName,
-                        "RUNNING", "读取 " + fetched.rows.size() + " 条，待写入（分页 " + fetched.pages + " 页" +
+                        "COLLECTED", "读取 " + fetched.rows.size() + " 条，待写入（分页 " + fetched.pages + " 页" +
                                 (fetched.reportedCount >= 0 ? "，源站总数 " + fetched.reportedCount : "") + "）",
-                        fetched.rows.size(), null);
+                        fetched.rows.size(), null, "READY", fetched.progress(), null);
             } catch (Exception e) {
                 appendLog(batchId, term.value, source, triggerType, actorId, actorName,
                         "FAILED", safe(e.getMessage()), 0, LocalDateTime.now());
@@ -263,6 +300,8 @@ public class ClassScheduleService {
         }
         Map<String, Integer> counts = new LinkedHashMap<>();
         try {
+            appendLog(batchId, term.value, null, triggerType, actorId, actorName,
+                    "RUNNING", "四类数据采集完整，正在统一写入数据库", 0, null, "WRITE", null, null);
             // 四个来源必须作为一个快照替换：网络阶段全部成功后才进入事务，任一张表
             // 写入失败都会回滚其它表，避免管理端看到“班级表已更新、教师/教室表仍是旧数据”的半套快照。
             transactionTemplate.executeWithoutResult(status -> {
@@ -286,19 +325,23 @@ public class ClassScheduleService {
             appendLog(batchId, term.value, source, triggerType, actorId, actorName,
                     "SUCCESS", "写入 " + fetched.rows.size() + " 条（分页 " + fetched.pages + " 页" +
                             (fetched.reportedCount >= 0 ? "，源站总数 " + fetched.reportedCount : "") + "）",
-                    fetched.rows.size(), LocalDateTime.now());
+                    fetched.rows.size(), LocalDateTime.now(), "COMPLETE", fetched.progress(), null);
         }
         return counts;
     }
 
-    private FetchResult fetchAll(JwHttpSession session, String path, String pagePath,
-                                 Map<String, String> form, String term) throws Exception {
+    FetchResult fetchAll(JwHttpSession session, String path, String pagePath,
+                         Map<String, String> form, String term,
+                         java.util.function.Consumer<PageProgress> onPage) throws Exception {
         // 服务器可能忽略过大的 pageSize（实测会回退到 1000），所以不能用
         // data.size() < PAGE_SIZE 作为唯一结束条件；优先依据 count 继续翻页。
         Map<String, JSONObject> unique = new LinkedHashMap<>();
         int page = 1;
         int reportedCount = -1;
         int fetchedCount = 0;
+        int effectivePageSize = 0;
+        int completedPages = 0;
+        int totalPages = -1;
         while (page <= 1000) {
             throttle();
             Map<String, String> params = new LinkedHashMap<>(form);
@@ -330,6 +373,8 @@ public class ClassScheduleService {
                 if (reportedCount > 0) {
                     throw new IllegalStateException("新版课表接口缺少数据字段: " + path);
                 }
+                if (reportedCount == 0) totalPages = 0;
+                onPage.accept(new PageProgress(completedPages, totalPages, fetchedCount, unique.size(), reportedCount));
                 break;
             }
             if (data.isEmpty()) {
@@ -339,8 +384,19 @@ public class ClassScheduleService {
                     throw new IllegalStateException("新版课表接口分页数据不完整: " + path +
                             "（已读取 " + fetchedCount + "/" + reportedCount + "）");
                 }
+                totalPages = completedPages;
+                onPage.accept(new PageProgress(completedPages, totalPages, fetchedCount, unique.size(), reportedCount));
                 break;
             }
+            if (effectivePageSize == 0) effectivePageSize = data.size();
+            if (reportedCount >= 0) totalPages = (int) Math.ceil((double) reportedCount / effectivePageSize);
+            completedPages = page;
+            if (unique.size() == before && (reportedCount < 0 || fetchedCount < reportedCount)) {
+                throw new IllegalStateException("新版课表接口分页参数未生效或结果重复: " + path);
+            }
+            // 每页解析并去重后立即提交结构化进度，不等待整类或整个学期结束。
+            onPage.accept(new PageProgress(completedPages, totalPages < 0 ? -1 : Math.max(completedPages, totalPages),
+                    fetchedCount, unique.size(), reportedCount));
             // 用原始行数而不是去重后的 unique.size() 对齐 count：班级页可能有少量
             // 完全重复行，教师页则可能有多位教师但共享同一教学安排。
             if (reportedCount >= 0 && fetchedCount >= reportedCount) break;
@@ -356,7 +412,7 @@ public class ClassScheduleService {
             page++;
         }
         if (page > 1000) throw new IllegalStateException("新版课表接口分页超过安全上限: " + path);
-        return new FetchResult(new ArrayList<>(unique.values()), Math.max(1, page), reportedCount);
+        return new FetchResult(new ArrayList<>(unique.values()), completedPages, reportedCount, fetchedCount);
     }
 
     private List<TermOption> discoverTerms(JwHttpSession session) throws Exception {
@@ -437,11 +493,10 @@ public class ClassScheduleService {
     }
 
     private void upsertTerm(TermOption term, Map<String, Integer> counts, JwHttpSession session) {
-        String start = null;
         try {
             // 教学日历也是教务请求，和四个 *_ifr 接口共用同一节流器，避免连续命中源站。
             throttle();
-            start = calendarService.getSemesterStart(session, term.value);
+            calendarService.getSemesterStart(session, term.value);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("教学日历请求被中断 term={}", term.value);
@@ -450,11 +505,11 @@ public class ClassScheduleService {
         int teacherCount = counts.getOrDefault("teacher", 0);
         int roomCount = counts.getOrDefault("room", 0);
         int courseCount = counts.getOrDefault("course", 0);
-        int affected = jdbc.update("UPDATE jw_class_schedule_term SET term_label=?,semester_start_date=?,row_count=?,class_count=?,teacher_count=?,room_count=?,course_count=?,last_collected_at=?,updated_at=? WHERE term_value=?",
-                term.label, start, classCount, classCount, teacherCount, roomCount, courseCount,
+        int affected = jdbc.update("UPDATE jw_class_schedule_term SET term_label=?,row_count=?,class_count=?,teacher_count=?,room_count=?,course_count=?,last_collected_at=?,updated_at=? WHERE term_value=?",
+                term.label, classCount, classCount, teacherCount, roomCount, courseCount,
                 LocalDateTime.now(), LocalDateTime.now(), term.value);
-        if (affected == 0) jdbc.update("INSERT INTO jw_class_schedule_term (term_value,term_label,semester_start_date,row_count,class_count,teacher_count,room_count,course_count,last_collected_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                term.value, term.label, start, classCount, classCount, teacherCount, roomCount, courseCount, LocalDateTime.now());
+        if (affected == 0) jdbc.update("INSERT INTO jw_class_schedule_term (term_value,term_label,row_count,class_count,teacher_count,room_count,course_count,last_collected_at) VALUES (?,?,?,?,?,?,?,?)",
+                term.value, term.label, classCount, classCount, teacherCount, roomCount, courseCount, LocalDateTime.now());
     }
 
     private void throttle() throws InterruptedException {
@@ -465,18 +520,30 @@ public class ClassScheduleService {
 
     private void appendLog(String batchId, String term, String source, String trigger, Long actorId,
                            String actorName, String status, String message, int rows, LocalDateTime finished) {
+        appendLog(batchId, term, source, trigger, actorId, actorName, status, message, rows, finished, null, null, null);
+    }
+
+    private void appendLog(String batchId, String term, String source, String trigger, Long actorId,
+                           String actorName, String status, String message, int rows, LocalDateTime finished,
+                           String phase, PageProgress page, Integer termCount) {
         try {
-            jdbc.update("INSERT INTO jw_class_schedule_pull_log (batch_id,term_value,source_type,trigger_type,actor_id,actor_name,status,message,row_count,finished_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            jdbc.update("INSERT INTO jw_class_schedule_pull_log (batch_id,term_value,source_type,trigger_type,actor_id,actor_name,status,message,row_count,finished_at," +
+                            "phase,completed_pages,total_pages,fetched_rows,reported_rows,term_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     batchId, term, source, trigger == null ? "MANUAL" : trigger, actorId,
-                    actorName == null ? "系统" : actorName, status, safe(message), rows, finished);
+                    actorName == null ? "系统" : actorName, status, safe(message), rows, finished, phase,
+                    page == null ? null : page.completedPages, page == null ? null : page.totalPages,
+                    page == null ? null : page.fetchedRows, page == null ? null : page.reportedRows, termCount);
         } catch (Exception e) { log.warn("班级课表采集日志写入失败", e); }
     }
 
     public List<Map<String, Object>> terms() {
-        return jdbc.queryForList("SELECT term_value AS value, term_label AS label, semester_start_date AS semesterStartDate, " +
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT term_value AS value, term_label AS label, " +
                 "row_count AS rowCount, class_count AS classCount, teacher_count AS teacherCount, " +
                 "room_count AS roomCount, course_count AS courseCount, last_collected_at AS lastCollectedAt " +
                 "FROM jw_class_schedule_term ORDER BY term_value DESC");
+        Map<String, String> calendar = calendarService.storedDates();
+        rows.forEach(row -> row.put("semesterStartDate", calendar.get(String.valueOf(row.get("value")))));
+        return rows;
     }
 
     public List<Map<String, Object>> classes(String term, String college, String major) {
@@ -499,6 +566,15 @@ public class ClassScheduleService {
     }
 
     public Map<String, Object> schedule(String term, String college, String major, String grade, String className) {
+        return scheduleData(term, college, major, grade, className, true);
+    }
+
+    /** 批量探测不重复读取所有学期及所有校历，仍复用班级索引查询与四表关联。 */
+    public Map<String, Object> scheduleForSync(String term, String college, String major, String grade, String className) {
+        return scheduleData(term, college, major, grade, className, false);
+    }
+
+    private Map<String, Object> scheduleData(String term, String college, String major, String grade, String className, boolean includeTerms) {
         // 班级页已经包含大部分字段。补全字段使用按关联键命中的相关子查询，
         // 让数据库先通过班级复合索引筛出目标班级，再按四表 join 索引查找，
         // 避免每次切换班级都物化并扫描三张全量聚合临时表。
@@ -532,18 +608,132 @@ public class ClassScheduleService {
             course.put("weeks", value(row, "week_range")); course.put("room", value(row, "room_name"));
             course.put("type", ""); courses.add(course);
         }
-        String start = null;
-        List<Map<String, Object>> termRows = jdbc.queryForList("SELECT semester_start_date FROM jw_class_schedule_term WHERE term_value=?", term);
-        if (!termRows.isEmpty()) start = value(termRows.get(0), "semester_start_date");
+        String start = calendarService.getSemesterStart((JwHttpSession) null, term);
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("term", term); result.put("terms", terms());
+        result.put("term", term); result.put("terms", includeTerms ? terms() : List.of());
         result.put("weekdays", List.of("星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"));
         result.put("courses", courses); result.put("remarks", List.of()); result.put("semesterStartDate", start);
         return result;
     }
 
     public List<Map<String, Object>> logs(int limit) {
-        return jdbc.queryForList("SELECT id,batch_id AS batchId,term_value AS term,source_type AS sourceType,trigger_type AS triggerType,actor_id AS actorId,actor_name AS actorName,status,message,row_count AS rowCount,started_at AS startedAt,finished_at AS finishedAt FROM jw_class_schedule_pull_log ORDER BY id DESC LIMIT ?", Math.min(Math.max(limit, 1), 200));
+        return jdbc.queryForList("SELECT " + LOG_COLUMNS + " FROM jw_class_schedule_pull_log ORDER BY started_at DESC,id DESC LIMIT ?", Math.min(Math.max(limit, 1), 200));
+    }
+
+    public void queuePull(String batchId, String term, Long actorId) {
+        validateBatchId(batchId);
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM jw_class_schedule_pull_log WHERE batch_id=?", Integer.class, batchId) > 0)
+            throw new BusinessException(409, "该采集批次已存在，请刷新进度");
+        User actor = actorId == null ? null : userMapper.selectById(actorId);
+        String name = actor == null ? "系统" : first(actor.getName(), actor.getStudentId());
+        appendLog(batchId, term, "all", "MANUAL", actorId, name, "QUEUED", "任务已创建，正在准备验证身份", 0, null, "AUTH", null, null);
+    }
+
+    public void recordTaskState(String batchId, String status, String message) {
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT " + LOG_COLUMNS +
+                " FROM jw_class_schedule_pull_log WHERE batch_id=? " +
+                "ORDER BY CASE WHEN source_type='all' THEN 0 ELSE 1 END,id DESC LIMIT 1", batchId);
+        if (rows.isEmpty()) return;
+        Map<String, Object> row = rows.get(0);
+        appendLog(batchId, value(row, "term"), "all", value(row, "triggerType"), longNumber(row.get("actorId"), null),
+                value(row, "actorName"), status, message, 0,
+                "FAILED".equals(status) ? LocalDateTime.now() : null, "AUTH", null, null);
+    }
+
+    /** 后台重启后旧线程不会继续执行，不能让它们永远停留在“进行中”。 */
+    public void recoverInterruptedPulls() {
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT l.batch_id AS batchId FROM jw_class_schedule_pull_log l JOIN " +
+                "(SELECT MAX(id) AS lastId,MAX(CASE WHEN source_type='all' THEN id END) AS stateId " +
+                "FROM jw_class_schedule_pull_log GROUP BY batch_id) b ON l.id=COALESCE(b.stateId,b.lastId) " +
+                "WHERE l.status IN ('QUEUED','RUNNING','PENDING')");
+        rows.forEach(row -> recordTaskState(String.valueOf(row.get("batchId")), "FAILED", "服务已重启，本次采集已中断，请重新发起采集"));
+    }
+
+    /** 每个学期/来源仅返回最新状态；数量取该来源最大值，失败事件不会抹掉已获取数量。 */
+    public Map<String, Object> progress(String batchId) {
+        validateBatchLookup(batchId);
+        List<Map<String, Object>> events = jdbc.queryForList("SELECT l.id,l.batch_id AS batchId,l.term_value AS term," +
+                "l.source_type AS sourceType,l.trigger_type AS triggerType,l.actor_id AS actorId,l.actor_name AS actorName," +
+                "l.status,l.message,l.phase,s.rowCount,s.completedPages,s.totalPages,s.fetchedRows,s.reportedRows," +
+                "l.started_at AS startedAt,l.finished_at AS finishedAt FROM jw_class_schedule_pull_log l JOIN " +
+                "(SELECT MAX(id) AS lastId,MAX(row_count) AS rowCount,MAX(completed_pages) AS completedPages," +
+                "MAX(total_pages) AS totalPages,MAX(fetched_rows) AS fetchedRows,MAX(reported_rows) AS reportedRows " +
+                "FROM jw_class_schedule_pull_log WHERE batch_id=? GROUP BY term_value,source_type) s ON s.lastId=l.id ORDER BY l.id DESC", batchId);
+        Map<String, Object> meta = jdbc.queryForMap("SELECT MIN(started_at) AS startedAt,MAX(term_count) AS totalTerms," +
+                "COUNT(*) AS eventCount FROM jw_class_schedule_pull_log WHERE batch_id=?", batchId);
+        Map<String, Object> state = events.stream().filter(e -> "all".equals(e.get("sourceType"))).findFirst()
+                .orElse(events.isEmpty() ? Map.of() : events.getFirst());
+        List<Map<String, Object>> sources = events.stream().filter(e -> Set.of("class", "teacher", "room", "course")
+                .contains(String.valueOf(e.get("sourceType")))).toList();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        sources.forEach(event -> counts.put(event.get("term") + ":" + event.get("sourceType"), number(event.get("rowCount"), 0)));
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("batchId", batchId);
+        result.put("status", state.getOrDefault("status", "QUEUED"));
+        result.put("term", state.get("term"));
+        result.put("actorName", state.get("actorName"));
+        result.put("actorId", state.get("actorId"));
+        result.put("triggerType", state.get("triggerType"));
+        result.put("startedAt", meta.get("startedAt"));
+        result.put("finishedAt", state.get("finishedAt"));
+        result.put("totalTerms", number(meta.get("totalTerms"), (int) sources.stream().map(e -> e.get("term")).distinct().count()));
+        result.put("eventCount", meta.get("eventCount"));
+        result.put("sources", sources);
+        result.put("completedSources", sources.stream().filter(e -> "SUCCESS".equals(e.get("status"))).count());
+        result.put("completedTerms", sources.stream().filter(e -> "SUCCESS".equals(e.get("status")))
+                .collect(java.util.stream.Collectors.groupingBy(e -> String.valueOf(e.get("term")), java.util.stream.Collectors.counting()))
+                .values().stream().filter(count -> count == 4).count());
+        result.put("counts", counts);
+        result.put("totalRows", counts.values().stream().mapToInt(Integer::intValue).sum());
+        result.put("latest", events.isEmpty() ? null : events.get(0));
+        return result;
+    }
+
+    public Map<String, Object> batches(int page, int size, String status, String search) {
+        page = Math.max(1, page); size = Math.min(30, Math.max(1, size));
+        // 恢复历史任务会追加新 ID，但不能把旧批次排到今天的采集之前。
+        String base = " FROM (SELECT batch_id,MIN(started_at) AS batchStartedAt,MIN(id) AS firstId,MAX(id) AS lastId,MAX(CASE WHEN source_type='all' THEN id END) AS stateId " +
+                "FROM jw_class_schedule_pull_log GROUP BY batch_id) b JOIN jw_class_schedule_pull_log e ON e.id=COALESCE(b.stateId,b.lastId)";
+        String where = " WHERE 1=1";
+        List<Object> args = new ArrayList<>();
+        if (status != null && !status.isBlank() && !"ALL".equals(status)) {
+            if ("RUNNING".equals(status)) where += " AND e.status IN ('RUNNING','QUEUED')";
+            else { where += " AND e.status=?"; args.add(status); }
+        }
+        if (search != null && !search.isBlank()) {
+            where += " AND (e.batch_id LIKE ? OR e.term_value LIKE ? OR e.actor_name LIKE ?)";
+            String query = "%" + search.trim() + "%";
+            args.add(query); args.add(query); args.add(query);
+        }
+        Long total = jdbc.queryForObject("SELECT COUNT(*)" + base + where, Long.class, args.toArray());
+        args.add(size); args.add((page - 1) * size);
+        List<Map<String, Object>> ids = jdbc.queryForList("SELECT b.batch_id AS batchId" + base + where +
+                " ORDER BY b.batchStartedAt DESC,b.firstId DESC LIMIT ? OFFSET ?", args.toArray());
+        List<Map<String, Object>> records = ids.stream().map(row -> progress(String.valueOf(row.get("batchId")))).toList();
+        Map<String, Object> stats = jdbc.queryForMap("SELECT COUNT(*) AS total," +
+                "COALESCE(SUM(CASE WHEN e.status='SUCCESS' THEN 1 ELSE 0 END),0) AS success," +
+                "COALESCE(SUM(CASE WHEN e.status='FAILED' THEN 1 ELSE 0 END),0) AS failed" + base);
+        return Map.of("records", records, "total", total == null ? 0 : total, "page", page, "size", size, "stats", stats);
+    }
+
+    public Map<String, Object> history(String batchId, int page, int size) {
+        validateBatchLookup(batchId);
+        page = Math.max(1, page); size = Math.min(100, Math.max(1, size));
+        Long total = jdbc.queryForObject("SELECT COUNT(*) FROM jw_class_schedule_pull_log WHERE batch_id=?", Long.class, batchId);
+        List<Map<String, Object>> records = jdbc.queryForList("SELECT " + LOG_COLUMNS +
+                " FROM jw_class_schedule_pull_log WHERE batch_id=? ORDER BY started_at DESC,id DESC LIMIT ? OFFSET ?", batchId, size, (page - 1) * size);
+        return Map.of("records", records, "total", total == null ? 0 : total, "page", page, "size", size);
+    }
+
+    private static void validateBatchId(String batchId) {
+        if (batchId == null || !batchId.matches(BATCH_ID_PATTERN)) throw new BusinessException(400, "无效的采集批次");
+    }
+
+    private static void validateBatchLookup(String batchId) {
+        // 旧版批次还使用过 base36 时间戳 + 随机后缀。查询需兼容已持久化的数据，
+        // 新建任务仍严格使用 UUID；这里仅作为参数化 SQL 的查询键，不作为路径使用。
+        if (batchId == null || !batchId.matches("[A-Za-z0-9_-]{1,64}"))
+            throw new BusinessException(400, "无效的采集批次");
     }
 
     public Map<String, Object> scheduleConfig() {
@@ -729,5 +919,8 @@ public class ClassScheduleService {
         }
     }
     private record TermOption(String value, String label) {}
-    private record FetchResult(List<JSONObject> rows, int pages, int reportedCount) {}
+    record PageProgress(int completedPages, int totalPages, int fetchedRows, int uniqueRows, int reportedRows) {}
+    record FetchResult(List<JSONObject> rows, int pages, int reportedCount, int fetchedCount) {
+        PageProgress progress() { return new PageProgress(pages, pages, fetchedCount, rows.size(), reportedCount); }
+    }
 }

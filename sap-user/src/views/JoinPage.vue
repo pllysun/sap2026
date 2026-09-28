@@ -1,4 +1,6 @@
 <template>
+  <div class="page join-page">
+    <PageHeader title="加入软件协会" label="GROW WITH US / 同行成长" description="和志同道合的伙伴，一起把想法变成作品。" />
   <div class="join-wrapper">
     <div class="join-content anim-in">
       <!-- 审核已通过 或 已是成员 -->
@@ -160,9 +162,11 @@
       </template>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
@@ -252,15 +256,19 @@ onMounted(async () => {
 
 <style scoped>
 .join-wrapper {
-  min-height: calc(100vh - 150px);
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 8px 0 30px;
 }
 .join-content {
-  max-width: 480px;
+  max-width: 600px;
   width: 100%;
+  background: white;
+  border: 1px solid var(--border-blue);
+  border-radius: 20px;
+  padding: 20px 28px;
 }
 .join-result {
   text-align: center;
@@ -274,7 +282,7 @@ onMounted(async () => {
   padding: 20px 0;
 }
 .join-info-card {
-  background: rgba(139,115,85,0.04);
+  background: var(--surface-blue);
   border-radius: 12px;
   padding: 16px 20px;
 }
@@ -282,7 +290,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(139,115,85,0.08);
+  border-bottom: 1px solid var(--border-blue);
 }
 .join-info-row:last-child { border-bottom: none; }
 .join-info-label {
@@ -301,15 +309,15 @@ onMounted(async () => {
 .qr-tab {
   padding: 8px 20px;
   border-radius: 20px;
-  border: 1px solid #e0d5c3;
+  border: 1px solid #c3d2e0;
   background: transparent;
   cursor: pointer;
   font-size: 14px;
-  color: #8b7355;
+  color: #55708b;
   transition: all 0.2s;
 }
 .qr-tab.active {
-  background: linear-gradient(135deg, #c9a96e, #8b7355);
+  background: linear-gradient(135deg, #6e9cc9, #55708b);
   color: #fff;
   border-color: transparent;
 }
@@ -330,24 +338,25 @@ onMounted(async () => {
 .input-field {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #e0d5c3;
+  border: 1px solid #c3d2e0;
   border-radius: 10px;
   font-size: 15px;
   outline: none;
   transition: border 0.2s;
 }
 .input-field:focus {
-  border-color: #c9a96e;
+  border-color: #6e9cc9;
 }
 
 @media (max-width: 768px) {
   .join-wrapper {
-    min-height: calc(100vh - 100px);
-    padding: 16px 12px;
+    min-height: 0;
+    padding: 0;
     align-items: flex-start;
   }
   .join-content {
     max-width: 100%;
+    padding: 16px;
   }
   .join-result {
     padding: 28px 8px;
@@ -406,19 +415,19 @@ onMounted(async () => {
 .success-icon-wrap {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #f5f0e6 0%, #fae8c8 100%);
+  background: linear-gradient(135deg, #e6eef5 0%, #cbe1f8 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
-  box-shadow: 0 8px 24px rgba(201, 169, 110, 0.2);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
 }
 .success-icon {
   font-size: 40px;
 }
 .gradient-text {
-  background: linear-gradient(135deg, #8b7355 0%, #c9a96e 100%);
+  background: linear-gradient(135deg, #55708b 0%, #6e9cc9 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -428,7 +437,7 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(224, 213, 195, 0.4);
+  border: 1px solid rgba(191, 219, 254, 0.4);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .premium-card:hover {
@@ -463,9 +472,9 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  background: #fdfcfb;
+  background: #fbfcfd;
   border-radius: 12px;
-  border: 1px solid #f2eadb;
+  border: 1px solid #dbe6f2;
 }
 .premium-info-item .label {
   color: #888;
@@ -478,8 +487,8 @@ onMounted(async () => {
   gap: 12px;
 }
 .copy-btn {
-  background: #f5f0e6;
-  color: #8b7355;
+  background: #e6eef5;
+  color: #55708b;
   border: none;
   padding: 6px 14px;
   border-radius: 20px;
@@ -489,7 +498,7 @@ onMounted(async () => {
   transition: all 0.2s;
 }
 .copy-btn:hover {
-  background: #eadecb;
+  background: #cbdbea;
 }
 .qr-glass-container {
   display: flex;
@@ -497,9 +506,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: linear-gradient(145deg, #ffffff 0%, #fefcfb 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #fbfdfe 100%);
   border-radius: 16px;
-  border: 1px dashed #e0d5c3;
+  border: 1px dashed #c3d2e0;
 }
 .premium-qr {
   width: 200px;
@@ -544,7 +553,7 @@ onMounted(async () => {
   justify-content: center;
   width: 100%;
   height: 56px;
-  background: linear-gradient(135deg, #2a2a2a 0%, #111111 100%);
+  background: var(--primary);
   color: #fff !important;
   font-size: 16px;
   font-weight: 700;
@@ -556,7 +565,7 @@ onMounted(async () => {
 .giant-primary-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 16px 36px rgba(0,0,0,0.25);
-  background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+  background: var(--primary-dark);
 }
 
 @keyframes slideUp {

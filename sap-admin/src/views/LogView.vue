@@ -32,78 +32,24 @@
 
     <!-- 日历热力图 -->
     <div class="zen-card" style="margin-bottom: 16px;">
-      <div class="stat-title">🔥 操作日志活跃度（近一年）</div>
+      <div class="stat-title">操作日志活跃度 · 永久保留
+        <el-date-picker v-model="heatmapYear" type="year" value-format="YYYY" :clearable="false" style="width:120px;margin-left:16px" @change="loadCalendarHeatmap" />
+      </div>
       <div ref="calendarChart" class="calendar-chart-box"></div>
     </div>
 
-    <!-- 日志列表 -->
-    <div class="zen-card">
-      <div class="filter-bar">
-        <el-select v-model="filterType" placeholder="操作类型" clearable style="width: 130px" @change="loadLogs">
-          <el-option label="查询" value="查询" />
-          <el-option label="新增" value="新增" />
-          <el-option label="修改" value="修改" />
-          <el-option label="删除" value="删除" />
-        </el-select>
-        <el-select v-model="filterMethod" placeholder="HTTP方法" clearable style="width: 130px" @change="loadLogs">
-          <el-option label="GET" value="GET" />
-          <el-option label="POST" value="POST" />
-          <el-option label="PUT" value="PUT" />
-          <el-option label="DELETE" value="DELETE" />
-        </el-select>
-        <el-tag effect="plain" style="margin-left: auto">
-          共 {{ total }} 条记录
-        </el-tag>
-      </div>
-
-      <el-table :data="logList" stripe style="width: 100%" size="small">
-        <el-table-column prop="requestTime" label="时间" width="170" />
-        <el-table-column prop="userName" label="操作者" width="100" />
-        <el-table-column prop="ip" label="IP" width="140" />
-        <el-table-column prop="description" label="操作描述" min-width="160" />
-        <el-table-column prop="operationType" label="类型" width="80">
-          <template #default="{ row }">
-            <el-tag :type="opTypeTag(row.operationType)" size="small" effect="plain">{{ row.operationType }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="httpMethod" label="方法" width="80">
-          <template #default="{ row }">
-            <el-tag :type="httpMethodTag(row.httpMethod)" size="small" effect="dark" round>{{ row.httpMethod }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="path" label="路径" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="duration" label="耗时" width="80">
-          <template #default="{ row }">{{ row.duration }}ms</template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-bar">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[20, 50, 100]"
-          layout="sizes, prev, pager, next, jumper"
-          @current-change="loadLogs"
-          @size-change="loadLogs"
-        />
-      </div>
-    </div>
+    <LogExplorer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
-import { getLogList, getLogStats } from '../api'
+import { getLogStats } from '../api'
 import request from '../utils/request'
 import * as echarts from 'echarts'
+import LogExplorer from './LogExplorer.vue'
+const heatmapYear = ref(String(new Date().getFullYear()))
 
-const logList = ref([])
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const filterType = ref('')
-const filterMethod = ref('')
 
 const pieChart = ref(null)
 const barChart = ref(null)
@@ -127,28 +73,6 @@ const chartPlaceholderText = (hasData) => {
 const calendarChart = ref(null)
 let calendarInstance = null
 
-const opTypeTag = (t) => {
-  const map = { '查询': '', '新增': 'success', '修改': 'warning', '删除': 'danger' }
-  return map[t] || 'info'
-}
-
-const httpMethodTag = (m) => {
-  const map = { 'GET': 'info', 'POST': 'success', 'PUT': 'warning', 'DELETE': 'danger' }
-  return map[m] || ''
-}
-
-const loadLogs = async () => {
-  try {
-    const res = await getLogList({
-      current: currentPage.value,
-      size: pageSize.value,
-      operationType: filterType.value || undefined,
-      httpMethod: filterMethod.value || undefined
-    })
-    logList.value = res.data?.records || []
-    total.value = Number(res.data?.total || 0)
-  } catch (e) {}
-}
 
 const loadStats = async () => {
   statsStatus.value = 'loading'
@@ -228,7 +152,7 @@ const renderLine = (data) => {
 
 const loadCalendarHeatmap = async () => {
   try {
-    const res = await request.get('/api/log/calendar', { params: { days: 365 } })
+    const res = await request.get('/api/log/calendar-year', { params: { year: heatmapYear.value } })
     const data = res.data || []
     renderCalendar(data)
   } catch (e) {}
@@ -236,19 +160,8 @@ const loadCalendarHeatmap = async () => {
 
 const renderCalendar = (data) => {
   if (!calendarChart.value) return
-  calendarInstance = echarts.init(calendarChart.value)
+  calendarInstance ||= echarts.init(calendarChart.value)
 
-  const today = new Date()
-  const oneYearAgo = new Date(today)
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
-  oneYearAgo.setDate(oneYearAgo.getDate() + 1)
-
-  const rangeStart = oneYearAgo.getFullYear() + '-' +
-    String(oneYearAgo.getMonth() + 1).padStart(2, '0') + '-' +
-    String(oneYearAgo.getDate()).padStart(2, '0')
-  const rangeEnd = today.getFullYear() + '-' +
-    String(today.getMonth() + 1).padStart(2, '0') + '-' +
-    String(today.getDate()).padStart(2, '0')
 
   calendarInstance.setOption({
     tooltip: {
@@ -273,7 +186,7 @@ const renderCalendar = (data) => {
       left: 60,
       right: 30,
       bottom: 50,
-      range: [rangeStart, rangeEnd],
+      range: heatmapYear.value,
       cellSize: ['auto', 15],
       splitLine: { show: false },
       itemStyle: {
@@ -300,7 +213,6 @@ const handleResize = () => {
 }
 
 onMounted(async () => {
-  loadLogs()
   await nextTick()
   loadStats()
   loadCalendarHeatmap()
@@ -317,6 +229,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.log-page .stat-card { display: block; }
+.log-page .chart-box { width: 100%; }
 .log-chart-empty {
   height: 200px;
   display: flex;
@@ -326,5 +240,3 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 </style>
-
-

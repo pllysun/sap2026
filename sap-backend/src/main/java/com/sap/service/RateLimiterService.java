@@ -50,6 +50,15 @@ public class RateLimiterService {
 
     private static final RedisScript<Long> SCRIPT = new DefaultRedisScript<>(LUA, Long.class);
 
+    // 从首次请求开始计窗，拒绝请求不会延长锁定。计数与过期在同一脚本中完成。
+    private static final RedisScript<Long> WINDOW_SCRIPT = new DefaultRedisScript<>("""
+            local count = tonumber(redis.call('GET', KEYS[1]) or '0')
+            if count >= tonumber(ARGV[1]) then return 0 end
+            count = redis.call('INCR', KEYS[1])
+            if count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[2]) end
+            return 1
+            """, Long.class);
+
     private static final long REDIS_COOLDOWN_MS = 30_000L;
 
     @Autowired
@@ -62,8 +71,13 @@ public class RateLimiterService {
     /** Redis 故障冷却截止(毫秒)：期间直接走内存，避免对挂掉的 Redis 反复重试。 */
     private final AtomicLong redisDownUntil = new AtomicLong(0L);
 
-    /** 内存桶：key → [tokens, lastTsMillis]。单实例下完全正确。 */
-    private final Map<String, double[]> buckets = new ConcurrentHashMap<>();
+    private record Bucket(double tokens, long touchedAt, double reclaimAt) {}
+    /** 不可变桶值，清理时若有新请求更新了该桶，ConcurrentHashMap 不会误删新值。 */
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+
+    private record Window(int count, long expiresAt) {}
+    private final Map<String, Window> windows = new java.util.HashMap<>();
+    private static final int MAX_MEMORY_WINDOWS = 100_000;
 
     /** 可注入时钟（测试用），默认系统时钟。 */
     private LongSupplier clock = System::currentTimeMillis;
@@ -78,6 +92,11 @@ public class RateLimiterService {
      */
     public boolean tryAcquire(String key, int capacity, double refillPerSec) {
         if (!props.isEnabled()) return true;
+        return tryAcquireEnforced(key, capacity, refillPerSec);
+    }
+
+    /** 注册策略由数据库开关控制，不被旧的全局 YAML 开关意外关闭。 */
+    public boolean tryAcquireEnforced(String key, int capacity, double refillPerSec) {
         long now = clock.getAsLong();
         if (props.isUseRedis() && redis != null && now >= redisDownUntil.get()) {
             try {
@@ -95,27 +114,65 @@ public class RateLimiterService {
         return tryAcquireMemory(key, capacity, refillPerSec, now);
     }
 
+    /** 固定时长窗口硬上限，用于注册间隔和小时/日额度；不受令牌桶的空闲清理影响。 */
+    public boolean tryAcquireWindow(String key, int limit, int windowSeconds) {
+        if (limit < 1 || windowSeconds < 1) throw new IllegalArgumentException("窗口与额度必须为正数");
+        if (!props.isEnabled()) return true;
+        return tryAcquireWindowEnforced(key, limit, windowSeconds);
+    }
+
+    public boolean tryAcquireWindowEnforced(String key, int limit, int windowSeconds) {
+        if (limit < 1 || windowSeconds < 1) throw new IllegalArgumentException("窗口与额度必须为正数");
+        long now = clock.getAsLong();
+        if (props.isUseRedis() && redis != null && now >= redisDownUntil.get()) {
+            try {
+                Long result = redis.execute(WINDOW_SCRIPT, Collections.singletonList(key),
+                        String.valueOf(limit), String.valueOf(windowSeconds * 1000L));
+                if (result != null) return result == 1L;
+            } catch (Exception e) {
+                log.warn("[注册限流] Redis 不可用，降级为本实例限流：{}", e.toString());
+            }
+            redisDownUntil.set(now + REDIS_COOLDOWN_MS);
+        }
+        synchronized (windows) {
+            Window window = windows.get(key);
+            if (window == null || window.expiresAt() <= now) {
+                if (window == null && windows.size() >= MAX_MEMORY_WINDOWS) {
+                    windows.values().removeIf(w -> w.expiresAt() <= now);
+                    if (windows.size() >= MAX_MEMORY_WINDOWS) return false;
+                }
+                windows.put(key, new Window(1, now + windowSeconds * 1000L));
+                return true;
+            }
+            if (window.count() >= limit) return false;
+            windows.put(key, new Window(window.count() + 1, window.expiresAt()));
+            return true;
+        }
+    }
+
     private boolean tryAcquireMemory(String key, int capacity, double refillPerSec, long now) {
-        // 用 ConcurrentHashMap.compute 在桶级原子完成「读-补充-扣减-回写」，
-        // 与 sweep 的 removeIf 串行化，杜绝「取到引用后被清理→重建出两个桶使限额翻倍」的竞态。
+        // 在桶级原子完成「读-补充-扣减-回写」，每次返回新值以避免清理删除刚更新的桶。
         boolean[] allowed = new boolean[1];
         buckets.compute(key, (k, b) -> {
-            if (b == null) b = new double[]{capacity, now};
-            double elapsed = Math.max(0, now - b[1]) / 1000.0;
-            double tokens = Math.min(capacity, b[0] + elapsed * refillPerSec);
+            double elapsed = b == null ? 0 : Math.max(0, now - b.touchedAt()) / 1000.0;
+            double tokens = b == null ? capacity : Math.min(capacity, b.tokens() + elapsed * refillPerSec);
             allowed[0] = tokens >= 1;
             if (allowed[0]) tokens -= 1;
-            b[0] = tokens;
-            b[1] = now;
-            return b;
+            // 动态配置允许低恢复速率：尚未补满的桶不能因空闲五分钟就恢复全部额度。
+            double fullAt = refillPerSec > 0 ? now + Math.ceil((capacity - tokens) * 1000 / refillPerSec)
+                    : Double.POSITIVE_INFINITY;
+            return new Bucket(tokens, now, Math.max(now + 300_000L, fullAt));
         });
         return allowed[0];
     }
 
-    /** 定时清理超过 5 分钟未访问的内存桶，防无界增长（重新访问会以满桶重建）。 */
+    /** 仅回收已补满且空闲五分钟的桶，重新访问时满桶重建不会增加额度。 */
     @Scheduled(fixedDelay = 600_000L)
     public void sweep() {
         long now = clock.getAsLong();
-        buckets.entrySet().removeIf(e -> now - e.getValue()[1] > 300_000L);
+        buckets.entrySet().removeIf(e -> now >= e.getValue().reclaimAt());
+        synchronized (windows) {
+            windows.values().removeIf(w -> w.expiresAt() <= now);
+        }
     }
 }

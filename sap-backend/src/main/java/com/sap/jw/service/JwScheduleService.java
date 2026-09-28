@@ -127,7 +127,9 @@ public class JwScheduleService {
             // 个人课表入口是自嵌套 iframe：外层只负责加载页面资源，浏览器随后
             // 以 iframe 导航头再次请求同一路由。服务端抓取也必须复现这第二跳，
             // 否则永远只能拿到 3KB 的空壳页面。
-            if (!parser.supports(html)) {
+            // 有些节点会先返回带空 qz-weeklyTable 的外层壳。它在结构上“像课表”，
+            // 但没有任何课程，必须继续走 iframe/别名请求，不能把空壳缓存成该学期的结果。
+            if (!hasUsableSchedule(html)) {
                 Map<String, String> iframeHeaders = new LinkedHashMap<>(headers);
                 iframeHeaders.put("Referer", url);
                 iframeHeaders.put("Sec-Fetch-Dest", "iframe");
@@ -136,7 +138,7 @@ public class JwScheduleService {
                 String iframeHtml = body(iframeResp);
                 mergeTermOptions(discoveredTerms, iframeHtml);
                 logFetch(url, iframeResp, iframeHtml, "primary-iframe");
-                if (parser.supports(iframeHtml)) return new FetchResult(iframeHtml, discoveredTerms, selected);
+                if (hasUsableSchedule(iframeHtml)) return new FetchResult(iframeHtml, discoveredTerms, selected);
 
                 // 源站外层壳声明的参数拼写为 viweType，但部分节点使用修正后的
                 // viewType；同时历史学期需要把 xnxq01id 一并带到 iframe 请求。
@@ -154,7 +156,7 @@ public class JwScheduleService {
                     mergeTermOptions(discoveredTerms, variantHtml);
                     selected = selectedTermOrFirst(variantHtml, discoveredTerms, selected);
                     logFetch(variant, variantResp, variantHtml, "primary-iframe-variant");
-                    if (parser.supports(variantHtml)) {
+                    if (hasUsableSchedule(variantHtml)) {
                         return new FetchResult(variantHtml, discoveredTerms, selected);
                     }
                 }
@@ -165,7 +167,7 @@ public class JwScheduleService {
                     String postHtml = postIframe == null ? "" : postIframe.body();
                     logFetchStatus(session.getJwglBase() + XSKB_PATH, postIframe == null ? -1 : postIframe.statusCode(),
                             postHtml, "primary-iframe-post");
-                    if (parser.supports(postHtml)) {
+                    if (hasUsableSchedule(postHtml)) {
                         return new FetchResult(postHtml, discoveredTerms, term.trim());
                     }
                 }
@@ -173,7 +175,7 @@ public class JwScheduleService {
 
             // 2026 年新版强智部分节点去掉 .do 后缀；先在同一已认证会话内尝试路由别名，
             // 不要因为页面路由变化就立即销毁会话并重复 CAS 登录。
-            if (!parser.supports(html)) {
+            if (!hasUsableSchedule(html)) {
                 for (String alias : XSKB_PATH_ALIASES) {
                     String aliasUrl = session.getJwglBase() + alias;
                     if (term != null && !term.isBlank()) {
@@ -184,7 +186,7 @@ public class JwScheduleService {
                     mergeTermOptions(discoveredTerms, aliasHtml);
                     selected = selectedTermOrFirst(aliasHtml, discoveredTerms, selected);
                     logFetch(aliasUrl, aliasResp, aliasHtml, "route-alias");
-                    if (parser.supports(aliasHtml)) {
+                    if (hasUsableSchedule(aliasHtml)) {
                         return new FetchResult(aliasHtml, discoveredTerms, selected);
                     }
                     // 父查询页（kbxx_xzb）把实际表格声明为 *_ifr；其 src 由浏览器
@@ -203,7 +205,7 @@ public class JwScheduleService {
                             String iframeHtml = iframePost == null ? "" : iframePost.body();
                             logFetchStatus(iframeUrl, iframePost == null ? -1 : iframePost.statusCode(), iframeHtml, "route-iframe-post");
                             log.info("课表异步接口响应 path={} apiShape={}", safePath(iframeUrl), apiShape(iframeHtml));
-                            if (parser.supports(iframeHtml)) return new FetchResult(iframeHtml, discoveredTerms, requestedTerm);
+                            if (hasUsableSchedule(iframeHtml)) return new FetchResult(iframeHtml, discoveredTerms, requestedTerm);
                         }
                     }
                     // 新版课表查询页把数据表放在 *_ifr 子路由中，页面脚本以 POST
@@ -216,7 +218,7 @@ public class JwScheduleService {
                                     Map.of("xnxq01id", requestedTerm));
                             String postHtml = post == null ? "" : post.body();
                             logFetchStatus(aliasUrl, -1, postHtml, "route-alias-post");
-                            if (parser.supports(postHtml)) return new FetchResult(postHtml, discoveredTerms, requestedTerm);
+                            if (hasUsableSchedule(postHtml)) return new FetchResult(postHtml, discoveredTerms, requestedTerm);
                         }
                     }
                 }
@@ -225,7 +227,7 @@ public class JwScheduleService {
             // 新版强智从首页进入课表页时，默认学期偶尔不会随首次 GET 写入上下文，
             // 页面只返回学期下拉而不返回 #kbtable。按页面已选学期补发一次明确查询，
             // 避免把正常会话误判为失效并重复登录。
-            if (!parser.supports(html) && (term == null || term.isBlank())) {
+            if (!hasUsableSchedule(html) && (term == null || term.isBlank())) {
                 String requestedTerm = selectedTermOrFirst(html, discoveredTerms, selected);
                 if (requestedTerm != null && !requestedTerm.isBlank()) {
                     // 与主请求保持一致：新版页面只有带 viweType=0 才会返回真实
@@ -235,7 +237,7 @@ public class JwScheduleService {
                     HttpResponse<byte[]> retry = session.getFollow(retryUrl, 6, headers);
                     String retryHtml = body(retry);
                     logFetch(retryUrl, retry, retryHtml, "selected-term");
-                    if (parser.supports(retryHtml)) return new FetchResult(retryHtml, discoveredTerms, requestedTerm);
+                    if (hasUsableSchedule(retryHtml)) return new FetchResult(retryHtml, discoveredTerms, requestedTerm);
                     html = retryHtml;
                 }
             }
@@ -286,6 +288,30 @@ public class JwScheduleService {
         String selected = selectedTerm(html);
         if (selected != null && !selected.isBlank()) return selected.trim();
         return terms.stream().findFirst().map(TermVO::getValue).orElse(null);
+    }
+
+    /**
+     * 只有明确的“未公布”提示可以把空结果视为最终结果。
+     *
+     * <p>新版强智会先返回带课表表格骨架的页面，再由 iframe/异步接口填充课程。
+     * {@link ScheduleParser#supports(String)} 只判断页面形状，因此单独用它会把空骨架
+     * 当成成功结果。对其它可识别页面实际解析一次，课程为空时继续尝试兼容入口。</p>
+     */
+    private boolean hasUsableSchedule(String html) {
+        if (!parser.supports(html)) return false;
+        if (isExplicitEmptySchedule(html)) return true;
+        try {
+            ScheduleVO parsed = parser.parse(html);
+            return parsed != null && parsed.getCourses() != null && !parsed.getCourses().isEmpty();
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    private static boolean isExplicitEmptySchedule(String html) {
+        if (html == null) return false;
+        String lower = html.toLowerCase(java.util.Locale.ROOT);
+        return lower.contains("课表暂未公布") || lower.contains("没有符合条件的数据");
     }
 
     /** 合并父查询页学期元数据，并让请求学期成为异步响应的明确归属。 */

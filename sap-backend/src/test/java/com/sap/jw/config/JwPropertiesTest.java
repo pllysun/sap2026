@@ -20,13 +20,10 @@ class JwPropertiesTest {
                 properties.getWebvpnCasBase());
         assertEquals("https://http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn",
                 properties.getWebvpnJwglBase());
-        assertEquals("https://http-jwgl-csuft-edu-cn-80.webvpn.csuft.edu.cn",
-                properties.getWebvpnLegacyJwglBase());
         assertEquals("https://https-jxzlpt-csuft-edu-cn-443.webvpn.csuft.edu.cn",
                 properties.getWebvpnQualityBase());
         assertEquals("https://cas.csuft.edu.cn", properties.getCasBase());
         assertEquals("http://jwxt.csuft.edu.cn", properties.getJwglBase());
-        assertEquals("http://jwgl.csuft.edu.cn", properties.getLegacyJwglBase());
         assertEquals("http://jwxt.csuft.edu.cn/jsxsd/Logon.do?method=logonByZnlkd",
                 properties.getJwServiceUrl());
         assertEquals(
@@ -37,16 +34,13 @@ class JwPropertiesTest {
     }
 
     @Test
-    void exposesNewAndLegacyWebvpnEndpointsInOrder() {
+    void exposesOnlyCurrentWebvpnEndpoint() {
         JwProperties properties = new JwProperties();
 
         assertEquals(List.of(
                         new JwProperties.JwEndpoint(
                                 "https://http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", "http://jwxt.csuft.edu.cn",
-                                "/jsxsd/Logon.do?method=logonByZnlkd"),
-                        new JwProperties.JwEndpoint(
-                                "https://http-jwgl-csuft-edu-cn-80.webvpn.csuft.edu.cn", "http://jwgl.csuft.edu.cn",
-                                "/Logon.do?method=logonByZnlkd")),
+                                "/jsxsd/Logon.do?method=logonByZnlkd")),
                 properties.getWebvpnJwEndpoints());
     }
 

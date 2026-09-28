@@ -2,6 +2,7 @@ package com.sap.config;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.sap.service.RateLimiterService;
+import com.sap.service.RegistrationProtectionSettingsService;
 import com.sap.util.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * 全局限流拦截器：按 URI+方法归类，取桶键（登录/注册按 IP；其余优先按登录用户），向
@@ -27,12 +29,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     @Autowired
     private RateLimitProperties props;
 
-    enum Category {LOGIN, REGISTER, JW, PDF, DOWNLOAD, WRITE}
+    @Autowired
+    private RegistrationProtectionSettingsService registrationSettings;
+
+    enum Category {LOGIN, REGISTER, CAPTCHA, JW, PDF, DOWNLOAD, WRITE}
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         Category c = categorize(request);
         if (c == null) return true; // 不限流的请求直接放行
+        if (c == Category.REGISTER || c == Category.CAPTCHA) {
+            return registrationLimit(request, response, c);
+        }
 
         RateLimitProperties.Rule rule = ruleOf(c);
         String key = "rl:" + c.name().toLowerCase() + ":" + keyOf(request, c);
@@ -44,6 +52,24 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             log.warn("[限流·灰度] 命中但未拦截 {} {} key={}", request.getMethod(), request.getRequestURI(), key);
             return true;
         }
+        return reject(request, response, key);
+    }
+
+    private boolean registrationLimit(HttpServletRequest request, HttpServletResponse response, Category category) throws Exception {
+        var policy = registrationSettings.current().requests();
+        if (!policy.enabled()) return true;
+        String key = "rl:" + category.name().toLowerCase() + ":" + keyOf(request, category);
+        boolean allowed;
+        if (category == Category.REGISTER) {
+            allowed = limiter.tryAcquireEnforced(key, policy.registerCapacity(), policy.registerPerMinute() / 60.0);
+        } else {
+            allowed = limiter.tryAcquireEnforced(key, policy.captchaCapacity(), policy.captchaPerMinute() / 60.0)
+                    && limiter.tryAcquireEnforced("rl:captcha:global", policy.captchaGlobalCapacity(), policy.captchaGlobalPerMinute() / 60.0);
+        }
+        return allowed || reject(request, response, key);
+    }
+
+    private boolean reject(HttpServletRequest request, HttpServletResponse response, String key) throws Exception {
         log.warn("[限流] 拦截 {} {} key={}", request.getMethod(), request.getRequestURI(), key);
         // 沿用本系统约定：业务信号走 HTTP 200 + 响应体 code（与 401/403 一致），
         // 前端 request.js 对 code!==200 既有处理会自动弹出 message，无需前端改动。
@@ -54,14 +80,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     /** 路径+方法 → 限流类别；返回 null 表示该请求不限流。 */
     Category categorize(HttpServletRequest req) {
-        String uri = req.getRequestURI();
+        if (req.getRequestURI() == null) return null;
+        // 与 MVC 一致去掉 context path / 矩阵参数并解码，避免同一接口换路径写法绕过分类。
+        String uri = UrlPathHelper.defaultInstance.getPathWithinApplication(req);
         String m = req.getMethod();
         if (uri == null) return null;
         if ("OPTIONS".equalsIgnoreCase(m)) return null; // CORS 预检不限流
+        if (uri.equals("/api/auth/captcha")) return Category.CAPTCHA;
+        if (uri.startsWith("/api/auth/password-recovery/")) return Category.LOGIN;
         if (uri.equals("/api/auth/login") || uri.equals("/api/auth/admin/login") || uri.equals("/api/auth/app/login")) {
             return Category.LOGIN;
         }
-        if (uri.equals("/api/auth/register")) return Category.REGISTER;
+        if (uri.equals("/api/auth/register") || uri.equals("/api/auth/app/register") || uri.equals("/api/auth/app/register/email-code")) return Category.REGISTER;
         if (uri.startsWith("/api/jw/")) return Category.JW;
         if (uri.startsWith("/api/note/") && uri.endsWith("/pdf")) return Category.PDF;
         if (uri.equals("/api/file/download") || uri.equals("/api/file/go")) return Category.DOWNLOAD;
@@ -76,7 +106,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     RateLimitProperties.Rule ruleOf(Category c) {
         return switch (c) {
             case LOGIN -> props.getLogin();
-            case REGISTER -> props.getRegister();
+            case REGISTER, CAPTCHA -> throw new IllegalArgumentException("注册及验证码规则由数据库配置提供");
             case JW -> props.getJw();
             case PDF -> props.getPdf();
             case DOWNLOAD -> props.getDownload();
@@ -86,7 +116,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     /** 登录/注册按 IP；其余优先按登录用户，未登录退回 IP。 */
     String keyOf(HttpServletRequest req, Category c) {
-        if (c == Category.LOGIN || c == Category.REGISTER) {
+        if (c == Category.LOGIN || c == Category.REGISTER || c == Category.CAPTCHA) {
             return "ip:" + IpUtil.clientIp(req);
         }
         try {

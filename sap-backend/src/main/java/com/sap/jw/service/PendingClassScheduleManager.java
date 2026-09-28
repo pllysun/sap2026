@@ -23,15 +23,17 @@ public class PendingClassScheduleManager {
         public final String term;
         public final PendingCas cas;
         public final String phone;
+        public final String batchId;
         public final long expiresAt;
 
         private Entry(Long userId, String account, String term, PendingCas cas,
-                      String phone, long expiresAt) {
+                      String phone, String batchId, long expiresAt) {
             this.userId = userId;
             this.account = account;
             this.term = term;
             this.cas = cas;
             this.phone = phone;
+            this.batchId = batchId;
             this.expiresAt = expiresAt;
         }
     }
@@ -39,9 +41,13 @@ public class PendingClassScheduleManager {
     private final ConcurrentHashMap<String, Entry> entries = new ConcurrentHashMap<>();
 
     public String put(Long userId, String account, String term, PendingCas cas, String phone) {
+        return put(userId, account, term, cas, phone, null);
+    }
+
+    public String put(Long userId, String account, String term, PendingCas cas, String phone, String batchId) {
         purge();
         String id = UUID.randomUUID().toString().replace("-", "");
-        entries.put(id, new Entry(userId, account, term, cas, phone,
+        entries.put(id, new Entry(userId, account, term, cas, phone, batchId,
                 System.currentTimeMillis() + TTL_MS));
         return id;
     }

@@ -43,7 +43,7 @@ public class AppAccessService {
     }
 
     public boolean hasBasicAccess(long userId) {
-        return effectiveLevel(userId) >= BASIC;
+        return true; // 已认证账号始终可使用 Web、班级课表及共享校历。
     }
 
     public void requireFullAccess(long userId) {
@@ -65,7 +65,7 @@ public class AppAccessService {
         com.sap.entity.Setting setting = new com.sap.entity.Setting();
         setting.setSettingKey(GUEST_ACCESS_LEVEL_KEY);
         setting.setSettingValue(String.valueOf(level));
-        setting.setDescription("软协课表游客权限等级：0关闭、1基础、2完整App能力");
+        setting.setDescription("软协课表游客权限等级：0/1基础能力、2完整App能力；Web与班级课表默认开放");
         settingService.updateSetting(setting);
     }
 

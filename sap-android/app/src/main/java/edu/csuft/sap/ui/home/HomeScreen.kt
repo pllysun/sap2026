@@ -8,7 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -19,30 +19,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.account.AccountManager
-import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.account.ConnectivityState
+import edu.csuft.sap.data.account.CurrentAccount
+import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.data.account.ModeGuideKind
+import edu.csuft.sap.data.account.ModeGuideState
 import edu.csuft.sap.data.schedule.AccountData
 import edu.csuft.sap.di.Graph
-import edu.csuft.sap.ui.icons.AppIcons
 import edu.csuft.sap.ui.grade.GradeScreen
+import edu.csuft.sap.ui.icons.AnimatedAppIcon
+import edu.csuft.sap.ui.icons.AppIcons
 import edu.csuft.sap.ui.profile.ProfileScreen
+import edu.csuft.sap.ui.profile.ProfileViewModel
 import edu.csuft.sap.ui.schedule.ScheduleScreen
 import edu.csuft.sap.update.UpdateDialog
 import edu.csuft.sap.update.UpdateViewModel
 
 private enum class Tab(val label: String, val icon: ImageVector, val iconFilled: ImageVector) {
+    Calendar("日历", AppIcons.Calendar, AppIcons.CalendarFilled),
     Schedule("课表", AppIcons.Schedule, AppIcons.ScheduleFilled),
     Grade("成绩", AppIcons.Grades, AppIcons.GradesFilled),
     Profile("我的", AppIcons.Profile, AppIcons.ProfileFilled),
@@ -55,7 +62,11 @@ internal fun downgradeSnapshotSource(active: String?, lastJw: String?, web: Acco
 
 @Composable
 fun HomeScreen(onLoggedOut: () -> Unit) {
-    var current by rememberSaveable { mutableIntStateOf(0) }
+    var current by rememberSaveable { mutableStateOf(Tab.Schedule.name) }
+    var openModePicker by rememberSaveable { mutableStateOf(false) }
+    var guide by remember { mutableStateOf<ModeGuideKind?>(null) }
+    // 进首页即恢复已缓存的头像，首次点“我的”时也无需等待图片解码。
+    val profileVm: ProfileViewModel = viewModel()
 
     // 模式门控：三种模式都使用统一的「课表 / 成绩(仅教务) / 我的」布局。
     // Web 与班级模式的设置从「我的→设置」进入，避免为不同模式维护两套入口。
@@ -63,13 +74,14 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
     val mode = MemberState.effectiveMode
     val visibleTabs = if (mode == AppMode.JW)
         buildList {
+            add(Tab.Calendar)
             add(Tab.Schedule)
             if (MemberState.showGrade) add(Tab.Grade)
             add(Tab.Profile)
         }
     else
-        listOf(Tab.Schedule, Tab.Profile)
-    val idx = current.coerceIn(0, visibleTabs.size - 1)
+        listOf(Tab.Calendar, Tab.Schedule, Tab.Profile)
+    val idx = visibleTabs.indexOfFirst { it.name == current }.takeIf { it >= 0 } ?: visibleTabs.indexOf(Tab.Schedule)
     // 切换模式后回到首个 Tab(课表)，避免停留在已消失的 Tab
     LaunchedEffect(
         mode,
@@ -78,15 +90,15 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
         MemberState.accessResolved,
         ConnectivityState.online,
     ) {
-        current = 0
+        current = Tab.Schedule.name
         // 云控 2→1 时先把当前教务缓存无损继承到 Web 本地空间，再切换数据源。
         // 源教务缓存与服务端绑定均保留；再次升到 2 仍可原样恢复并继续同步。
         // 冷启动会先乐观进入首页；身份尚未从服务端解析前不能执行继承，否则真实会员会被误当成游客。
         when (mode) {
             AppMode.WEB -> {
-                if (ConnectivityState.online && MemberState.accessResolved) {
+                if (!ConnectivityState.online || MemberState.accessResolved) {
                 val active = Graph.accountManager.activeAccount
-                if (!MemberState.hasFullAppFeatures) {
+                if (!ConnectivityState.online || !MemberState.hasFullAppFeatures) {
                     // 兼容已被旧版本直接切到空 Web 源的用户。scanned=true 但无 profile 代表用户主动删空，
                     // 此时不能擅自恢复；只有从未导入过的全新空空间才尝试上次教务缓存。
                     val source = downgradeSnapshotSource(
@@ -100,8 +112,15 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                 // 掉线时也切到本地 Web 槽，避免仍拿着教务账号而触发网络扫描。
                 Graph.accountManager.useWebview()
             }
-            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
-            AppMode.JW -> if (ConnectivityState.online) Graph.accountManager.activateJwAccount()
+            AppMode.CLASS -> {
+                Graph.accountManager.activateClassAccount()
+                Graph.classScheduleSync.request()
+            }
+            AppMode.JW -> if (ConnectivityState.online) {
+                Graph.accountManager.activateJwAccount()
+                Graph.accountManager.refresh()
+                if (MemberState.isJw) Graph.accountManager.activateJwAccount()
+            }
                 else Graph.accountManager.useWebview()
         }
     }
@@ -109,6 +128,21 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
     // 完整 App 能力账号检查更新；真实角色不参与界面文案。
     val updateVm: UpdateViewModel = viewModel()
     val context = LocalContext.current
+    val owner by CurrentAccount.uid.collectAsState()
+    LaunchedEffect(owner, MemberState.accessResolved, MemberState.isMember,
+        MemberState.appAccessLevel, ConnectivityState.online) {
+        guide = ModeGuideState.pending(context, owner ?: "_", MemberState.accessResolved,
+            ConnectivityState.online, MemberState.isMember, MemberState.appAccessLevel)
+    }
+    fun finishGuide(openPicker: Boolean) {
+        val active = guide ?: return
+        ModeGuideState.complete(context, owner ?: "_", active, MemberState.hasFullAppFeatures)
+        guide = null
+        if (openPicker) {
+            openModePicker = true
+            current = Tab.Profile.name
+        }
+    }
     LaunchedEffect(MemberState.hasFullAppFeatures) {
         if (MemberState.hasFullAppFeatures) updateVm.check(manual = false)
     }
@@ -123,18 +157,20 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                 visibleTabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = idx == index,
-                        onClick = { current = index },
+                        onClick = { current = tab.name },
                         icon = {
-                            // 选中=实心剪影，未选中=线性，提升 Tab 切换的层次与质感
-                            Icon(if (idx == index) tab.iconFilled else tab.icon, contentDescription = tab.label)
+                            AnimatedAppIcon(
+                                icon = tab.icon, selectedIcon = tab.iconFilled,
+                                selected = idx == index, tint = LocalContentColor.current,
+                            )
                         },
-                        label = { Text(tab.label, fontSize = 11.sp) },
+                        label = { Text(tab.label, fontSize = 11.sp, fontWeight = if (idx == index) FontWeight.SemiBold else FontWeight.Medium) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = Color.Transparent,
-                            unselectedIconColor = MaterialTheme.colorScheme.outline,
-                            unselectedTextColor = MaterialTheme.colorScheme.outline,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.065f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     )
                 }
@@ -152,9 +188,11 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
                 },
             ) { tab ->
                 when (tab) {
+                    Tab.Calendar -> edu.csuft.sap.ui.schedule.CalendarScreen(Modifier.fillMaxSize())
                     Tab.Schedule -> ScheduleScreen(Modifier.fillMaxSize())
                     Tab.Grade -> GradeScreen(Modifier.fillMaxSize())
-                    Tab.Profile -> ProfileScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut)
+                    Tab.Profile -> ProfileScreen(Modifier.fillMaxSize(), onLoggedOut = onLoggedOut, vm = profileVm,
+                        openModePicker = openModePicker, onModePickerOpened = { openModePicker = false })
                 }
             }
         }
@@ -166,4 +204,8 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
         onInstall = { updateVm.install(context) },
         onDismiss = { updateVm.dismiss() },
     )
+    guide?.let { kind ->
+        ModeGuideOverlay(kind, MemberState.availableModes,
+            onDismiss = { finishGuide(false) }, onOpenModePicker = { finishGuide(true) })
+    }
 }

@@ -2,7 +2,7 @@
   <div class="member-page zen-fade-in">
     <div class="page-header">
       <h2>成员管理</h2>
-      <p>社团成员换届档案</p>
+      <p>任职档案与成员资料</p>
     </div>
 
     <el-tabs v-model="activeTab" class="member-tabs">
@@ -15,10 +15,12 @@
             </el-select>
             <el-button type="primary" @click="showAddDialog = true">添加成员</el-button>
             <el-button @click="openChangeover">执行换届</el-button>
+            <span class="member-toolbar-hint">{{ currentGrade }} 届 · {{ termTotal }} 条任职记录 · 点击卡片查看详情</span>
           </div>
 
-          <div class="term-grid" v-if="termList.length">
+          <div class="term-grid" v-if="termList.length" v-loading="termsLoading">
             <div v-for="item in termList" :key="item.id" class="term-card">
+              <button type="button" class="term-card-main" :aria-label="`查看${item.userName}的成员详情`" @click="openProfile(item.userId)">
               <div class="term-card-left">
                 <div class="term-avatar">{{ item.userName ? item.userName.charAt(0) : '?' }}</div>
                 <div class="term-info">
@@ -26,23 +28,24 @@
                   <div class="term-sid">{{ item.studentId }}</div>
                 </div>
               </div>
-              <div class="term-card-right">
-                <el-tag :type="getTagType(item.positionName)" effect="plain" size="small">
+                <el-tag :type="getTagType(item.positionName)" effect="plain" size="small" :disable-transitions="true">
                   {{ item.positionName }}
                 </el-tag>
-                <el-button type="danger" text size="small" @click="handleDelete(item.id)">移除</el-button>
-              </div>
+              </button>
             </div>
           </div>
-          <el-empty v-else description="暂无换届记录" />
+          <el-empty v-else :description="termsLoading ? '正在加载成员…' : '暂无换届记录'" />
 
           <div class="term-pagination" v-if="termTotal > 0">
+            <span class="member-page-range">第 {{ (termPage - 1) * termPageSize + 1 }}–{{ Math.min(termPage * termPageSize, termTotal) }} 条 / 共 {{ termTotal }} 条</span>
             <el-pagination
               v-model:current-page="termPage"
               :page-size="termPageSize"
-              :page-sizes="[40, 100, 200, 500]"
+              :page-sizes="[24, 48, 96]"
               :total="termTotal"
-              layout="total, sizes, prev, pager, next"
+              layout="sizes, prev, pager, next"
+              :pager-count="5"
+              :disabled="termsLoading"
               background
               @current-change="loadTerms"
               @size-change="onTermSizeChange"
@@ -60,7 +63,7 @@
           </div>
 
           <div class="outstanding-grid" v-if="outstandingList.length">
-            <div v-for="m in outstandingList" :key="m.id" class="om-card">
+            <div v-for="m in outstandingList" :key="m.id" class="om-card" role="button" tabindex="0" :aria-label="`查看${m.name}的优秀成员档案`" @click="openOutstandingProfile(m)" @keydown.enter.self="openOutstandingProfile(m)" @keydown.space.self.prevent="openOutstandingProfile(m)">
               <div class="om-card-header">
                 <div class="om-avatar">{{ m.name ? m.name.charAt(0) : '?' }}</div>
                 <div class="om-header-info">
@@ -90,8 +93,8 @@
               </div>
 
               <div class="om-card-footer">
-                <el-button text size="small" @click="openOmEdit(m)">编辑</el-button>
-                <el-button text type="danger" size="small" @click="handleOmDelete(m.id)">删除</el-button>
+                <el-button text size="small" @click.stop="openOmEdit(m)">编辑</el-button>
+                <el-button text type="danger" size="small" @click.stop="handleOmDelete(m.id)">删除</el-button>
               </div>
             </div>
           </div>
@@ -99,6 +102,7 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+    <MemberProfileDialog v-model="showProfile" :user-id="profileUserId" :outstanding="profileOutstanding" />
 
     <!-- 添加成员弹窗 -->
     <el-dialog v-model="showAddDialog" title="添加换届记录" width="460px" append-to-body>
@@ -237,11 +241,12 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import {
-  getTermList, getGrades, addTerm, deleteTerm, doChangeover,
+  getTermList, getGrades, addTerm, doChangeover,
   getUserList, getPositions, getSettingValue, getMemberUsers,
   getAllOutstandingMembers, addOutstandingMember, updateOutstandingMember, deleteOutstandingMember
 } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import MemberProfileDialog from '../components/MemberProfileDialog.vue'
 
 const activeTab = ref('term')
 const currentGrade = ref('')
@@ -250,8 +255,12 @@ const nextGradeValue = ref('')
 const grades = ref([])
 const termList = ref([])
 const termPage = ref(1)
-const termPageSize = ref(200)
+const termPageSize = ref(24)
 const termTotal = ref(0)
+const termsLoading = ref(false), showProfile = ref(false), profileUserId = ref(null), profileOutstanding = ref(null)
+let termsRequest = 0
+const openProfile = id => { profileOutstanding.value = null; profileUserId.value = id; showProfile.value = true }
+const openOutstandingProfile = member => { profileUserId.value = null; profileOutstanding.value = member; showProfile.value = true }
 const userList = ref([])
 const memberList = ref([])
 const positions = ref([])
@@ -335,11 +344,14 @@ const loadGrades = async () => {
 
 const loadTerms = async () => {
   if (!currentGrade.value) return
+  const request = ++termsRequest
+  termsLoading.value = true
   try {
     const res = await getTermList({ grade: currentGrade.value, current: termPage.value, size: termPageSize.value })
+    if (request !== termsRequest) return
     termList.value = res.data?.records || []
     termTotal.value = Number(res.data?.total || 0)
-  } catch (e) {}
+  } catch (e) {} finally { if (request === termsRequest) termsLoading.value = false }
 }
 
 const onTermSizeChange = (newSize) => {
@@ -367,23 +379,6 @@ const handleAdd = async () => {
     showAddDialog.value = false
     loadTerms()
     loadGrades()
-  } catch (e) {}
-}
-
-const handleDelete = async (id) => {
-  try {
-    await ElMessageBox.confirm('确认移除此记录？', '提示')
-  } catch (e) {
-    return // 用户取消，静默
-  }
-  try {
-    await deleteTerm(id)
-    ElMessage.success('已移除')
-    // 若删的是当前页最后一条且不在首页，回退一页避免停在空白页
-    if (termList.value.length === 1 && termPage.value > 1) {
-      termPage.value--
-    }
-    loadTerms()
   } catch (e) {}
 }
 
@@ -566,5 +561,3 @@ onBeforeUnmount(() => {
   if (countdownTimer) clearInterval(countdownTimer)
 })
 </script>
-
-

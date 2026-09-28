@@ -1,0 +1,8 @@
+# Package verified artifacts on the currently deployed, immutable amd64 runtime.
+FROM pllysun/sap:1.4.90@sha256:15dc9007cfbcaf7fbed6d3c012853303d6bea51fe90c0f30b85b4ca640fe852b
+RUN rm -rf /app/static/admin /app/static/user
+COPY app.jar /app/app.jar
+COPY static /app/static
+RUN find /app/static -type d -exec chmod 755 {} + \
+    && find /app/static -type f -exec chmod 644 {} + \
+    && chmod 644 /app/app.jar

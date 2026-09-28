@@ -62,7 +62,7 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_toggle, if (mode == MODE_TODAY) "本周" else "今日")
         views.setTextViewText(
             R.id.widget_empty,
-            if (!data.bound) "请在 App 登录并绑定教务账号" else if (mode == MODE_TODAY) "今日无课" else "本周无课",
+            if (!data.bound) "请在 App 选择或导入课表" else if (mode == MODE_TODAY) "今日无课" else "本周无课",
         )
 
         // 列表数据源
@@ -125,6 +125,9 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             refreshProvider(context, mgr, ScheduleWidgetProvider::class.java, hasList = true)
             refreshProvider(context, mgr, TodayWidgetProvider::class.java, hasList = true)
             refreshProvider(context, mgr, NextClassWidgetProvider::class.java, hasList = false)
+            refreshProvider(context, mgr, FocusWidgetProvider::class.java, hasList = false)
+            refreshProvider(context, mgr, WeekOverviewWidgetProvider::class.java, hasList = false)
+            refreshProvider(context, mgr, MonthWidgetProvider::class.java, hasList = false)
         }
 
         private fun refreshProvider(

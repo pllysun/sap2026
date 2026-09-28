@@ -43,6 +43,7 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock TermMapper termMapper;
     @Mock AppAccessService appAccessService;
 
+    @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks AuthService service;
 
     private User user(long id, String studentId, String rawPw, Integer status) {
@@ -64,6 +65,16 @@ class AuthServiceTest extends BaseUnitTest {
 
     // ===================== login =====================
 
+    @Test void passwordRecoveryClearsOnlyRecoveredAccountLocks() {
+        var locks=new java.util.concurrent.ConcurrentHashMap<String,long[]>();
+        locks.put("S-OK|127.0.0.1",new long[]{0,Long.MAX_VALUE});
+        locks.put("s-ok|192.0.2.1",new long[]{0,Long.MAX_VALUE});
+        locks.put("s-ok2|127.0.0.1",new long[]{0,Long.MAX_VALUE});
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"loginAttempts",locks);
+        service.clearPasswordRecoveryLock("s-ok");
+        assertEquals(java.util.Set.of("s-ok2|127.0.0.1"),locks.keySet());
+    }
+
     @Test
     void login_success_returnsTokenAndUserVO() {
         User u = user(1L, "S-ok", "pw", 1);
@@ -83,16 +94,17 @@ class AuthServiceTest extends BaseUnitTest {
     }
 
     @Test
-    void appLogin_guestLevelZero_isRejectedWithoutChangingRole() {
+    void appLogin_guestLevelZero_canLoginWithoutChangingRole() {
         User u = user(101L, "guest-zero", "pw", 1);
         when(userMapper.selectOne(any())).thenReturn(u);
         when(userRoleMapper.selectRoleCodesByUserId(101L)).thenReturn(List.of(4));
         when(appAccessService.guestAccessLevel()).thenReturn(0);
 
-        try (MockedStatic<StpUtil> ignored = mockStatic(StpUtil.class)) {
-            BusinessException ex = assertThrows(BusinessException.class,
-                    () -> service.appLogin(loginDto("guest-zero", "pw")));
-            assertEquals(403, ex.getCode());
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getTokenValue).thenReturn("app-token");
+            Map<String, Object> result = service.appLogin(loginDto("guest-zero", "pw"));
+            assertEquals(0, result.get("appAccessLevel"));
+            assertEquals(List.of(4), result.get("roles"));
         }
     }
 

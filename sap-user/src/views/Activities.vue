@@ -1,9 +1,6 @@
 <template>
   <div class="page">
-    <div class="page-header">
-      <h1 class="page-title">软协活动</h1>
-      <p class="page-desc">记录协会的精彩瞬间，每一步都在拓宽技术与社群的边界</p>
-    </div>
+    <PageHeader title="软协活动" label="OUR MOMENTS / 协会日常" description="一起探索、一起实践，把值得记住的瞬间留下。" />
 
     <div v-if="initialLoading" class="loading"><div class="loading__spinner"></div></div>
 
@@ -18,6 +15,8 @@
       <div
         v-if="activities.length > 0"
         class="act-featured anim-in"
+        role="button" tabindex="0" :aria-label="'查看活动：' + activities[0].title"
+        @keydown.enter="openDetail(activities[0])" @keydown.space.prevent="openDetail(activities[0])"
         @click="openDetail(activities[0])"
       >
         <div class="act-featured__img-wrap">
@@ -48,6 +47,8 @@
         <div
           v-for="(act, idx) in activities.slice(1)" :key="act.id"
           class="act-card anim-in"
+          role="button" tabindex="0" :aria-label="'查看活动：' + act.title"
+          @keydown.enter="openDetail(act)" @keydown.space.prevent="openDetail(act)"
           :style="{ animationDelay: ((idx + 1) * 0.06) + 's' }"
           @click="openDetail(act)"
         >
@@ -148,6 +149,7 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import request from '@/utils/request'
 

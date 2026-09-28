@@ -35,18 +35,28 @@ public class OperationLogAspect {
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
         long start = System.currentTimeMillis();
-        Object result = point.proceed();
-        long duration = System.currentTimeMillis() - start;
-
+        Long actor = null;
+        try { if (StpUtil.isLogin()) actor = StpUtil.getLoginIdAsLong(); } catch (Exception ignored) { }
+        Object result = null;
+        Throwable failure = null;
         try {
-            saveLog(operationLog, duration);
-        } catch (Exception e) {
-            // 日志记录不应影响正常业务
+            result = point.proceed();
+            return result;
+        } catch (Throwable error) {
+            failure = error;
+            throw error;
+        } finally {
+            try { saveLog(operationLog, System.currentTimeMillis() - start, result, failure, actor); }
+            catch (Exception ignored) { /* 日志不能影响业务 */ }
         }
-        return result;
     }
 
-    private void saveLog(OperationLog annotation, long duration) {
+    @Around("@within(org.springframework.web.bind.annotation.RestController) && !@annotation(com.sap.annotation.OperationLog)")
+    public Object unannotated(ProceedingJoinPoint point) throws Throwable {
+        return around(point, null);
+    }
+
+    private void saveLog(OperationLog annotation, long duration, Object result, Throwable failure, Long actor) {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) return;
         HttpServletRequest request = attrs.getRequest();
@@ -54,15 +64,15 @@ public class OperationLogAspect {
         String httpMethod = request.getMethod();
         String path = request.getRequestURI();
         String ip = getIpAddr(request);
-        String description = annotation.value();
+        String description = annotation == null ? "接口调用" : annotation.value();
         String operationType = resolveOperationType(httpMethod);
 
         // 获取当前用户
-        Long userId = null;
+        Long userId = actor;
         String userName = "匿名";
         try {
-            if (StpUtil.isLogin()) {
-                userId = StpUtil.getLoginIdAsLong();
+            if (userId == null && StpUtil.isLogin()) userId = StpUtil.getLoginIdAsLong();
+            if (userId != null) {
                 User user = userMapper.selectById(userId);
                 if (user != null) {
                     userName = user.getName() != null ? user.getName() : user.getStudentId();
@@ -81,6 +91,10 @@ public class OperationLogAspect {
         log.setDescription(description);
         log.setDuration(duration);
         log.setRequestTime(LocalDateTime.now());
+        Object pattern = request.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        log.setEndpoint(pattern == null ? com.sap.service.LogAnalyticsService.normalizeEndpoint(path) : pattern.toString());
+        log.setSource(com.sap.service.LogAnalyticsService.classify(path, request.getHeader("X-SAP-Client")));
+        log.setResultCode(failure instanceof com.sap.common.BusinessException e ? e.getCode() : failure != null ? 500 : result instanceof com.sap.common.Result<?> r ? r.getCode() : 200);
         sysLogMapper.insert(log);
 
         // 更新统计表
@@ -94,10 +108,10 @@ public class OperationLogAspect {
                         .eq(LogStats::getStatDate, today)
                         .eq(LogStats::getOperationType, operationType)
                         .eq(LogStats::getHttpMethod, httpMethod)
+                        .orderByAsc(LogStats::getId).last("LIMIT 1")
         );
         if (existing != null) {
-            existing.setCount(existing.getCount() + 1);
-            logStatsMapper.updateById(existing);
+            logStatsMapper.increment(existing.getId());
         } else {
             LogStats stats = new LogStats();
             stats.setStatDate(today);

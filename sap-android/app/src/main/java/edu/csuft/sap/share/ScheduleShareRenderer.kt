@@ -16,8 +16,7 @@ import androidx.core.content.FileProvider
 import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleSettings
-import edu.csuft.sap.ui.theme.customCourseColor
-import edu.csuft.sap.ui.theme.paletteColor
+import edu.csuft.sap.ui.theme.scheduleCourseColor
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -132,7 +131,7 @@ object ScheduleShareRenderer {
                 val top = gridTop + rowH * (s - 1) + spacing
                 val right = pad + timeCol + colW * (idx + 1) - spacing
                 val bottom = gridTop + rowH * e - spacing
-                val col = course.customColor?.let { customCourseColor(it) } ?: paletteColor(course.colorIndex)
+                val col = scheduleCourseColor(course, settings)
                 val radius = settings.cornerRadiusDp * 2f
                 rect.style = Paint.Style.FILL
                 rect.color = col.container.toArgb()

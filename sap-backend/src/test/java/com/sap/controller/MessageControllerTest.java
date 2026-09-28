@@ -201,12 +201,14 @@ class MessageControllerTest extends BaseUnitTest {
     // ============ like ============
 
     @Test
-    void like_alreadyLiked_error() {
+    void like_alreadyLiked_returnsAuthoritativeState() {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            when(messageMapper.selectById(5L)).thenReturn(msg(5, 50L));
             when(messageLikeMapper.selectCount(any())).thenReturn(1L);
             Result<?> r = controller.like(Map.of("targetType", 0, "targetId", 5));
-            assertEquals("已点赞", r.getMessage());
+            assertEquals(200, r.getCode());
+            assertEquals(Map.of("liked", true, "likeCount", 1L), r.getData());
             verify(messageLikeMapper, never()).insert(any());
         }
     }
@@ -215,10 +217,11 @@ class MessageControllerTest extends BaseUnitTest {
     void like_inserts() {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
-            when(messageLikeMapper.selectCount(any())).thenReturn(0L);
+            when(messageReplyMapper.selectById(5L)).thenReturn(new MessageReply());
+            when(messageLikeMapper.selectCount(any())).thenReturn(0L, 1L, 1L);
             Result<?> r = controller.like(Map.of("targetType", 1, "targetId", 5));
             verify(messageLikeMapper).insert(any(MessageLike.class));
-            assertEquals("点赞成功", r.getData());
+            assertEquals(Map.of("liked", true, "likeCount", 1L), r.getData());
         }
     }
 
@@ -226,10 +229,12 @@ class MessageControllerTest extends BaseUnitTest {
     void like_duplicateKey_treatedAsAlreadyLiked() {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
-            when(messageLikeMapper.selectCount(any())).thenReturn(0L);
+            when(messageMapper.selectById(5L)).thenReturn(msg(5, 50L));
+            when(messageLikeMapper.selectCount(any())).thenReturn(0L, 2L, 1L);
             doThrow(new DuplicateKeyException("dup")).when(messageLikeMapper).insert(any(MessageLike.class));
             Result<?> r = controller.like(Map.of("targetType", 0, "targetId", 5));
-            assertEquals("已点赞", r.getMessage());
+            assertEquals(200, r.getCode());
+            assertEquals(Map.of("liked", true, "likeCount", 2L), r.getData());
         }
     }
 
@@ -239,13 +244,32 @@ class MessageControllerTest extends BaseUnitTest {
     void unlike_deletes() {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            when(messageMapper.selectById(5L)).thenReturn(msg(5, 50L));
             Result<?> r = controller.unlike(0, 5L);
             verify(messageLikeMapper).delete(any());
-            assertEquals("取消点赞成功", r.getData());
+            assertEquals(Map.of("liked", false, "likeCount", 0L), r.getData());
         }
     }
 
     // ============ delete ============
+
+    @Test
+    void displayName_handlesLegacyBlankNicknamesWithoutExposingAccount() {
+        User u = user(1, "  "); u.setName(" 小林 "); u.setStudentId("fixture-account");
+        assertEquals("小林", MessageController.displayName(u));
+        u.setNickname(" 林间 "); assertEquals("林间", MessageController.displayName(u));
+        u.setNickname(null); u.setName(null); assertEquals("软协同学", MessageController.displayName(u));
+        assertEquals("已注销用户", MessageController.displayName(null));
+    }
+
+    @Test
+    void like_validatesTargetsBeforeWriting() {
+        assertEquals(400, controller.like(Map.of()).getCode());
+        assertEquals(400, controller.like(Map.of("targetType", 3, "targetId", 5)).getCode());
+        assertEquals(400, controller.unlike(0, -1L).getCode());
+        assertEquals(404, controller.like(Map.of("targetType", 0, "targetId", 5)).getCode());
+        verify(messageLikeMapper, never()).insert(any(MessageLike.class));
+    }
 
     @Test
     void delete_messageNotFound_error() {

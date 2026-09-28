@@ -18,6 +18,7 @@ import edu.csuft.sap.data.repository.JwRepository
 import edu.csuft.sap.data.repository.ClassScheduleRepository
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleStore
+import edu.csuft.sap.data.schedule.ClassScheduleCache
 import edu.csuft.sap.ui.theme.ThemeState
 import edu.csuft.sap.update.UpdateRepository
 import kotlinx.coroutines.CoroutineScope
@@ -40,9 +41,13 @@ object Graph {
         private set
     lateinit var authRepository: AuthRepository
         private set
+    lateinit var registrationRepository: edu.csuft.sap.data.repository.RegistrationRepository
+        private set
     lateinit var jwRepository: JwRepository
         private set
     lateinit var classScheduleRepository: ClassScheduleRepository
+        private set
+    lateinit var academicCalendarRepository: edu.csuft.sap.data.repository.AcademicCalendarRepository
         private set
     lateinit var feedbackRepository: FeedbackRepository
         private set
@@ -51,6 +56,10 @@ object Graph {
     lateinit var accountManager: AccountManager
         private set
     lateinit var scheduleStore: ScheduleStore
+        private set
+    lateinit var classScheduleCache: ClassScheduleCache
+        private set
+    lateinit var classScheduleSync: edu.csuft.sap.data.schedule.ClassScheduleSync
         private set
     lateinit var jwCacheStore: JwCacheStore
         private set
@@ -65,14 +74,17 @@ object Graph {
         appContext = context.applicationContext
         // 先恢复当前会员账号命名空间，再建按账号隔离的本地存储（UserStore/AccountManager）。
         CurrentAccount.load(context.applicationContext)
+        edu.csuft.sap.data.account.PrivacyConsents.load(context.applicationContext)
         tokenStore = TokenStore(context.applicationContext)
         userStore = UserStore(context.applicationContext)
         val api = ApiClient.create(BuildConfig.BASE_URL, { tokenStore.token })
         probeApi = ApiClient.create(BuildConfig.BASE_URL, { tokenStore.token },
             connectTimeoutSec = 3, readTimeoutSec = 3)
         authRepository = AuthRepository(api, tokenStore, userStore)
+        registrationRepository = edu.csuft.sap.data.repository.RegistrationRepository(api)
         jwRepository = JwRepository(api)
-        classScheduleRepository = ClassScheduleRepository(api)
+        classScheduleRepository = ClassScheduleRepository(api, context)
+        academicCalendarRepository = edu.csuft.sap.data.repository.AcademicCalendarRepository(context, probeApi)
         feedbackRepository = FeedbackRepository(api)
         announcementRepository = AnnouncementRepository(context.applicationContext, api)
         accountManager = AccountManager(context.applicationContext, jwRepository)
@@ -80,10 +92,12 @@ object Graph {
         // drop(1) 跳过订阅即发的当前值（构造时已读取，无需重复重载）。
         appScope.launch { CurrentAccount.uid.drop(1).collect { accountManager.onUserChanged() } }
         scheduleStore = ScheduleStore(context.applicationContext)
+        classScheduleCache = ClassScheduleCache(scheduleStore, accountManager)
+        classScheduleSync = edu.csuft.sap.data.schedule.ClassScheduleSync(classScheduleRepository, scheduleStore)
         jwCacheStore = JwCacheStore(context.applicationContext)
         updateRepository = UpdateRepository(api, BuildConfig.BASE_URL) { tokenStore.token }
         Periods.load(context.applicationContext) // 载入自定义节次时间
         ThemeState.load(context.applicationContext) // 载入自定义辅色（主题色）
-        MemberState.load(context.applicationContext) // 载入教务/Web 模式选择
+        MemberState.load(context.applicationContext) // 恢复本账号模式；全新账号默认班级课表
     }
 }

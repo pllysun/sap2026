@@ -6,6 +6,7 @@ import com.sap.common.Result;
 import com.sap.dto.LoginDTO;
 import com.sap.dto.RegisterDTO;
 import com.sap.service.AuthService;
+import com.sap.service.RegistrationProtectionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,9 @@ public class AuthController {
 
     @Autowired
     private com.sap.service.CaptchaService captchaService;
+
+    @Autowired
+    private RegistrationProtectionService registrationProtection;
 
     @PostMapping("/admin/login")
     @OperationLog("管理端登录")
@@ -47,9 +51,9 @@ public class AuthController {
     @OperationLog("用户注册")
     public Result<?> register(@Valid @RequestBody RegisterDTO dto,
                               jakarta.servlet.http.HttpServletRequest request) {
-        // 风控触发式验证码：默认不要求；仅当该 IP 注册数超过宽松阈值时才要验证码。
+        // 默认首次注册即验证；可选豁免在判断时原子预占，防止并发绕过。
         String ip = clientIp(request);
-        if (captchaService.captchaRequired(ip)) {
+        if (captchaService.requiresCaptchaForAttempt(ip)) {
             boolean blank = dto.getCaptchaId() == null || dto.getCaptchaId().isBlank()
                     || dto.getCaptchaCode() == null || dto.getCaptchaCode().isBlank();
             if (blank) {
@@ -58,12 +62,13 @@ public class AuthController {
                 data.put("captchaRequired", true);
                 return Result.ok(data);
             }
-            if (!captchaService.verify(dto.getCaptchaId(), dto.getCaptchaCode())) {
-                return Result.error("验证码错误或已过期，请重试");
+            if (!captchaService.verify(dto.getCaptchaId(), dto.getCaptchaCode(), ip)) {
+                return Result.error(400, "验证码错误或已过期，请刷新后重试");
             }
         }
-        authService.register(dto);
-        captchaService.recordRegister(ip); // 注册成功后对该 IP 计数，驱动风控阈值
+        try (var permit = registrationProtection.acquire(ip, dto.getQq())) {
+            authService.register(dto);
+        }
         return Result.ok("注册成功");
     }
 

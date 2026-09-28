@@ -26,6 +26,7 @@ public class SysLogService {
      */
     public Page<SysLog> pageQuery(int current, int size, String operationType, String httpMethod) {
         LambdaQueryWrapper<SysLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(SysLog::getRequestTime, java.time.LocalDateTime.now().minusDays(90));
         if (operationType != null && !operationType.isEmpty()) {
             wrapper.eq(SysLog::getOperationType, operationType);
         }
@@ -33,7 +34,7 @@ public class SysLogService {
             wrapper.eq(SysLog::getHttpMethod, httpMethod);
         }
         wrapper.orderByDesc(SysLog::getRequestTime);
-        return sysLogMapper.selectPage(new Page<>(current, size), wrapper);
+        return sysLogMapper.selectPage(new Page<>(Math.max(1,current), Math.max(1,Math.min(100,size))), wrapper);
     }
 
     /**
@@ -109,5 +110,17 @@ public class SysLogService {
 
     public long totalCount() {
         return sysLogMapper.selectCount(null);
+    }
+
+    public List<List<Object>> getCalendarYear(int year) {
+        if (year < 2000 || year > LocalDate.now().getYear()) throw new com.sap.common.BusinessException(400,"年份超出范围");
+        LocalDate start=LocalDate.of(year,1,1), end=start.plusYears(1);
+        var rows=logStatsMapper.selectList(new LambdaQueryWrapper<LogStats>()
+            .ge(LogStats::getStatDate,start).lt(LogStats::getStatDate,end));
+        Map<LocalDate,Long> counts=new TreeMap<>();
+        rows.forEach(row -> counts.merge(row.getStatDate(),row.getCount().longValue(),Long::sum));
+        List<List<Object>> result=new ArrayList<>();
+        for (var date=start;date.isBefore(end);date=date.plusDays(1)) result.add(Arrays.asList(date.toString(),counts.getOrDefault(date,0L)));
+        return result;
     }
 }

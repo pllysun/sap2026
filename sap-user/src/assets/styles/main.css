@@ -1,7 +1,7 @@
 /* ============================================================
-   Fresh Gradient Design System
+   Blue & White Design System
    中南林业科技大学软件协会 · 用户端
-   灵感来源：清新白底 + 青绿→紫渐变强调 + 柔和阴影
+   浅蓝与白色 · 统一内容、表单与交互层级
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700;800&display=swap');
@@ -12,42 +12,42 @@
 
   /* Core palette */
   --white:     #ffffff;
-  --bg:        #f7f8fc;
+  --bg:        #f5f9ff;
   --bg-card:   #ffffff;
 
   /* Ink */
-  --ink-900: #1a1d2e;
-  --ink-800: #2d3142;
-  --ink-700: #3d4158;
-  --ink-600: #555a72;
-  --ink-500: #6e7591;
-  --ink-400: #9298b0;
-  --ink-300: #c0c5d7;
-  --ink-200: #dfe2ee;
-  --ink-100: #eef0f7;
-  --ink-50:  #f4f5fa;
+  --ink-900: #193653;
+  --ink-800: #25415e;
+  --ink-700: #385572;
+  --ink-600: #526c87;
+  --ink-500: #637d98;
+  --ink-400: #748ba2;
+  --ink-300: #adc5dc;
+  --ink-200: #d4e4f3;
+  --ink-100: #e3eef8;
+  --ink-50:  #f2f7fd;
 
   /* Gradient — Teal-to-Blue primary */
-  --primary:       #3B82F6;
-  --primary-dark:  #2563EB;
-  --teal:          #14B8A6;
-  --gradient:      linear-gradient(135deg, var(--teal) 0%, var(--primary) 50%, #8B5CF6 100%);
-  --gradient-soft: linear-gradient(135deg, rgba(20,184,166,0.08) 0%, rgba(59,130,246,0.08) 50%, rgba(139,92,246,0.06) 100%);
-  --gradient-btn:  linear-gradient(135deg, var(--teal) 0%, var(--primary) 100%);
+  --primary:       #2878d5;
+  --primary-dark:  #1c60b4;
+  --teal:          #5099e5;
+  --gradient:      linear-gradient(125deg, #cce8ff 0%, #eef7ff 65%, #ffffff 100%);
+  --gradient-soft: linear-gradient(130deg, #edf6ff, #f8fbff);
+  --gradient-btn:  linear-gradient(120deg, #398beb, #256bc4);
 
   /* Semantic */
   --success:  #22C55E;
   --warning:  #F59E0B;
   --error:    #EF4444;
   --info:     #3B82F6;
-  --purple:   #8B5CF6;
+  --purple:   #477fbd;
 
   /* Shadows */
   --shadow-sm:  0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-md:  0 4px 16px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg:  0 8px 32px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
   --shadow-xl:  0 16px 48px rgba(0,0,0,0.10);
-  --shadow-gradient: 0 4px 20px rgba(20,184,166,0.20), 0 4px 12px rgba(59,130,246,0.15);
+  --shadow-gradient: 0 5px 16px rgba(42, 119, 206, 0.17);
 
   /* Spacing */
   --s1: 4px;  --s2: 8px;  --s3: 12px;  --s4: 16px;
@@ -171,7 +171,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   background: var(--gradient-btn); color: #fff;
   box-shadow: var(--shadow-gradient);
 }
-.btn--primary:hover { box-shadow: 0 6px 24px rgba(20,184,166,0.28), 0 4px 14px rgba(59,130,246,0.2); transform: translateY(-1px); }
+.btn--primary:hover { box-shadow: 0 6px 24px rgba(59,130,246,0.28), 0 4px 14px rgba(59,130,246,0.2); transform: translateY(-1px); }
 .btn--primary:active { transform: translateY(0) scale(0.98); }
 
 .btn--secondary {
@@ -588,8 +588,8 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .badge--success { background: rgba(34,197,94,0.1); color: var(--success); }
 .badge--warning { background: rgba(245,158,11,0.1); color: var(--warning); }
 .badge--error   { background: rgba(239,68,68,0.1); color: var(--error); }
-.badge--purple  { background: rgba(139,92,246,0.1); color: var(--purple); }
-.badge--teal    { background: rgba(20,184,166,0.1); color: var(--teal); }
+.badge--purple  { background: rgba(59,130,246,0.1); color: var(--purple); }
+.badge--teal    { background: rgba(59,130,246,0.1); color: var(--teal); }
 .badge--gradient {
   background: var(--gradient-btn); color: #fff;
 }
@@ -634,12 +634,12 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 }
 .auth-page::before {
   width: 320px; height: 320px; top: -80px; right: -60px;
-  background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
   animation-delay: 0s;
 }
 .auth-page::after {
   width: 280px; height: 280px; bottom: -60px; left: -40px;
-  background: radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%);
   animation-delay: -4s;
 }
 
@@ -676,7 +676,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 }
 .auth-card .input:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(20,184,166,0.12), 0 0 16px rgba(20,184,166,0.08);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12), 0 0 16px rgba(59,130,246,0.08);
   transform: translateY(-1px);
 }
 
@@ -878,4 +878,3 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   width: 80px;
   text-align: right;
 }
-

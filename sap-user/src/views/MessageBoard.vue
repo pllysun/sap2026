@@ -1,9 +1,6 @@
 <template>
-  <div class="page">
-    <div class="page-header">
-      <h1 class="page-title">留言板</h1>
-      <p class="page-desc">分享你的想法，与协会成员交流互动</p>
-    </div>
+  <div class="page message-board">
+    <PageHeader title="留言板" label="COMMUNITY / 交流空间" description="一个问题、一点灵感，或一句想对伙伴说的话。" />
 
     <!-- Post -->
     <div v-if="!isGuest" class="card mb-4 anim-in">
@@ -28,39 +25,36 @@
     <div v-if="messages.length > 0">
       <div v-for="(msg, idx) in messages" :key="msg.id" class="card mb-3 anim-in" :style="{ animationDelay: (idx * 0.03) + 's' }">
         <div class="message__header">
-          <img :src="msg.avatar || '/default-avatar.png'" class="message__avatar" />
-          <span class="message__name">{{ msg.userName }}</span>
+          <UserAvatar :src="msg.avatar" :name="authorName(msg)" />
+          <span class="message__name">{{ authorName(msg) }}</span>
           <span class="message__time">{{ formatTime(msg.createdAt) }}</span>
         </div>
 
         <div class="message__content">{{ msg.content }}</div>
 
         <div class="message__actions">
-          <span class="like-btn" :class="{ liked: msg.liked }" @click="toggleLike(msg, 0)">
-            {{ msg.liked ? '♥' : '♡' }} {{ msg.likeCount || 0 }}
-          </span>
-          <span class="like-btn" @click="toggleReplyForm(msg.id)">💬 回复</span>
+          <MessageLikeButton :item="msg" :target-type="0" @updated="Object.assign(msg, $event)" />
+          <button class="reply-button" @click="toggleReplyForm(msg.id)" :aria-expanded="replyingTo === msg.id">回复 <span v-if="msg.replies?.length">{{ msg.replies.length }}</span></button>
         </div>
 
         <!-- Reply input -->
         <div v-if="replyingTo === msg.id" class="mt-2 flex gap-1" style="padding-left: 36px;">
           <input v-model="replyContent" class="input" placeholder="写下回复…" @keyup.enter="submitReply(msg.id)" style="flex:1;" />
-          <button class="btn btn--primary btn--sm btn--pill" @click="submitReply(msg.id)" :disabled="!replyContent.trim()">发送</button>
+          <button class="btn btn--primary btn--sm btn--pill" @click="submitReply(msg.id)" :disabled="replying || !replyContent.trim()">{{ replying ? '发送中…' : '发送' }}</button>
         </div>
+        <p v-if="replyingTo === msg.id && replyError" class="error-text" role="alert">{{ replyError }}</p>
 
         <!-- Replies with collapse -->
         <div v-if="msg.replies && msg.replies.length > 0" class="reply-zone mt-2">
           <div v-for="(reply, rIdx) in visibleReplies(msg)" :key="reply.id" style="margin-bottom: 12px;">
             <div class="flex gap-1" style="align-items: center;">
-              <img :src="reply.avatar || '/default-avatar.png'" style="width:20px;height:20px;border-radius:50%;" />
-              <span class="t-caption" style="font-weight:500;color:var(--text-primary);">{{ reply.userName }}</span>
+              <UserAvatar :src="reply.avatar" :name="authorName(reply)" :size="24" />
+              <span class="t-caption" style="font-weight:500;color:var(--ink-800);">{{ authorName(reply) }}</span>
               <span class="t-caption">{{ formatTime(reply.createdAt) }}</span>
             </div>
             <div class="t-body" style="margin: 2px 0 2px 28px; font-size: 0.875rem;">{{ reply.content }}</div>
             <div style="margin-left: 28px;">
-              <span class="like-btn" :class="{ liked: reply.liked }" @click="toggleLike(reply, 1)" style="font-size:0.75rem;">
-                {{ reply.liked ? '♥' : '♡' }} {{ reply.likeCount || 0 }}
-              </span>
+              <MessageLikeButton :item="reply" :target-type="1" @updated="Object.assign(reply, $event)" />
             </div>
           </div>
           <!-- Collapse / Expand button -->
@@ -98,7 +92,8 @@
       </div>
     </div>
 
-    <div v-if="!loading && messages.length === 0" class="empty">
+    <p v-if="loadError" class="error-text" role="alert">{{ loadError }} <button @click="loadMessages">重新加载</button></p>
+    <div v-if="!loading && !loadError && messages.length === 0" class="empty">
       <div style="font-size:3rem; margin-bottom: var(--s3); opacity:0.4;">💬</div>
       <div class="empty__text">还没有留言，来写下第一条吧</div>
     </div>
@@ -106,14 +101,17 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
 import { ref, computed, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+import UserAvatar from '@/components/UserAvatar.vue'
+import MessageLikeButton from '@/components/MessageLikeButton.vue'
 
 const userStore = useUserStore()
 const isGuest = computed(() => {
   const roles = userStore.roles || []
-  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
+  return !roles.some(r => [0, 1, 2, 3].includes(Number(r)))
 })
 
 const messages = ref([])
@@ -126,6 +124,11 @@ const posting = ref(false)
 const postError = ref('')
 const replyingTo = ref(null)
 const replyContent = ref('')
+const replying = ref(false)
+const replyError = ref('')
+const loadError = ref('')
+let loadGeneration = 0
+const authorName = item => item.userName?.trim() || '软协同学'
 const expandedReplies = reactive({})
 
 const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
@@ -148,15 +151,19 @@ function toggleExpandReplies(msgId) {
 onMounted(() => loadMessages())
 
 async function loadMessages() {
+  const generation = ++loadGeneration
   loading.value = true
+  loadError.value = ''
   try {
     const r = await request.get('/api/message/list', { params: { current: currentPage.value, size: pageSize.value } })
+    if (generation !== loadGeneration) return
     messages.value = r.data.records || []; total.value = r.data.total || 0
-  } catch {} finally { loading.value = false }
+  } catch (e) { if (generation === loadGeneration) loadError.value = e.message || '留言加载失败' }
+  finally { if (generation === loadGeneration) loading.value = false }
 }
 
 async function postMessage() {
-  if (!newContent.value.trim()) return
+  if (posting.value || !newContent.value.trim()) return
   posting.value = true; postError.value = ''
   try { await request.post('/api/message', { content: newContent.value }); newContent.value = ''; currentPage.value = 1; await loadMessages() }
   catch (e) { postError.value = e.message || '发布失败' }
@@ -164,20 +171,18 @@ async function postMessage() {
 }
 
 function toggleReplyForm(id) {
+  if (replying.value) return
   replyingTo.value = replyingTo.value === id ? null : id
   replyContent.value = ''
+  replyError.value = ''
 }
 
 async function submitReply(msgId) {
-  if (!replyContent.value.trim()) return
-  try { await request.post(`/api/message/${msgId}/reply`, { content: replyContent.value }); replyingTo.value = null; replyContent.value = ''; await loadMessages() } catch {}
-}
-
-async function toggleLike(item, targetType) {
-  try {
-    if (item.liked) { await request.delete('/api/message/like', { params: { targetType, targetId: item.id } }); item.liked = false; item.likeCount = Math.max(0, (item.likeCount || 0) - 1) }
-    else { await request.post('/api/message/like', { targetType, targetId: item.id }); item.liked = true; item.likeCount = (item.likeCount || 0) + 1 }
-  } catch {}
+  if (replying.value || !replyContent.value.trim()) return
+  replying.value = true; replyError.value = ''
+  try { await request.post(`/api/message/${msgId}/reply`, { content: replyContent.value }); replyingTo.value = null; replyContent.value = ''; await loadMessages() }
+  catch (e) { replyError.value = e.message || '回复失败，请稍后重试' }
+  finally { replying.value = false }
 }
 
 function formatTime(t) {
@@ -190,3 +195,7 @@ function formatTime(t) {
   return d.toLocaleDateString('zh-CN')
 }
 </script>
+
+<style scoped>
+.message-board{max-width:1120px}.message-board .page-header{text-align:left;margin-bottom:30px}.message-board .page-title{color:#202e3b;font-size:32px}.message-board .page-title:after{display:none}.message-board .card{box-shadow:none;border:1px solid #dee4ea;border-radius:14px}.message__header{gap:12px}.message__name{color:#26323d}.message__content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;padding:6px 0}.message__actions{gap:15px;align-items:center}.reply-button{color:#536a82;font-size:12px;padding:8px 11px;border-radius:8px;min-height:34px}.reply-button:hover{background:#e9eef3}.reply-zone{background:#f3f6f9;border-left:2px solid #bbcbda;border-radius:0 9px 9px 0;padding:15px}.reply-zone .t-body{white-space:pre-wrap;overflow-wrap:anywhere}.reply-button:focus-visible{outline:2px solid #39638d;outline-offset:2px}
+</style>
