@@ -4,9 +4,9 @@
       <div class="section-head">
         <div>
           <h3>游客权限设置</h3>
-          <p>控制游客账号能否登录，以及登录后可使用的软协课表能力。真实会员不受此设置影响。</p>
+          <p>Web、班级课表默认开放；此处控制游客是否拥有完整教务能力。真实会员不受此设置影响。</p>
         </div>
-        <el-tag v-if="!canEdit" type="info" effect="plain">仅超级管理员可修改</el-tag>
+        <el-tag v-if="!canEdit" type="info" effect="plain">仅超级管理员或会长可修改</el-tag>
       </div>
 
       <el-radio-group v-model="selectedLevel" class="level-grid" :disabled="!canEdit || savingLevel">
@@ -103,8 +103,8 @@ const savedLevel = ref(0)
 const selectedLevel = ref(0)
 const announcements = ref([])
 const levels = [
-  { value: 0, title: '完全关闭', description: '游客账号无法登录 App' },
-  { value: 1, title: '基础能力', description: '游客登录后使用 Web 本地课表' },
+  { value: 0, title: '基础能力（兼容旧配置）', description: 'Web、班级课表默认开放，不开放教务模式' },
+  { value: 1, title: '基础能力', description: 'Web、班级课表默认开放，不开放教务模式' },
   { value: 2, title: '完整能力', description: '开放完整 App 能力，最多绑定一个教务账号' },
 ]
 const currentLevelLabel = computed(() => levels.find(item => item.value === savedLevel.value)?.title || '-')

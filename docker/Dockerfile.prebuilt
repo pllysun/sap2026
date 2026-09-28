@@ -1,0 +1,31 @@
+# Package tested, self-contained artifacts without inheriting an old application
+# image. Old application layers can retain removed configuration or credentials.
+# Context: app.jar, static/{admin,user}, ocr/, nginx.conf, entrypoint.sh.
+FROM eclipse-temurin:21.0.5_11-jre-jammy
+
+ARG HTTP_PROXY=""
+ARG HTTPS_PROXY=""
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nginx wget certbot cron redis-server python3 python3-pip libgomp1 && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /run/nginx /app/static/user /app/static/admin /app/ocr /app/data /app/logs /app/uploads /app/ssl/webroot/.well-known/acme-challenge
+
+COPY ocr/requirements.txt /app/ocr/requirements.txt
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir -r /app/ocr/requirements.txt
+COPY ocr/main.py /app/ocr/main.py
+ENV HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy=""
+
+COPY app.jar /app/app.jar
+COPY static/ /app/static/
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod 755 /app/entrypoint.sh && chmod 644 /app/app.jar && \
+    find /app/static -type d -exec chmod 755 {} + && \
+    find /app/static -type f -exec chmod 644 {} +
+
+VOLUME ["/app/data", "/app/logs", "/app/uploads", "/etc/letsencrypt"]
+EXPOSE 80 443
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget --no-check-certificate -qO- https://localhost:443/ || exit 1
+ENTRYPOINT ["/app/entrypoint.sh"]

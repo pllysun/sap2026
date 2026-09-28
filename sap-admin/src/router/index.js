@@ -73,6 +73,12 @@ const routes = [
         meta: { title: '入会管理' }
       },
       {
+        path: 'email',
+        name: 'Email',
+        component: () => import('../views/EmailView.vue'),
+        meta: { title: '邮件管理' }
+      },
+      {
         path: 'schedule-app',
         name: 'ScheduleApp',
         component: () => import('../views/ScheduleAppView.vue'),

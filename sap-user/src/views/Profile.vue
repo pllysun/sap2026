@@ -1,20 +1,19 @@
 <template>
-  <div class="page">
-    <div class="page-header">
-      <h1 class="page-title">个人信息</h1>
-    </div>
+  <div class="page profile-page">
+    <PageHeader title="个人信息" label="MY SPACE / 我的账号" description="让伙伴认识你，管理你的个人资料。" />
 
     <div v-if="loading" class="loading"><div class="loading__spinner"></div></div>
 
     <template v-else-if="userStore.user">
-      <div class="card anim-in" style="max-width: 520px; margin: 0 auto;">
+      <div class="card profile-card anim-in">
 
         <!-- Avatar -->
-        <div class="text-center mb-4">
-          <div class="avatar-upload" @click="triggerUpload">
-            <img :src="form.avatar || '/default-avatar.png'" class="avatar-upload__img" />
+        <div class="profile-identity">
+          <button class="avatar-upload" @click="triggerUpload" aria-label="更换头像" :disabled="uploadingAvatar">
+            <UserAvatar :src="form.avatar" :name="userStore.user.nickname || userStore.user.name" :size="88" />
             <div class="avatar-upload__overlay">更换</div>
-          </div>
+          </button>
+          <div><h2>{{ userStore.user.nickname || userStore.user.name || '软协同学' }}</h2><p>软件协会 · 个人档案</p></div>
           <input type="file" ref="fileInput" accept="image/*" @change="handleAvatarChange" style="display:none;" />
           <div v-if="uploadingAvatar" class="t-caption mt-1">上传中…</div>
         </div>
@@ -65,6 +64,8 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'

@@ -72,6 +72,14 @@ class ScheduleParserTest {
     }
 
     @Test
+    void ignoresJsonListsWithoutScheduleFields() {
+        ScheduleParser parser = new ScheduleParser();
+        String json = "{\"code\":0,\"count\":1,\"data\":[{\"kcmc\":\"公告标题\",\"author\":\"教务处\"}]}";
+        assertFalse(parser.supports(json));
+        assertTrue(parser.parse(json).getCourses().isEmpty());
+    }
+
+    @Test
     void parsesCurrentQzWeeklyTableLayout() {
         ScheduleParser parser = new ScheduleParser();
         String html = """

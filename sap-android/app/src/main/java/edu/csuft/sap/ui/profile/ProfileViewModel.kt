@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** 我的页 VM：会员信息 + 多教务学号的绑定/切换/备注/解绑。 */
@@ -41,8 +42,17 @@ class ProfileViewModel : ViewModel() {
     private var pendingAccount: String? = null
 
     private val acc = Graph.accountManager
-    private val _state = MutableStateFlow(UiState())
+    private val cachedUser = Graph.authRepository.cachedMe()
+    private val _state = MutableStateFlow(UiState(
+        user = cachedUser?.user,
+        identities = cachedUser?.identities.orEmpty(),
+        avatarVersion = cachedUser?.updatedAt,
+    ))
     val state: StateFlow<UiState> = _state.asStateFlow()
+    private val avatarLoader = AvatarLoader(Graph.appContext)
+    val avatar = avatarLoader.image
+    private var refreshJob: Job? = null
+    private var accountsRefreshJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -55,6 +65,11 @@ class ProfileViewModel : ViewModel() {
         // 故监听当前账号变化，主动清掉上一个账号的内存信息并重新加载，避免“切游客号还显示会员信息”。
         viewModelScope.launch {
             CurrentAccount.uid.drop(1).collect {
+                refreshJob?.cancel()
+                refreshJob = null
+                accountsRefreshJob?.cancel()
+                accountsRefreshJob = null
+                avatarLoader.activate(CurrentAccount.key)
                 _state.value = _state.value.copy(user = null, identities = emptyList(), avatarVersion = null)
                 refresh()
             }
@@ -63,19 +78,34 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        if (refreshJob?.isActive == true) return
+        val account = CurrentAccount.key
+        refreshJob = viewModelScope.launch {
             // 先用本地缓存即时展示（含头像/身份），避免白屏；离线也有内容
             Graph.authRepository.cachedMe()?.let { c ->
                 _state.value = _state.value.copy(user = c.user, identities = c.identities, avatarVersion = c.updatedAt)
             }
-            _state.value = _state.value.copy(loading = true, error = null)
+            loadAvatar(account)
+            _state.value = _state.value.copy(loading = _state.value.user == null, error = null)
             // 省流量同步：先轻量接口，仅资料/头像变过才重新拉头像
             when (val r = Graph.authRepository.syncUser()) {
-                is Outcome.Success -> _state.value = _state.value.copy(
-                    loading = false, user = r.data.user, identities = r.data.identities, avatarVersion = r.data.updatedAt)
-                is Outcome.Error -> _state.value = _state.value.copy(loading = false)
+                is Outcome.Success -> if (CurrentAccount.key == account) {
+                    _state.value = _state.value.copy(
+                        loading = false, user = r.data.user, identities = r.data.identities, avatarVersion = r.data.updatedAt)
+                    loadAvatar(account)
+                }
+                is Outcome.Error -> if (CurrentAccount.key == account) _state.value = _state.value.copy(loading = false)
             }
-            acc.refresh()
+            if (CurrentAccount.key == account && accountsRefreshJob?.isActive != true) {
+                accountsRefreshJob = viewModelScope.launch { acc.refresh() }
+            }
+        }
+    }
+
+    private fun loadAvatar(account: String) {
+        val url = avatarUrlOf(_state.value.user?.avatar, _state.value.avatarVersion)
+        viewModelScope.launch {
+            if (CurrentAccount.key == account) avatarLoader.load(account, url)
         }
     }
 
@@ -177,18 +207,22 @@ class ProfileViewModel : ViewModel() {
 
     /** 保存个人信息（网名/性别/头像 url）；成功后刷新用户信息并回调。 */
     fun saveProfile(nickname: String?, gender: Int?, avatar: String?, onDone: () -> Unit) {
+        val account = CurrentAccount.key
         viewModelScope.launch {
             _state.value = _state.value.copy(profileSaving = true, profileError = null)
             when (val r = Graph.authRepository.updateProfile(nickname, gender, avatar)) {
                 is Outcome.Success -> {
+                    if (CurrentAccount.key != account) return@launch
                     // 保存后 updatedAt 已变，syncUser 会按规则重新拉到新头像并刷新缓存
                     val synced = (Graph.authRepository.syncUser() as? Outcome.Success)?.data
+                    if (CurrentAccount.key != account) return@launch
                     _state.value = _state.value.copy(
                         profileSaving = false,
                         user = synced?.user ?: _state.value.user,
                         identities = synced?.identities ?: _state.value.identities,
                         avatarVersion = synced?.updatedAt ?: _state.value.avatarVersion,
                     )
+                    loadAvatar(account)
                     onDone()
                 }
                 is Outcome.Error -> _state.value = _state.value.copy(profileSaving = false, profileError = r.message)

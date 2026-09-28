@@ -21,10 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import edu.csuft.sap.ui.icons.AppIcons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ChevronIcon
 import edu.csuft.sap.ui.theme.ThemeState
 
 /** 主题色（辅色）设置：预设色板 + 取色盘自定义。简约白为主，辅色用于全局强调。 */
@@ -108,7 +106,7 @@ fun ThemeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     Box(Modifier.size(24.dp).background(accent, CircleShape)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape))
                     Text("取色盘自定义…", fontSize = 16.sp, modifier = Modifier.padding(start = 12.dp).weight(1f))
-                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                    ChevronIcon()
                 }
             }
 

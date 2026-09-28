@@ -53,13 +53,6 @@ class TermControllerTest {
     }
 
     @Test
-    void delete_delegatesToService() {
-        Result<?> result = controller.delete(7L);
-        verify(termService).deleteTerm(7L);
-        assertEquals(200, result.getCode());
-    }
-
-    @Test
     void changeover_delegatesToService() {
         List<Map<String, Object>> assignments = List.of(Map.of("positionId", 1));
         Result<?> result = controller.changeover(assignments);

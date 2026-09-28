@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import edu.csuft.sap.ui.auth.LoginScreen
+import edu.csuft.sap.ui.auth.AuthScreen
 import edu.csuft.sap.ui.common.JwMfaGate
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.home.HomeScreen
@@ -49,7 +49,7 @@ fun AppRoot(appViewModel: AppViewModel = viewModel()) {
     ) { state ->
         when (state) {
             AppViewModel.Gate.LOADING -> LoadingBox()
-            AppViewModel.Gate.LOGIN -> LoginScreen(
+            AppViewModel.Gate.LOGIN -> AuthScreen(
                 onLoggedIn = appViewModel::onLoggedIn,
                 onOffline = appViewModel::enterOffline,
             )
@@ -59,4 +59,5 @@ fun AppRoot(appViewModel: AppViewModel = viewModel()) {
 
     // 全局短信二次验证弹框：拉教务数据触发 MFA 时（后端 428）任意页面之上弹出
     JwMfaGate()
+    if (gate == AppViewModel.Gate.APP) edu.csuft.sap.ui.common.AcademicPrivacyGate()
 }

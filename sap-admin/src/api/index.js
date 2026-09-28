@@ -1,5 +1,9 @@
 import request from '../utils/request'
 
+export const getAcademicCalendars = () => request.get('/api/academic-calendar/admin')
+export const saveAcademicCalendar = (data) => request.put('/api/academic-calendar/admin', data)
+export const deleteAcademicCalendar = (term) => request.delete(`/api/academic-calendar/admin/${encodeURIComponent(term)}`)
+
 // ===== 认证 =====
 export const adminLogin = (data) => request.post('/api/auth/admin/login', data)
 export const getUserInfo = () => request.get('/api/auth/info')
@@ -11,6 +15,8 @@ export const getGradeStats = () => request.get('/api/dashboard/grade-stats')
 
 // ===== 用户 =====
 export const getUserList = (params) => request.get('/api/user/list', { params })
+export const getMemberProfile = (id) => request.get(`/api/user/${id}/profile`)
+export const getMemberRelations = (id, params) => request.get(`/api/user/${id}/profile/relations`, { params })
 export const updateUser = (id, data) => request.put(`/api/user/${id}`, data)
 export const updateUserRoles = (id, data) => request.put(`/api/user/${id}/roles`, data)
 export const getUserRoles = (id) => request.get(`/api/user/${id}/roles`)
@@ -24,6 +30,8 @@ export const getSettings = () => request.get('/api/setting/list')
 export const updateSetting = (data) => request.put('/api/setting', data)
 export const getSettingValue = (key) => request.get('/api/setting/value', { params: { key } })
 export const getPublicSettings = () => request.get('/api/setting/public')
+export const getRegistrationProtectionConfig = () => request.get('/api/setting/registration-protection')
+export const updateRegistrationProtectionConfig = (data) => request.put('/api/setting/registration-protection', data)
 
 // ===== COS 对象存储配置 =====
 export const getCosConfig = () => request.get('/api/setting/cos-config')
@@ -39,8 +47,8 @@ export const publishAppVersion = (formData) => request.post('/api/app/version/pu
 
 // ===== 软协课表意见反馈 Issue 中心 =====
 export const getScheduleAppSummary = (days) => request.get('/api/app/feedback/admin/summary', { params: { days } })
-export const getFeedbackIssues = (params) => request.get('/api/app/feedback/issues', { params })
-export const getFeedbackIssue = (id) => request.get(`/api/app/feedback/issues/${id}`)
+export const getFeedbackIssues = (params) => request.get('/api/app/feedback/admin/issues', { params })
+export const getFeedbackIssue = (id) => request.get(`/api/app/feedback/admin/issues/${id}`)
 export const replyFeedbackIssue = (id, content, parentId = null) =>
   request.post(`/api/app/feedback/admin/issues/${id}/comments`, { content, parentId })
 export const updateFeedbackStatus = (id, status) => request.put(`/api/app/feedback/admin/issues/${id}/status`, { status })
@@ -57,12 +65,14 @@ export const updateScheduleAnnouncement = (id, data) =>
 export const deleteScheduleAnnouncement = (id) =>
   request.delete(`/api/app/cloud/admin/announcements/${id}`)
 
-// ===== 班级课表采集与定时任务 =====
+// ===== 班级课表采集与进度 =====
 export const getClassScheduleAdmin = () => request.get('/api/class-schedule/admin')
 export const getClassScheduleLogs = (limit = 100) => request.get('/api/class-schedule/admin/logs', { params: { limit } })
-// 全量班级课表按学期串行读取并写入四张表，首次采集可能持续数分钟；
-// 单独放宽该请求超时，避免管理端误判为失败后重复点击，造成重复采集日志。
-export const pullClassSchedule = (data = {}) => request.post('/api/class-schedule/admin/pull', data, { timeout: 1800000 })
+export const getClassScheduleProgress = (batchId) => request.get('/api/class-schedule/admin/pull/progress', { params: { batchId, at: Date.now() } })
+export const getClassScheduleBatches = (params) => request.get('/api/class-schedule/admin/batches', { params })
+export const getClassScheduleHistory = (params) => request.get('/api/class-schedule/admin/pull/history', { params })
+// 仅创建后台任务；调用方通过 batchId 异步查询逐页进度。
+export const pullClassSchedule = (data = {}) => request.post('/api/class-schedule/admin/pull', data)
 export const submitClassScheduleMfa = (data = {}) => request.post('/api/class-schedule/admin/pull/mfa', data)
 export const resendClassScheduleMfa = (data = {}) => request.post('/api/class-schedule/admin/pull/mfa/resend', data)
 
@@ -76,7 +86,6 @@ export const deletePosition = (id) => request.delete(`/api/position/${id}`)
 export const getTermList = (params) => request.get('/api/term/list', { params })
 export const getGrades = () => request.get('/api/term/grades')
 export const addTerm = (data) => request.post('/api/term', data)
-export const deleteTerm = (id) => request.delete(`/api/term/${id}`)
 export const doChangeover = (data) => request.post('/api/term/changeover', data)
 
 // ===== 活动 =====
@@ -149,6 +158,18 @@ export const uploadManagerQr = (data) => request.post('/api/join/manager/qr', da
 export const getJoinApplications = (params) => request.get('/api/join/applications', { params })
 export const approveJoinApplication = (id) => request.post(`/api/join/approve/${id}`)
 export const directUpgradeMember = (studentId) => request.post('/api/join/direct-upgrade', { studentId })
+
+// ===== 邮件管理 =====
+export const getEmailConfig = () => request.get('/api/email/config')
+export const updateEmailConfig = (data) => request.put('/api/email/config', data)
+export const testEmailConfig = () => request.post('/api/email/config/test')
+export const getEmailTemplates = () => request.get('/api/email/templates')
+export const getEmailTemplate = (id) => request.get(`/api/email/templates/${id}`)
+export const createEmailTemplate = (data) => request.post('/api/email/templates', data)
+export const updateEmailTemplate = (id, data) => request.put(`/api/email/templates/${id}`, data)
+export const deleteEmailTemplate = (id) => request.delete(`/api/email/templates/${id}`)
+export const previewEmailTemplate = (id, variables = {}) => request.post(`/api/email/templates/${id}/preview`, variables)
+export const sendTestEmail = (data) => request.post('/api/email/test-send', data)
 
 // ===== 流量统计 =====
 export const getStatsOverview = (days) => request.get('/api/stats/overview', { params: { days } })

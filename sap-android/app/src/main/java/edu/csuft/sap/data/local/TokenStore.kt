@@ -34,6 +34,12 @@ class TokenStore(context: Context) {
 
     fun hasToken(): Boolean = !token.isNullOrBlank()
 
+    /** 确认协议后的登录必须先落盘成功，才能跳转主页面。 */
+    fun saveConfirmed(value: String) {
+        require(value.isNotBlank())
+        check(prefs.edit().putString(KEY_TOKEN, value).commit()) { "无法保存登录状态" }
+    }
+
     fun clear() {
         prefs.edit().clear().apply()
     }

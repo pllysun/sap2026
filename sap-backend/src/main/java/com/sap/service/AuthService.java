@@ -27,6 +27,8 @@ import java.util.Map;
 
 @Service
 public class AuthService {
+    @Autowired
+    private com.sap.service.mail.EmailBusinessHooks emailHooks;
 
     @Autowired
     private UserMapper userMapper;
@@ -69,9 +71,6 @@ public class AuthService {
         if (roles == null) roles = List.of();
         boolean isMember = roles.stream().anyMatch(r -> r != null && r <= 3);
         int appAccessLevel = isMember ? AppAccessService.FULL : appAccessService.guestAccessLevel();
-        if (appAccessLevel == AppAccessService.CLOSED) {
-            throw new BusinessException(403, "当前暂未开放登录，请稍后再试或联系软件协会");
-        }
         StpUtil.login(user.getId(), new cn.dev33.satoken.stp.SaLoginModel()
                 .setDevice("app")
                 .setTimeout(-1)
@@ -127,6 +126,11 @@ public class AuthService {
         }
         if (key != null) loginAttempts.remove(key); // 登录成功，清除失败计数
         return user;
+    }
+
+    /** 仅在邮箱验证且密码重置提交成功后调用，允许用户立即用新密码登录。 */
+    public void clearPasswordRecoveryLock(String account) {
+        loginAttempts.keySet().removeIf(key -> key.regionMatches(true,0,account+"|",0,account.length()+1));
     }
 
     private Map<String, Object> loginResult(User user) {
@@ -202,6 +206,7 @@ public class AuthService {
 
         // 刷新缓存
         cacheService.addUser(user);
+        emailHooks.registered(user);
     }
 
     /**

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img">
+  <title>主题色</title>
+  <path d="M12 3A9 9 0 1 0 12 21H13A2 2 0 0 0 14.5 17.5A2 2 0 0 1 16 14H18A3 3 0 0 0 21 11C21 6.5 17 3 12 3Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M7 10H7.1M10 6.5H10.1M15 6.5H15.1M6.5 14.5H6.6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

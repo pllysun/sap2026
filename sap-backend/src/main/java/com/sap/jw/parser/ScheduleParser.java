@@ -204,14 +204,28 @@ public class ScheduleParser {
         if (!(s.startsWith("{") || s.startsWith("["))) return false;
         try {
             Object value = com.alibaba.fastjson2.JSON.parse(s);
-            return !jsonRows(value).isEmpty() || value instanceof Collection<?>
-                    || (value instanceof Map<?, ?> map && hasJsonRowsKey(map));
+            return jsonRows(value).stream().anyMatch(ScheduleParser::looksLikeCourseRow);
         } catch (Exception ignored) { }
         return false;
     }
 
-    private static boolean hasJsonRowsKey(Map<?, ?> map) {
-        return firstCollection(map, "data", "rows", "list", "items", "records") != null;
+    /** JSON 接口可能返回其它列表（公告、分页元数据等），至少要有两个课表字段才认定为课表。 */
+    private static boolean looksLikeCourseRow(Object row) {
+        if (!(row instanceof Map<?, ?> map)) return false;
+        String name = textValue(map, "kcmc", "kcmc1", "courseName", "课程名称", "kc", "课程");
+        if (name == null || name.isBlank()) return false;
+        int scheduleFields = 0;
+        if (hasJsonText(map, "skxq", "xq", "xqmc", "weekday", "星期", "上课星期", "day")) scheduleFields++;
+        if (hasJsonText(map, "jcdm", "jcs", "sksj", "jc", "节次", "上课节次", "section")) scheduleFields++;
+        if (hasJsonText(map, "zc", "skzc", "zcsm", "周次", "上课周次", "weeks")) scheduleFields++;
+        if (hasJsonText(map, "jsxm", "jsxmzc", "teacher", "teacherName", "任课教师", "教师", "老师")) scheduleFields++;
+        if (hasJsonText(map, "jxcd", "jxcdmc", "skdd", "room", "教室", "上课地点", "地点")) scheduleFields++;
+        return scheduleFields >= 2;
+    }
+
+    private static boolean hasJsonText(Map<?, ?> map, String... keys) {
+        Object value = firstValue(map, keys);
+        return value != null && !String.valueOf(value).isBlank();
     }
 
     private static Collection<?> firstCollection(Map<?, ?> map, String... keys) {
@@ -261,6 +275,7 @@ public class ScheduleParser {
             String section = textValue(map, "jcdm", "jcs", "sksj", "jc", "节次", "上课节次", "section");
             c.setSection(section);
             c.setSectionIndex(parseSectionIndex(section));
+            if (c.getDay() < 1 || c.getSectionIndex() < 1) continue;
             vo.getCourses().add(c);
         }
         return vo;

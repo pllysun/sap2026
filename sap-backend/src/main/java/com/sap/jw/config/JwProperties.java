@@ -39,18 +39,12 @@ public class JwProperties {
 
     /**
      * 当前校方新版强智教务主入口经 WebVPN 改写后的地址。
-     * 2026 年迁移后，学生端首页与课表、成绩均由 jwxt 提供；已下线的 jwgl 仅作兼容回退。
+     * 2026 年迁移后，学生端首页与课表、成绩均由 jwxt 提供；不再连接已下线的 jwgl。
      */
     private String webvpnJwglBase = "https://http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn";
 
-    /** 旧 jwgl 入口，仅在新版入口暂时不可用时回退。 */
-    private String webvpnLegacyJwglBase = "https://http-jwgl-csuft-edu-cn-80.webvpn.csuft.edu.cn";
-
     /** 新版 jwxt 的单点登录入口位于 /jsxsd/。 */
     private String webvpnJwSsoPath = "/jsxsd/Logon.do?method=logonByZnlkd";
-
-    /** 旧 jwgl 的单点登录入口仍在站点根路径。 */
-    private String webvpnLegacyJwSsoPath = "/Logon.do?method=logonByZnlkd";
 
     /** 教学质量保障系统经 WebVPN 改写后的地址。 */
     private String webvpnQualityBase = "https://https-jxzlpt-csuft-edu-cn-443.webvpn.csuft.edu.cn";
@@ -81,9 +75,6 @@ public class JwProperties {
      * 否则 CAS 会返回 Unauthorized Service Access。
      */
     private String jwglBase = "http://jwxt.csuft.edu.cn";
-
-    /** 旧 jwgl 地址，供 WebVPN 重定向改写与兼容回退使用。 */
-    private String legacyJwglBase = "http://jwgl.csuft.edu.cn";
 
     /** 新版强智 CAS 单点登录回调。 */
     private String jwSsoPath = "/jsxsd/Logon.do?method=logonByZnlkd";
@@ -126,15 +117,11 @@ public class JwProperties {
         return trimTrailingSlash(jwglBase) + ensureLeadingSlash(jwSsoPath);
     }
 
-    /**
-     * WebVPN 下可尝试的强智入口，顺序为新版 jwxt、旧 jwgl。
-     * 去重允许部署环境显式将两者指向同一地址，避免一次登录重复请求同一源站。
-     */
+    /** 仅连接当前新版教务入口。 */
     public List<JwEndpoint> getWebvpnJwEndpoints() {
         LinkedHashSet<String> seen = new LinkedHashSet<>();
         List<JwEndpoint> endpoints = new ArrayList<>();
         addEndpoint(endpoints, seen, webvpnJwglBase, jwglBase, webvpnJwSsoPath);
-        addEndpoint(endpoints, seen, webvpnLegacyJwglBase, legacyJwglBase, webvpnLegacyJwSsoPath);
         return endpoints;
     }
 

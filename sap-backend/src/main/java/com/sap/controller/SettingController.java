@@ -47,7 +47,7 @@ public class SettingController {
     @OperationLog("修改系统设置")
     @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> update(@RequestBody Setting setting) {
-        // 课表云控只能走专用接口并由超级管理员修改，避免会长通过通用设置接口绕过权限。
+        // 超级管理员和会长均通过课表云控专用接口修改，统一校验游客权限等级。
         if (java.util.Set.of("guest_access_level", "allow_guest_login")
                 .contains(setting.getSettingKey())) {
             throw new com.sap.common.BusinessException(403, "请在软协课表的课表云控中修改该设置");

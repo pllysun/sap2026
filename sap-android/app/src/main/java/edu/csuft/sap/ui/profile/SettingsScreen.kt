@@ -1,59 +1,75 @@
 package edu.csuft.sap.ui.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edu.csuft.sap.BuildConfig
-import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import edu.csuft.sap.R
 import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.account.MemberState
+import edu.csuft.sap.ui.common.ModeOptionRow
+import edu.csuft.sap.ui.common.ModePickerHeader
 import edu.csuft.sap.ui.common.pressFade
 import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ChevronIcon
+import edu.csuft.sap.ui.icons.IconBadge
+import edu.csuft.sap.ui.icons.ModeIcon
+import edu.csuft.sap.ui.icons.title
 import edu.csuft.sap.update.Changelog
 import edu.csuft.sap.update.UpdateDialog
 import edu.csuft.sap.update.UpdateViewModel
 
 /** App 设置入口：隐私协议 / 关于 / 退出登录。 */
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun AppSettingsScreen(
     modifier: Modifier = Modifier,
     mode: AppMode,
@@ -65,40 +81,45 @@ fun AppSettingsScreen(
     onAbout: () -> Unit,
     onLogout: () -> Unit,
     onBack: () -> Unit,
+    openModesInitially: Boolean = false,
+    onModePickerOpened: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     var showModeInfo by remember { mutableStateOf(false) }
+    var showModes by remember { mutableStateOf(false) }
+    LaunchedEffect(openModesInitially) {
+        if (openModesInitially) {
+            showModes = true
+            onModePickerOpened()
+        }
+    }
+    val modeSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    var selectingMode by remember { mutableStateOf(false) }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("设置", onBack)
-        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            Card {
-                ThemeRow(onTheme)
-            }
-            Spacer(Modifier.height(12.dp))
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+        val viewportHeight = maxHeight
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = viewportHeight).padding(20.dp)) {
+            Text("课表与显示", style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
             // 三种课表模式统一入口；可见模式由云控与当前账号能力决定。
             Card {
-                Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        Modifier.fillMaxWidth().clickable { showModes = true }.padding(18.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        ModeIcon(mode, Modifier.padding(end = 14.dp), selected = true, size = 44.dp)
                         Column(Modifier.weight(1f)) {
-                            Text("课表模式", fontSize = 16.sp)
-                            Text("选择你要使用的课表来源", fontSize = 12.sp,
+                            Text(mode.title, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                            Text("当前课表模式 · 点击切换", fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 2.dp))
+                                modifier = Modifier.padding(top = 4.dp))
                         }
-                        TextButton(onClick = { showModeInfo = true }) { Text("模式说明") }
+                        ChevronIcon()
                     }
-                    MemberState.availableModes.forEachIndexed { index, item ->
-                        if (index > 0) RowDivider()
-                        ModeOptionRow(
-                            mode = item,
-                            selected = item == mode,
-                            onClick = { onSelectMode(item) },
-                        )
-                    }
-                }
+                    RowDivider()
+                    ThemeRow(onTheme)
             }
             // 显示成绩：教务模式专属；关闭后教务模式底栏仅「课表 / 我的」
             if (mode == AppMode.JW) {
@@ -120,52 +141,71 @@ fun AppSettingsScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
+            Text("帮助与关于", style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, top = 26.dp, bottom = 10.dp))
             Card {
-                NavRow("课表公告", onAnnouncements)
+                NavRow("课表公告", onAnnouncements, AppIcons.Bell)
                 RowDivider()
-                NavRow("隐私协议", onPrivacy)
+                NavRow("隐私协议", onPrivacy, AppIcons.Shield)
                 RowDivider()
-                NavRow("更新日志", onChangelog)
+                NavRow("更新日志", onChangelog, AppIcons.Update)
                 RowDivider()
-                NavRow("关于", onAbout)
+                NavRow("关于", onAbout, AppIcons.Info)
             }
-            Spacer(Modifier.height(20.dp))
-        }
+            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.weight(1f))
         OutlinedButton(
             onClick = onLogout,
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = RoundedCornerShape(16.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) { Text("退出登录", color = MaterialTheme.colorScheme.error) }
+        }
+        }
     }
-    if (showModeInfo) {
-        AlertDialog(
-            onDismissRequest = { showModeInfo = false },
-            title = { Text("课表模式说明") },
-            text = {
-                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
-                    Text("教务课表\n自动采集个人各学期课表、成绩和考试安排；需要绑定教务账号。")
-                    Text("Web课表\n在学校网页中自行登录并导入个人课表；账号密码不经过服务器，但不会自动获取成绩。")
-                    Text("班级课表\n无需账号密码，按学期、学院、专业和班级选择公共课表；与个人课表可能因重修、选课而略有差异。")
+    if (showModes) {
+        ModalBottomSheet(onDismissRequest = { showModes = false }, sheetState = modeSheet) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).selectableGroup().padding(bottom = 24.dp)) {
+                ModePickerHeader(showModeInfo) { showModeInfo = !showModeInfo }
+                MemberState.availableModes.forEach { item ->
+                    ModeOptionRow(item, item == mode, showModeInfo) {
+                        if (!selectingMode) {
+                            selectingMode = true
+                            val owner = edu.csuft.sap.data.account.CurrentAccount.key
+                            scope.launch {
+                                try {
+                                    try { modeSheet.hide() }
+                                    catch (e: kotlinx.coroutines.CancellationException) {
+                                        // 拖动手势可取消动画，但不应吞掉已点击的模式；离开页面则仍取消。
+                                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                    }
+                                    showModes = false
+                                    androidx.compose.runtime.withFrameNanos { }
+                                    if (owner == edu.csuft.sap.data.account.CurrentAccount.key && item != mode) onSelectMode(item)
+                                } finally { selectingMode = false }
+                            }
+                        }
+                    }
                 }
-            },
-            confirmButton = { TextButton(onClick = { showModeInfo = false }) { Text("知道了") } },
-        )
+            }
+        }
     }
 }
 
 /**
  * 隐私协议。
  * [offline]=true 时展示离线版本（完全不联网、不收集任何信息），优先级最高。
- * [web]=true 时展示 Web 模式版本（端上抓取、不存教务密码、仅课表），数据权限与教务模式不同。
+ * 按会员身份选择协议；登录前显式使用游客协议。
  */
 @Composable
-fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, web: Boolean = false, offline: Boolean = false) {
+fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, member: Boolean = MemberState.hasFullAppFeatures, offline: Boolean = false) {
     if (offline) { OfflinePrivacyScreen(modifier, onBack); return }
-    if (web) { WebPrivacyScreen(modifier, onBack); return }
+    if (!member) { GuestPrivacyScreen(modifier, onBack); return }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        SettingsTopBar("隐私协议", onBack)
+        SettingsTopBar("教务功能隐私协议", onBack)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
             Para("软协课表（以下简称“本应用”）非常重视你的隐私。本协议说明我们收集哪些信息、如何使用与存储，以及你拥有的权利。")
+            Para("软件协会会员及以上身份，或云控开放完整能力的账号，可以使用教务、Web 和班级课表。登录不等于绑定教务账号；只有主动绑定后，服务器才会加密保存教务账号密码，用于同步个人教务数据。Web 与班级模式不托管教务密码。")
             Section("一、我们收集的信息")
             Para("1. 平台账号：用于登录本应用及校验账号身份。\n" +
                 "2. 学校教务账号与密码：用于代你登录学校教务系统，抓取你的课表、成绩、考试安排、评教等数据。\n" +
@@ -183,6 +223,28 @@ fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, web: Boolea
                 "· 你可随时退出登录，本地保存的登录凭证将被清除。")
             Section("五、第三方共享")
             Para("除你的学校教务系统外，本应用不会向任何第三方共享你的个人信息。")
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+/** 游客仅使用 Web 与班级课表，不包含服务器托管教务密码的授权。 */
+@Composable
+fun GuestPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        SettingsTopBar("游客隐私协议", onBack)
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
+            Para("App 仅供内部使用，禁止分享。本协议适用于使用 Web 与班级课表的基础能力账号。如后续获得教务能力，会在首次使用前请你确认教务功能隐私协议。")
+            Section("一、App 账号")
+            Para("学号和 App 密码用于账号验证；同意协议后才在本机保存登录凭证，以便下次自动进入。App 不保存你输入的明文密码。Web 与班级课表为默认开放的基础功能。")
+            Section("二、两种课表模式")
+            Para("· Web 课表：你在学校认证网页自行登录，App 在本机解析个人课表。教务账号密码不由 App 服务器托管，网页登录状态（Cookie）可能保留在本机。\n" +
+                "· 班级课表：无需教务账号密码，选择、下载并在本机缓存公共班级课表，可离线查看。\n" +
+                "· 两种模式均不授权服务器保存教务密码，不自动采集个人成绩。")
+            Section("三、App 功能与数据")
+            Para("App 会处理账号资料及功能所需的访问、下载和操作日志。你主动提交的反馈及附件会保存并在 Issue 中心展示；课表背景仅在本机处理。仅在你主动选择图片时读取所选图片。找回 App 密码时，验证码发送到账号登记的 QQ 邮箱。")
+            Section("四、管理自己的数据")
+            Para("你可以退出登录清除本机登录凭证，在 Web 导入中通过「换账号」清除网页登录状态，并删除本地课表。账号资料有误或需要协助处理数据时，请联系软件协会管理员。")
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -230,7 +292,7 @@ fun OfflinePrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 "· 你主动选择并裁剪的课表背景仅保存在 App 私有目录。\n" +
                 "· 所有数据均保存在你的设备本地，不会离开你的设备。")
             Section("三、数据范围")
-            Para("离线模式仅展示你设备本地已有的课表，不抓取、不更新任何教务数据；恢复联网后才会按你所选模式重新提供在线功能。")
+            Para("离线模式支持切换本地 Web 课表和已下载的班级课表，包括已缓存学期及开学日期，不抓取或下载新数据。本机会记住你选择的班级；恢复联网后按云控和账号权限提供在线功能。")
             Section("四、你的权利")
             Para("· 本地保存的课表可随时删除。\n" +
                 "· 离线模式下无需登录或退出，本应用不持有任何可在离线状态下收集的信息。")
@@ -294,7 +356,7 @@ fun AboutScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 
             Box(Modifier.padding(top = 24.dp).fillMaxWidth()) {
                 Card {
-                    NavRow("检查更新", onClick = { updateVm.check(manual = true) })
+                    NavRow("检查更新", onClick = { updateVm.check(manual = true) }, icon = AppIcons.Refresh)
                     RowDivider()
                     InfoRow("应用名称", "软协课表")
                     RowDivider()
@@ -342,7 +404,7 @@ internal fun SettingsTopBar(title: String, onBack: () -> Unit) {
 private fun Card(content: @Composable () -> Unit) {
     Column(
         // 先 clip 再 background，保证整行按下高亮被裁到圆角内（首尾行不溢出圆角）
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface),
     ) { content() }
 }
 
@@ -358,63 +420,22 @@ private fun ThemeRow(onClick: () -> Unit) {
         Modifier.fillMaxWidth().pressFade(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        IconBadge(AppIcons.Palette, Modifier.padding(end = 12.dp), size = 34.dp)
         Text("主题色", fontSize = 16.sp, modifier = Modifier.weight(1f))
         Box(Modifier.size(20.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 10.dp))
-    }
-}
-
-/** 课表模式切换行：在窄屏上纵向展示标题和说明，避免三个横向标签挤压或截断。 */
-@Composable
-private fun ModeOptionRow(mode: AppMode, selected: Boolean, onClick: () -> Unit) {
-    val title = when (mode) {
-        AppMode.JW -> "教务课表"
-        AppMode.WEB -> "Web课表"
-        AppMode.CLASS -> "班级课表"
-    }
-    val subtitle = when (mode) {
-        AppMode.JW -> "自动采集个人课表、成绩和考试安排"
-        AppMode.WEB -> "自行登录学校网页，导入个人课表"
-        AppMode.CLASS -> "无需账号，按班级查看公共课表"
-    }
-    Row(
-        Modifier.fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                fontSize = 15.sp,
-                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                subtitle,
-                fontSize = 12.sp,
-                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-        }
-        if (selected) {
-            Icon(AppIcons.Check, "当前模式", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        }
+        ChevronIcon(Modifier.padding(start = 10.dp))
     }
 }
 
 @Composable
-private fun NavRow(title: String, onClick: () -> Unit) {
+private fun NavRow(title: String, onClick: () -> Unit, icon: ImageVector? = null) {
     Row(
         Modifier.fillMaxWidth().pressFade(onClick = onClick).padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        icon?.let { IconBadge(it, Modifier.padding(end = 12.dp), size = 34.dp) }
         Text(title, fontSize = 16.sp, modifier = Modifier.weight(1f))
-        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+        ChevronIcon()
     }
 }
 

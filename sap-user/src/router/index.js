@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  { path: '/forgot-password', name: 'ForgotPassword', component: () => import('@/views/ForgotPassword.vue') },
   {
     path: '/login',
     name: 'Login',
@@ -62,13 +63,18 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 84 }
+    return { top: 0 }
+  },
   routes
 })
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('sap_token')
-  if (to.path !== '/login' && to.path !== '/register' && !token) {
+  if (!['/login', '/register', '/forgot-password'].includes(to.path) && !token) {
     next('/login')
   } else {
     next()

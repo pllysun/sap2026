@@ -7,6 +7,16 @@ import org.junit.Test
 
 class MemberStateTest {
 
+    @Test
+    fun cloudLevelOffersAcademicModeWithoutChangingGuestIdentity() {
+        MemberState.setAccess(listOf(4), 2)
+        assertTrue(MemberState.availableModes.contains(AppMode.JW))
+        assertTrue(MemberState.availableModes.contains(AppMode.WEB))
+        assertTrue(MemberState.availableModes.contains(AppMode.CLASS))
+        assertFalse(MemberState.isJw)
+        assertFalse(MemberState.isMember)
+    }
+
     @After
     fun reset() {
         MemberState.clearAccess()

@@ -32,8 +32,7 @@ public class RateLimitProperties {
      * 此处仅作粗粒度洪泛闸。
      */
     private Rule login = new Rule(30, 30);
-    /** 注册（/api/auth/register），按 IP（与风控验证码叠加，给足突发以兼容校园网共用 IP）。 */
-    private Rule register = new Rule(20, 20);
+    // 注册和验证码的规则统一由数据库中的注册防护设置提供。
     /** 教务代抓（/api/jw/**），按用户——遏制线程池 DoS，同时容下 App 启动一次正常同步。 */
     private Rule jw = new Rule(30, 30);
     /** 写接口（POST/PUT/DELETE/PATCH 于 /api/**），按用户/IP。 */

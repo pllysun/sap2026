@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+    @Autowired
+    private com.sap.service.mail.EmailBusinessHooks emailHooks;
 
     @Autowired
     private UserMapper userMapper;
@@ -64,10 +66,10 @@ public class UserService {
         // 去重，避免触发 uk_user_role 唯一约束
         List<Integer> codes = roleCodes.stream().distinct().collect(Collectors.toList());
 
-        // 防垂直越权：只有超级管理员(0)可以授予/变更 超管(0)、会长(1) 等高权限角色
+        // 超级管理员(0)与会长(1)权限等价，均可管理任意角色；普通管理员仍不可修改高权限账号。
         List<String> callerRoles = StpUtil.getRoleList();
-        boolean callerIsSuperAdmin = callerRoles.contains("0");
-        if (!callerIsSuperAdmin) {
+        boolean callerIsLeaderOrSuper = callerRoles.contains("0") || callerRoles.contains("1");
+        if (!callerIsLeaderOrSuper) {
             int grantMin = codes.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
             List<Integer> targetCurrent = userRoleMapper.selectRoleCodesByUserId(userId);
             int targetMin = targetCurrent.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
@@ -87,7 +89,7 @@ public class UserService {
 
     /**
      * 管理员重置指定账号(按学号)的密码。
-     * 防越权：非超级管理员不得重置高权限账号(超管/会长，roleCode ≤ 1)的密码，
+     * 超级管理员和会长均可重置任意账号；普通管理员不得重置高权限账号(roleCode ≤ 1)，
      * 避免低权限管理员通过重置密码接管高权限账号。
      */
     @Transactional
@@ -101,8 +103,8 @@ public class UserService {
         if (user == null) throw new BusinessException("账号不存在");
 
         List<String> callerRoles = StpUtil.getRoleList();
-        boolean callerIsSuperAdmin = callerRoles.contains("0");
-        if (!callerIsSuperAdmin) {
+        boolean callerIsLeaderOrSuper = callerRoles.contains("0") || callerRoles.contains("1");
+        if (!callerIsLeaderOrSuper) {
             List<Integer> targetRoles = userRoleMapper.selectRoleCodesByUserId(user.getId());
             int targetMin = targetRoles.stream().mapToInt(Integer::intValue).min().orElse(Integer.MAX_VALUE);
             if (targetMin <= 1) {
@@ -176,6 +178,7 @@ public class UserService {
             term.setPositionId(memberPosition.getId());
             termMapper.insert(term);
         }
+        emailHooks.memberJoined(userId);
     }
 
     /**

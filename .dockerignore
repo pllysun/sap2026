@@ -13,6 +13,22 @@ logo.png
 # 敏感配置，绝不能打进镜像（含真实数据库/密钥）
 **/application-dev.yml
 **/application-prod.yml
+**/application-dev.yaml
+**/application-prod.yaml
+**/application-local.yml
+**/application-local.yaml
+**/*.local.env
+**/*.local.md
+**/.env
+**/keystore.properties
+**/*.jks
+
+# The production image contains the web apps and backend only. Do not send
+# Android packages, release archives, or operations material to BuildKit.
+sap-android/
+release/
+ops/
+templates/
 
 # 单元测试不需要进运行时镜像
 sap-backend/src/test

@@ -1,0 +1,9 @@
+// Isolated debug install; the regular app and release backend configuration stay intact.
+allprojects {
+    plugins.withId('com.android.application') {
+        android.buildTypes.debug.applicationIdSuffix = '.avatarqa'
+        afterEvaluate {
+            android.buildTypes.debug.buildConfigField 'String', 'BASE_URL', '"http://10.0.2.2:18891"'
+        }
+    }
+}

@@ -14,12 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import edu.csuft.sap.ui.icons.AppIcons
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,13 +30,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import edu.csuft.sap.ui.icons.SyncIcon
 import java.time.Instant
 import java.time.ZoneId
 
 @Composable
 fun LoadingBox(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.5.dp)
+        SyncIcon(running = true, modifier = Modifier.size(32.dp), description = "正在加载")
     }
 }
 
@@ -109,11 +105,7 @@ fun SyncBar(syncedAt: Long?, syncing: Boolean, error: String?, onSync: () -> Uni
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (syncing) {
-                CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
-            } else {
-                Icon(AppIcons.Refresh, "同步", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-            }
+            SyncIcon(running = syncing, modifier = Modifier.size(16.dp))
             Text(
                 "同步", fontSize = 13.sp, fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 4.dp),

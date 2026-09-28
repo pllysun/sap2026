@@ -1,9 +1,6 @@
 <template>
   <div class="page">
-    <div class="page-header">
-      <h1 class="page-title">软协笔记</h1>
-      <p class="page-desc">知识汇聚，笔记沉淀，让学习的痕迹成为前行的力量</p>
-    </div>
+    <PageHeader title="软协笔记" label="KNOWLEDGE LIBRARY / 知识共享" description="把经验写下来，让下一次探索更进一步。" />
 
     <div v-if="initialLoading" class="loading"><div class="loading__spinner"></div></div>
 
@@ -16,7 +13,7 @@
     <div v-if="!initialLoading && notes.length > 0 || keyword" class="note-search">
       <div class="note-search__input-wrap">
         <span class="note-search__icon">🔍</span>
-        <input v-model="keyword" class="note-search__input" placeholder="搜索笔记标题…"
+        <input v-model="keyword" class="note-search__input" aria-label="搜索笔记" placeholder="搜索笔记标题…"
           @keyup.enter="doSearch" />
         <button v-if="keyword" class="note-search__clear" @click="keyword = ''; doSearch()">✕</button>
       </div>
@@ -27,6 +24,8 @@
       <div
         v-for="(note, idx) in notes" :key="note.id"
         class="note-card anim-in"
+        role="button" :tabindex="isGuest ? -1 : 0" :aria-disabled="isGuest" :aria-label="'阅读笔记：' + note.title"
+        @keydown.enter="goDetail(note)" @keydown.space.prevent="goDetail(note)"
         :class="{ 'note-card--guest': isGuest }"
         :style="{ animationDelay: (idx * 0.05) + 's' }"
         @click="goDetail(note)"
@@ -68,6 +67,7 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -84,7 +84,7 @@ const initialLoading = ref(true)
 
 const isGuest = computed(() => {
   const roles = userStore.roles || []
-  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
+  return !roles.some(r => [0, 1, 2, 3].includes(Number(r)))
 })
 
 const totalPages = computed(() => Math.ceil(total.value / pageSize))

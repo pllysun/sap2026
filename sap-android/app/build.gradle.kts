@@ -14,8 +14,8 @@ android {
         applicationId = "edu.csuft.sap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 75
-        versionName = "2.1"
+        versionCode = 118
+        versionName = "2.3"
         // 后端地址：模拟器用 10.0.2.2 指向宿主机；真机改成局域网IP或部署域名
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081\"")
     }
@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.jsoup) // WebView 抓取的课表 HTML 端上解析
     implementation(libs.coil.compose) // 网络头像加载
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
 
 // 打包后把签名 release APK + mapping 复制到「项目根目录/release」(= 仓库根 sap2026/release/)，统一取用。

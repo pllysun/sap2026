@@ -69,6 +69,12 @@
               <template #default="{ row }"><el-tag size="small" :type="categoryType(row.category)">{{ row.categoryText }}</el-tag></template>
             </el-table-column>
             <el-table-column prop="reporterName" label="提交人" width="130" />
+            <el-table-column label="账号 / QQ" min-width="170">
+              <template #default="{ row }">
+                <div>账号：{{ row.reporterAccount || '—' }}</div>
+                <div>QQ：{{ row.reporterQq || '—' }}</div>
+              </template>
+            </el-table-column>
             <el-table-column label="回复" width="76" align="center">
               <template #default="{ row }"><span class="comment-count">◌ {{ row.commentCount }}</span></template>
             </el-table-column>
@@ -88,7 +94,7 @@
         </el-tab-pane>
 
         <el-tab-pane label="课表云控" name="cloud" lazy>
-          <ScheduleCloudPanel :can-edit="isSuperAdmin" />
+          <ScheduleCloudPanel :can-edit="isLeaderOrSuper" />
         </el-tab-pane>
 
         <el-tab-pane label="班级课表" name="class-schedule" lazy>
@@ -124,6 +130,7 @@
             <div class="author-line">
               <el-avatar :size="32" :src="detail.reporterAvatar">{{ detail.reporterName?.slice(0, 1) }}</el-avatar>
               <strong>{{ detail.reporterName }}</strong>
+              <span>账号：{{ detail.reporterAccount || '—' }} · QQ：{{ detail.reporterQq || '—' }}</span>
               <span>反馈正文</span>
             </div>
             <div class="issue-content">{{ detail.content }}</div>
@@ -258,7 +265,6 @@ import { formatInt } from '../utils/format'
 const route = useRoute()
 const router = useRouter()
 const roles = ref([])
-const isSuperAdmin = computed(() => roles.value.includes(0))
 const isLeaderOrSuper = computed(() => roles.value.includes(0) || roles.value.includes(1))
 const isAdmin = computed(() => isLeaderOrSuper.value || roles.value.includes(2))
 const activeTab = ref('issues')
@@ -381,7 +387,7 @@ async function submitReply() {
   replyLoading.value = true
   try {
     const result = await replyFeedbackIssue(detail.value.id, text, replyTarget.value?.id || null)
-    detail.value = result.data
+    detail.value = { ...detail.value, ...result.data }
     replyText.value = ''
     replyTarget.value = null
     ElMessage.success('回复已发布')
@@ -433,7 +439,7 @@ async function changeStatus(status) {
   statusLoading.value = true
   try {
     const result = await updateFeedbackStatus(detail.value.id, status)
-    detail.value = result.data
+    detail.value = { ...detail.value, ...result.data }
     if (closing) {
       replyText.value = ''
       replyTarget.value = null

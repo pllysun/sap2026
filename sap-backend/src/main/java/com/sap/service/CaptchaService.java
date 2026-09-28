@@ -1,7 +1,7 @@
 package com.sap.service;
 
 import com.wf.captcha.SpecCaptcha;
-import org.springframework.beans.factory.annotation.Value;
+import com.sap.common.BusinessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -9,83 +9,90 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.LongSupplier;
 
 /**
- * 注册风控验证码（单实例内存存储，无 Redis 依赖；进程重启即重置，对风控可接受）。
- * <p><b>默认不弹验证码</b>：仅当某 IP 在窗口内注册数超过宽松阈值 {@code free-limit} 后，
- * 才对该 IP 后续注册要求验证码——正常用户零打扰，批量养号脚本越过阈值后被验证码挡住。</p>
- * <p>校园网 NAT 下大量学生共用一个出口 IP，故阈值给得宽松；越过阈值也只是多一步图形验证码，
- * 真人可解、脚本难解。应急可用 {@code app.register.captcha-enabled=false} 一键关闭。</p>
+ * 一次性图形验证码。默认每次注册均需验证，答案仅存本实例内存并绑定来源 IP。
+ * 多实例部署须使用粘性会话；进程重启后旧图片失效，客户端重新获取即可。
  */
 @Service
 public class CaptchaService {
 
-    /** 总开关：关闭后任何注册都不要求验证码（应急回滚用）。 */
-    @Value("${app.register.captcha-enabled:true}")
-    private boolean enabled;
+    private final RegistrationProtectionSettingsService settings;
 
-    /** 单 IP 在窗口内可「免验证码」注册的次数（宽松，默认 5）。超过后该 IP 后续注册才要验证码。 */
-    @Value("${app.register.free-limit:5}")
-    private int freeLimit;
+    public CaptchaService(RegistrationProtectionSettingsService settings) {
+        this.settings = settings;
+    }
 
-    /** 风控计数窗口(小时，默认 24)。窗口过后该 IP 计数清零。 */
-    @Value("${app.register.window-hours:24}")
-    private int windowHours;
-
-    /** 验证码答案有效期(秒，默认 180)。 */
-    @Value("${app.register.captcha-ttl-seconds:180}")
-    private int captchaTtlSeconds;
-
-    private record Captcha(String answer, long expireAt) {}
+    // 已签发的验证码保留签发时的有效期及最短作答时间，避免保存配置导致正在填写的图片失效。
+    private record Captcha(String answer, String ip, long verifyAfter, long expireAt) {}
     private record IpStat(int count, long resetAt) {}
 
     private final Map<String, Captcha> captchas = new ConcurrentHashMap<>();
     private final Map<String, IpStat> ipStats = new ConcurrentHashMap<>();
+    private LongSupplier clock = System::currentTimeMillis;
+    private static final int MAX_ENTRIES = 10_000;
 
     /** 生成图形验证码，返回 {captchaId, image(base64 dataURL)}；答案存内存(一次性、带过期)。 */
-    public Map<String, Object> generate() {
-        SpecCaptcha captcha = new SpecCaptcha(120, 40, 4);
+    public Map<String, Object> generate(String ip) {
+        var policy = settings.current().captcha();
+        SpecCaptcha captcha = new SpecCaptcha(160, 50, policy.length());
         String answer = captcha.text();
+        String image = captcha.toBase64();
         String id = UUID.randomUUID().toString().replace("-", "");
-        captchas.put(id, new Captcha(answer, System.currentTimeMillis() + captchaTtlSeconds * 1000L));
+        long now = clock.getAsLong();
+        synchronized (captchas) {
+            if (captchas.size() >= MAX_ENTRIES) {
+                captchas.values().removeIf(c -> c.expireAt() <= now);
+                if (captchas.size() >= MAX_ENTRIES) throw new BusinessException(429, "验证码请求较多，请稍后再试");
+            }
+            captchas.put(id, new Captcha(answer, ip, now + policy.minSolveSeconds() * 1000L,
+                    now + policy.ttlSeconds() * 1000L));
+        }
         Map<String, Object> data = new HashMap<>();
         data.put("captchaId", id);
-        data.put("image", captcha.toBase64());
+        data.put("image", image);
         return data;
     }
 
     /** 校验并消费验证码（取出即删，防重放）；不区分大小写。 */
-    public boolean verify(String id, String input) {
-        if (id == null || input == null || input.isBlank()) return false;
+    public boolean verify(String id, String input, String ip) {
+        if (id == null) return false;
         Captcha c = captchas.remove(id);
-        return c != null && c.expireAt() > System.currentTimeMillis()
+        long now = clock.getAsLong();
+        return c != null && input != null && !input.isBlank() && ip != null && ip.equals(c.ip())
+                && c.expireAt() > now && now >= c.verifyAfter()
                 && c.answer().equalsIgnoreCase(input.trim());
     }
 
-    /** 该 IP 当前注册是否需要验证码（默认否；仅窗口内注册数超过宽松阈值才为是）。 */
-    public boolean captchaRequired(String ip) {
-        if (!enabled || ip == null) return false;
-        IpStat s = ipStats.get(ip);
-        if (s == null || s.resetAt() <= System.currentTimeMillis()) return false;
-        return s.count() >= freeLimit;
-    }
-
-    /** 注册成功后对该 IP 计数 +1（驱动风控阈值；窗口过期则重新计窗）。 */
-    public void recordRegister(String ip) {
-        if (ip == null) return;
-        long now = System.currentTimeMillis();
-        long reset = now + windowHours * 3600_000L;
-        ipStats.compute(ip, (k, old) ->
-                (old == null || old.resetAt() <= now)
-                        ? new IpStat(1, reset)
-                        : new IpStat(old.count() + 1, old.resetAt()));
+    /** 原子决定本次请求是否需验证，同时预占可选豁免，不能在注册成功后才计数。 */
+    public boolean requiresCaptchaForAttempt(String ip) {
+        var policy = settings.current().captcha();
+        if (!policy.enabled()) return false;
+        if (policy.freeLimit() <= 0 || ip == null) return true;
+        long now = clock.getAsLong();
+        synchronized (ipStats) {
+            IpStat stat = ipStats.get(ip);
+            if (stat == null || stat.resetAt() <= now) {
+                if (stat == null && ipStats.size() >= MAX_ENTRIES) {
+                    ipStats.values().removeIf(s -> s.resetAt() <= now);
+                    if (ipStats.size() >= MAX_ENTRIES) return true;
+                }
+                stat = new IpStat(0, now + policy.freeWindowHours() * 3600_000L);
+            }
+            if (stat.count() >= policy.freeLimit()) return true;
+            ipStats.put(ip, new IpStat(stat.count() + 1, stat.resetAt()));
+            return false;
+        }
     }
 
     /** 定时清理过期项，防内存无界增长。 */
     @Scheduled(fixedDelay = 300_000L)
     public void sweep() {
-        long now = System.currentTimeMillis();
+        long now = clock.getAsLong();
         captchas.entrySet().removeIf(e -> e.getValue().expireAt() <= now);
-        ipStats.entrySet().removeIf(e -> e.getValue().resetAt() <= now);
+        synchronized (ipStats) {
+            ipStats.entrySet().removeIf(e -> e.getValue().resetAt() <= now);
+        }
     }
 }

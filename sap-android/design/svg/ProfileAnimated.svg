@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img">
+<title>我的 · 动态</title>
+<style>g{transform-origin:12px 12px;animation:arrive .28s cubic-bezier(.2,.8,.2,1) both}@keyframes arrive{from{opacity:.35;transform:translateY(1px) scale(.9)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){g{animation:none}}</style>
+<g>
+  <path d="M8.5 7.5A3.5 3.5 0 1 0 15.5 7.5A3.5 3.5 0 1 0 8.5 7.5Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M5 20V18.5A4.5 4.5 0 0 1 9.5 14H14.5A4.5 4.5 0 0 1 19 18.5V20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

@@ -23,7 +23,47 @@ class ScheduleStore(context: Context) {
     private val _root = MutableStateFlow(load())
     val root: StateFlow<ScheduleRoot> = _root.asStateFlow()
 
+    fun applyAcademicCalendar(dates: Map<String, String>) {
+        val current = _root.value
+        val updated = current.withAcademicCalendar(dates)
+        if (updated != current) persist(updated)
+    }
+
     fun accountData(account: String): AccountData = _root.value.accounts[storageAccountKey(account)] ?: AccountData()
+
+    fun finishScheduleSync(account: String, terms: Set<String>) {
+        val before = _root.value
+        val after = before.withSyncedWeekend(storageAccountKey(account), terms)
+        if (after != before) persist(after)
+    }
+
+    /** JSON 编码放后台；提交前校验账号和根版本，避免覆盖刷新期间的界面编辑。 */
+    suspend fun applyClassRefresh(owner: String, updates: List<ClassRefresh>, allowed: () -> Boolean) {
+        while (CurrentAccount.key == owner && allowed()) {
+            val before = _root.value
+            val accountPrefs = appContext.getSharedPreferences("sap_account", Context.MODE_PRIVATE)
+            val active = accountPrefs.getString("active_account", null)
+            val (after, json) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val refreshed = before.withClassRefresh(owner, updates)
+                val terms = updates.filter { it.account == active &&
+                    before.accounts[accountStorageKey(owner, it.account)]?.termCourses?.get(it.term) == it.previousCourses
+                }.mapTo(mutableSetOf()) { it.term }
+                val next = if (active != null) refreshed.withSyncedWeekend(accountStorageKey(owner, active), terms) else refreshed
+                next to gson.toJson(next)
+            }
+            val committed = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                if (CurrentAccount.key != owner || !allowed()) return@withContext true
+                if (_root.value !== before || accountPrefs.getString("active_account", null) != active) false else {
+                    if (after != before) {
+                        prefs.edit().putString(KEY_ROOT, json).apply()
+                        _root.value = after
+                    }
+                    true
+                }
+            }
+            if (committed) return
+        }
+    }
 
     /** 已下载的班级缓存槽；用于离线打开选择器并切换历史班级。 */
     fun cachedClassAccounts(): List<Pair<String, String>> {
@@ -110,6 +150,7 @@ class ScheduleStore(context: Context) {
                     name = old.name,
                     settings = old.settings,
                     customCourses = old.customCourses,
+                    hiddenSourceIds = old.hiddenSourceIds,
                 ) else fresh
             }
             val all = merged + customProfiles
@@ -141,6 +182,7 @@ class ScheduleStore(context: Context) {
                 termValue = term,
                 settings = sameTerm?.settings ?: ScheduleSettings(),
                 customCourses = sameTerm?.customCourses ?: emptyList(),
+                hiddenSourceIds = sameTerm?.hiddenSourceIds,
             )
             data.copy(
                 termCourses = mapOf(term to courses),   // 覆盖：丢弃其它学期
@@ -159,6 +201,7 @@ class ScheduleStore(context: Context) {
                 termValue = term,
                 settings = existing?.settings ?: ScheduleSettings(),
                 customCourses = existing?.customCourses ?: emptyList(),
+                hiddenSourceIds = existing?.hiddenSourceIds,
             )
             data.copy(
                 termCourses = data.termCourses + (term to courses),
@@ -216,6 +259,7 @@ class ScheduleStore(context: Context) {
         courses: List<CachedCourse>,
         startDate: String?,
         displayName: String = className,
+        identity: ClassIdentity? = null,
     ) = mutate(account) { data ->
         val old = data.profiles.firstOrNull { it.kind == ProfileKind.TERM && it.termValue == term }
         val settings = (old?.settings ?: ScheduleSettings()).let {
@@ -229,8 +273,11 @@ class ScheduleStore(context: Context) {
             termValue = term,
             settings = settings,
             customCourses = old?.customCourses ?: emptyList(),
+            hiddenSourceIds = old?.hiddenSourceIds,
         )
         data.copy(
+            classIdentity = identity ?: data.classIdentity,
+            classRevisions = data.classRevisions.orEmpty() - term,
             termCourses = data.termCourses + (term to courses),
             profiles = data.profiles.filterNot { it.id == profile.id } + profile,
             activeProfileId = profile.id,
@@ -276,6 +323,13 @@ class ScheduleStore(context: Context) {
         persist(cur.copy(accounts = accounts))
     }
 
+    /** 一次写入移除所选班级的全部学期、设置、备注和自建课程。 */
+    fun clearClassAccounts(accounts: Set<String>) {
+        val current = _root.value
+        val updated = current.withoutClassAccounts(CurrentAccount.key, accounts)
+        if (updated != current) persist(updated)
+    }
+
     // ---- 课表级 ----
 
     fun renameProfile(account: String, profileId: String, name: String) =
@@ -300,16 +354,11 @@ class ScheduleStore(context: Context) {
     }
 
     fun upsertCourse(account: String, profileId: String, course: CustomCourse) =
-        mutateProfile(account, profileId) { p ->
-            val list = p.customCourses.toMutableList()
-            val idx = list.indexOfFirst { it.id == course.id }
-            if (idx >= 0) list[idx] = course else list.add(course)
-            p.copy(customCourses = list)
-        }
+        mutateProfile(account, profileId) { p -> p.withCourseEdit(course) }
 
     fun deleteCourse(account: String, profileId: String, courseId: String) =
         mutateProfile(account, profileId) { p ->
-            p.copy(customCourses = p.customCourses.filterNot { it.id == courseId })
+            p.withCourseDeleted(courseId)
         }
 
     // ---- 内部 ----
@@ -355,6 +404,12 @@ class ScheduleStore(context: Context) {
         fun accountStorageKey(memberAccount: String, jwAccount: String): String =
             "$memberAccount\u001F${jwAccount.trim()}"
     }
+}
+
+internal fun ScheduleRoot.withoutClassAccounts(member: String, selected: Set<String>): ScheduleRoot {
+    val keys = selected.filter(AccountManager::isClass)
+        .mapTo(HashSet()) { ScheduleStore.accountStorageKey(member, it) }
+    return copy(accounts = accounts.filterKeys { it !in keys })
 }
 
 /**

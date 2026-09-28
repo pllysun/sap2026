@@ -1,0 +1,9 @@
+// Isolated install and local fixture; no real accounts are created during QA.
+allprojects {
+    plugins.withId('com.android.application') {
+        android.buildTypes.debug.applicationIdSuffix = '.registrationqa'
+        afterEvaluate {
+            android.buildTypes.debug.buildConfigField 'String', 'BASE_URL', '"http://10.0.2.2:18893"'
+        }
+    }
+}

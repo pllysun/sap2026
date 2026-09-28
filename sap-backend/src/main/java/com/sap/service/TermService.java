@@ -148,13 +148,6 @@ public class TermService {
     }
 
     /**
-     * 删除换届记录
-     */
-    public void deleteTerm(Long id) {
-        termMapper.deleteById(id);
-    }
-
-    /**
      * 执行换届
      * @param assignments 选人列表 [{positionId, userIds:[]}]
      */

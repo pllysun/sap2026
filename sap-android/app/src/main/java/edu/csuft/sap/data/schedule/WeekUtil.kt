@@ -36,11 +36,13 @@ object WeekUtil {
         return result.toList()
     }
 
-    /** 根据开学日期算今天是第几周（1 起）；无开学日期返回 null。 */
+    /** 根据开学日期算指定日期是第几周（1 起）；开学日前或无开学日期返回 null。 */
     fun currentWeek(semesterStartIso: String?, today: LocalDate = LocalDate.now()): Int? {
         val start = parseDate(semesterStartIso) ?: return null
         val days = ChronoUnit.DAYS.between(start, today)
-        if (days < 0) return 1
+        // 不能把开学日前的日期压到第 1 周：否则开学后的周次会提前
+        // 命中同一个星期几，进而造成课表高亮和上课提醒提前触发。
+        if (days < 0) return null
         return (days / 7).toInt() + 1
     }
 

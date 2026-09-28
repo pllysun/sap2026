@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+    <ImageView android:id="@+id/summary_highlight" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="@null"/>
+    <LinearLayout android:id="@+id/summary_cell" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="30dp" android:orientation="vertical" android:gravity="center">
+        <TextView android:id="@+id/summary_day" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#293345" android:textSize="12sp" android:includeFontPadding="false"/>
+        <TextView android:id="@+id/summary_count" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#6577C2" android:textSize="9sp" android:includeFontPadding="false"/>
+    </LinearLayout>
+</FrameLayout>

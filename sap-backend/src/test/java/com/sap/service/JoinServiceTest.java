@@ -36,6 +36,7 @@ class JoinServiceTest extends BaseUnitTest {
     @Mock BillService billService;
     @Mock CacheService cacheService;
 
+    @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks JoinService service;
 
     private JoinManager manager(long id, long userId, String grade) {

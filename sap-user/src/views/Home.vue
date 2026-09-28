@@ -1,1055 +1,172 @@
 <template>
-  <div>
-    <!-- Hero Section — Full Screen -->
-    <section class="home-hero">
-      <div class="home-hero__deco home-hero__deco--1"></div>
-      <div class="home-hero__deco home-hero__deco--2"></div>
-      <div class="home-hero__deco home-hero__deco--3"></div>
-
-      <!-- 浮动技术标签 -->
-      <div class="hero-float-tags">
-        <span class="hero-float-tag" style="top:8%;left:6%;animation-delay:0s;">Vue.js</span>
-        <span class="hero-float-tag" style="top:5%;right:10%;animation-delay:-2s;">Python</span>
-        <span class="hero-float-tag" style="top:18%;left:3%;animation-delay:-4s;">Java</span>
-        <span class="hero-float-tag" style="top:12%;right:4%;animation-delay:-1s;">C++</span>
-        <span class="hero-float-tag" style="bottom:30%;left:5%;animation-delay:-3s;">Git</span>
-        <span class="hero-float-tag" style="bottom:18%;right:6%;animation-delay:-5s;">Linux</span>
-        <span class="hero-float-tag" style="top:32%;right:2%;animation-delay:-6s;">React</span>
-        <span class="hero-float-tag" style="bottom:38%;left:2%;animation-delay:-7s;">SQL</span>
-        <span class="hero-float-tag" style="top:3%;left:22%;animation-delay:-1.5s;">ChatGPT</span>
-        <span class="hero-float-tag" style="top:15%;right:18%;animation-delay:-3.5s;">LLM</span>
-        <span class="hero-float-tag" style="bottom:12%;left:15%;animation-delay:-4.5s;">TensorFlow</span>
-        <span class="hero-float-tag" style="bottom:25%;right:15%;animation-delay:-0.5s;">Docker</span>
-        <span class="hero-float-tag" style="top:28%;left:10%;animation-delay:-5.5s;">Spring Boot</span>
-        <span class="hero-float-tag" style="bottom:8%;right:22%;animation-delay:-2.5s;">Node.js</span>
-        <span class="hero-float-tag" style="bottom:5%;left:52%;animation-delay:-8s;">PyTorch</span>
-        <span class="hero-float-tag" style="bottom:5%;left:38%;animation-delay:-8s;">TypeScript</span>
-      </div>
-
-      <!-- 大标题区域 — 中英文结合 -->
-      <div class="hero-title-area anim-in">
-        <h1 class="hero-title-text">
-          <span class="hero-title-text__cn">
-            <img src="/logo.png" class="hero-title-logo" alt="Logo" />中南林业科技大学
-          </span>
-          <span class="hero-title-text__accent">软件协会</span>
-        </h1>
-        <p class="hero-title-en">CSUFT · Software Association</p>
-        <p class="hero-title-slogan">万维网连接五大洲，二进制写尽天下事</p>
-      </div>
-
-      <!-- 内容+向下探索包裹层：垂直居中 -->
-      <div class="hero-body">
-        <div class="home-hero__inner">
-          <div class="anim-in hero-text-col" style="animation-delay: 0.15s;">
-            <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>CSUFTSAP · 计算机学习入门</span>
-            <h2 class="t-display mt-2" style="font-size: 1.8rem;">开启你的编程之旅，<br/>从零到一构建技术力量</h2>
-            <p class="t-body mt-3" style="max-width: 480px; font-size: 0.95rem;">
-              我们为每一位同学提供系统的编程学习路径——从 Markdown、C 语言基础到 Web 开发、AI 与就业分析，帮你找到属于自己的方向。
-            </p>
-            <div class="hero-btns hero-btns--desktop">
-              <!-- 游客 + 入会开启 → 加入协会 -->
-              <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
-              <!-- 游客 + 入会关闭 → 开始学习（不可点） -->
-              <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;" title="请联系会长开放入口"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</span>
-              <!-- 正式成员 → 开始学习 -->
-              <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</router-link>
-              <!-- 正式成员 + 入会开启 → 加入协会（提示已加入） -->
-              <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
-              <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>了解协会</a>
-            </div>
-          </div>
-          <div class="card anim-in home-hero__code" style="animation-delay:0.25s;">
-            <div style="display: flex; gap: 6px; margin-bottom: var(--s3);">
-              <span style="width:12px;height:12px;border-radius:50%;background:#EF4444;"></span>
-              <span style="width:12px;height:12px;border-radius:50%;background:#F59E0B;"></span>
-              <span style="width:12px;height:12px;border-radius:50%;background:#22C55E;"></span>
-            </div>
-            <pre style="margin:0;color:var(--ink-500);line-height:1.8;"><span style="color:#8B5CF6;">#include</span> <span style="color:var(--teal);">&lt;iostream&gt;</span>
-<span style="color:#8B5CF6;">using namespace</span> std;
-
-<span style="color:var(--primary);">int</span> <span style="color:#F59E0B;">main</span>() {
-  cout &lt;&lt; <span style="color:var(--teal);">"Hello, Future Developer!"</span>
-       &lt;&lt; endl;
-  <span style="color:#6e7591;">// 你的编程之旅从这里开始</span>
-  <span style="color:#8B5CF6;">return</span> <span style="color:var(--primary);">0</span>;
-}</pre>
-            <p class="t-caption mt-3 text-center">写下你的第一行代码，成为未来的开发者</p>
-          </div>
-          <!-- 手机端按钮放在代码卡片下方 -->
-          <div class="hero-btns hero-btns--mobile anim-in" style="animation-delay: 0.3s;">
-            <router-link v-if="isGuest && joinEnabled" to="/join" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
-            <span v-else-if="isGuest && !joinEnabled" class="btn btn--primary btn--pill btn--disabled hero-btn" style="cursor: not-allowed; opacity: 0.6;"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</span>
-            <router-link v-if="!isGuest" to="/study" class="btn btn--primary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>开始学习</router-link>
-            <router-link v-if="!isGuest && joinEnabled" to="/join" class="btn btn--secondary btn--pill hero-btn"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>加入协会</router-link>
-            <a href="#about-section" class="btn btn--secondary btn--pill hero-btn" @click.prevent="scrollToAbout"><svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>了解协会</a>
-          </div>
+  <div ref="homeRoot" class="association-home">
+    <section class="home-intro home-shell" aria-labelledby="home-title">
+      <div class="intro-copy">
+        <p class="eyebrow"><span class="status-dot"></span> CSUFT · SOFTWARE ASSOCIATION</p>
+        <h1 id="home-title">保持好奇，<br>一起<span class="ink-accent">创造。</span></h1>
+        <p class="intro-lead">中南林业科技大学软件协会</p>
+        <p class="intro-description">从第一行代码到第一个作品，从独自探索到并肩协作。<br class="desktop-break">在这里，找到一起学习、分享和实践的伙伴。</p>
+        <div class="home-actions">
+          <router-link to="/study" class="home-button home-button--dark">探索学习小组 <span>↗</span></router-link>
+          <router-link v-if="isGuest && joinEnabled" to="/join" class="home-button home-button--light">加入软件协会 <span>→</span></router-link>
+          <a v-else href="#association-life" class="home-text-link">看看我们的日常 <span>↓</span></a>
         </div>
+        <div class="intro-footnote"><span></span> 学习 · 实践 · 分享 · 同行</div>
+      </div>
+      <div class="creative-stage" aria-label="软件协会：让想法通过代码成为作品">
+        <div class="stage-grid" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div><div class="orbit orbit--two" aria-hidden="true"></div>
+        <div class="stage-tag"><span class="status-dot"></span> IDEAS ARE BUILDING</div>
+        <div class="code-window">
+          <div class="code-window__bar"><span class="window-dots"><i></i><i></i><i></i></span><span>hello, sap.ts</span><span>⌘</span></div>
+          <div class="code-window__body" aria-hidden="true">
+            <div><em>01</em><span class="code-comment">// 一个人的灵感，一群人的作品</span></div>
+            <div><em>02</em><span><b>const</b> us = {</span></div>
+            <div><em>03</em><span>&nbsp; curiosity: <strong>'保持好奇'</strong>,</span></div>
+            <div><em>04</em><span>&nbsp; action: <strong>'动手创造'</strong>,</span></div>
+            <div><em>05</em><span>&nbsp; together: <b>true</b></span></div>
+            <div><em>06</em><span>};</span></div>
+            <div><em>07</em><span>buildSomething(us);<i class="code-caret"></i></span></div>
+          </div>
+          <div class="code-window__terminal"><span>✓</span> 想法已就绪，等你一起实现。</div>
+        </div>
+        <div class="logo-stamp"><img src="/logo.png" alt="软件协会 Logo"><span>CREATE<br><b>TOGETHER.</b></span></div>
+        <router-link to="/message-board" class="stage-note"><i aria-hidden="true"></i><span>遇到问题？</span><strong>把讨论留在这里 ↗</strong><small>软件协会 · 留言板</small></router-link>
+        <span class="stage-coordinate" aria-hidden="true">&lt; / &gt; &nbsp; ALWAYS LEARNING</span>
+      </div>
+    </section>
+    <div class="motto-ribbon"><div class="home-shell"><span class="ribbon-symbol" aria-hidden="true">✳</span><p>万维网连接五大洲，<br class="mobile-break">二进制写尽天下事</p><span class="ribbon-label">OUR MOTTO / 我们的口号</span></div></div>
 
-        <!-- 向下滚动引导 -->
-        <div class="hero-scroll-hint anim-in" style="animation-delay: 0.4s;" @click="scrollToAbout">
-          <span>向下探索</span>
-          <div class="hero-scroll-arrow"></div>
+    <section class="home-shell home-section reveal" aria-labelledby="explore-title">
+      <div class="section-heading"><div><p class="eyebrow">01 / FIND YOUR WAY</p><h2 id="explore-title">不止写代码，<br>也一起拓宽可能。</h2></div><p>把学习落在实践里，把经验留给下一位。<br>这就是我们相聚的意义。</p></div>
+      <div class="explore-grid">
+        <router-link to="/study" class="explore-card explore-card--green"><span class="card-index">01</span><div class="explore-mark" aria-hidden="true">{<span>一起</span>}</div><div><h3>结伴学习</h3><p>加入学习小组，围绕任务交流、提交作品，在反馈中一步步进阶。</p></div><span class="explore-link">找到学习伙伴 <b>↗</b></span></router-link>
+        <router-link to="/notes" class="explore-card explore-card--cream"><span class="card-index">02</span><div class="paper-stack" aria-hidden="true"><i></i><i></i><i>笔记<br>也是路标。</i></div><div><h3>分享所学</h3><p>把踩过的坑、解决的方法和新想法写下来，让知识在交流中积累。</p></div><span class="explore-link">翻开软协笔记 <b>↗</b></span></router-link>
+        <router-link to="/activities" class="explore-card explore-card--blue"><span class="card-index">03</span><div class="connection-mark" aria-hidden="true"><i></i><i></i><i></i><b>＋</b></div><div><h3>走到一起</h3><p>在协会活动中认识新朋友，交流技术与日常，让线上连接延伸到校园。</p></div><span class="explore-link">看看协会活动 <b>↗</b></span></router-link>
+      </div>
+    </section>
+
+    <section id="association-life" class="life-section home-section reveal" aria-labelledby="life-title"><div class="home-shell">
+      <div class="section-heading"><div><p class="eyebrow">02 / LIFE AT SAP</p><h2 id="life-title">发生在我们之间。</h2></div><router-link to="/activities" class="home-text-link">全部活动 <span>↗</span></router-link></div>
+      <div v-if="loading" class="home-placeholder" aria-live="polite">正在翻开协会相册…</div>
+      <div v-else-if="errors.activities" class="home-placeholder">活动暂时未能加载 <button @click="loadData">重新加载</button></div>
+      <div v-else-if="activities.length" class="activity-editorial">
+        <router-link v-for="(activity, index) in activities" :key="activity.id" to="/activities" class="activity-story" :class="{ 'activity-story--featured': index === 0 }">
+          <div class="story-image"><img v-if="activity.images?.[0]?.imageUrl && !brokenImages[activity.id]" :src="activity.images[0].imageUrl" :alt="activity.title" loading="lazy" @error="brokenImages[activity.id] = true"><div v-else class="story-art" aria-hidden="true"><span>相聚的<br>每一刻。</span><b>↗</b></div><span class="story-label">{{ activity.grade }} · 协会活动</span></div>
+          <div class="story-copy"><time>{{ formatDate(activity.createdAt) }}</time><h3>{{ activity.title }}</h3><p v-if="activity.content">{{ activity.content }}</p><span class="story-arrow" aria-hidden="true">↗</span></div>
+        </router-link>
+      </div><div v-else class="home-placeholder">新的相聚正在酝酿，活动发布后会出现在这里。</div>
+    </div></section>
+
+    <section class="home-shell home-section reveal" aria-labelledby="learning-title">
+      <div class="section-heading"><div><p class="eyebrow">03 / KEEP LEARNING</p><h2 id="learning-title">下一步，<br class="mobile-break">从这里开始。</h2></div><router-link to="/notes" class="home-text-link">笔记资料库 <span>↗</span></router-link></div>
+      <div class="learning-layout">
+        <div class="learning-guide"><span class="mini-label">学习方向 / 找到自己的起点</span>
+          <div class="direction-tabs" role="tablist" aria-label="选择学习方向"><button v-for="(direction, i) in directions" :id="`direction-${i}`" :key="direction.title" role="tab" :aria-selected="activeDirection === i" aria-controls="direction-panel" :tabindex="activeDirection === i ? 0 : -1" :class="{ selected: activeDirection === i }" @click="activeDirection = i" @keydown="changeDirection($event, i)">{{ direction.label }}</button></div>
+          <div id="direction-panel" role="tabpanel" :aria-labelledby="`direction-${activeDirection}`" tabindex="0"><Transition name="direction" mode="out-in"><div :key="activeDirection"><span class="direction-number">0{{ activeDirection + 1 }}</span><h3>{{ directions[activeDirection].title }}</h3><p>{{ directions[activeDirection].description }}</p><ol class="learning-steps"><li v-for="step in directions[activeDirection].steps" :key="step"><span></span>{{ step }}</li></ol></div></Transition></div>
+          <router-link to="/study" class="home-text-link">在学习小组里实践 <span>→</span></router-link>
+        </div>
+        <div class="notes-feed"><div class="feed-heading"><span class="mini-label">最近更新的笔记</span><span class="feed-dot"></span></div>
+          <p v-if="loading" class="home-placeholder">正在整理笔记…</p><p v-else-if="errors.notes" class="home-placeholder">笔记暂时未能加载 <button @click="loadData">重试</button></p>
+          <router-link v-for="(note, index) in notes" :key="note.id" :to="isGuest ? '/notes' : `/notes/${note.id}`" class="note-entry"><span class="note-entry__index">{{ String(index + 1).padStart(2, '0') }}</span><div><div class="note-entry__meta">{{ formatDate(note.createdAt) }} <span>· {{ note.readMinutes || 1 }} 分钟阅读</span></div><h3>{{ note.title }}</h3><p v-if="note.description">{{ note.description }}</p></div><span class="note-entry__arrow" aria-hidden="true">↗</span></router-link>
+          <p v-if="!loading && !errors.notes && !notes.length" class="home-placeholder">第一份知识积累，从一次分享开始。</p><p v-if="isGuest" class="member-hint">笔记目录开放浏览，正文供正式会员学习。</p>
+          <router-link v-if="latestStudy" to="/study" class="study-spotlight"><span class="mini-label">{{ Number(latestStudy.status) === 1 ? '正在进行的学习活动' : '最近的学习活动' }}</span><h3>{{ latestStudy.title || `${latestStudy.grade}级学习活动` }}</h3><div><span>{{ latestStudy.grade }}级 · {{ Number(latestStudy.status) === 1 ? '和伙伴一起继续' : '看看大家的学习记录' }}</span><b>→</b></div></router-link>
         </div>
       </div>
     </section>
 
-    <!-- Stats + Line Chart Section -->
-    <section id="about-section" class="home-section">
-      <div class="page">
-        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>数据洞察</span>
-        <h2 class="section-title">数读软协，见证成长</h2>
-        <p class="section-desc">用数据记录我们的足迹，每一位成员都是协会历史的创造者。</p>
-
-        <div v-if="stats" class="grid grid--3 mb-4">
-          <div v-for="(s, idx) in statCards" :key="idx" class="card card--interactive anim-in" :style="{ animationDelay: (idx * 0.06) + 's' }">
-            <div class="stat">
-              <div class="stat__value">{{ s.value }}</div>
-              <div class="stat__label">{{ s.label }}</div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="loading"><div class="loading__spinner"></div></div>
-
-        <!-- 历届成员折线图 -->
-        <div v-if="gradeStats.length > 0" class="card anim-in" style="padding: var(--s5);">
-          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><svg style="width:18px;height:18px;color:var(--primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>历届正式成员人数</h3>
-          <div class="chart-container">
-            <canvas ref="lineChartCanvas"></canvas>
-          </div>
-        </div>
-
-        <!-- 操作日志日历热力图 -->
-        <div class="card anim-in" style="padding: var(--s5); margin-top: var(--s4);">
-          <h3 class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><svg style="width:18px;height:18px;color:var(--teal)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>在线成员活跃度</h3>
-          <div class="heatmap-container">
-            <canvas ref="heatmapCanvas"></canvas>
-          </div>
-          <div class="heatmap-legend">
-            <span class="heatmap-legend__label">Less</span>
-            <span class="heatmap-legend__box" style="background: #ebedf0;"></span>
-            <span class="heatmap-legend__box" style="background: #9be9a8;"></span>
-            <span class="heatmap-legend__box" style="background: #40c463;"></span>
-            <span class="heatmap-legend__box" style="background: #30a14e;"></span>
-            <span class="heatmap-legend__box" style="background: #216e39;"></span>
-            <span class="heatmap-legend__label">More</span>
-          </div>
-        </div>
+    <section class="community-section home-section reveal" aria-labelledby="community-title"><div class="home-shell">
+      <div class="section-heading"><div><p class="eyebrow">04 / GROWING TOGETHER</p><h2 id="community-title">每一份参与，都有回响。</h2></div><p>数字背后，是一起学习和创造的人。<br>以下数据来自协会平台的真实记录。</p></div>
+      <p v-if="errors.stats" class="data-notice" role="status">统计暂时不可用。<button @click="loadData">重新加载</button></p>
+      <div class="community-metrics"><div v-for="metric in metrics" :key="metric.key"><strong>{{ stats ? number(animatedStats[metric.key] ?? stats[metric.key]) : '—' }}</strong><span>{{ metric.label }}</span><small>{{ metric.note }}</small></div></div>
+      <div class="community-charts">
+        <div class="grade-chart"><div class="chart-heading"><h3>历届成员档案</h3><span>按届归档 · 同届去重</span></div><div v-if="stats?.memberArchiveByTerm?.length" class="grade-bars"><div v-for="grade in stats.memberArchiveByTerm" :key="grade.grade" class="grade-bar"><span>{{ grade.grade }}届</span><div><i :style="{ width: `${Math.max(2, Number(grade.count) / maxGradeCount * 100)}%` }"></i></div><b>{{ number(grade.count) }}</b></div></div><p v-else class="chart-empty">{{ loading ? '正在读取成员档案…' : '暂无可展示的成员档案' }}</p><p class="chart-caption">同一成员可能被收录于多届；各届人数不能相加作为会员总数。</p></div>
+        <div class="activity-heatmap"><div class="chart-heading"><h3>持续发生的连接</h3><span>近半年平台活跃记录</span></div><div v-if="!errors.calendar" class="heatmap-grid" role="img" aria-label="最近半年每日平台活跃记录热力图"><span v-for="day in heatmapDays" :key="day.date" :class="`heat-level-${day.level}`" :title="`${day.date} · ${number(day.count)} 次活动记录`"></span></div><p v-else class="chart-empty">活跃记录暂时不可用</p><div class="heatmap-legend"><span>{{ heatmapRange }}</span><div>少 <i v-for="level in 5" :key="level" :class="`heat-level-${level - 1}`"></i> 多</div></div><p class="chart-caption">这里记录平台的使用足迹，不代表在线人数。</p></div>
       </div>
-    </section>
+    </div></section>
 
-    <!-- Learning Path Section -->
-    <section class="home-section">
-      <div class="page">
-        <span class="section-label section-label--icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
-          推荐学习路径
-        </span>
-        <h2 class="section-title">计算机入门学习路线</h2>
-        <p class="section-desc">循序渐进，从基础到实战，找到最适合你的学习方向。</p>
+    <section v-if="members.length" class="home-shell home-section members-section reveal" aria-labelledby="members-title"><div class="section-heading"><div><p class="eyebrow">05 / PEOPLE OF SAP</p><h2 id="members-title">同行的人，<br class="mobile-break">各有光芒。</h2></div><div class="member-navigation"><span>{{ memberPage + 1 }} / {{ memberPages }}</span><button aria-label="上一组优秀成员" :disabled="memberPage === 0" @click="memberPage--">←</button><button aria-label="下一组优秀成员" :disabled="memberPage + 1 >= memberPages" @click="memberPage++">→</button></div></div><div class="people-grid"><article v-for="person in visibleMembers" :key="person.id" class="person-card"><span class="person-initial">{{ (person.name || '协')[0] }}</span><div><h3>{{ person.name || '软协成员' }}</h3><span>{{ person.grade }}级 <template v-if="person.destination">· {{ person.destination }}</template></span></div><p>{{ person.destinationDetail || person.bio || person.major || '在热爱的方向，继续探索。' }}</p></article></div></section>
 
-        <div class="home-paths">
-          <div v-for="(path, idx) in learningPaths" :key="idx"
-            class="card card--interactive anim-in home-path-card"
-            :style="{ animationDelay: (idx * 0.08) + 's', '--accent': path.accent }">
-            <span class="home-path-card__step">STEP {{ idx + 1 }}</span>
-            <!-- 图标为内置静态 SVG，无用户输入，v-html 安全 -->
-            <div class="home-path-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="path.svg"></svg>
-            </div>
-            <h3 class="home-path-card__title">{{ path.title }}</h3>
-            <p class="home-path-card__desc">{{ path.desc }}</p>
-            <div class="home-path-card__tags">
-              <span v-for="tag in path.tags" :key="tag" class="home-path-tag">{{ tag }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Quick Start Tips -->
-    <section class="home-section">
-      <div class="page">
-        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>新手必看</span>
-        <h2 class="section-title">编程入门指南</h2>
-        <p class="section-desc">来自学长学姐的建议，帮你少走弯路。</p>
-
-        <div class="grid grid--2">
-          <div v-for="(tip, idx) in beginnerTips" :key="idx"
-            class="card card--interactive anim-in"
-            :style="{ animationDelay: (idx * 0.06) + 's' }">
-            <div class="flex gap-2" style="align-items: flex-start;">
-              <div class="home-tip-icon" :style="{ background: tip.bg, color: tip.accent }"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="tip.svg"></svg></div>
-              <div>
-                <h3 class="t-heading" style="margin-bottom: 4px;">{{ tip.title }}</h3>
-                <p class="t-body">{{ tip.desc }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Outstanding Members -->
-    <section class="home-section">
-      <div class="page">
-        <span class="section-label section-label--icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>榜样力量</span>
-        <h2 class="section-title">优秀学长学姐</h2>
-        <p class="section-desc">他们曾在软件协会分享、学习、成长，如今在更大的舞台发光发热。</p>
-
-        <div v-if="membersLoading" class="loading"><div class="loading__spinner"></div></div>
-        <div v-else-if="members.length === 0" class="empty"><div class="empty__text">暂无优秀成员数据</div></div>
-
-        <div class="grid grid--4" v-if="pagedMembers.length > 0">
-          <div
-            v-for="(m, idx) in pagedMembers" :key="m.id"
-            class="card card--interactive member-card anim-in"
-            :style="{ animationDelay: (idx * 0.04) + 's' }"
-          >
-            <div class="member-card__name">
-              {{ m.name }}
-              <span class="badge" :class="destinationBadge(m.destination)">{{ m.destination || '—' }}</span>
-            </div>
-            <div class="member-card__info">{{ m.grade }}级 · {{ m.major || '未填写' }}</div>
-            <div class="member-card__info" v-if="m.destinationDetail" style="display:flex;align-items:center;gap:4px;"><svg style="width:13px;height:13px;flex-shrink:0;opacity:.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{{ m.destinationDetail }}</div>
-          </div>
-        </div>
-
-        <div class="pagination" v-if="totalPages > 1">
-          <button class="pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">‹</button>
-          <button v-for="p in displayPages" :key="p" class="pagination__btn" :class="{ active: p === currentPage }" @click="currentPage = p">{{ p }}</button>
-          <button class="pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">›</button>
-        </div>
-      </div>
+    <section class="home-shell join-section reveal"><div class="join-panel"><div><p class="eyebrow">YOUR NEXT CHAPTER</p><h2>带上好奇心。<br>剩下的，一起探索。</h2></div><div class="join-panel__right"><p>刚接触编程，也可以从这里开始。<br>先了解我们的学习与活动，再找到自己的节奏。</p><router-link v-if="isGuest && joinEnabled" to="/join" class="home-button home-button--dark">了解入会 <span>↗</span></router-link><router-link v-else to="/message-board" class="home-button home-button--dark">和大家打个招呼 <span>↗</span></router-link></div></div>
+      <div class="home-faq"><details><summary>没有编程基础，可以参加吗？<span>＋</span></summary><p>可以先从基础语法和学习笔记开始，结合学习小组的任务练习。遇到问题时，把尝试过程写清楚，再和伙伴一起讨论。</p></details><details><summary>注册账号就代表加入协会吗？<span>＋</span></summary><p>注册账号与成为正式会员是两件事。入会开放时，可通过「了解入会」提交申请；完成入会审核后，账号会获得相应的会员权限。</p></details><details><summary>从哪里了解最新活动？<span>＋</span></summary><p>在「软协活动」查看协会记录与发布的内容，学习任务请前往「学习小组」。有疑问可以到留言板交流，或通过页脚的联系方式联系协会。</p></details></div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
-
 const userStore = useUserStore()
-const joinEnabled = ref(false)
-const isGuest = computed(() => {
-  const roles = userStore.roles || []
-  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
+const isGuest = computed(() => !userStore.roles.some(role => [0, 1, 2, 3].includes(Number(role))))
+const homeRoot = ref(null), stats = ref(null), activities = ref([]), notes = ref([]), members = ref([]), calendar = ref([]), studyActivities = ref([])
+const latestStudy = computed(() => {
+  const sorted = [...studyActivities.value].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')) || Number(b.id) - Number(a.id))
+  return sorted.find(item => Number(item.status) === 1) || sorted[0]
 })
-
-const heatmapCanvas = ref(null)
-const calendarData = ref([])
-
-const stats = ref(null)
-const members = ref([])
-const membersLoading = ref(true)
-const currentPage = ref(1)
-const pageSize = 8
-const gradeStats = ref([])
-const lineChartCanvas = ref(null)
-
-const statCards = computed(() => {
-  if (!stats.value) return []
-  return [
-    { value: stats.value.userCount || 0, label: '协会成员（正式）' },
-    { value: stats.value.activityCount || 0, label: '活动次数' },
-    { value: stats.value.studyActivityCount || 0, label: '学习活动' }
+const loading = ref(true), joinEnabled = ref(false), activeDirection = ref(0), memberPage = ref(0)
+const errors = reactive({}), brokenImages = reactive({}), animatedStats = reactive({})
+const memberPages = computed(() => Math.ceil(members.value.length / 4))
+const visibleMembers = computed(() => members.value.slice(memberPage.value * 4, memberPage.value * 4 + 4))
+const metrics = [
+  { key: 'memberCount', label: '会员账号', note: '含往届，按会员及以上权限去重' },
+  { key: 'registeredCount', label: '平台注册用户', note: '包含游客，不等于会员人数' },
+  { key: 'activityCount', label: '协会活动', note: '已记录的协会活动' },
+  { key: 'noteCount', label: '共享学习笔记', note: '来自协会的知识积累' },
+]
+const directions = [
+  { label: '编程起步', title: '先写出第一个小程序。', description: '不急着掌握所有技术，从理解问题、写出代码、验证结果开始。', steps: ['搭建开发环境，熟悉编辑器', '学习 C 语言基础与程序调试', '用 Markdown 记录过程与收获'] },
+  { label: '算法思维', title: '让解决问题更有章法。', description: '从具体问题出发，理解数据如何组织、程序如何高效运行。', steps: ['掌握数组、链表与基础数据结构', '练习查找、排序与递归', '复盘解题思路，而不只是答案'] },
+  { label: '应用实践', title: '把想法做成能用的作品。', description: '从一个小需求开始，在实际开发中连接界面、数据与协作。', steps: ['尝试 Web 界面或移动端应用', '了解接口、数据库与版本管理', '完成一个项目，演示并收集反馈'] },
+]
+function changeDirection(event, index) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+  event.preventDefault()
+  activeDirection.value = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + (event.key === 'ArrowRight' ? 1 : 2)) % 3
+  document.getElementById(`direction-${activeDirection.value}`)?.focus()
+}
+const number = value => new Intl.NumberFormat('zh-CN').format(Number(value) || 0)
+const formatDate = value => value ? String(value).slice(0, 10).replaceAll('-', '.') : '协会记录'
+const maxGradeCount = computed(() => Math.max(1, ...(stats.value?.memberArchiveByTerm || []).map(row => Number(row.count))))
+function dateKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
+const heatmapDays = computed(() => {
+  const map = new Map(calendar.value.map(row => [String(row[0]).slice(0, 10), Number(row[1]) || 0]))
+  const start = new Date(); start.setDate(start.getDate() - 181)
+  const days = Array.from({ length: 182 }, (_, i) => { const day = new Date(start); day.setDate(day.getDate() + i); const date = dateKey(day); return { date, count: map.get(date) || 0 } })
+  const max = Math.max(1, ...days.map(day => day.count))
+  return days.map(day => ({ ...day, level: day.count ? Math.max(1, Math.ceil(day.count / max * 4)) : 0 }))
+})
+const heatmapRange = computed(() => `${heatmapDays.value[0].date.slice(5).replace('-', '.')} — ${heatmapDays.value.at(-1).date.slice(5).replace('-', '.')}`)
+let observer, countFrame, disposed = false, dataGeneration = 0
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+function animateStats() {
+  cancelAnimationFrame(countFrame)
+  const start = performance.now()
+  const frame = now => { const progress = reducedMotion() ? 1 : Math.min(1, (now - start) / 1000); metrics.forEach(metric => animatedStats[metric.key] = Math.round(Number(stats.value[metric.key] || 0) * (1 - (1 - progress) ** 3))); if (progress < 1) countFrame = requestAnimationFrame(frame) }
+  countFrame = requestAnimationFrame(frame)
+}
+function observeSections() {
+  observer?.disconnect()
+  if (reducedMotion() || !window.IntersectionObserver) return
+  observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target) } }), { threshold: 0.08 })
+  homeRoot.value?.querySelectorAll('.reveal').forEach(section => { section.classList.add('reveal-ready'); observer.observe(section) })
+}
+async function loadData() {
+  const generation = ++dataGeneration
+  loading.value = true
+  const jobs = [
+    ['stats', '/api/home/overview', data => { stats.value = data; animateStats() }],
+    ['activities', '/api/activity/page?current=1&size=3', data => activities.value = data.records || []],
+    ['notes', '/api/note/list?current=1&size=3', data => notes.value = data.records || []],
+    ['study', '/api/study/activity/list', data => studyActivities.value = data || []],
+    ['members', '/api/outstanding-member/all', data => members.value = data || []],
+    ['calendar', '/api/log/public/calendar', data => calendar.value = data || []],
+    ['join', '/api/join/status', data => joinEnabled.value = data === true],
   ]
-})
-
-// icon 为内置线性 SVG 路径（Lucide 风格），accent 为该卡片的主题强调色
-const learningPaths = [
-  {
-    accent: '#3B82F6', title: 'Markdown 语法',
-    desc: 'AI 时代的必备技能，学会用 Markdown 编写规范文档，提高沟通效率。',
-    tags: ['文档编写', 'AI 提问', '排版技能'],
-    svg: '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6"/><path d="M9 17h6"/>'
-  },
-  {
-    accent: '#6366F1', title: 'C 语言基础',
-    desc: '编程的第一步，掌握变量、循环、函数等核心概念，为后续学习打下坚实基础。',
-    tags: ['入门必学', '语法基础', '指针'],
-    svg: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>'
-  },
-  {
-    accent: '#8B5CF6', title: '数据结构与算法',
-    desc: '学会用合适的数据结构解决问题，培养算法思维，提升编程核心竞争力。',
-    tags: ['链表', '树与图', '排序算法'],
-    svg: '<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>'
-  },
-  {
-    accent: '#14B8A6', title: 'Web 开发入门',
-    desc: '从 HTML/CSS/JavaScript 开始，学习构建网页应用，了解前后端协作模式。',
-    tags: ['HTML/CSS', 'JavaScript', 'Vue/React'],
-    svg: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"/>'
-  },
-  {
-    accent: '#0EA5E9', title: 'AI 人工智能',
-    desc: '了解机器学习与深度学习基础，学习用 Python 构建智能应用与数据分析。',
-    tags: ['Python', '机器学习', '深度学习'],
-    svg: '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v2"/><path d="M15 2v2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M2 9h2"/><path d="M2 15h2"/><path d="M20 9h2"/><path d="M20 15h2"/>'
-  },
-  {
-    accent: '#F43F5E', title: '就业/考研分析',
-    desc: '规划你的未来发展路径，了解计算机行业就业趋势与考研/保研备考策略。',
-    tags: ['就业方向', '考研攻略', '保研规划'],
-    svg: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'
-  }
-]
-
-const beginnerTips = [
-  { accent: '#3B82F6', bg: 'rgba(59,130,246,0.1)', title: '坚持每天写代码', desc: '编程是一项实践技能，每天写至少 30 分钟代码，比一周集中学一天效果好得多。', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>' },
-  { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', title: '不要怕看错误信息', desc: '报错是程序员最好的老师。学会阅读和理解编译器/运行时给出的错误提示。', svg: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>' },
-  { accent: '#14B8A6', bg: 'rgba(20,184,166,0.1)', title: '加入学习小组', desc: '和志同道合的同学组队学习，互相督促、讨论问题，学习效率翻倍。', svg: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
-  { accent: '#F59E0B', bg: 'rgba(245,158,11,0.1)', title: '善用搜索和文档', desc: '遇到问题先 Google，学会阅读官方文档。这是每个开发者的必备技能。', svg: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>' }
-]
-
-const totalPages = computed(() => Math.ceil(members.value.length / pageSize))
-const pagedMembers = computed(() => { const s = (currentPage.value - 1) * pageSize; return members.value.slice(s, s + pageSize) })
-const displayPages = computed(() => { const pages = []; for (let i = Math.max(1, currentPage.value - 2); i <= Math.min(totalPages.value, currentPage.value + 2); i++) pages.push(i); return pages })
-
-function destinationBadge(d) {
-  if (!d) return 'badge--default'
-  if (d.includes('就业')) return 'badge--teal'
-  if (d.includes('保研')) return 'badge--success'
-  if (d.includes('考研')) return 'badge--purple'
-  return 'badge--primary'
+  await Promise.all(jobs.map(async ([key, url, apply]) => { try { const res = await request.get(url); if (!disposed && generation === dataGeneration) { apply(res.data); errors[key] = false } } catch { if (!disposed && generation === dataGeneration) errors[key] = true } }))
+  if (!disposed && generation === dataGeneration) { loading.value = false; await nextTick(); observeSections() }
 }
-
-function scrollToAbout() {
-  const el = document.getElementById('about-section')
-  if (el) el.scrollIntoView({ behavior: 'smooth' })
-}
-
-// 绘制折线图
-function drawLineChart() {
-  if (!lineChartCanvas.value || gradeStats.value.length === 0) return
-  const canvas = lineChartCanvas.value
-  const ctx = canvas.getContext('2d')
-  const dpr = window.devicePixelRatio || 1
-
-  // Set canvas size
-  const rect = canvas.parentElement.getBoundingClientRect()
-  canvas.width = rect.width * dpr
-  canvas.height = 280 * dpr
-  canvas.style.width = rect.width + 'px'
-  canvas.style.height = '280px'
-  ctx.scale(dpr, dpr)
-
-  const w = rect.width, h = 280
-  const data = gradeStats.value
-  const labels = data.map(d => d.grade + '级')
-  const values = data.map(d => Number(d.count))
-  const maxVal = Math.max(...values, 1)
-
-  const padL = 60, padR = 30, padT = 30, padB = 50
-  const plotW = w - padL - padR
-  const plotH = h - padT - padB
-
-  ctx.clearRect(0, 0, w, h)
-
-  // Grid lines
-  const gridLines = 5
-  ctx.strokeStyle = '#eef0f7'
-  ctx.lineWidth = 1
-  ctx.font = '12px Inter, Noto Sans SC, sans-serif'
-  ctx.fillStyle = '#9298b0'
-  ctx.textAlign = 'right'
-  for (let i = 0; i <= gridLines; i++) {
-    const y = padT + plotH - (plotH / gridLines) * i
-    const val = Math.round((maxVal / gridLines) * i)
-    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke()
-    ctx.fillText(val.toString(), padL - 8, y + 4)
-  }
-
-  if (values.length === 0) return
-  const stepX = values.length > 1 ? plotW / (values.length - 1) : plotW
-
-  // Gradient fill
-  const gradient = ctx.createLinearGradient(0, padT, 0, h - padB)
-  gradient.addColorStop(0, 'rgba(20,184,166,0.25)')
-  gradient.addColorStop(1, 'rgba(20,184,166,0.02)')
-  ctx.beginPath()
-  ctx.moveTo(padL, padT + plotH)
-  for (let i = 0; i < values.length; i++) {
-    const x = padL + stepX * i
-    const y = padT + plotH - (values[i] / maxVal) * plotH
-    ctx.lineTo(x, y)
-  }
-  ctx.lineTo(padL + stepX * (values.length - 1), padT + plotH)
-  ctx.closePath()
-  ctx.fillStyle = gradient
-  ctx.fill()
-
-  // Line
-  ctx.beginPath()
-  ctx.strokeStyle = '#14B8A6'
-  ctx.lineWidth = 2.5
-  ctx.lineJoin = 'round'
-  for (let i = 0; i < values.length; i++) {
-    const x = padL + stepX * i
-    const y = padT + plotH - (values[i] / maxVal) * plotH
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
-  }
-  ctx.stroke()
-
-  // Points + labels
-  ctx.textAlign = 'center'
-  for (let i = 0; i < values.length; i++) {
-    const x = padL + stepX * i
-    const y = padT + plotH - (values[i] / maxVal) * plotH
-
-    // Point
-    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'; ctx.fill()
-    ctx.strokeStyle = '#14B8A6'; ctx.lineWidth = 2.5; ctx.stroke()
-
-    // Value label
-    ctx.fillStyle = '#1a1d2e'
-    ctx.font = 'bold 13px Inter, Noto Sans SC, sans-serif'
-    ctx.fillText(values[i].toString(), x, y - 12)
-
-    // X label
-    ctx.fillStyle = '#6e7591'
-    ctx.font = '12px Inter, Noto Sans SC, sans-serif'
-    ctx.fillText(labels[i], x, h - padB + 20)
-  }
-}
-
-watch(gradeStats, () => { nextTick(() => drawLineChart()) })
-
-// 数据并行预加载——进入页面前就加载完成
-const loadData = async () => {
-  const [statsRes, gradeRes, memberRes] = await Promise.allSettled([
-    request.get('/api/dashboard/stats', { params: { grade: 'all' } }),
-    request.get('/api/dashboard/grade-stats'),
-    request.get('/api/outstanding-member/all')
-  ])
-  if (statsRes.status === 'fulfilled') stats.value = statsRes.value.data
-  if (gradeRes.status === 'fulfilled') gradeStats.value = gradeRes.value.data || []
-  if (memberRes.status === 'fulfilled') members.value = memberRes.value.data || []
-  membersLoading.value = false
-}
-loadData() // 立即执行，不等 onMounted
-
-// 加载热力图数据
-const loadCalendar = async () => {
-  try {
-    const res = await request.get('/api/log/public/calendar')
-    calendarData.value = res.data || []
-    nextTick(() => drawHeatmap())
-  } catch (e) {}
-}
-loadCalendar()
-
-// 加载入会状态
-request.get('/api/join/status').then(res => { joinEnabled.value = res.data === true }).catch(() => {})
-userStore.fetchUserInfo().catch(() => {})
-
-// GitHub 风格日历热力图
-function drawHeatmap() {
-  if (!heatmapCanvas.value || calendarData.value.length === 0) return
-  const canvas = heatmapCanvas.value
-  const ctx = canvas.getContext('2d')
-  const dpr = window.devicePixelRatio || 1
-
-  const cellSize = 13
-  const cellGap = 3
-  const cellTotal = cellSize + cellGap
-  const labelPadLeft = 36
-  const labelPadTop = 22
-  const weeksToShow = 53
-
-  const canvasW = labelPadLeft + weeksToShow * cellTotal + 10
-  const canvasH = labelPadTop + 7 * cellTotal + 20
-
-  canvas.width = canvasW * dpr
-  canvas.height = canvasH * dpr
-  canvas.style.width = canvasW + 'px'
-  canvas.style.height = canvasH + 'px'
-  ctx.scale(dpr, dpr)
-  ctx.clearRect(0, 0, canvasW, canvasH)
-
-  // Build date→count map
-  const dateMap = {}
-  let maxCount = 0
-  for (const [date, count] of calendarData.value) {
-    dateMap[date] = count
-    if (count > maxCount) maxCount = count
-  }
-
-  // Color levels
-  const getColor = (count) => {
-    if (count === 0) return '#ebedf0'
-    const ratio = count / Math.max(maxCount, 1)
-    if (ratio <= 0.25) return '#9be9a8'
-    if (ratio <= 0.5) return '#40c463'
-    if (ratio <= 0.75) return '#30a14e'
-    return '#216e39'
-  }
-
-  // Calculate start date (go back to the first Sunday/Monday of ~53 weeks ago)
-  const today = new Date()
-  const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const startDate = new Date(endDate)
-  startDate.setDate(startDate.getDate() - (weeksToShow * 7 - 1) - startDate.getDay())
-
-  // Month labels
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  ctx.fillStyle = '#6e7591'
-  ctx.font = '11px Inter, Noto Sans SC, sans-serif'
-  ctx.textAlign = 'center'
-
-  let lastMonth = -1
-  const d = new Date(startDate)
-  for (let week = 0; week < weeksToShow; week++) {
-    const testDate = new Date(d)
-    testDate.setDate(testDate.getDate() + week * 7)
-    if (testDate.getMonth() !== lastMonth) {
-      lastMonth = testDate.getMonth()
-      ctx.fillText(months[lastMonth], labelPadLeft + week * cellTotal + cellSize / 2, 14)
-    }
-  }
-
-  // Day labels
-  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', '']
-  ctx.fillStyle = '#6e7591'
-  ctx.font = '10px Inter, Noto Sans SC, sans-serif'
-  ctx.textAlign = 'right'
-  for (let i = 0; i < 7; i++) {
-    if (dayLabels[i]) {
-      ctx.fillText(dayLabels[i], labelPadLeft - 6, labelPadTop + i * cellTotal + cellSize - 1)
-    }
-  }
-
-  // Draw cells
-  const current = new Date(startDate)
-  for (let week = 0; week < weeksToShow; week++) {
-    for (let day = 0; day < 7; day++) {
-      const dateStr = current.getFullYear() + '-' +
-        String(current.getMonth() + 1).padStart(2, '0') + '-' +
-        String(current.getDate()).padStart(2, '0')
-
-      if (current <= endDate) {
-        const count = dateMap[dateStr] || 0
-        const x = labelPadLeft + week * cellTotal
-        const y = labelPadTop + day * cellTotal
-
-        ctx.fillStyle = getColor(count)
-        ctx.beginPath()
-        // Rounded rect
-        const r = 2
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + cellSize - r, y)
-        ctx.quadraticCurveTo(x + cellSize, y, x + cellSize, y + r)
-        ctx.lineTo(x + cellSize, y + cellSize - r)
-        ctx.quadraticCurveTo(x + cellSize, y + cellSize, x + cellSize - r, y + cellSize)
-        ctx.lineTo(x + r, y + cellSize)
-        ctx.quadraticCurveTo(x, y + cellSize, x, y + cellSize - r)
-        ctx.lineTo(x, y + r)
-        ctx.quadraticCurveTo(x, y, x + r, y)
-        ctx.fill()
-      }
-      current.setDate(current.getDate() + 1)
-    }
-  }
-}
-
-// Hero 全屏滚动吸附
-let isSnapping = false
-const wheelHandler = (e) => {
-  if (isSnapping) { e.preventDefault(); return }
-  const heroEl = document.querySelector('.home-hero')
-  const aboutEl = document.getElementById('about-section')
-  if (!heroEl || !aboutEl) return
-
-  const heroRect = heroEl.getBoundingClientRect()
-  const aboutRect = aboutEl.getBoundingClientRect()
-
-  // 在 Hero 区域内，向下滚动 → 跳到 about-section
-  if (e.deltaY > 0 && heroRect.bottom > window.innerHeight * 0.5) {
-    e.preventDefault()
-    isSnapping = true
-    aboutEl.scrollIntoView({ behavior: 'smooth' })
-    setTimeout(() => { isSnapping = false }, 800)
-    return
-  }
-
-  // 在 about-section 顶部附近，向上滚动 → 跳回 Hero
-  if (e.deltaY < 0 && aboutRect.top >= -10 && aboutRect.top <= 80) {
-    e.preventDefault()
-    isSnapping = true
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    setTimeout(() => { isSnapping = false }, 800)
-    return
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('wheel', wheelHandler, { passive: false })
-})
-
-onUnmounted(() => {
-  window.removeEventListener('wheel', wheelHandler)
-})
+onMounted(() => { observeSections(); loadData() })
+onUnmounted(() => { disposed = true; observer?.disconnect(); cancelAnimationFrame(countFrame) })
 </script>
 
-<style scoped>
-/* Full-screen hero — vertical layout: title on top, content below */
-.home-hero {
-  min-height: 100vh;
-  margin-top: -72px;
-  padding: 5vh var(--s6) 0;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  background: var(--gradient-soft);
-}
-
-/* 内容+向下探索包裹层：占据剩余空间，内容偏上 */
-.hero-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 10vh;
-  width: 100%;
-  gap: var(--s5);
-}
-
-/* 浮动技术标签 */
-.hero-float-tags { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.hero-float-tag {
-  position: absolute;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--ink-300);
-  background: rgba(255,255,255,0.5);
-  padding: 4px 14px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--ink-100);
-  animation: tagFloat 8s ease-in-out infinite;
-  backdrop-filter: blur(4px);
-}
-@keyframes tagFloat {
-  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
-  25% { transform: translateY(-12px) rotate(2deg); opacity: 0.8; }
-  50% { transform: translateY(-6px) rotate(-1deg); opacity: 0.6; }
-  75% { transform: translateY(-14px) rotate(1deg); opacity: 0.7; }
-}
-
-/* 大标题区域 — 中英文结合 */
-.hero-title-area {
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-.hero-title-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  object-fit: cover;
-  vertical-align: middle;
-  margin-right: 12px;
-  margin-top: -6px;
-  box-shadow: 0 6px 24px rgba(20,184,166,0.25), 0 0 40px rgba(59,130,246,0.1);
-  animation: logoGlow 4s ease-in-out infinite;
-}
-@keyframes logoGlow {
-  0%, 100% { box-shadow: 0 6px 24px rgba(20,184,166,0.25), 0 0 40px rgba(59,130,246,0.1); }
-  50% { box-shadow: 0 8px 36px rgba(20,184,166,0.35), 0 0 60px rgba(139,92,246,0.15); }
-}
-.hero-title-text {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.hero-title-text__cn {
-  font-size: 3.6rem;
-  font-weight: 800;
-  color: var(--ink-800);
-  line-height: 1.15;
-  letter-spacing: 0.02em;
-  display: inline-flex;
-  align-items: center;
-}
-.hero-title-text__accent {
-  background: linear-gradient(135deg, #14B8A6 0%, #3B82F6 50%, #8B5CF6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 4.2rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1.15;
-}
-.hero-title-en {
-  margin-top: var(--s3);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--ink-400);
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-}
-.hero-title-slogan {
-  margin-top: var(--s2);
-  font-size: 0.95rem;
-  color: var(--ink-300);
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  font-style: italic;
-}
-
-.home-hero__inner {
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s7);
-  align-items: center;
-  position: relative;
-  z-index: 1;
-}
-.home-hero__code {
-  padding: var(--s5);
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.85rem;
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
-}
-
-/* 向下滚动引导 */
-.hero-scroll-hint {
-  position: relative;
-  z-index: 1;
-  cursor: pointer;
-  text-align: center;
-  color: var(--ink-400);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  transition: color 0.2s;
-  margin-top: auto;
-  padding-bottom: var(--s4);
-}
-.hero-scroll-hint:hover { color: var(--primary); }
-.hero-scroll-arrow {
-  width: 20px; height: 20px;
-  margin: 6px auto 0;
-  border-right: 2px solid var(--ink-300);
-  border-bottom: 2px solid var(--ink-300);
-  transform: rotate(45deg);
-  animation: scrollBounce 2s ease-in-out infinite;
-}
-@keyframes scrollBounce {
-  0%, 100% { transform: rotate(45deg) translate(0, 0); opacity: 0.5; }
-  50% { transform: rotate(45deg) translate(4px, 4px); opacity: 1; }
-}
-
-.home-hero__deco {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: heroFloat 10s ease-in-out infinite;
-}
-.home-hero__deco--1 { width: 300px; height: 300px; top: -80px; right: 10%; background: radial-gradient(circle, rgba(20,184,166,0.1) 0%, transparent 70%); }
-.home-hero__deco--2 { width: 200px; height: 200px; bottom: -40px; left: 5%; background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%); animation-delay: -5s; }
-.home-hero__deco--3 { width: 150px; height: 150px; top: 30%; left: 40%; background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%); animation-delay: -3s; }
-@keyframes heroFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-18px) scale(1.04); } }
-
-/* Sections */
-.home-section {
-  padding: var(--s8) var(--s6);
-}
-
-/* Chart */
-.chart-container {
-  width: 100%;
-  position: relative;
-}
-
-/* 热力图 */
-.heatmap-container {
-  width: 100%;
-  overflow-x: auto;
-}
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-.heatmap-legend__label {
-  font-size: 11px;
-  color: #6e7591;
-}
-.heatmap-legend__box {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-/* Learning path cards — 6 items: 3 per row */
-.home-paths {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s5);
-}
-.home-path-card {
-  --accent: var(--primary);
-  position: relative;
-  padding: var(--s5);
-  text-align: left;
-  overflow: hidden;
-}
-/* 顶部强调线：悬停时从左展开 */
-.home-path-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, transparent));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--dur) var(--ease);
-}
-.home-path-card:hover::before { transform: scaleX(1); }
-.home-path-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--ink-100));
-}
-.home-path-card__step {
-  position: absolute;
-  top: var(--s4);
-  right: var(--s4);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-}
-.home-path-card__icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  margin-bottom: var(--s4);
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.home-path-card__icon svg { width: 27px; height: 27px; }
-.home-path-card:hover .home-path-card__icon {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
-}
-.home-path-card__title {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink-900);
-  margin-bottom: var(--s2);
-}
-.home-path-card__desc {
-  font-size: 0.875rem;
-  line-height: 1.7;
-  color: var(--ink-500);
-  margin-bottom: var(--s4);
-}
-.home-path-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.home-path-tag {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 9%, transparent);
-  padding: 4px 10px;
-  border-radius: var(--r-pill);
-  transition: background var(--dur) var(--ease);
-}
-.home-path-card:hover .home-path-tag {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-}
-/* 区块标签内联图标 */
-.section-label--icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.section-label--icon svg {
-  width: 14px;
-  height: 14px;
-}
-
-.home-tip-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.home-tip-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-/* Hero buttons */
-.hero-btns {
-  display: flex;
-  gap: var(--s3);
-  margin-top: var(--s4);
-  flex-wrap: wrap;
-}
-/* Desktop: show inline buttons, hide mobile copy */
-.hero-btns--mobile { display: none; }
-.hero-btn {
-  height: 44px;
-  padding: 0 24px;
-  font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-  .home-hero {
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: var(--s5) var(--s4) var(--s4);
-    margin-top: -56px;
-  }
-  .hero-body {
-    padding-top: 0;
-    gap: var(--s3);
-    justify-content: center;
-  }
-  .home-hero__inner {
-    grid-template-columns: 1fr;
-    gap: var(--s4);
-  }
-  .home-hero__code {
-    font-size: 0.75rem;
-    padding: var(--s4);
-    border-radius: var(--r-lg);
-  }
-  .home-hero__code pre {
-    font-size: 0.72rem !important;
-    line-height: 1.6 !important;
-  }
-
-  .hero-title-text__cn {
-    font-size: 1.6rem;
-  }
-  .hero-title-text__accent {
-    font-size: 2rem;
-  }
-  .hero-title-logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    margin-right: 8px;
-  }
-  .hero-title-en {
-    font-size: 0.8rem;
-    letter-spacing: 0.15em;
-  }
-  .hero-title-slogan {
-    font-size: 0.8rem;
-  }
-
-  /* Hide floating tech tags on mobile to avoid overlap */
-  .hero-float-tags {
-    display: none;
-  }
-  /* Hide section label in hero on mobile */
-  .hero-text-col .section-label {
-    display: none;
-  }
-
-  /* Mobile: hide desktop buttons, show mobile buttons below code card */
-  .hero-btns--desktop { display: none; }
-  .hero-btns--mobile {
-    display: flex;
-    flex-direction: column;
-    gap: var(--s2);
-    margin-top: var(--s3);
-  }
-  .hero-btns--mobile .hero-btn {
-    width: 100%;
-    justify-content: center;
-    height: 42px;
-    padding: 0 18px;
-    font-size: 0.85rem;
-  }
-
-  .home-paths { grid-template-columns: 1fr 1fr; gap: var(--s3); }
-  .home-path-card {
-    padding: var(--s4);
-  }
-  .home-path-card__icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 13px;
-    margin-bottom: var(--s3);
-  }
-  .home-path-card__icon svg { width: 23px; height: 23px; }
-  .home-path-card__step {
-    font-size: 0.6rem;
-    padding: 2px 6px;
-    top: var(--s2);
-    right: var(--s2);
-  }
-
-  .home-section {
-    padding: var(--s6) var(--s4);
-  }
-
-  .home-tip-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-  }
-
-  .home-hero__deco--1 { width: 150px; height: 150px; }
-  .home-hero__deco--2 { width: 100px; height: 100px; }
-  .home-hero__deco--3 { width: 80px; height: 80px; }
-}
-
-@media (max-width: 480px) {
-  .home-hero {
-    padding: var(--s3) var(--s3) var(--s3);
-  }
-  .hero-title-text__cn {
-    font-size: 1.25rem;
-  }
-  .hero-title-text__accent {
-    font-size: 1.55rem;
-  }
-  .hero-title-logo {
-    width: 28px;
-    height: 28px;
-    margin-right: 6px;
-  }
-  .hero-title-en { font-size: 0.7rem; }
-  .hero-title-slogan { font-size: 0.7rem; }
-
-  .home-paths { grid-template-columns: 1fr; }
-
-  .home-section {
-    padding: var(--s5) var(--s3);
-  }
-}
-</style>
+<style scoped src="../assets/styles/home.css"></style>

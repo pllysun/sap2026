@@ -44,8 +44,11 @@ class SettingServiceTest extends BaseUnitTest {
 
         service.initDefaultSettings();
 
-        // 27 legacy/current defaults plus the migrated three-level App access setting.
-        verify(settingMapper, times(28)).insert(any(Setting.class));
+        // 28 existing defaults plus eight global SMTP configuration entries.
+        ArgumentCaptor<Setting> defaults = ArgumentCaptor.forClass(Setting.class);
+        verify(settingMapper, times(36)).insert(defaults.capture());
+        assertEquals(8, defaults.getAllValues().stream()
+                .filter(s -> s.getSettingKey().startsWith("email_smtp_")).count());
         verify(settingMapper, never()).updateById(any());
     }
 
@@ -70,7 +73,7 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(28)).updateById(any(Setting.class));
+        verify(settingMapper, times(36)).updateById(any(Setting.class));
     }
 
     @Test
@@ -81,7 +84,7 @@ class SettingServiceTest extends BaseUnitTest {
         service.initDefaultSettings();
 
         verify(settingMapper, never()).insert(any());
-        verify(settingMapper, times(28)).updateById(any(Setting.class));
+        verify(settingMapper, times(36)).updateById(any(Setting.class));
     }
 
     @Test
@@ -98,6 +101,33 @@ class SettingServiceTest extends BaseUnitTest {
     }
 
     // ===================== getValue =====================
+
+    @Test
+    void registrationPoliciesCannotBypassDedicatedReadAndSaveValidation() {
+        String key = RegistrationProtectionSettingsService.PREFIX + "quotas";
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.getValue(key)).getCode());
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.updateSetting(setting(key, "{}", "bypass"))).getCode());
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.getValue(key.toUpperCase(java.util.Locale.ROOT))).getCode());
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.updateSetting(setting(key.toUpperCase(java.util.Locale.ROOT), "{}", "bypass"))).getCode());
+        verifyNoInteractions(settingMapper);
+    }
+
+    @Test
+    void databaseCollationCannotBypassDedicatedPolicyApi() {
+        when(settingMapper.selectOne(any())).thenReturn(setting(
+                RegistrationProtectionSettingsService.PREFIX + "quotas", "{}", "policy"));
+        String alias = "registration_protectión_quotas";
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.getValue(alias)).getCode());
+        assertEquals(403, assertThrows(com.sap.common.BusinessException.class,
+                () -> service.updateSetting(setting(alias, "{}", "bypass"))).getCode());
+        verify(settingMapper, never()).updateById(any(Setting.class));
+        verify(settingMapper, never()).insert(any(Setting.class));
+    }
 
     @Test
     void getValue_found_returnsValue() {

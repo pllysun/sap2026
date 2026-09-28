@@ -14,7 +14,6 @@ class RateLimitPropertiesTest {
         assertFalse(p.isDryRun());
         assertTrue(p.isUseRedis());
         assertEquals(30, p.getLogin().getCapacity());
-        assertEquals(20, p.getRegister().getRefillPerMinute());
         assertEquals(30, p.getJw().getCapacity());
         assertEquals(60, p.getWrite().getCapacity());
         assertEquals(10, p.getPdf().getCapacity());
@@ -29,7 +28,6 @@ class RateLimitPropertiesTest {
         p.setUseRedis(false);
         RateLimitProperties.Rule r = new RateLimitProperties.Rule(99, 88);
         p.setLogin(r);
-        p.setRegister(r);
         p.setJw(r);
         p.setWrite(r);
         p.setPdf(r);

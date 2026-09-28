@@ -16,10 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import edu.csuft.sap.ui.icons.AppIcons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.schedule.ProfileKind
+import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ChevronIcon
 
 private const val CUSTOM_YEAR = "__custom__"
 
@@ -185,7 +183,7 @@ private fun DrillRow(title: String, isCurrent: Boolean, onClick: () -> Unit) {
         Text(title, fontSize = 16.sp, modifier = Modifier.weight(1f))
         if (isCurrent) Text("当前", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(end = 8.dp))
-        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+        ChevronIcon()
     }
 }
 

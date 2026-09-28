@@ -18,7 +18,7 @@ class IpUtilTest {
         MockHttpServletRequest r = new MockHttpServletRequest();
         r.addHeader("X-Real-IP", "9.9.9.9");
         r.addHeader("X-Forwarded-For", "1.1.1.1, 2.2.2.2"); // 客户端伪造的首段不被采信
-        r.setRemoteAddr("8.8.8.8");
+        r.setRemoteAddr("127.0.0.1");
         assertEquals("9.9.9.9", IpUtil.clientIp(r));
     }
 
@@ -51,5 +51,35 @@ class IpUtilTest {
         r.addHeader("X-Forwarded-For", "   ");
         r.setRemoteAddr("4.4.4.4");
         assertEquals("4.4.4.4", IpUtil.clientIp(r));
+    }
+
+    @Test
+    void 不可信直连完全忽略所有代理头() {
+        MockHttpServletRequest r = new MockHttpServletRequest();
+        r.setRemoteAddr("8.8.8.8");
+        r.addHeader("X-Real-IP", "1.1.1.1");
+        r.addHeader("X-Forwarded-For", "2.2.2.2");
+        assertEquals("8.8.8.8", IpUtil.clientIp(r));
+    }
+
+    @Test
+    void 无效代理头不能生成任意限流键() {
+        for (String header : new String[]{"unknown", "example.com", "1.2.3.4,5.6.7.8", "999.1.1.1", "::1%lo0"}) {
+            MockHttpServletRequest r = new MockHttpServletRequest();
+            r.addHeader("X-Real-IP", header);
+            r.addHeader("X-Forwarded-For", "1.2.3.4, ");
+            assertEquals("127.0.0.1", IpUtil.clientIp(r));
+        }
+    }
+
+    @Test
+    void IPv6等价写法统一为同一个限流键() {
+        MockHttpServletRequest r = new MockHttpServletRequest();
+        r.setRemoteAddr("::1");
+        r.addHeader("X-Real-IP", "2001:db8::A");
+        assertEquals("2001:db8:0:0:0:0:0:a", IpUtil.clientIp(r));
+        r.setRemoteAddr("2001:db8::A");
+        r.addHeader("X-Real-IP", "1.1.1.1");
+        assertEquals("2001:db8:0:0:0:0:0:a", IpUtil.clientIp(r));
     }
 }

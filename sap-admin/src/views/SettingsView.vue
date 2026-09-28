@@ -2,16 +2,25 @@
   <div class="settings-page zen-fade-in">
     <div class="page-header">
       <h2>系统设置</h2>
-      <p>系统配置与身份管理</p>
+      <p>按用途管理配置，各区域独立保存</p>
     </div>
+    <div v-if="!canEdit" class="settings-access">{{ accessLoading ? '正在验证访问权限…' : '无法加载设置，请刷新后重试' }}</div>
+    <div v-else class="settings-workspace">
+      <nav class="settings-nav" aria-label="设置分类">
+        <button v-for="item in settingsSections" :key="item.key" type="button" :class="{ active: settingsSection === item.key }" :aria-pressed="settingsSection === item.key" @click="settingsSection = item.key">
+          <el-icon><component :is="item.icon" /></el-icon><span><strong>{{ item.title }}</strong><small>{{ item.hint }}</small></span>
+        </button>
+      </nav>
+      <div class="settings-content">
+        <div class="settings-section-heading"><h3>{{ selectedSettings.title }}</h3><p>{{ selectedSettings.description }}</p></div>
 
     <!-- ===== 顶部横幅：当前年级 ===== -->
-    <div class="grade-banner">
+    <div v-show="settingsSection === 'general'" class="grade-banner">
       <div class="grade-banner__left">
-        <div class="grade-banner__icon">🎓</div>
+        <div class="grade-banner__icon"><el-icon><Calendar /></el-icon></div>
         <div class="grade-banner__info">
           <span class="grade-banner__label">当前年级</span>
-          <span class="grade-banner__desc">此参数决定学习小组活动的年级归属，影响全局数据</span>
+          <span class="grade-banner__desc">用于招新、学习活动和财务统计</span>
         </div>
       </div>
       <div class="grade-banner__right">
@@ -28,6 +37,8 @@
       </div>
     </div>
 
+    <RegistrationProtectionSettings v-if="canEdit" v-show="settingsSection === 'security'" />
+
     <!-- ===== 三栏网格 ===== -->
     <div class="settings-layout">
 
@@ -35,9 +46,9 @@
       <div class="settings-col">
 
         <!-- 对象存储配置 -->
-        <div class="zen-card">
+        <div v-show="settingsSection === 'storage'" class="zen-card settings-wide">
           <div class="card-header">
-            <span class="card-header__icon">☁️</span>
+            <el-icon class="card-header__icon"><FolderOpened /></el-icon>
             <span class="card-header__title">对象存储</span>
           </div>
           <div class="cos-config-grid">
@@ -65,7 +76,8 @@
             </div>
             <div class="cos-field" style="grid-column: 1 / -1">
               <label>自定义下载域名（CDN，选填）</label>
-              <el-input v-model="cosConfig.cdnDomain" size="small" placeholder="如 dl.csuftsap.top —— APK 必须用自定义域名下载；留空则用 COS 默认域名" />
+              <el-input v-model="cosConfig.cdnDomain" size="small" placeholder="如 dl.csuftsap.top" />
+              <small class="setting-field-hint">App 安装包需使用自定义下载域名，其他文件可使用 COS 默认域名。</small>
             </div>
           </div>
           <div class="cos-actions">
@@ -81,9 +93,9 @@
         </div>
 
         <!-- 重置账号密码（仅超管/会长可见可用） -->
-        <div class="zen-card" v-if="canEdit">
+        <div class="zen-card settings-wide settings-danger" v-if="canEdit" v-show="settingsSection === 'security'">
           <div class="card-header">
-            <span class="card-header__icon">🔑</span>
+            <el-icon class="card-header__icon"><Lock /></el-icon>
             <span class="card-header__title">重置账号密码</span>
           </div>
           <div class="cos-config-grid">
@@ -97,15 +109,15 @@
             </div>
           </div>
           <div class="cos-actions">
-            <el-button type="danger" size="small" @click="handleResetPassword" :loading="resetPwd.loading">重置密码</el-button>
+            <el-button type="danger" plain size="small" @click="handleResetPassword" :loading="resetPwd.loading">重置密码</el-button>
           </div>
-          <p style="font-size:12px;color:#aaa;margin-top:8px;">直接将该账号密码改为新密码（无需原密码）。出于安全，非超级管理员不能重置超管/会长的密码。</p>
+          <p style="font-size:12px;color:#aaa;margin-top:8px;">超级管理员和会长均可直接重置任意账号的密码，无需原密码。</p>
         </div>
 
         <!-- 入会会费配置 -->
-        <div class="zen-card">
+        <div v-show="settingsSection === 'general'" class="zen-card">
           <div class="card-header">
-            <span class="card-header__icon">💰</span>
+            <el-icon class="card-header__icon"><Wallet /></el-icon>
             <span class="card-header__title">入会会费</span>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
@@ -121,10 +133,10 @@
         </div>
 
         <!-- 招新群配置 -->
-        <div class="zen-card">
+        <div v-show="settingsSection === 'general'" class="zen-card">
           <div class="card-header">
-            <span class="card-header__icon">💬</span>
-            <span class="card-header__title">新生群配置 (入会后展示)</span>
+            <el-icon class="card-header__icon"><ChatDotRound /></el-icon>
+            <span class="card-header__title">入会欢迎群</span>
           </div>
           <div class="qr-config-grid" style="grid-template-columns: 1fr;">
             <div class="qr-card" style="box-shadow: none; border: 1px dashed #e4e7ed; padding: 12px; margin: 0;">
@@ -142,7 +154,7 @@
               </div>
               <el-input v-model="footerConfig.join_group_link" size="small" placeholder="一键加群邀请链接 (从手机QQ获取Url)" style="margin-top: 8px;" />
               <div style="margin-top: 12px; text-align: right;">
-                <el-button type="primary" size="small" @click="handleSaveFooterConfig" :loading="footerSaving">保存入会配置</el-button>
+                <el-button type="primary" size="small" @click="handleSaveFooterConfig('join')" :loading="footerSaving">保存入会配置</el-button>
               </div>
             </div>
           </div>
@@ -152,9 +164,9 @@
       <!-- 右列：身份管理 + 页脚配置 -->
       <div class="settings-col">
         <!-- 身份管理 -->
-        <div class="zen-card">
+        <div v-show="settingsSection === 'identity'" class="zen-card settings-wide">
           <div class="card-header">
-            <span class="card-header__icon">👤</span>
+            <el-icon class="card-header__icon"><User /></el-icon>
             <span class="card-header__title">身份管理</span>
           </div>
           <el-table :data="positions" stripe size="small">
@@ -189,23 +201,23 @@
             </el-table-column>
           </el-table>
 
-          <div class="add-setting" style="margin-top: 16px">
-            <el-input v-model="newPosition.positionName" placeholder="身份名称" style="width: 120px" size="small" />
-            <el-input-number v-model="newPosition.maxCount" :min="1" placeholder="最大人数" style="width: 110px" size="small" />
-            <el-select v-model="newPosition.roleCode" placeholder="权限" style="width: 100px" size="small">
+          <div class="position-create">
+            <div><label>身份名称</label><el-input v-model="newPosition.positionName" placeholder="如 技术部部长" size="small" /></div>
+            <div><label>人数上限</label><el-input-number v-model="newPosition.maxCount" :min="1" size="small" /></div>
+            <div><label>对应权限</label><el-select v-model="newPosition.roleCode" placeholder="权限" size="small">
               <el-option :value="1" label="会长" />
               <el-option :value="2" label="管理员" />
               <el-option :value="3" label="成员" />
-            </el-select>
-            <el-input-number v-model="newPosition.sortOrder" :min="1" placeholder="排序" style="width: 90px" size="small" />
+            </el-select></div>
+            <div><label>显示顺序</label><el-input-number v-model="newPosition.sortOrder" :min="1" size="small" /></div>
             <el-button type="primary" size="small" @click="handleAddPosition">添加</el-button>
           </div>
         </div>
 
         <!-- 页脚与二维码配置 -->
-        <div class="zen-card">
+        <div v-show="settingsSection === 'general'" class="zen-card settings-wide">
           <div class="card-header">
-            <span class="card-header__icon">🌐</span>
+            <el-icon class="card-header__icon"><Picture /></el-icon>
             <span class="card-header__title">页脚与二维码</span>
           </div>
           <div class="footer-config-grid">
@@ -229,7 +241,7 @@
 
           <el-divider content-position="left">页脚二维码配置（值为空则不展示）</el-divider>
 
-          <div class="qr-config-grid" style="grid-template-columns: 1fr;">
+          <div class="qr-config-grid">
             <div class="qr-card">
               <h4>官方QQ群二维码</h4>
               <div class="qr-preview">
@@ -264,9 +276,11 @@
           </div>
 
           <div style="margin-top: 16px; text-align: right;">
-            <el-button type="primary" size="small" @click="handleSaveFooterConfig" :loading="footerSaving">保存页脚配置</el-button>
+            <el-button type="primary" size="small" @click="handleSaveFooterConfig('footer')" :loading="footerSaving">保存页脚配置</el-button>
           </div>
         </div>
+      </div>
+    </div>
       </div>
     </div>
 
@@ -297,13 +311,22 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { updateSetting, getPublicSettings, getSettingValue, getUserInfo, getPositions, addPosition, updatePosition, deletePosition, getCosConfig, updateCosConfig, testCosConnection, resetUserPassword } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
+import RegistrationProtectionSettings from '../components/RegistrationProtectionSettings.vue'
 
 const router = useRouter()
 const positions = ref([])
 const showEditPosition = ref(false)
 const editPositionId = ref(null)
-const isSuperAdmin = ref(false)
 const canEdit = ref(false)
+const accessLoading = ref(true)
+const settingsSection = ref('general')
+const settingsSections = [
+  { key: 'general', title: '基础配置', hint: '届别 · 会费 · 联系方式', icon: 'Setting', description: '管理协会日常运营信息、网站页脚和二维码。' },
+  { key: 'identity', title: '身份管理', hint: '职位 · 权限 · 人数', icon: 'User', description: '管理任职身份、人数上限与对应权限。' },
+  { key: 'security', title: '账号与安全', hint: '注册防护 · 密码重置', icon: 'Lock', description: '集中管理注册防护，敏感操作仍需确认。' },
+  { key: 'storage', title: '文件存储', hint: 'COS · 密钥 · 下载域名', icon: 'FolderOpened', description: '配置文件存储和下载地址；检测使用已保存的配置。' },
+]
+const selectedSettings = computed(() => settingsSections.find(item => item.key === settingsSection.value))
 
 // 重置账号密码
 const resetPwd = reactive({ studentId: '', newPassword: '', loading: false })
@@ -339,7 +362,6 @@ onMounted(async () => {
   try {
     const res = await getUserInfo()
     const roles = res.data?.roles || []
-    isSuperAdmin.value = roles.includes(0) || roles.includes('0')
     canEdit.value = roles.includes(0) || roles.includes('0') || roles.includes(1) || roles.includes('1')
     // 仅超管/会长可进入设置页：非授权用户直敲 URL 时拦回首页（后端亦有 SaCheckRole 兜底）
     if (!canEdit.value) {
@@ -347,7 +369,7 @@ onMounted(async () => {
       router.push('/dashboard')
       return
     }
-  } catch (e) {}
+  } catch (e) { return } finally { accessLoading.value = false }
 
   loadPositions()
   loadCosConfig()
@@ -454,7 +476,7 @@ const showReplaceSecret = async (field) => {
   try {
     const { value } = await ElMessageBox.prompt(
       field === 'secretId' ? 'SecretId' : 'SecretKey',
-      { inputPlaceholder: '粘贴完整密钥', confirmButtonText: '确定', cancelButtonText: '取消' }
+      { inputPlaceholder: '粘贴完整密钥', inputType: 'password', confirmButtonText: '确定', cancelButtonText: '取消' }
     )
     if (value && value.trim()) {
       cosConfig[field] = value.trim()
@@ -571,15 +593,15 @@ const onQrUploaded = (res, field) => {
   }
 }
 
-const handleSaveFooterConfig = async () => {
+const handleSaveFooterConfig = async (scope = 'footer') => {
   footerSaving.value = true
   try {
-    const keys = Object.keys(footerConfig)
-    // 并发提交所有配置，避免逐项串行导致中途失败半保存
+    const keys = Object.keys(footerConfig).filter(key => scope === 'join' ? key.startsWith('join_') : !key.startsWith('join_'))
+    // 只保存当前区域，不覆盖其他区域尚未确认的草稿。
     await Promise.all(
       keys.map(key => updateSetting({ settingKey: key, settingValue: footerConfig[key] }))
     )
-    ElMessage.success('页脚配置保存成功')
+    ElMessage.success(scope === 'join' ? '入会配置保存成功' : '页脚配置保存成功')
   } catch (e) {
     // 单项失败时全局响应拦截器已弹出具体原因，此处不再重复提示
   } finally {

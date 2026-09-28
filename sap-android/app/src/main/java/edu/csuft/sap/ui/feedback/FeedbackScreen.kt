@@ -66,10 +66,10 @@ import edu.csuft.sap.data.repository.FeedbackImageUpload
 import edu.csuft.sap.ui.common.LoadingBox
 import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.icons.AppIcons
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 
 private enum class FeedbackRoute { LIST, CREATE, DETAIL }
 
@@ -200,6 +200,7 @@ private fun FeedbackList(
                     value = keyword,
                     onValueChange = { keyword = it },
                     label = { Text("搜索反馈") },
+                    leadingIcon = { Icon(AppIcons.Search, null, Modifier.size(20.dp)) },
                     placeholder = { Text("输入功能或问题关键词") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -426,7 +427,7 @@ private fun FeedbackCreate(
                                             },
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        Text("×", color = Color.White, fontSize = 18.sp, lineHeight = 18.sp)
+                                        Icon(AppIcons.Close, "移除图片", tint = Color.White, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }
@@ -545,7 +546,10 @@ private fun FeedbackDetail(
                                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                     .background(MaterialTheme.colorScheme.surfaceVariant).padding(14.dp),
                             ) {
-                                Text("✓ 该 Issue 已关闭", fontWeight = FontWeight.Medium)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(AppIcons.Check, null, Modifier.padding(end = 8.dp).size(18.dp))
+                                    Text("该 Issue 已关闭", fontWeight = FontWeight.Medium)
+                                }
                                 Text(
                                     "由 ${issue.closedByName ?: "用户"} 关闭于 ${formatDate(issue.closedAt)}。如问题仍存在，请新建反馈并引用 #${issue.id}。",
                                     fontSize = 12.sp,

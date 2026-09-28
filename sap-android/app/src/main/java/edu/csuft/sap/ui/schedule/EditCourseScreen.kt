@@ -18,11 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import edu.csuft.sap.ui.icons.AppIcons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,8 +45,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import edu.csuft.sap.data.schedule.CustomCourse
+import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.ui.theme.CoursePalette
 import edu.csuft.sap.ui.theme.customCourseColor
+import edu.csuft.sap.ui.theme.adjustedCourseColor
 import java.util.UUID
 
 private val dayLabels = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -72,6 +73,7 @@ fun EditCourseScreen(
     prefillLocation: String? = null,
     prefillEndNode: Int? = null,
     prefillColorIndex: Int? = null,
+    settings: ScheduleSettings = ScheduleSettings(),
 ) {
     var name by remember { mutableStateOf(initial?.name ?: prefillName ?: "") }
     var teacher by remember { mutableStateOf(initial?.teacher ?: prefillTeacher ?: "") }
@@ -84,6 +86,17 @@ fun EditCourseScreen(
     var customColor by remember { mutableStateOf(initial?.customColor) }
     var showColorPicker by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+
+    if (confirmDelete && initial != null) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text("删除课程？") },
+        text = { Text("将从当前课表移除这条课程的全部上课周次，不影响其他课表和学校原始数据。") },
+        confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete(initial.id) }) {
+            Text("删除", color = MaterialTheme.colorScheme.error)
+        } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("取消") } },
+    )
 
     Column(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()),
@@ -152,7 +165,8 @@ fun EditCourseScreen(
 
             SectionLabel("颜色", null)
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CoursePalette.forEachIndexed { i, c ->
+                CoursePalette.forEachIndexed { i, base ->
+                    val c = adjustedCourseColor(base, settings)
                     val sel = customColor == null && colorIndex == i
                     Box(
                         Modifier.size(30.dp).background(c.container, CircleShape)
@@ -164,7 +178,8 @@ fun EditCourseScreen(
                 }
                 // 自定义取色（彩虹圈→打开取色器；选了自定义色则显示该色）
                 val cc = customColor
-                val swatch: Brush = if (cc != null) SolidColor(Color(cc)) else Brush.sweepGradient(
+                val customPreview = cc?.let { previewCustomColor(it, settings) }
+                val swatch: Brush = if (customPreview != null) SolidColor(customPreview.container) else Brush.sweepGradient(
                     listOf(
                         Color(0xFFFF5252), Color(0xFFFFD740), Color(0xFF69F0AE),
                         Color(0xFF40C4FF), Color(0xFF7C4DFF), Color(0xFFFF4081), Color(0xFFFF5252),
@@ -174,24 +189,27 @@ fun EditCourseScreen(
                     Modifier.size(30.dp).background(swatch, CircleShape).clickable { showColorPicker = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (cc != null) Box(Modifier.size(12.dp).background(customCourseColor(cc).onContainer, CircleShape))
+                    if (customPreview != null) Box(Modifier.size(12.dp).background(customPreview.onContainer, CircleShape))
                 }
             }
             if (showColorPicker) ColorPickerDialog(
                 initial = customColor,
+                settings = settings,
                 onPick = { customColor = it; showColorPicker = false },
                 onDismiss = { showColorPicker = false },
             )
 
             if (initial != null) {
                 Spacer(Modifier.height(28.dp))
-                Box(
-                    Modifier.fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                        .clickable { onDelete(initial.id) }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center,
-                ) { Text("删除课程", color = MaterialTheme.colorScheme.error, fontSize = 15.sp) }
+                FilledTonalButton(
+                    onClick = { confirmDelete = true },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                ) { Text("删除课程", fontSize = 15.sp, fontWeight = FontWeight.Medium) }
             }
             Spacer(Modifier.height(32.dp))
         }
@@ -298,12 +316,12 @@ private fun secondHalf(max: Int): Set<Int> = if (max < 10) emptySet() else (10..
 
 /** 课程自定义取色器：色相 + 浓淡两滑块，实时预览课卡，输出柔和可读底色(ARGB)。 */
 @Composable
-private fun ColorPickerDialog(initial: Long?, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
+private fun ColorPickerDialog(initial: Long?, settings: ScheduleSettings, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
     var hue by remember { mutableStateOf(initial?.let { hueOf(Color(it)) } ?: 210f) }
     var sat by remember { mutableStateOf(0.5f) }
     val container = pastel(hue, sat)
     val argb = colorToArgbLong(container)
-    val cc = customCourseColor(argb)
+    val cc = previewCustomColor(argb, settings)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("自定义颜色") },
@@ -333,6 +351,10 @@ private fun ColorPickerDialog(initial: Long?, onPick: (Long) -> Unit, onDismiss:
 }
 
 /** 由色相/浓淡生成柔和底色（保持高亮度，深字可读）。 */
+private fun previewCustomColor(argb: Long, settings: ScheduleSettings) = customCourseColor(argb).let {
+    if (settings.colorIntensityAffectsCustom) adjustedCourseColor(it, settings) else it
+}
+
 private fun pastel(hue: Float, sat: Float): Color =
     Color.hsv(hue.coerceIn(0f, 360f), 0.12f + sat.coerceIn(0f, 1f) * 0.45f, 0.98f)
 

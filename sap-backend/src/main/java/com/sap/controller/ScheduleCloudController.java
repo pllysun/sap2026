@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/** 管理端课表云控与 App 公告。修改操作仅限超级管理员。 */
+/** 管理端课表云控与 App 公告。超级管理员与会长具有相同的管理权限。 */
 @RestController
 @RequestMapping("/api/app/cloud")
 public class ScheduleCloudController {
@@ -51,7 +51,7 @@ public class ScheduleCloudController {
 
     @PutMapping("/admin/guest-access-level")
     @OperationLog("修改软协课表游客权限等级")
-    @SaCheckRole("0")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> updateGuestAccessLevel(@RequestBody Map<String, Object> body) {
         Object raw = body.get("level");
         int level;
@@ -66,7 +66,7 @@ public class ScheduleCloudController {
 
     @PostMapping("/admin/announcements")
     @OperationLog("发布软协课表公告")
-    @SaCheckRole("0")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> createAnnouncement(@Valid @RequestBody AppAnnouncementDTO dto) {
         return Result.ok("公告已保存",
                 announcementService.create(StpUtil.getLoginIdAsLong(), dto));
@@ -74,7 +74,7 @@ public class ScheduleCloudController {
 
     @PutMapping("/admin/announcements/{id}")
     @OperationLog("修改软协课表公告")
-    @SaCheckRole("0")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> updateAnnouncement(@PathVariable Long id,
                                         @Valid @RequestBody AppAnnouncementDTO dto) {
         return Result.ok("公告已更新", announcementService.update(id, dto));
@@ -82,7 +82,7 @@ public class ScheduleCloudController {
 
     @DeleteMapping("/admin/announcements/{id}")
     @OperationLog("删除软协课表公告")
-    @SaCheckRole("0")
+    @SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
     public Result<?> deleteAnnouncement(@PathVariable Long id) {
         announcementService.delete(id);
         return Result.ok("公告已删除", null);

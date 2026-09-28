@@ -1,15 +1,12 @@
 <template>
   <div class="page">
-    <div class="page-header">
-      <h1 class="page-title">学习小组</h1>
-      <p class="page-desc">在这里管理你的学习任务、查看成绩和排名</p>
-    </div>
+    <PageHeader title="学习小组" label="LEARN TOGETHER / 一起学习" description="管理学习任务，记录每一次进步。" />
 
     <!-- Tab Bar -->
     <div class="tab-bar anim-in">
-      <div class="tab-bar__item" :class="{ active: activeTab === 'task' }" @click="activeTab = 'task'">📋 学习任务</div>
-      <div class="tab-bar__item" :class="{ active: activeTab === 'scores' }" @click="activeTab = 'scores'">📊 我的成绩</div>
-      <div class="tab-bar__item" :class="{ active: activeTab === 'ranking' }" @click="activeTab = 'ranking'">🏆 成绩统计</div>
+      <button class="tab-bar__item" :class="{ active: activeTab === 'task' }" :aria-pressed="activeTab === 'task'" @click="activeTab = 'task'">学习任务</button>
+      <button class="tab-bar__item" :class="{ active: activeTab === 'scores' }" :aria-pressed="activeTab === 'scores'" @click="activeTab = 'scores'">我的成绩</button>
+      <button class="tab-bar__item" :class="{ active: activeTab === 'ranking' }" :aria-pressed="activeTab === 'ranking'" @click="activeTab = 'ranking'">成绩统计</button>
     </div>
 
     <!-- ========== TAB: 学习任务 ========== -->
@@ -305,6 +302,7 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/PageHeader.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
@@ -312,7 +310,7 @@ import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
 const isGuest = computed(() => {
   const roles = userStore.roles || []
-  return roles.length === 0 || (roles.includes(4) && !roles.some(r => r <= 3))
+  return !roles.some(r => [0, 1, 2, 3].includes(Number(r)))
 })
 
 const activeTab = ref('task')
@@ -425,7 +423,8 @@ watch(activeTab, (tab) => {
   if (tab === 'ranking' && !rankingLoaded.value) { rankingLoaded.value = true; loadAllActivities() }
 })
 
-onMounted(() => { if (!isGuest.value) loadStatus() })
+// Layout resolves permissions asynchronously on a direct visit to this route.
+watch(isGuest, guest => { if (!guest) loadStatus() }, { immediate: true })
 </script>
 
 <style scoped>
@@ -732,4 +731,3 @@ onMounted(() => { if (!isGuest.value) loadStatus() })
   .rank-modal__body { padding: var(--s4); }
 }
 </style>
-

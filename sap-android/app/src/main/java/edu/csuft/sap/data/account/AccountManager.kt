@@ -85,9 +85,16 @@ class AccountManager(context: Context, private val jw: JwRepository) {
      * 返回是否存在任何教务绑定（不含本地源）。非会员无绑定时 active 落到网页源。
      */
     suspend fun refresh(): Boolean {
+        if (!ConnectivityState.online || !MemberState.isJw) {
+            if (_accounts.value.none { it.isLocal }) _accounts.value = _accounts.value + webviewEntry
+            // 不校正或覆盖当前班级选择；断网时只使用已有本地状态。
+            return _accounts.value.any { !it.isLocal }
+        }
         val nick = loadNicknames()
+        val owner = CurrentAccount.key
         return when (val r = jw.accounts()) {
             is Outcome.Success -> {
+                if (CurrentAccount.key != owner || !MemberState.isJw) return false
                 // 服务端备注为长期真源；本地值仅兼容升级前已保存的备注。
                 val bound = r.data.map {
                     BoundAccount(
@@ -106,6 +113,7 @@ class AccountManager(context: Context, private val jw: JwRepository) {
                 bound.isNotEmpty()
             }
             is Outcome.Error -> {
+                if (CurrentAccount.key != owner || !MemberState.isJw) return false
                 // 拉取失败：至少保证本地网页源可用
                 if (_accounts.value.none { it.isLocal }) _accounts.value = _accounts.value + webviewEntry
                 if (_active.value == null) setActive(WEBVIEW_ACCOUNT)
@@ -128,7 +136,7 @@ class AccountManager(context: Context, private val jw: JwRepository) {
     /** 切换回班级模式时恢复最近一次选择，缓存存在时可直接离线显示。 */
     fun activateClassAccount(): Boolean {
         val saved = prefs.getString(keyLastClass(), null)
-        if (saved.isNullOrBlank()) {
+        if (saved.isNullOrBlank() || saved == DEFAULT_CLASS_ACCOUNT) {
             useClass("default")
             return false
         }
@@ -139,11 +147,23 @@ class AccountManager(context: Context, private val jw: JwRepository) {
     /** 上次使用过的教务账号，仅用于云控降级时从对应的本地缓存恢复课表，不触发网络请求。 */
     fun lastJwAccount(): String? = prefs.getString(keyLastJw(), null)
 
+    /** 删除班级后恢复剩余选择；全部删除时回到未选择状态，清除旧选择引用。 */
+    fun forgetClassAccounts(deleted: Set<String>, remaining: List<String>) {
+        val selection = classSelectionAfterDeletion(
+            _active.value, prefs.getString(keyLastClass(), null), deleted, remaining,
+        )
+        setActive(selection.active)
+        prefs.edit().apply {
+            if (selection.last == null) remove(keyLastClass()) else putString(keyLastClass(), selection.last)
+        }.apply()
+    }
+
     /**
      * 切回教务模式时调用：激活上次用过的教务账号（否则第一个教务账号）；
      * 无任何教务账号时置空，由界面提示去「我的」绑定。返回是否激活了教务账号。
      */
     fun activateJwAccount(): Boolean {
+        if (!MemberState.isJw) return false
         val jwAccts = _accounts.value.filter { !it.isLocal }.map { it.account }
         val last = prefs.getString(keyLastJw(), null)
         val target = when {
@@ -163,7 +183,7 @@ class AccountManager(context: Context, private val jw: JwRepository) {
             if (account == null) remove(keyActive()) else putString(keyActive(), account)
             // 记住最近使用的教务账号（非本地），供 Web→教务 切回时自动激活
             if (account != null && !isLocal(account) && !isClass(account)) putString(keyLastJw(), account)
-            if (account != null && isClass(account)) putString(keyLastClass(), account)
+            if (account != null && isClass(account) && account != DEFAULT_CLASS_ACCOUNT) putString(keyLastClass(), account)
         }.apply()
         mirrorActive(account) // 同步无后缀镜像，供小组件 / 上课提醒读取当前激活账号
     }
@@ -199,9 +219,10 @@ class AccountManager(context: Context, private val jw: JwRepository) {
         fun isLocal(account: String?) = account == WEBVIEW_ACCOUNT
         /** 本地班级课表缓存前缀；后缀是学院/年级/专业/班级的稳定摘要（跨学期复用）。 */
         const val CLASS_ACCOUNT_PREFIX = "__class__:"
+        const val DEFAULT_CLASS_ACCOUNT = "${CLASS_ACCOUNT_PREFIX}default"
         fun isClass(account: String?) = account?.startsWith(CLASS_ACCOUNT_PREFIX) == true
         fun isLocalOrClass(account: String?) = isLocal(account) || isClass(account)
-        private const val KEY_ACTIVE = "active_account_" // 实际 key 拼 CurrentAccount.key 后缀（按会员账号隔离）
+        internal const val KEY_ACTIVE = "active_account_" // 实际 key 拼 CurrentAccount.key 后缀（按会员账号隔离）
         // 无后缀镜像 key：始终 = 当前激活教务号，供 WidgetRepository（小组件 / 上课提醒，跨进程取不到 CurrentAccount 后缀）读取
         private const val KEY_ACTIVE_MIRROR = "active_account"
         private const val KEY_NICK = "nicknames_"         // 备注按会员账号 + 教务号隔离
@@ -210,4 +231,23 @@ class AccountManager(context: Context, private val jw: JwRepository) {
     }
 
     private val webviewEntry = BoundAccount(WEBVIEW_ACCOUNT, "网页课表", isLocal = true)
+}
+
+internal data class ClassSelection(val active: String?, val last: String?)
+
+internal fun classSelectionAfterDeletion(
+    active: String?, last: String?, deleted: Set<String>, remaining: List<String>,
+): ClassSelection {
+    val fallback = remaining.firstOrNull {
+        AccountManager.isClass(it) && it !in deleted && it != AccountManager.DEFAULT_CLASS_ACCOUNT
+    }
+    val next = if (active in deleted && AccountManager.isClass(active)) {
+        fallback ?: AccountManager.DEFAULT_CLASS_ACCOUNT
+    } else active
+    val nextLast = when {
+        next != active -> fallback
+        last in deleted || last == AccountManager.DEFAULT_CLASS_ACCOUNT -> fallback
+        else -> last
+    }
+    return ClassSelection(next, nextLast)
 }

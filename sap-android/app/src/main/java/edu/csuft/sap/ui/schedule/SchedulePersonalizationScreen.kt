@@ -26,9 +26,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +63,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -149,6 +154,37 @@ fun SchedulePersonalizationScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item {
+                AppearanceGroup("课程颜色") {
+                    AppearanceSlider(
+                        title = "默认课表颜色浓淡",
+                        value = draft.colorIntensityPercent.toFloat(),
+                        range = ScheduleAppearanceLimits.COLOR_INTENSITY,
+                        valueText = "${draft.colorIntensityPercent}%" + if (draft.colorIntensityPercent == 100) " · 默认" else "",
+                        onValueChange = { draft = draft.copy(cardColorIntensityPercent = it.roundToInt()) },
+                        onValueChangeFinished = { onSave(draft) },
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("0% · 淡", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("200% · 浓", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 8.dp).toggleable(
+                            value = draft.colorIntensityAffectsCustom,
+                            role = Role.Checkbox,
+                            onValueChange = { commit(draft.copy(colorIntensityAffectsCustom = it)) },
+                        ).padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("同时调整自建课程", fontSize = 14.sp)
+                            Text("自己创建的课程也跟随调整", fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Checkbox(checked = draft.colorIntensityAffectsCustom, onCheckedChange = null)
+                    }
+                }
+            }
             item {
                 AppearanceGroup("布局与显示") {
                     AppearanceSlider(
@@ -396,6 +432,7 @@ private fun SchedulePreview(
                             periodCount = settings.dailyPeriods,
                             showNowLine = false,
                             settings = settings,
+                            weekDates = WeekUtil.datesOfWeek(settings.semesterStartDate, week),
                             onCourseClick = {},
                             onEmptyClick = { _, _ -> },
                         )
@@ -503,7 +540,7 @@ private fun AppearanceSlider(
             activeTickColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
             inactiveTickColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
         ),
-        modifier = Modifier.fillMaxWidth().height(34.dp),
+        modifier = Modifier.fillMaxWidth().height(34.dp).semantics { contentDescription = title },
     )
 }
 
@@ -675,7 +712,7 @@ private fun DrawScope.drawCropImage(
 private val previewCourses = listOf(
     // weeks 为空=每周展示，保证没有真实课表时无论当前第几周都有可调节的效果样例。
     DisplayCourse("高等数学", "张老师", "理科楼 A201", 1, 1, 2, emptyList(), 0, false),
-    DisplayCourse("大学英语", "李老师", "外语楼 302", 2, 3, 4, emptyList(), 2, false),
+    DisplayCourse("自建课程", "李老师", "外语楼 302", 2, 3, 4, emptyList(), 2, true, customId = "preview-custom"),
     DisplayCourse("数据结构", "王老师", "软件楼 401", 3, 5, 6, emptyList(), 4, false),
     DisplayCourse("体育", "陈老师", "东操场", 4, 7, 8, (1..18 step 2).toList(), 5, false),
     DisplayCourse("软件工程", "周老师", "计算机楼 210", 5, 3, 4, (2..18 step 2).toList(), 1, false),

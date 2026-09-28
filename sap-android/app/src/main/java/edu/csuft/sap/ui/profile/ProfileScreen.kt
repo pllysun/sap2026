@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -47,11 +47,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,7 +58,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import edu.csuft.sap.data.account.AppMode
 import edu.csuft.sap.data.account.BoundAccount
 import edu.csuft.sap.data.account.ConnectivityState
@@ -70,6 +68,8 @@ import edu.csuft.sap.ui.common.SapCard
 import edu.csuft.sap.ui.common.ScreenHeader
 import edu.csuft.sap.ui.feedback.FeedbackScreen
 import edu.csuft.sap.ui.icons.AppIcons
+import edu.csuft.sap.ui.icons.ChevronIcon
+import edu.csuft.sap.ui.icons.IconBadge
 import kotlinx.coroutines.launch
 
 private enum class ProfileRoute { NONE, PROFILE_EDIT, JW_ACCOUNTS, FEEDBACK, SETTINGS, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG, ABOUT }
@@ -79,11 +79,18 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     onLoggedOut: () -> Unit,
     vm: ProfileViewModel = viewModel(),
+    openModePicker: Boolean = false,
+    onModePickerOpened: () -> Unit = {},
 ) {
     val state by vm.state.collectAsState()
+    val avatarBitmap by vm.avatar.collectAsState()
+    LaunchedEffect(vm) { vm.refresh() }
     val ctx = LocalContext.current
     var route by remember { mutableStateOf(ProfileRoute.NONE) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    LaunchedEffect(openModePicker) {
+        if (openModePicker) route = ProfileRoute.SETTINGS
+    }
 
     // 拦截系统返回键：子页逐级回退（主题/隐私/关于→设置，设置→我的），避免一按返回就退到桌面
     BackHandler(enabled = route != ProfileRoute.NONE) {
@@ -136,13 +143,10 @@ fun ProfileScreen(
                 ProfileRoute.SETTINGS -> AppSettingsScreen(
                     modifier = modifier,
                     mode = MemberState.effectiveMode,
+                    openModesInitially = openModePicker,
+                    onModePickerOpened = onModePickerOpened,
                     onSelectMode = { selected ->
-                        MemberState.setMode(ctx, selected)
-                        when (selected) {
-                            AppMode.WEB -> Graph.accountManager.useWebview()
-                            AppMode.CLASS -> Graph.accountManager.activateClassAccount()
-                            AppMode.JW -> Graph.accountManager.activateJwAccount()
-                        }
+                        MemberState.requestMode(ctx, selected)
                     },
                     onTheme = { route = ProfileRoute.THEME },
                     onAnnouncements = { route = ProfileRoute.ANNOUNCEMENTS },
@@ -157,7 +161,6 @@ fun ProfileScreen(
                 ProfileRoute.PRIVACY -> PrivacyScreen(
                     modifier = modifier,
                     onBack = { route = ProfileRoute.SETTINGS },
-                    web = MemberState.isWeb,
                     offline = !ConnectivityState.online,
                 )
                 ProfileRoute.CHANGELOG -> ChangelogScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
@@ -175,23 +178,13 @@ fun ProfileScreen(
             return@Column
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            val avatarUrl = avatarUrlOf(state.user?.avatar, state.avatarVersion)
             // 用户信息卡：点击进入「个人信息」二级菜单（查看/编辑软协平台资料）
             SapCard(onClick = { route = ProfileRoute.PROFILE_EDIT }) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (avatarUrl != null) {
-                            AsyncImage(model = avatarUrl, contentDescription = "头像", contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp))
-                        } else {
-                            Text((state.user?.name ?: "会").take(1), fontSize = 20.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        }
-                    }
+                    ProfileAvatar(avatarBitmap, state.user?.name)
                     Column(Modifier.weight(1f).padding(start = 14.dp)) {
                         Text(state.user?.name ?: state.user?.nickname ?: "当前账号", fontSize = 18.sp, fontWeight = FontWeight.Medium)
                         state.user?.studentId?.let {
@@ -200,7 +193,7 @@ fun ProfileScreen(
                         // 平台身份（游客 / 2025正式成员 / 2025宣传部部长 / 2026会长…）
                         IdentityTags(identityLabels(state.identities, MemberState.roleCodes))
                     }
-                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                    ChevronIcon()
                 }
             }
 
@@ -214,6 +207,7 @@ fun ProfileScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
+                            IconBadge(AppIcons.Academic, Modifier.padding(end = 14.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("教务账号", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                                 Text(
@@ -226,7 +220,7 @@ fun ProfileScreen(
                                     modifier = Modifier.padding(top = 2.dp),
                                 )
                             }
-                            Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                            ChevronIcon()
                         }
                     }
                 }
@@ -235,6 +229,7 @@ fun ProfileScreen(
             Box(Modifier.padding(top = 12.dp)) {
                 SapCard(onClick = if (ConnectivityState.online) ({ route = ProfileRoute.FEEDBACK }) else null) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        IconBadge(AppIcons.Feedback, Modifier.padding(end = 14.dp))
                         Column(Modifier.weight(1f)) {
                             Text("意见反馈", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                             Text(
@@ -245,7 +240,7 @@ fun ProfileScreen(
                                 modifier = Modifier.padding(top = 2.dp),
                             )
                         }
-                        Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline)
+                        ChevronIcon()
                     }
                 }
             }
@@ -258,9 +253,9 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    IconBadge(AppIcons.Settings, Modifier.padding(end = 14.dp))
                     Text("设置", fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                    Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.padding(start = 8.dp))
+                    ChevronIcon(Modifier.padding(start = 8.dp))
                 }
             }
         }
@@ -359,6 +354,7 @@ private fun JwAccountsScreen(modifier: Modifier, vm: ProfileViewModel, onBack: (
 @Composable
 fun ProfileEditScreen(modifier: Modifier, vm: ProfileViewModel, onBack: () -> Unit) {
     val state by vm.state.collectAsState()
+    val avatarBitmap by vm.avatar.collectAsState()
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     val user = state.user
@@ -395,11 +391,8 @@ fun ProfileEditScreen(modifier: Modifier, vm: ProfileViewModel, onBack: () -> Un
                     .clickable(enabled = !uploading) { picker.launch("image/*") },
                 contentAlignment = Alignment.Center,
             ) {
-                when {
-                    uploading -> CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp)
-                    avatarShown != null -> AsyncImage(model = avatarShown, contentDescription = "头像", contentScale = ContentScale.Crop, modifier = Modifier.size(96.dp))
-                    else -> Text((user?.name ?: "会").take(1), fontSize = 34.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                }
+                ProfileAvatar(avatarBitmap, user?.name, size = 96.dp, previewUrl = avatarShown)
+                if (uploading) CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp)
             }
             Text("点击更换头像", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
 

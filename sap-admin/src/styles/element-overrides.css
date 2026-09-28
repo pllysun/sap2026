@@ -80,7 +80,12 @@ html body button.el-button--default:hover {
 }
 
 /* -- 其他语义按钮 -- */
-.el-button--danger:not(.is-text):not(.is-link) { color: #fff !important; }
+.el-button--danger:not(.is-plain):not(.is-text):not(.is-link) { color: #fff !important; }
+.el-button--danger.is-plain { color: #b42318 !important; }
+.el-button--danger.is-plain:not(.is-disabled):hover,
+.el-button--danger.is-plain:not(.is-disabled):focus { color: #fff !important; }
+.el-button--danger.is-plain.is-disabled,
+.el-button--danger.is-plain.is-disabled:hover { color: #976b6b !important; background: #fff5f5 !important; border-color: #eadada !important; }
 .el-button--danger.is-text { color: var(--el-color-danger) !important; }
 .el-button--success:not(.is-text):not(.is-link) { color: #fff !important; }
 
@@ -129,7 +134,7 @@ html body button.el-button--default:hover {
 }
 
 /* -- 弹窗 -- */
-html body .el-overlay {
+html body .el-overlay:not(.email-modal):not(.email-confirm) {
   z-index: 2000 !important;
 }
 .el-overlay-dialog {
@@ -145,6 +150,39 @@ html body .el-dialog__body {
   max-height: none !important;
   color: var(--zen-text) !important;
   padding: 20px !important;
+}
+
+/* 邮件管理的编辑/预览内容可能较长，弹窗必须在视口内布局，
+ * 挂载到 body 脱离页面动画的 transform，只滚动内容区。
+ * 保留 Element Plus 的动态层级，确保从编辑器打开的预览在上层。 */
+html body .email-modal .el-overlay-dialog {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  overflow: hidden !important;
+}
+html body .el-dialog.email-dialog {
+  max-width: 100%;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: auto !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+html body .el-dialog.email-dialog .el-dialog__header {
+  flex: 0 0 auto;
+}
+html body .el-dialog.email-dialog .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 1 auto;
+}
+html body .el-dialog.email-dialog .el-dialog__footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--zen-border-light);
+  background: var(--zen-card);
 }
 .el-dialog__header {
   border-bottom: 1px solid var(--zen-border-light);
@@ -188,6 +226,10 @@ html body .el-dialog__body {
 }
 .el-pager li.is-active {
   color: var(--zen-accent) !important;
+}
+.el-pagination.is-background .el-pager li.is-active {
+  background: var(--el-color-primary) !important;
+  color: #fff !important;
 }
 
 /* -- 其他组件 -- */

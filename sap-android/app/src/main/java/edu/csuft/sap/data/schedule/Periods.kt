@@ -3,6 +3,7 @@ package edu.csuft.sap.data.schedule
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /** 单节课的时间。node 为节号（1 起）。 */
@@ -46,13 +47,12 @@ object Periods {
     const val MAX_NODES = 16
 
     /** 当前生效的节次时间表（默认 = [DEFAULT]，[load] 后可为用户自定义；长度随用户设置 8..16 可变）。 */
-    @Volatile
-    var current: List<Period> = DEFAULT
+    var current: List<Period> by mutableStateOf(DEFAULT)
         private set
 
     /**
-     * Compose 可观察的变更版本号：[save]/[resetDefault] 后自增。课表网格时间列等 UI 读它即订阅，
-     * 节次时间一改就自动重组、无需重进 App（[current] 本身是普通 var，Compose 不追踪其变化）。
+     * 兼容现有缓存键；所有载入、保存和重置统一更新。current 本身也可观察，
+     * 日历的延迟列表与详情直接读取 period 时同样能订阅时间变化。
      */
     var revision by mutableIntStateOf(0)
         private set
@@ -90,23 +90,30 @@ object Periods {
     private const val PREFS = "sap_periods"
     private const val KEY = "times"
 
+    @Synchronized
     fun load(context: Context) {
         val s = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
-        current = parse(s) ?: DEFAULT
+        updateCurrent(parse(s) ?: DEFAULT)
+    }
+
+    internal fun updateCurrent(list: List<Period>) {
+        if (current == list) return
+        current = list.toList()
+        revision++
     }
 
     /** 保存自定义时间（节号按下标 1.. 重新归一）。 */
+    @Synchronized
     fun save(context: Context, list: List<Period>) {
         val normalized = list.mapIndexed { i, p -> p.copy(node = i + 1) }.ifEmpty { DEFAULT }
-        current = normalized
-        revision++ // 通知 Compose 重组（时间列等随即刷新）
+        updateCurrent(normalized)
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(KEY, normalized.joinToString(",") { "${it.start}-${it.end}" }).apply()
     }
 
+    @Synchronized
     fun resetDefault(context: Context) {
-        current = DEFAULT
-        revision++ // 通知 Compose 重组
+        updateCurrent(DEFAULT)
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY).apply()
     }
 

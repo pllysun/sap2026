@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 
 /**
- * 全局「辅色 / 强调色」：简约白为主，辅色亮一点，默认天蓝。
+ * 全局「辅色 / 强调色」：简约白为主，辅色亮一点，默认晴蓝。
  * 改后整个 App 的 `colorScheme.primary`（底栏选中/FAB/今日高亮/开关/选周/选中态…）随之变。
  * 用 Compose 快照状态 + SharedPreferences 持久化。
  */
@@ -16,12 +16,12 @@ object ThemeState {
     private const val PREFS = "sap_theme"
     private const val KEY = "accent"
 
-    /** 默认辅色：天蓝。 */
-    val DEFAULT = Color(0xFF2E9BEF)
+    /** 默认辅色：晴蓝。 */
+    val DEFAULT = Color(0xFF3564DC)
 
     /** 预设辅色（亮色系，配简约白）。 */
     val PRESETS: List<Pair<String, Color>> = listOf(
-        "天蓝" to Color(0xFF2E9BEF),
+        "晴蓝" to Color(0xFF3564DC),
         "宝蓝" to Color(0xFF3B5BDB),
         "青绿" to Color(0xFF12B886),
         "薄荷" to Color(0xFF20C997),
@@ -44,5 +44,6 @@ object ThemeState {
     fun setAccent(context: Context, color: Color) {
         accent = color
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY, color.toArgb()).apply()
+        edu.csuft.sap.widget.ScheduleWidgetProvider.notifyChanged(context)
     }
 }

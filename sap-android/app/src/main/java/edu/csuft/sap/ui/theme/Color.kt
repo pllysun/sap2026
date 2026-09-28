@@ -6,13 +6,13 @@ import androidx.compose.ui.graphics.luminance
 // 强调色（辅色）已迁至 ThemeState：默认天蓝、可在设置里换。此处仅保留简约白底色与中性灰。
 
 // 简约白 + 中性灰
-val PageBg = Color(0xFFF6F7F9)
+val PageBg = Color(0xFFF6F8FB)
 val Surface = Color(0xFFFFFFFF)
 val SurfaceMuted = Color(0xFFF1F3F5)
-val TextPrimary = Color(0xFF1F2329)
-val TextSecondary = Color(0xFF646A73)
+val TextPrimary = Color(0xFF1C2A3A)
+val TextSecondary = Color(0xFF667387)
 val TextTertiary = Color(0xFF9098A1)
-val Hairline = Color(0xFFEDEFF2)
+val Hairline = Color(0xFFE7ECF2)
 val Danger = Color(0xFFE2504A)
 
 /** 课程色卡：每门课按名称稳定取一组（底色, 文字色）。 */

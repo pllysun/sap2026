@@ -7,4 +7,10 @@
     <string name="widget_next_desc">显示今日正在上 / 下一节课</string>
     <string name="widget_today_label">今日课程</string>
     <string name="widget_today_desc">在桌面查看今日全部课程</string>
+    <string name="widget_focus_label">今日概览</string>
+    <string name="widget_focus_desc">今日课程数量与下一节课，支持离线查看</string>
+    <string name="widget_week_overview_label">本周课量</string>
+    <string name="widget_week_overview_desc">一周课程分布，同名同时间课程合并计数</string>
+    <string name="widget_month_label">月历</string>
+    <string name="widget_month_desc">每月课程与无课日期，突出今天</string>
 </resources>

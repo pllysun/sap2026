@@ -6,6 +6,7 @@ import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.entity.User;
 import com.sap.service.UserService;
+import com.sap.service.MemberProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,25 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MemberProfileService memberProfileService;
+
+    @GetMapping("/{id}/profile")
+    @OperationLog("查询成员关联档案")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> profile(@PathVariable Long id) {
+        return Result.ok(memberProfileService.profile(id));
+    }
+
+    @GetMapping("/{id}/profile/relations")
+    @OperationLog("查询成员业务资料")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> profileRelations(@PathVariable Long id, @RequestParam String section,
+                                      @RequestParam(defaultValue = "1") int current,
+                                      @RequestParam(defaultValue = "12") int size) {
+        return Result.ok(memberProfileService.relations(id, section, current, size));
+    }
 
     @GetMapping("/list")
     @OperationLog("查询用户列表")

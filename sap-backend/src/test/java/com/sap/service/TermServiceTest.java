@@ -201,13 +201,6 @@ class TermServiceTest extends BaseUnitTest {
         verify(termMapper, never()).insert(any());
     }
 
-    // ===================== deleteTerm =====================
-    @Test
-    void deleteTerm_deletesById() {
-        service.deleteTerm(7L);
-        verify(termMapper).deleteById(7L);
-    }
-
     // ===================== changeover =====================
     @Test
     void changeover_settingNull_throws() {

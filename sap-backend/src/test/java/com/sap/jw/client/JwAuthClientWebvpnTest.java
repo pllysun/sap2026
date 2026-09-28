@@ -251,18 +251,12 @@ class JwAuthClientWebvpnTest {
     }
 
     @Test
-    void fallsBackToLegacyJwEndpointWhenNewEndpointDoesNotEstablishSso() {
+    void failsWhenCurrentEndpointDoesNotEstablishSso() {
         JwProperties properties = properties("");
-        // 模拟新版入口存在但返回非教务页（例如学校灰度迁移/503），旧入口仍可完成单点登录。
         properties.setWebvpnJwglBase(webvpnBase + "/unavailable");
         properties.setJwglBase(webvpnBase);
-        properties.setWebvpnLegacyJwglBase(jwBase);
-        properties.setLegacyJwglBase(jwBase);
-
-        JwHttpSession session = new JwAuthClient(properties, new OcrClient(properties))
-                .login("student", "secret");
-
-        assertEquals(jwBase, session.getJwglBase());
+        assertThrows(BusinessException.class, () ->
+                new JwAuthClient(properties, new OcrClient(properties)).login("student", "secret"));
     }
 
     @Test
@@ -325,11 +319,8 @@ class JwAuthClientWebvpnTest {
         properties.setWebvpnCasBase(casBase);
         properties.setWebvpnPortalBase(jwBase);
         properties.setWebvpnJwglBase(jwBase);
-        properties.setWebvpnLegacyJwglBase(jwBase);
         properties.setJwglBase("http://jwgl.csuft.edu.cn");
-        properties.setLegacyJwglBase("http://jwgl.csuft.edu.cn");
         properties.setWebvpnJwSsoPath("/Logon.do?method=logonByZnlkd");
-        properties.setWebvpnLegacyJwSsoPath("/Logon.do?method=logonByZnlkd");
         properties.setWebvpnQualityBase(jwBase);
         properties.setWebvpnCallbackUrl(callbackUrl);
         properties.setWebvpnExternalId(configuredExternalId);

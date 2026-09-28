@@ -67,6 +67,20 @@ mvn spring-boot:run
 
 后端启动后访问 API 文档：http://localhost:8081/doc.html
 
+注册默认启用验证码、IP/QQ/全站限额和并发拦截，可在管理端「系统设置 → 注册防护」中动态配置，参数持久化到数据库。配置及代理部署要求见 [注册防护说明](sap-backend/REGISTRATION_PROTECTION.md)。
+
+首次部署没有默认管理员或默认密码。仅在服务器私有环境中同时设置
+`SAP_BOOTSTRAP_ADMIN_ACCOUNT` 与 `SAP_BOOTSTRAP_ADMIN_PASSWORD`，才会初始化指定管理员；
+完成后移除这两个变量。已有账号只补齐超级管理员角色，绝不重置密码；
+未配置时不处理任何账号。请勿把真实凭据写入源码、示例文件或提交历史。
+
+预编译产物可使用 `docker/Dockerfile.prebuilt` 作为构建上下文内的 `Dockerfile`，
+再执行 `docker/build-image.sh --prebuilt-context ...`。该方式从官方 JRE 构建运行环境，
+不继承旧应用镜像层，避免已从新文件删除的私有配置仍留在底层。
+网络受限时可使用 `docker/Dockerfile.runtime-repack`：先清除已验证运行环境中的旧应用、
+静态资源与数据目录，再跨越 `FROM scratch` 边界复制运行环境并装入新产物；
+最终镜像不引用旧应用层。不得改成直接在旧应用镜像上覆盖 JAR。
+
 ### 4. 启动管理端
 
 ```powershell

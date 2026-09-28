@@ -31,7 +31,9 @@
       </form>
 
       <div class="auth-card__footer">
+        <router-link to="/forgot-password">忘记密码？</router-link><br />
         没有账号？<router-link to="/register">立即注册</router-link>
+        <p v-if="errorMsg">QQ 填写有误或密码仍不正确，请联系管理员。</p>
       </div>
     </div>
   </div>

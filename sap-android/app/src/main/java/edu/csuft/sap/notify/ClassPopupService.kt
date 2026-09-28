@@ -85,7 +85,7 @@ class ClassPopupService : Service() {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         col.addView(TextView(ctx).apply {
-            text = "🔔  上课提醒"; setTextColor(accent); textSize = 13f; typeface = Typeface.DEFAULT_BOLD
+            text = "上课提醒"; setTextColor(accent); textSize = 13f; typeface = Typeface.DEFAULT_BOLD
         })
         col.addView(TextView(ctx).apply {
             text = c.name; setTextColor(Color.parseColor("#111111")); textSize = 21f
@@ -224,7 +224,7 @@ class ClassPopupService : Service() {
     private fun startAsForeground() {
         ensureFgsChannel(this)
         val n = NotificationCompat.Builder(this, FGS_CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("上课提醒")
             .setContentText("正在弹出上课提醒")
             .setPriority(NotificationCompat.PRIORITY_MIN)

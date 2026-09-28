@@ -28,6 +28,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.SAP">
@@ -72,6 +73,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/today_widget_info" />
+        </receiver>
+
+        <receiver android:name=".widget.FocusWidgetProvider" android:exported="true" android:label="@string/widget_focus_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/focus_widget_info" />
+        </receiver>
+        <receiver android:name=".widget.WeekOverviewWidgetProvider" android:exported="true" android:label="@string/widget_week_overview_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/week_overview_widget_info" />
+        </receiver>
+        <receiver android:name=".widget.MonthWidgetProvider" android:exported="true" android:label="@string/widget_month_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/month_widget_info" />
         </receiver>
 
         <service

@@ -6,13 +6,9 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.common.BusinessException;
-import com.sap.jw.client.MfaRequiredException;
-import com.sap.jw.client.JwAuthClient;
-import com.sap.jw.client.JwHttpSession;
 import com.sap.jw.dto.JwCaptchaDTO;
 import com.sap.jw.service.ClassScheduleService;
-import com.sap.jw.service.PendingClassScheduleManager;
-import com.sap.jw.service.JwSessionManager;
+import com.sap.jw.service.ClassScheduleTaskService;
 import com.sap.service.AppAccessService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,27 +19,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/** 班级课表查询、采集与定时任务管理接口。 */
+/** 班级课表查询与手动异步采集接口。 */
 @RestController
 @RequestMapping("/api/class-schedule")
 public class ClassScheduleController {
 
     private final ClassScheduleService scheduleService;
     private final AppAccessService accessService;
-    private final JwAuthClient authClient;
-    private final JwSessionManager sessionManager;
-    private final PendingClassScheduleManager pendingManager;
+    private final ClassScheduleTaskService tasks;
 
     public ClassScheduleController(ClassScheduleService scheduleService,
                                    AppAccessService accessService,
-                                   JwAuthClient authClient,
-                                   JwSessionManager sessionManager,
-                                   PendingClassScheduleManager pendingManager) {
+                                   ClassScheduleTaskService tasks) {
         this.scheduleService = scheduleService;
         this.accessService = accessService;
-        this.authClient = authClient;
-        this.sessionManager = sessionManager;
-        this.pendingManager = pendingManager;
+        this.tasks = tasks;
     }
 
     /** App 班级模式选择学期。游客在云控基础等级以上即可使用。 */
@@ -81,9 +71,10 @@ public class ClassScheduleController {
     @GetMapping("/admin")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> admin() {
-        return Result.ok(Map.of(
-                "terms", scheduleService.terms(),
-                "logs", scheduleService.logs(100)));
+        Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("terms", scheduleService.terms());
+        data.put("activeBatchId", tasks.activeBatchId());
+        return Result.ok(data);
     }
 
     /** 管理端手动采集；管理员可以发起，执行人会写入持久化日志。 */
@@ -96,40 +87,31 @@ public class ClassScheduleController {
         String account = stringValue(request.get("account"));
         String password = stringValue(request.get("password"));
         String term = stringValue(request.get("term"));
+        String batchId = stringValue(request.get("batchId"));
+        if (batchId != null && !batchId.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+            throw new BusinessException(400, "无效的采集批次");
+        }
         // 当前项目没有启用 sa-token-jwt extra 扩展；操作者姓名由采集服务按 actor_id 回查，
         // 不能调用 StpUtil.getExtra，否则会在真正登录教务前直接抛 ApiDisabledException(500)。
-        String actorName = null;
         // 不使用固定“管理端”占位名；采集服务会按 actor_id 回查真实用户姓名，
         // 这样手动触发与定时任务的审计日志都能指向具体操作者。
         Long requestedOwner = number(request.get("ownerUserId"));
-        boolean superAdmin = StpUtil.getRoleList().contains("0");
+        var roles = StpUtil.getRoleList();
+        boolean leaderOrSuper = roles.contains("0") || roles.contains("1");
         Long configuredOwner = number(scheduleService.scheduleConfig().get("ownerUserId"));
-        if (!superAdmin && requestedOwner != null
+        if (!leaderOrSuper && requestedOwner != null
                 && !requestedOwner.equals(userId)
                 && !requestedOwner.equals(configuredOwner)) {
             throw new com.sap.common.BusinessException(403, "无权使用该负责人教务账号采集");
         }
-        // 管理员未指定负责人时，优先使用超级管理员在定时配置中设置的采集负责人；
+        // 管理员未指定负责人时，优先使用定时配置中设置的采集负责人；
         // 没有集中负责人则使用当前管理员自己的绑定账号。密码始终从后端加密凭据读取。
         Long credentialOwner = requestedOwner != null
                 ? requestedOwner
                 : configuredOwner != null ? configuredOwner : userId;
-        try {
-            return Result.ok("班级课表采集任务已完成",
-                    password == null
-                            ? scheduleService.pullAs(credentialOwner, account, term, "MANUAL", userId, actorName)
-                            : scheduleService.pullWithCredentials(userId, account, password, term, "MANUAL", actorName));
-        } catch (MfaRequiredException e) {
-            // 一次性密码登录触发安全手机验证时保留 CAS 会话，前端输入短信后可继续同一次采集，
-            // 不要求管理员先把账号绑定到自己的 App 账号。
-            String cleanAccount = account == null ? "" : account.trim();
-            String challengeId = pendingManager.put(userId, cleanAccount, term, e.getPending(), e.getPhone());
-            Map<String, Object> data = new java.util.LinkedHashMap<>();
-            data.put("needMfa", true);
-            data.put("challengeId", challengeId);
-            data.put("phone", e.getPhone());
-            return Result.ok("需要短信二次验证", data);
-        }
+        if (password != null && account == null) throw new BusinessException(400, "请输入教务账号");
+        return Result.ok("班级课表采集任务已启动", tasks.start(password == null ? credentialOwner : userId,
+                userId, account, password, term, batchId));
     }
 
     /** 输入短信验证码后继续本次班级课表采集。 */
@@ -137,16 +119,8 @@ public class ClassScheduleController {
     @OperationLog("短信验证码续登采集班级课表")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> pullMfa(@RequestBody JwCaptchaDTO dto) {
-        Long userId = StpUtil.getLoginIdAsLong();
-        PendingClassScheduleManager.Entry entry = pendingManager.get(dto == null ? null : dto.getChallengeId());
-        if (entry == null || entry.userId == null || !entry.userId.equals(userId)) {
-            throw new BusinessException("短信验证会话已过期，请重新开始采集");
-        }
-        JwHttpSession session = authClient.continueWithMfa(entry.cas, dto == null ? null : dto.getCode());
-        sessionManager.cache(entry.userId, entry.account, session);
-        pendingManager.remove(dto.getChallengeId());
-        return Result.ok("班级课表采集任务已完成",
-                scheduleService.pullAs(entry.userId, entry.account, entry.term, "MANUAL", userId, null));
+        return Result.ok("已提交短信验证", tasks.resume(StpUtil.getLoginIdAsLong(),
+                dto == null ? null : dto.getChallengeId(), dto == null ? null : dto.getCode()));
     }
 
     /** 重新发送班级课表采集所需的短信验证码。 */
@@ -154,19 +128,33 @@ public class ClassScheduleController {
     @OperationLog("重发班级课表采集短信验证码")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> resendPullMfa(@RequestBody JwCaptchaDTO dto) {
-        Long userId = StpUtil.getLoginIdAsLong();
-        PendingClassScheduleManager.Entry entry = pendingManager.get(dto == null ? null : dto.getChallengeId());
-        if (entry == null || entry.userId == null || !entry.userId.equals(userId)) {
-            throw new BusinessException("短信验证会话已过期，请重新开始采集");
-        }
-        authClient.sendSms(entry.cas);
-        return Result.ok(Map.of("needMfa", true, "challengeId", dto.getChallengeId(), "phone", entry.phone));
+        return Result.ok(tasks.resend(StpUtil.getLoginIdAsLong(), dto == null ? null : dto.getChallengeId()));
     }
 
     @GetMapping("/admin/logs")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
     public Result<?> logs(@RequestParam(defaultValue = "100") int limit) {
         return Result.ok(scheduleService.logs(limit));
+    }
+
+    @GetMapping("/admin/pull/progress")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> pullProgress(@RequestParam String batchId) {
+        return Result.ok(tasks.progress(batchId, StpUtil.getLoginIdAsLong()));
+    }
+
+    @GetMapping("/admin/batches")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> batches(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size,
+                             @RequestParam(required = false) String status, @RequestParam(required = false) String search) {
+        return Result.ok(scheduleService.batches(page, size, status, search));
+    }
+
+    @GetMapping("/admin/pull/history")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> history(@RequestParam String batchId, @RequestParam(defaultValue = "1") int page,
+                             @RequestParam(defaultValue = "20") int size) {
+        return Result.ok(scheduleService.history(batchId, page, size));
     }
 
     private void requireBasic() {

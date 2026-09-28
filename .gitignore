@@ -53,9 +53,14 @@ ops/*-key.local
 **/keystore.properties
 **/*.jks
 **/*.keystore
+# 本机 Gradle 状态（此处可能是指向工作机缓存的软链接）
+sap-android/.gradle
 
 # ===== 打包产物（APK 输出目录）=====
 /release/
+
+# 本地渲染的邮件预览可能含测试收件人信息
+templates/email/preview.html
 
 # ===== 日志 =====
 *.log

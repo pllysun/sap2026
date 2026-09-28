@@ -255,6 +255,8 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
     }
 
     suspend fun fetchTermStart(wv: WebView, term: String): String? {
+        // 先使用全校共享校历，缺失或服务器不可达才从当前已登录的学校网页读取。
+        Graph.academicCalendarRepository.dates()[term]?.let { return it }
         wv.loadUrl("${calendarUrl(activeJwBase)}?xnxq01id=" + enc(term))
         if (awaitUrl(15000) { it.contains("jxzl_query") } == null) return null
         val cal = grabHtml(10000) ?: return null
@@ -313,6 +315,7 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
             val month = java.time.LocalDate.now().monthValue
             val def = TermScan.defaultTerm(current, withData, month) ?: current
             Graph.scheduleStore.setActiveProfile(AccountManager.WEBVIEW_ACCOUNT, "webview:$def")
+            Graph.scheduleStore.finishScheduleSync(AccountManager.WEBVIEW_ACCOUNT, (withData + current).toSet())
             CookieManager.getInstance().flush()
             if (withData.isNotEmpty()) {
                 stop("已导入 ${withData.size} 个学期、共 $cCount 门课")
@@ -346,6 +349,7 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
             )
             Graph.accountManager.useWebview()
             status = "课表已导入，正在获取开学日期…"
+            Graph.scheduleStore.finishScheduleSync(AccountManager.WEBVIEW_ACCOUNT, setOf(res.term))
             val start = fetchTermStart(wv, res.term)
             if (start != null) Graph.scheduleStore.setSemesterStart(AccountManager.WEBVIEW_ACCOUNT, res.term, start)
             CookieManager.getInstance().flush()

@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 /** 软协课表 Issue 中心：账号反馈、共享跟进、管理端回复、关闭与删除。 */
 @Service
 public class AppFeedbackService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sap.service.mail.EmailBusinessHooks emailHooks;
 
     public static final String OPEN = "OPEN";
     public static final String CLOSED = "CLOSED";
@@ -102,6 +104,31 @@ public class AppFeedbackService {
                         commentCounts.getOrDefault(issue.getId(), 0), List.of()))
                 .toList();
         return PageResult.of(records, page.getTotal(), safeCurrent, safeSize);
+    }
+
+    public PageResult<com.sap.vo.AdminFeedbackIssueVO> adminList(long viewerId, int current, int size,
+            String status, String category, String keyword, boolean mine) {
+        PageResult<FeedbackIssueVO> page = list(viewerId, true, current, size, status, category, keyword, mine);
+        Map<Long, User> reporters = users(page.getRecords().stream().map(FeedbackIssueVO::getReporterId)
+                .filter(Objects::nonNull).collect(Collectors.toSet()));
+        return PageResult.of(page.getRecords().stream()
+                .map(row -> adminView(row, reporters.get(row.getReporterId()))).toList(),
+                page.getTotal(), page.getCurrent(), page.getSize());
+    }
+
+    public com.sap.vo.AdminFeedbackIssueVO adminDetail(long viewerId, Long issueId) {
+        FeedbackIssueVO row = detail(viewerId, true, issueId);
+        return adminView(row, userMapper.selectById(row.getReporterId()));
+    }
+
+    private com.sap.vo.AdminFeedbackIssueVO adminView(FeedbackIssueVO row, User reporter) {
+        var result = new com.sap.vo.AdminFeedbackIssueVO();
+        org.springframework.beans.BeanUtils.copyProperties(row, result);
+        if (reporter != null) {
+            result.setReporterAccount(reporter.getStudentId());
+            result.setReporterQq(reporter.getQq());
+        }
+        return result;
     }
 
     public FeedbackIssueVO detail(long viewerId, boolean admin, Long issueId) {
@@ -183,7 +210,7 @@ public class AppFeedbackService {
     @Transactional
     public FeedbackIssueVO comment(long viewerId, boolean admin, Long issueId,
                                    FeedbackCommentCreateDTO dto) {
-        AppFeedbackIssue issue = requireIssue(issueId);
+        AppFeedbackIssue issue = lockIssue(issueId);
         if (CLOSED.equals(issue.getStatus())) {
             throw new BusinessException(409, "该反馈已关闭，如问题仍存在请新建反馈");
         }
@@ -196,7 +223,7 @@ public class AppFeedbackService {
      */
     @Transactional
     public FeedbackIssueVO adminComment(long adminId, Long issueId, FeedbackCommentCreateDTO dto) {
-        AppFeedbackIssue issue = requireIssue(issueId);
+        AppFeedbackIssue issue = lockIssue(issueId);
         return insertComment(adminId, true, issue, dto);
     }
 
@@ -218,6 +245,7 @@ public class AppFeedbackService {
         commentMapper.insert(comment);
         issue.setUpdatedAt(LocalDateTime.now());
         issueMapper.updateById(issue);
+        emailHooks.issueReplied(issue, comment, userMapper.selectById(viewerId));
         return detail(viewerId, admin, issueId);
     }
 
@@ -227,7 +255,7 @@ public class AppFeedbackService {
      */
     @Transactional
     public FeedbackIssueVO closeOwnIssue(long viewerId, boolean admin, Long issueId) {
-        AppFeedbackIssue issue = requireIssue(issueId);
+        AppFeedbackIssue issue = lockIssue(issueId);
         if (!Objects.equals(issue.getReporterId(), viewerId)) {
             throw new BusinessException(403, "只能关闭自己发起的 Issue");
         }
@@ -242,7 +270,7 @@ public class AppFeedbackService {
 
     @Transactional
     public FeedbackIssueVO changeStatus(long adminId, Long issueId, String requestedStatus) {
-        AppFeedbackIssue issue = requireIssue(issueId);
+        AppFeedbackIssue issue = lockIssue(issueId);
         String status = normalizeStatus(requestedStatus, false);
         if (status.equals(issue.getStatus())) return detail(adminId, true, issueId);
         issue.setStatus(status);
@@ -261,7 +289,7 @@ public class AppFeedbackService {
     /** 管理端永久删除 Issue 及其全部回复，明确区别于关闭。 */
     @Transactional
     public void deleteIssue(Long issueId) {
-        requireIssue(issueId);
+        lockIssue(issueId);
         commentMapper.hardDeleteByIssueId(issueId);
         if (issueMapper.hardDeleteById(issueId) != 1) {
             throw new BusinessException(404, "反馈不存在或已删除");
@@ -297,6 +325,12 @@ public class AppFeedbackService {
 
     private AppFeedbackIssue requireIssue(Long issueId) {
         AppFeedbackIssue issue = issueId == null ? null : issueMapper.selectById(issueId);
+        if (issue == null) throw new BusinessException(404, "反馈不存在或已删除");
+        return issue;
+    }
+
+    private AppFeedbackIssue lockIssue(Long id) {
+        AppFeedbackIssue issue = id == null ? null : issueMapper.selectForUpdate(id);
         if (issue == null) throw new BusinessException(404, "反馈不存在或已删除");
         return issue;
     }
@@ -343,7 +377,7 @@ public class AppFeedbackService {
         FeedbackCommentVO vo = new FeedbackCommentVO();
         vo.setId(comment.getId());
         vo.setAuthorId(comment.getAuthorId());
-        vo.setAuthorName(displayName(author, comment.getAuthorId()));
+        vo.setAuthorName(Objects.equals(comment.getAuthorId(), 0L) ? "系统" : displayName(author, comment.getAuthorId()));
         vo.setAuthorAvatar(author == null ? null : author.getAvatar());
         vo.setParentId(comment.getParentId());
         vo.setAdminReply(isMaintainer(author));
@@ -505,6 +539,7 @@ public class AppFeedbackService {
     }
 
     private String displayName(User user, Long fallbackId) {
+        if (Objects.equals(fallbackId, 0L)) return "系统";
         if (user != null && user.getNickname() != null && !user.getNickname().isBlank()) return user.getNickname();
         if (user != null && user.getName() != null && !user.getName().isBlank()) return user.getName();
         if (user != null && user.getStudentId() != null && !user.getStudentId().isBlank()) return user.getStudentId();

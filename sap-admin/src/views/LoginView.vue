@@ -45,7 +45,8 @@
         </el-form-item>
       </el-form>
 
-      <p class="login-footer">仅管理员可登录</p>
+      <p class="login-footer"><a href="/forgot-password?from=admin">忘记密码？通过注册 QQ 邮箱找回</a></p>
+      <p class="login-footer">仅管理员可登录；QQ 填错或密码仍不正确，请联系管理员。</p>
     </div>
   </div>
 </template>
@@ -93,5 +94,4 @@ const handleLogin = async () => {
   }
 }
 </script>
-
 
