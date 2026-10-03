@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">软件协会平台架构</title>
+  <desc id="desc">Web 与课表客户端经 Nginx 访问 Spring Boot，数据存储与对象存储提供业务数据，独立判题节点执行编译与沙箱运行。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="m0 0 8 4-8 4" fill="#779ab9"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="720" rx="18" fill="#f5f9fd"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Noto Sans CJK SC,Microsoft YaHei,sans-serif">
+    <rect x="50" y="34" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="180.0" y="66" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">用户端 Web</text>
+    <text x="180.0" y="90" text-anchor="middle" font-size="12" fill="#7189a0">Vue 3 · 题库与协会内容</text>
+    <path d="M180 116L180 163" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="330" y="34" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="460.0" y="66" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">管理端 Web</text>
+    <text x="460.0" y="90" text-anchor="middle" font-size="12" fill="#7189a0">Vue 3 · Element Plus</text>
+    <path d="M460 116L460 163" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="610" y="34" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="740.0" y="66" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">Android</text>
+    <text x="740.0" y="90" text-anchor="middle" font-size="12" fill="#7189a0">Kotlin · Jetpack Compose</text>
+    <path d="M740 116L740 163" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="890" y="34" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="1020.0" y="66" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">微信小程序</text>
+    <text x="1020.0" y="90" text-anchor="middle" font-size="12" fill="#7189a0">课表 · 成绩 · 考试</text>
+    <path d="M1020 116L1020 163" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <path d="M180 163H1020M600 163v25" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="330" y="190" width="540" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="600.0" y="222" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">Nginx</text>
+    <text x="600.0" y="246" text-anchor="middle" font-size="12" fill="#7189a0">/ 用户端   ·   /admin/ 管理端   ·   /api/ 反向代理</text>
+    <path d="M600 272L600 303" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="270" y="305" width="660" height="90" rx="12" fill="#234d76" stroke="#234d76"/>
+    <text x="600.0" y="337" text-anchor="middle" font-size="17" font-weight="600" fill="#fff">Spring Boot · Java 21</text>
+    <text x="600.0" y="361" text-anchor="middle" font-size="12" fill="#c1d6e9">认证与权限 · 协会业务 · 教务接口 · 判题队列 · SSE 事件</text>
+    <path d="M600 395v33M180 428H1020" fill="none" stroke="#779ab9" stroke-width="1.8"/>
+    <path d="M180 428L180 457" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="50" y="460" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="180.0" y="492" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">MySQL / H2</text>
+    <text x="180.0" y="516" text-anchor="middle" font-size="12" fill="#7189a0">业务数据 · 提交记录</text>
+    <path d="M460 428L460 457" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="330" y="460" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="460.0" y="492" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">Redis</text>
+    <text x="460.0" y="516" text-anchor="middle" font-size="12" fill="#7189a0">Docker 登录态持久化</text>
+    <path d="M740 428L740 457" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="610" y="460" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="740.0" y="492" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">腾讯云 COS</text>
+    <text x="740.0" y="516" text-anchor="middle" font-size="12" fill="#7189a0">图片 · 材料 · App 安装包</text>
+    <path d="M1020 428L1020 457" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="890" y="460" width="260" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="1020.0" y="492" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">OCR 服务</text>
+    <text x="1020.0" y="516" text-anchor="middle" font-size="12" fill="#7189a0">本地 Python 边车</text>
+    <path d="M600 395L600 596" fill="none" stroke="#779ab9" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <rect x="324" y="548" width="552" height="39" rx="8" fill="#f5f9fd"/>
+    <text x="600" y="572" text-anchor="middle" fill="#537596" font-size="12">判题任务经节点控制服务分配；结果与执行事件回传后端</text>
+    <rect x="310" y="600" width="280" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="450.0" y="632" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">内置判题节点</text>
+    <text x="450.0" y="656" text-anchor="middle" font-size="12" fill="#7189a0">Agent → go-judge → 编译 / 运行</text>
+    <rect x="610" y="600" width="280" height="82" rx="12" fill="#fff" stroke="#cdddec"/>
+    <text x="750.0" y="632" text-anchor="middle" font-size="17" font-weight="600" fill="#234d76">独立判题节点</text>
+    <text x="750.0" y="656" text-anchor="middle" font-size="12" fill="#7189a0">资源上报 · 容量分配 · 故障切换</text>
+    <path d="M450 594H750M450 594v6M750 594v6" fill="none" stroke="#779ab9" stroke-width="1.8"/>
+  </g>
+</svg>
