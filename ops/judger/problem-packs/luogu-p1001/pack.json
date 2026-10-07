@@ -1,0 +1,218 @@
+{
+  "slug": "luogu-p1001",
+  "title": "A+B Problem",
+  "difficulty": "EASY",
+  "tags": [
+    "输入输出",
+    "入门"
+  ],
+  "description": "读取两个整数，输出它们的和。",
+  "inputFormat": "一行两个整数 a、b，以空白分隔。",
+  "outputFormat": "输出 a+b。",
+  "constraints": "-10^9 ≤ a,b ≤ 10^9。",
+  "sourcePlatform": "洛谷",
+  "sourceUrl": "https://www.luogu.com.cn/problem/P1001",
+  "sourceId": "P1001",
+  "sourceNote": "题意自行整理；测试集全部自建，覆盖正负数、零与上下界，不包含官方隐藏数据。",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\nint main(void) {\n    return 0;\n}",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\nint main() {\n    return 0;\n}",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n    }\n}",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n# 读取输入并输出答案\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::collections::HashMap;\nuse std::io::{self, Read};\nstruct Solution;\nfn main() {}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "generated-1",
+      "input": "1 2\n",
+      "expectedOutput": "3\n",
+      "sample": true
+    },
+    {
+      "name": "generated-2",
+      "input": "0 0\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "generated-3",
+      "input": "-1000000000 -1000000000\n",
+      "expectedOutput": "-2000000000\n",
+      "sample": false
+    },
+    {
+      "name": "generated-4",
+      "input": "1000000000 1000000000\n",
+      "expectedOutput": "2000000000\n",
+      "sample": false
+    },
+    {
+      "name": "generated-5",
+      "input": "-1000000000 1000000000\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "generated-6",
+      "input": "-1 0\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "generated-7",
+      "input": "0 -1\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "generated-8",
+      "input": "999999999 1\n",
+      "expectedOutput": "1000000000\n",
+      "sample": false
+    },
+    {
+      "name": "generated-9",
+      "input": "-999999999 -1\n",
+      "expectedOutput": "-1000000000\n",
+      "sample": false
+    },
+    {
+      "name": "generated-10",
+      "input": "123 -456\n",
+      "expectedOutput": "-333\n",
+      "sample": false
+    },
+    {
+      "name": "generated-11",
+      "input": "-706694944 -907203734\n",
+      "expectedOutput": "-1613898678\n",
+      "sample": false
+    },
+    {
+      "name": "generated-12",
+      "input": "439620783 -976894814\n",
+      "expectedOutput": "-537274031\n",
+      "sample": false
+    },
+    {
+      "name": "generated-13",
+      "input": "-765193045 -663751277\n",
+      "expectedOutput": "-1428944322\n",
+      "sample": false
+    },
+    {
+      "name": "generated-14",
+      "input": "919261023 -307918047\n",
+      "expectedOutput": "611342976\n",
+      "sample": false
+    },
+    {
+      "name": "generated-15",
+      "input": "-20014982 446445544\n",
+      "expectedOutput": "426430562\n",
+      "sample": false
+    },
+    {
+      "name": "generated-16",
+      "input": "-301924130 -772538401\n",
+      "expectedOutput": "-1074462531\n",
+      "sample": false
+    },
+    {
+      "name": "generated-17",
+      "input": "-626072413 809342456\n",
+      "expectedOutput": "183270043\n",
+      "sample": false
+    },
+    {
+      "name": "generated-18",
+      "input": "83793694 957791774\n",
+      "expectedOutput": "1041585468\n",
+      "sample": false
+    },
+    {
+      "name": "generated-19",
+      "input": "-431456398 336777373\n",
+      "expectedOutput": "-94679025\n",
+      "sample": false
+    },
+    {
+      "name": "generated-20",
+      "input": "-18786687 -686879516\n",
+      "expectedOutput": "-705666203\n",
+      "sample": false
+    },
+    {
+      "name": "generated-21",
+      "input": "-370176980 595800245\n",
+      "expectedOutput": "225623265\n",
+      "sample": false
+    },
+    {
+      "name": "generated-22",
+      "input": "-355347893 519697592\n",
+      "expectedOutput": "164349699\n",
+      "sample": false
+    },
+    {
+      "name": "generated-23",
+      "input": "-931355020 -359860854\n",
+      "expectedOutput": "-1291215874\n",
+      "sample": false
+    },
+    {
+      "name": "generated-24",
+      "input": "-700948868 -883967300\n",
+      "expectedOutput": "-1584916168\n",
+      "sample": false
+    },
+    {
+      "name": "generated-25",
+      "input": "487335282 -911856946\n",
+      "expectedOutput": "-424521664\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    if (scanf(\"%lld%lld\", &a, &b) != 2) return 2;\n    printf(\"%lld\\n\", a + b);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\nint main() {\n    long long a, b;\n    std::cin >> a >> b;\n    std::cout << a + b << \"\\n\";\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner s = new Scanner(System.in);\n        long a = s.nextLong(), b = s.nextLong();\n        System.out.println(a + b);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "a, b = map(int, input().split())\nprint(a + b)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn main() {\n    let mut s = String::new();\n    io::stdin().read_to_string(&mut s).unwrap();\n    let a: Vec<i64> = s.split_whitespace().map(|x| x.parse().unwrap()).collect();\n    println!(\"{}\", a[0] + a[1]);\n}\n"
+    }
+  }
+}

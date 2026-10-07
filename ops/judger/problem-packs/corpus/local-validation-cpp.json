@@ -1,0 +1,673 @@
+{
+  "environment": "LOCAL_NATIVE_NOT_GO_JUDGE",
+  "elapsedSeconds": 23.87,
+  "requestedLanguages": [
+    "cpp"
+  ],
+  "missingLanguages": [],
+  "rounds": 3,
+  "packCount": 44,
+  "passed": 44,
+  "failed": 0,
+  "toolVersions": {
+    "cpp": "Apple clang version 17.0.0 (clang-1700.6.4.2)"
+  },
+  "results": [
+    {
+      "slug": "leetcode-11",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-14",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-15",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-19",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-21",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-239",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-26",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-27",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-28",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-3",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 23,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 23,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-312",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-32",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 23,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 23,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-33",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-34",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-35",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-4",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-41",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-42",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 19,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 19,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-46",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 13,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-48",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-54",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-55",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-56",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-58",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 19,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-62",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-64",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-66",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-69",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-70",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-75",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-76",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 23,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-84",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-88",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-9",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 26,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 26,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-98",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "luogu-p1048",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "luogu-p1216",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 19,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "luogu-p1428",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "luogu-p1439",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "original-attendance-components",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "original-club-range-sum",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 20,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "original-points-min-coins",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "original-study-min-window",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 21,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "original-study-streak",
+      "language": "cpp",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 22,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    }
+  ]
+}

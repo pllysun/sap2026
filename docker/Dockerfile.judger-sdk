@@ -1,0 +1,15 @@
+# Build context: verified JDK27 GA archive and source-built static go-judge.
+# The final SAP image copies this SDK into an isolated root filesystem.
+FROM python:3.14.7-slim-trixie@sha256:7bf6c3111fe094f8ee1a1cbcdc63c4cfb345b0e3df42d5aa9a90b3b4b022ab6d AS python
+FROM rust:1.98.1-slim-trixie@sha256:fce83543909cd5409924a61ce296bdf5bab0fca37f004c0f6c8ef6f4a37bbc59 AS rust
+FROM gcc:15.3@sha256:d84c2b84552acded397b364db513b90defde027ed6b41a22bff3debb4030b569 AS judger-sdk
+COPY --from=python /usr/local/ /usr/local/
+COPY --from=rust /usr/local/rustup/toolchains/*/ /opt/rust/
+COPY jdk27.tar.gz /tmp/jdk27.tar.gz
+RUN echo '95fc37eb3a18a27a26d5904c2d89d52bace8dafa9a078ca27f4747fbc4bf070b  /tmp/jdk27.tar.gz' | sha256sum -c - && \
+    tar -xzf /tmp/jdk27.tar.gz -C /opt && rm /tmp/jdk27.tar.gz && mv /opt/jdk-27 /opt/java27 && \
+    rm -rf /usr/share/doc /usr/share/man /usr/share/locale /opt/java27/demo /opt/java27/man && \
+    /usr/local/bin/gcc --version && /usr/local/bin/python3 --version && \
+    /opt/rust/bin/rustc --version && /opt/java27/bin/java --version
+COPY go-judge /opt/judger/go-judge
+ENTRYPOINT ["/opt/judger/go-judge"]

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-20",
+  "problemRevision": 1,
+  "title": "有效的括号",
+  "summary": "用栈保存尚未配对的左括号，右括号必须与栈顶同类型，结束后栈必须为空。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "字符串只包含 `()`、`[]`、`{}` 这三类括号。有效不仅要求每类左右数量相等，还要求嵌套顺序正确：`([])` 有效，而 `([)]` 无效，因为 `[` 尚未关闭时，不能先用 `)` 关闭外层的 `(`。\n\n本题在平台只开放核心函数模式。填写对应语言的 `isValid` 或 `is_valid` 函数，参数 `s` 是括号字符串，返回布尔值。平台驱动负责从一行非空输入读取 `s`，并把结果输出为小写的 `true` 或 `false`；不要额外写 `main`、再读一次输入或打印自己的结果。长度上限是 10000，不能只写死处理几个样例。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "想象每个左括号打开一个新的盒子：后打开的盒子必须先关上。这种“后进先出”的规则就是栈。栈只从一端放入或取出元素，这一端称为栈顶。\n\n从左往右扫描。读到左括号就放到栈顶。读到右括号时，先确定它需要哪一种左括号，再查看栈顶：栈为空表示没有左括号可配对；类型不同表示交叉或错配；两者任一发生就立即返回假。类型相同则取出栈顶，表示这对括号处理完毕。\n\n全部扫描结束后，还要检查栈为空。如果留下左括号，说明它们没有被关闭。只数左右括号数量会漏掉 `([)]`，所以这里保存的是未配对括号的顺序，而不仅是数量。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "以公开样例 `([])` 为例，下表中栈按“栈底到栈顶”的方向列出：\n\n| 下标 | 当前字符 | 操作 | 操作后的栈 |\n| --- | --- | --- | --- |\n| 0 | `(` | 左括号入栈 | `(` |\n| 1 | `[` | 左括号入栈 | `( [` |\n| 2 | `]` | 需要 `[`，与栈顶一致，弹出 | `(` |\n| 3 | `)` | 需要 `(`，与栈顶一致，弹出 | 空 |\n\n扫描结束且栈为空，因此返回真。再看公开样例 `([)]`：前两步相同，第三个字符 `)` 需要 `(`，但栈顶是 `[`，这一步已经证明无法正确嵌套，后续字符无法修复这个错误。",
+      "diagram": {
+        "caption": "依次读取 ([])。右括号每次只关闭栈顶对应的左括号，最终没有剩余。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 277\" role=\"img\" aria-label=\"样例 ([]) 的栈变化\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"277\" rx=\"16\" fill=\"#f6f9ff\"/><text x=\"30\" y=\"32\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#24364b\">样例 ([]) 的栈变化</text><rect x=\"30\" y=\"50\" width=\"100\" height=\"36\" fill=\"#e7effb\"/><text x=\"42\" y=\"74\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#3267b1\">字符</text><rect x=\"130\" y=\"50\" width=\"250\" height=\"36\" fill=\"#e7effb\"/><text x=\"142\" y=\"74\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#3267b1\">动作</text><rect x=\"380\" y=\"50\" width=\"310\" height=\"36\" fill=\"#e7effb\"/><text x=\"392\" y=\"74\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#3267b1\">栈底 → 栈顶</text><rect x=\"30\" y=\"88\" width=\"100\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"42\" y=\"114\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">(</text><rect x=\"130\" y=\"88\" width=\"250\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"142\" y=\"114\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">入栈</text><rect x=\"380\" y=\"88\" width=\"310\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"392\" y=\"114\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">(</text><rect x=\"30\" y=\"131\" width=\"100\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"42\" y=\"157\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">[</text><rect x=\"130\" y=\"131\" width=\"250\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"142\" y=\"157\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">入栈</text><rect x=\"380\" y=\"131\" width=\"310\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"392\" y=\"157\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">(  [</text><rect x=\"30\" y=\"174\" width=\"100\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"42\" y=\"200\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">]</text><rect x=\"130\" y=\"174\" width=\"250\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"142\" y=\"200\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">弹出 [</text><rect x=\"380\" y=\"174\" width=\"310\" height=\"40\" fill=\"#ffffff\" stroke=\"#dce6f3\"/><text x=\"392\" y=\"200\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">(</text><rect x=\"30\" y=\"217\" width=\"100\" height=\"40\" fill=\"#edf7f2\" stroke=\"#dce6f3\"/><text x=\"42\" y=\"243\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#26816b\">)</text><rect x=\"130\" y=\"217\" width=\"250\" height=\"40\" fill=\"#edf7f2\" stroke=\"#dce6f3\"/><text x=\"142\" y=\"243\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#26816b\">弹出 (</text><rect x=\"380\" y=\"217\" width=\"310\" height=\"40\" fill=\"#edf7f2\" stroke=\"#dce6f3\"/><text x=\"392\" y=\"243\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#26816b\">空：配对成功</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 接收驱动传入的字符串 `s`，初始化空栈 `st`。C/Java 用字符数组模拟栈，`k` 表示元素数量；有效元素位于 `st[0..k-1]`，栈顶是 `st[k-1]`。\n2. 遍历字符串中的每个字符 `c`。左括号用追加操作入栈；C/Java 的 `st[k++]=c` 先写入位置 `k`，再把数量增加一。\n3. 对右括号计算所需左括号 `w`、`want`，或查 Python 的 `pairs` 字典。先检查非空，再弹出并比较，不能对空栈取栈顶。\n4. 错配直接返回假；C 在提前返回前释放申请的 `st`，避免遗漏内存释放。\n5. 所有字符处理完后返回栈是否为空。Rust 使用 `pop()` 返回的 `Option` 同时检查栈空和类型，`Some(w)` 表示成功取出所需字符。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "在每个字符处理后，栈从底到顶保存此前读过、还没有与右括号配对的左括号，顺序与它们打开的顺序相同。\n\n读到左括号时，新的括号是最内层尚未关闭的括号，放到栈顶后这个描述仍然成立。读到右括号时，合法嵌套一定先关闭最内层，也就是栈顶；栈为空或类型不符都违反题意，不可能靠后面的字符修正。配对成功后弹出栈顶，只剩其他尚未关闭的左括号。\n\n因此，过程从未错配且最后栈为空，意味着每个括号都按正确类型和顺序配对；若最后不空，则至少有一个左括号没有右括号。算法返回值与题目条件完全一致。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令 `n` 为字符串长度。每个字符扫描一次，每个左括号最多入栈一次、出栈一次，因此时间为 `O(n)`，即字符串长度增加一倍，主要处理量也近似增加一倍。不能把循环中的出栈误算成额外再扫描整个字符串。\n\n额外空间最坏为 `O(n)`：例如全部是左括号时，栈需要保存 `n` 个字符。C/Java 的数组直接按字符串长度分配，C++ 的字符串栈、Python 列表、Rust 向量随入栈增长。输入字符串本身由驱动提供，不算算法新建的栈；Java `toCharArray()` 的字符副本也为 `O(n)`，不改变总的空间阶数。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 第一个字符就是右括号时，栈为空，要返回假，不能访问 `st[-1]`。\n- 扫描结束有剩余左括号也无效，不能只在遍历中没有发现错配就返回真。\n- `([)]` 左右数量相同，但嵌套顺序错误，必须比较栈顶的类型。\n- 字符串长度可能为奇数，这时不可能全部配对；参考程序不靠长度特判，栈规则仍会给出假。\n- C 版先检查 `!k` 再执行 `st[--k]`，利用短路判断避免空栈越界；不要颠倒判断顺序。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "记住“最后打开的括号必须最先关闭”，就能自然想到栈。\n\n手算练习：`{[]()}` 返回真；`{[}` 返回假，因为读到 `}` 时栈顶是 `[`。试着把每一步的栈写出来，解释错误发生在哪个字符，而不是只给最终结论。"
+    }
+  ],
+  "codes": {
+    "FUNCTION": {
+      "c": "// s 是平台驱动传入的括号字符串；本函数只返回布尔值。\nbool isValid(char*s){\n    int n=strlen(s),k=0;\n    char*st=malloc(n+1);\n    // 栈保存尚未配对的左括号，遇到右括号必须关闭最内层。\n    for(int i=0;i<n;i++){\n        char c=s[i];\n        if(c=='('||c=='['||c=='{')st[k++]=c;\n        else{\n            char want=c==')'?'(':c==']'?'[':'{';\n            // 先判断栈非空，再弹出比较；短路判断防止空栈访问。\n            if(!k||st[--k]!=want){\n                free(st);\n                return false;\n            }\n        }\n    }\n    free(st);\n    // 结束时栈空才表示所有左括号也已经被关闭。\n    return k==0;\n}\n",
+      "cpp": "class Solution {\n    // 字符串由平台驱动传入；不要在核心函数里再次读输入。\n    public: bool isValid(string s){\n        string st;\n        // 后打开的左括号必须先关闭，所以只与栈顶配对。\n        for(char c:s){\n            if(c=='('||c=='['||c=='{')st+=c;\n            else{\n                char w=c==')'?'(':c==']'?'[':'{';\n                // 先检查空栈和类型，不合法时立即返回。\n                if(st.empty()||st.back()!=w)return false;\n                st.pop_back();\n            }\n        }\n        // 没有剩余左括号时才是完整配对。\n        return st.empty();\n    }\n}\n;\n",
+      "java": "class Solution {\n    // s 是驱动提供的字符串；k 表示模拟栈内的字符数。\n    public boolean isValid(String s){\n        char[] st=new char[s.length()];\n        int k=0;\n        // 左括号入栈，右括号只与最后入栈的左括号匹配。\n        for(char c:s.toCharArray()){\n            if(c=='('||c=='['||c=='{')st[k++]=c;\n            else{\n                char w=c==')'?'(':c==']'?'[':'{';\n                // 先排除空栈，再取栈顶，避免负下标访问。\n                if(k==0||st[--k]!=w)return false;\n            }\n        }\n        // 扫描结束后仍有左括号就不能通过。\n        return k==0;\n    }\n}\n",
+      "python": "class Solution:\n    # 接收平台传入的字符串；返回 True/False，由驱动负责输出。\n    def isValid(self,s):\n        st=[]\n        pairs={\")\":\"(\",\"]\":\"[\",\"}\":\"{\"}\n        # 栈的末尾是最近尚未关闭的左括号，符合嵌套顺序。\n        for c in s:\n            if c in \"([{\": st.append(c)\n            # 先判断空栈，再弹出并与当前右括号所需类型比较。\n            elif not st or st.pop()!=pairs[c]: return False\n        # 栈必须为空，避免遗漏没有被关闭的左括号。\n        return not st\n",
+      "rust": "impl Solution {\n    // 接收驱动提供的字符串；只返回布尔值。\n    pub fn is_valid(s:String)->bool{\n        let mut st=Vec::new();\n        // 题目字符都是 ASCII 括号，用字节扫描并维护左括号栈。\n        for c in s.bytes(){\n            match c{\n                b'('|b'['|b'{'=>st.push(c),_=>{\n                    let w=match c{\n                        b')'=>b'(',b']'=>b'[',_=>b'{'\n                    }\n                    ;\n                    // pop 的 None 表示栈空，Some(w) 表示正确的左括号。\n                    if st.pop()!=Some(w){\n                        return false;\n                    }\n                }\n            }\n        }\n        // 返回前检查没有未配对的左括号。\n        st.is_empty()\n    }\n}\n"
+    }
+  }
+}

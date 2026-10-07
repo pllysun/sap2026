@@ -1,0 +1,212 @@
+{
+  "slug": "original-attendance-components",
+  "title": "活动签到连通组",
+  "difficulty": "MEDIUM",
+  "tags": [
+    "图",
+    "并查集"
+  ],
+  "description": "有 n 名成员及若干无向联系，统计通过联系可互相到达的成员组数，孤立成员也计一组。",
+  "inputFormat": "n m，随后 m 行 u v；成员编号 1..n。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "1 <= n <= 200；0 <= m <= 400；允许重复边与自环。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "",
+  "sourceId": "SAP004",
+  "sourceNote": "软件协会原创",
+  "sourceAuthor": "SAP OJ 题库整理组",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": null,
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, i = 0, m = 0, n = 0, u = 0, v = 0;\n    n = read();\n    m = read();\n    for (i = 0; i < (n + 1); i += 1) {\n        a[i] = i;\n    }\n    ans = n;\n    for (i = 0; i < m; i += 1) {\n        u = read();\n        v = read();\n        while (a[u] != u) {\n            u = a[u];\n        }\n        while (a[v] != v) {\n            v = a[v];\n        }\n        if (u != v) {\n            a[u] = v;\n            ans = (ans - 1);\n        }\n    }\n    emit(ans);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, i = 0, m = 0, n = 0, u = 0, v = 0;\n    n = read();\n    m = read();\n    for (i = 0; i < (n + 1); i += 1) {\n        a[i] = i;\n    }\n    ans = n;\n    for (i = 0; i < m; i += 1) {\n        u = read();\n        v = read();\n        while (a[u] != u) {\n            u = a[u];\n        }\n        while (a[v] != v) {\n            v = a[v];\n        }\n        if (u != v) {\n            a[u] = v;\n            ans = (ans - 1);\n        }\n    }\n    emit(ans);\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int ans = 0, i = 0, m = 0, n = 0, u = 0, v = 0;\n        n = read();\n        m = read();\n        for (i = 0; i < (n + 1); i += 1) {\n            a[i] = i;\n        }\n        ans = n;\n        for (i = 0; i < m; i += 1) {\n            u = read();\n            v = read();\n            while (a[u] != u) {\n                u = a[u];\n            }\n            while (a[v] != v) {\n                v = a[v];\n            }\n            if (u != v) {\n                a[u] = v;\n                ans = (ans - 1);\n            }\n        }\n        emit(ans);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\nans = i = m = n = u = v = 0\nn = read()\nm = read()\nfor i in range((n + 1)):\n    a[i] = i\nans = n\nfor i in range(m):\n    u = read()\n    v = read()\n    while a[u] != u:\n        u = a[u]\n    while a[v] != v:\n        v = a[v]\n    if u != v:\n        a[u] = v\n        ans = ans - 1\nemit(ans)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut ans: i32 = 0;\n    let mut i: i32 = 0;\n    let mut m: i32 = 0;\n    let mut n: i32 = 0;\n    let mut u: i32 = 0;\n    let mut v: i32 = 0;\n    n = reader.read();\n    m = reader.read();\n    i = 0;\n    while i < (n + 1) {\n        a[(i) as usize] = i;\n        i += 1;\n    }\n    ans = n;\n    i = 0;\n    while i < m {\n        u = reader.read();\n        v = reader.read();\n        while (a[(u) as usize] != u) {\n            u = a[(u) as usize];\n        }\n        while (a[(v) as usize] != v) {\n            v = a[(v) as usize];\n        }\n        if (u != v) {\n            a[(u) as usize] = v;\n            ans = (ans - 1);\n        }\n        i += 1;\n    }\n    emit(ans);\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "1 0\n",
+      "expectedOutput": "1\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "2 1\n2 2\n",
+      "expectedOutput": "2\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "200 112\n3 50\n191 170\n139 86\n108 68\n178 154\n158 20\n12 114\n120 115\n172 97\n111 126\n152 197\n121 6\n105 47\n45 87\n74 185\n168 82\n52 124\n161 1\n105 118\n116 65\n191 30\n138 93\n86 156\n82 127\n90 113\n85 50\n182 81\n20 103\n125 37\n18 102\n159 86\n74 117\n138 163\n167 75\n92 135\n36 191\n76 145\n111 76\n55 191\n182 58\n93 165\n192 188\n107 93\n108 92\n153 40\n91 103\n186 109\n69 139\n16 161\n19 107\n152 133\n114 126\n24 199\n153 47\n17 154\n180 15\n67 10\n181 67\n55 67\n126 165\n8 64\n102 45\n140 37\n200 29\n2 100\n147 6\n33 32\n134 153\n24 124\n106 123\n78 6\n103 151\n165 27\n147 141\n116 59\n197 1\n11 17\n8 124\n175 194\n125 32\n43 140\n173 147\n125 149\n164 34\n190 36\n7 62\n79 99\n38 159\n191 66\n49 64\n161 128\n161 50\n26 179\n134 141\n191 1\n129 129\n80 87\n16 77\n64 51\n102 88\n118 180\n27 175\n200 145\n119 10\n176 37\n103 126\n53 26\n34 193\n197 150\n190 86\n155 50\n122 84\n",
+      "expectedOutput": "89\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "17 20\n5 9\n8 16\n17 12\n8 1\n8 8\n11 14\n12 5\n11 4\n2 9\n17 14\n2 15\n10 6\n13 12\n7 15\n10 7\n5 14\n13 5\n13 9\n11 4\n2 11\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "3 0\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "1 2\n1 1\n1 1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "9 18\n9 6\n6 1\n9 9\n7 8\n6 6\n8 8\n2 9\n2 7\n5 8\n4 7\n4 6\n8 9\n5 1\n7 9\n9 4\n9 1\n9 2\n2 3\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "9 3\n7 1\n5 6\n7 5\n",
+      "expectedOutput": "6\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "6 1\n5 1\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "5 1\n3 1\n",
+      "expectedOutput": "4\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "18 14\n6 10\n16 16\n8 3\n16 12\n10 7\n6 3\n16 18\n5 18\n7 10\n8 8\n12 13\n6 8\n17 4\n7 12\n",
+      "expectedOutput": "8\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "15 16\n9 13\n7 12\n7 9\n13 15\n11 12\n7 6\n9 7\n11 4\n1 15\n4 11\n2 2\n1 15\n9 7\n15 5\n15 3\n2 10\n",
+      "expectedOutput": "4\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "1 0\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "20 18\n11 11\n18 19\n2 2\n17 19\n8 3\n14 10\n14 5\n18 10\n5 20\n12 15\n18 20\n18 15\n19 14\n11 10\n10 9\n16 10\n10 6\n3 4\n",
+      "expectedOutput": "6\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "16 14\n8 11\n2 5\n13 11\n3 15\n2 6\n3 1\n16 10\n1 15\n1 11\n14 14\n2 15\n4 13\n9 6\n12 11\n",
+      "expectedOutput": "4\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "20 30\n7 5\n4 20\n3 8\n14 3\n5 2\n10 7\n9 8\n5 16\n9 5\n2 8\n14 9\n18 4\n6 14\n16 9\n5 14\n18 15\n11 9\n20 16\n14 16\n20 16\n12 12\n18 10\n16 20\n15 11\n17 14\n18 10\n2 15\n19 11\n18 17\n17 7\n",
+      "expectedOutput": "4\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "18 33\n1 9\n2 17\n10 16\n10 14\n5 13\n15 13\n18 1\n4 18\n3 17\n2 13\n17 10\n8 11\n8 11\n9 17\n17 10\n1 4\n5 4\n16 9\n16 12\n11 10\n11 1\n18 5\n9 2\n6 5\n13 13\n11 6\n15 3\n11 10\n9 8\n8 1\n10 8\n16 15\n17 16\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "6 6\n5 4\n4 6\n3 3\n3 2\n5 5\n1 5\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "16 23\n11 9\n10 7\n13 16\n5 2\n14 10\n4 15\n7 12\n4 15\n13 4\n7 6\n8 6\n2 14\n9 3\n1 7\n16 7\n16 5\n2 15\n2 10\n12 2\n16 12\n13 10\n6 1\n2 9\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "5 0\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-21",
+      "input": "5 4\n1 2\n2 3\n3 4\n4 5\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-22",
+      "input": "200 400\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n",
+      "expectedOutput": "200\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

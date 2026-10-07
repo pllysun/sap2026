@@ -202,6 +202,22 @@ public class MailQueue {
     public String enqueueTest(String to, String subject, String html, Long actor) {
         return store.transaction(() -> { store.lock(); String id = insert("TEST", null, to, subject, html, null, actor); afterCommit(); return id; });
     }
+    /** Fixed system alert: persistent dedup and the same audited/retryable SMTP queue as business mail. */
+    public String enqueueDownloadAlert(String to, String eventId, String date, long count, int threshold) {
+        return store.transaction(() -> {
+            store.lock();
+            String unique = "APP_DOWNLOAD_ALERT:" + eventId;
+            var found = store.db.queryForList("SELECT message_id FROM sys_mail_dedup WHERE event_id=?", unique);
+            if (!found.isEmpty()) return String.valueOf(found.getFirst().get("message_id"));
+            String html = "<h2>软协 App 下载次数告警</h2><p>北京时间 " + date + "，本轮防护计数已达 " + count + " 次，超过告警阈值 " + threshold
+                    + " 次。</p><p>请在管理端「软协课表 → 下载防护」检查当天统计与下载方式。超过服务器下载阈值后，后续下载自动由服务器转发。</p>";
+            String id = insert("APP_DOWNLOAD_ALERT", null, to, "软协 App 异常下载告警", html, null, null,
+                    Map.of("eventTitle", "App 下载次数告警", "reason", "全平台当日下载次数超过配置阈值", "details", Map.of("日期", date, "防护计数", count, "告警阈值", threshold)));
+            store.db.update("INSERT INTO sys_mail_dedup(event_id,message_id,created_at) VALUES (?,?,?)", unique, id, System.currentTimeMillis());
+            afterCommit();
+            return id;
+        });
+    }
     private String insert(String hook, Long userId, String to, String subject, String html, Long expiry, Long actor) {
         return insert(hook,userId,to,subject,html,expiry,actor,null);
     }

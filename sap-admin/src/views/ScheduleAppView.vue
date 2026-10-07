@@ -104,6 +104,9 @@
         <el-tab-pane v-if="isLeaderOrSuper" label="版本发布" name="release" lazy>
           <AppReleaseView embedded />
         </el-tab-pane>
+        <el-tab-pane label="下载防护" name="downloads" lazy>
+          <AppDownloadPanel :can-edit="isLeaderOrSuper" />
+        </el-tab-pane>
       </el-tabs>
     </div>
 
@@ -249,6 +252,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, Refresh, Search } from '@element-plus/icons-vue'
 import AppReleaseView from './AppReleaseView.vue'
+import AppDownloadPanel from './AppDownloadPanel.vue'
 import ScheduleCloudPanel from './ScheduleCloudPanel.vue'
 import ClassSchedulePanel from './ClassSchedulePanel.vue'
 import {
@@ -315,6 +319,7 @@ onMounted(async () => {
       return
     }
     if (route.query.tab === 'release' && isLeaderOrSuper.value) activeTab.value = 'release'
+    if (route.query.tab === 'downloads') activeTab.value = 'downloads'
     await Promise.all([loadSummary(), loadIssues()])
   } catch (e) {}
 })

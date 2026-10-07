@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-013",
+  "problemRevision": 1,
+  "title": "训练积分名次",
+  "summary": "按积分降序、编号升序排列，分数改变时以排序位置加一更新并列名次。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "n 名同学的原编号为 1 到 n，输入第 i 个积分属于编号 i。积分越高越靠前，同分共享名次，同分输出顺序按编号从小到大。名次是“严格比自己高的人数+1”，所以并列第一后可能直接到第三，没有保证名次连续。\n\n输入 n 与 n 个积分，输出 n 行，每行是原编号和名次。不要输出积分，也不要把排序后的序号当作原编号。公开 `[80,100,100]` 的结果是编号 2、3 并列第一，编号 1 第三。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "先把排序规则与名次规则分开。排序按“积分高在前；同分编号小在前”，会让同一分数的人挨在一起。C 把编号和分数组合成 Student 记录排序；其余语言保存 scores，并排序原下标组成的 order，使身份不会丢失。\n\n扫描排序结果，当前分数如果与前项不同，说明一个新分数组开始。它前面的所有人分数都严格更高，因此名次等于当前位置+1。若与前项相同，就沿用前项的 rank。这是竞赛常见的并列名次规则，不是每遇一个新分数只让名次加一。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开积分 `[80,100,100]`，排序得到原编号 `[2,3,1]`：\n\n| 排序位置 | 同学 | 名次处理 | 输出 |\n| --- | --- | --- | --- |\n| 排序位置 0 | 编号 2，积分 100 | 新分数组，rank=1 | 2 1 |\n| 排序位置 1 | 编号 3，积分 100 | 与上项同分，沿用 1 | 3 1 |\n| 排序位置 2 | 编号 1，积分 80 | 前面两人更高，rank=3 | 1 3 |\n\n第三个人不是第二名，因为前面已有两个人积分严格高于他。公开 `[30,20,20,10]` 中名次为 1、2、2、4，逻辑完全相同。",
+      "diagram": {
+        "caption": "两位 100 分同学共享第一，80 分同学之前已有两人，因此名次为 3。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 243\" role=\"img\" aria-label=\"80、100、100：排序顺序与并列名次\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"243\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">80、100、100：排序顺序与并列名次</text><text x=\"26.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">位置</text><text x=\"196.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">原编号与积分</text><text x=\"366.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">名次规则</text><text x=\"536.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">输出</text><rect x=\"20\" y=\"82\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">排序位置 0</text><text x=\"196.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">编号 2，积分 100</text><text x=\"366.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">新分数组，rank=1</text><text x=\"536.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">2 1</text><rect x=\"20\" y=\"128\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">排序位置 1</text><text x=\"196.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">编号 3，积分 100</text><text x=\"366.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">与上项同分，沿用 1</text><text x=\"536.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">3 1</text><rect x=\"20\" y=\"174\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#e5f2ed\"/><text x=\"26.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">排序位置 2</text><text x=\"196.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">编号 1，积分 80</text><text x=\"366.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">前面两人更高，rank=3</text><text x=\"536.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">1 3</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读积分并保留原编号。零起点数组的下标 index 对应外部编号 index+1。\n2. 按积分降序、编号升序排序。Python 使用键 `(-scores[index],index)`；Java/Rust/C++ 使用比较函数；C 使用 qsort 的比较器。\n3. 初始化 rank=1。排序位置 i 或 position 从 0 开始；首项或分数不同于前项时，令 rank=位置+1，同分保持原 rank。\n4. 输出原编号与 rank。部分语言使用 answer 缓存所有行，C/C++ 直接逐行输出。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "排序规则保证严格更高积分的人全部位于前面，同分在连续一组内，且组内编号递增。新分数组的第一项之前恰好有 i 个严格更高的人，所以名次应为 i+1。该组后续项之前多出的只是同分人，不属于“严格更高”，沿用组首名次正确。\n\n每个同学恰好出现在排序序列一次，并保留原身份；扫描又遵循这个顺序输出，因此同分排序、并列名次及编号都满足题意。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 是人数。读入和扫描为 `O(n)`。C++ sort、Java 对象数组排序、Python sorted、Rust 当前 sort_by 按库算法提供 `O(n log n)` 量级排序；C qsort 的复杂度由实际标准库实现决定，C 标准本身不保证相同最坏上界，通常排序工作也是 `O(n log n)`，不能把它当成手写冒泡的 `O(n²)`。\n\n输入记录与 order 的逻辑存储为 `O(n)`；Java、Python、Rust 的稳定排序可能使用 `O(n)` 辅助空间，C++ sort 常见实现用 `O(log n)` 栈。C 参考记录数组固定容量 2000，qsort 内部空间取决于实现。缓存输出的语言另需 `O(n)` 输出内存。大 O 描述人数增长时的量级，排序是本题的主要成本。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 并列第一有两人时下一名是第三，不是第二。\n- 同分必须按原编号升序，不能任意输出；不依赖输入值排序后自动保留身份。\n- 原编号与排序位置不同，输出 order[i]+1 而不是 i+1。\n- 首项比较时不能访问前一项下标 -1，先判断位置为 0。\n- rank 仅在分数改变时更新，不能每一人都让 rank++。\n- 积分可能为 0，仍有合法名次，不代表缺失数据。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：排序让同分成为一组，组首位置之前的人数就是严格更高人数。\n\n1. `[10,10,10]` 的输出是什么？编号 1、2、3 都是第一名，按编号顺序。\n2. `[5,8,5]` 呢？`2 1`、`1 2`、`3 2`。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\ntypedef struct  {\n    int id;\n    int score;\n}\nStudent;\nint compare_students(const void* left, const void* right)  {\n    const Student* a = (const Student*)left;\n    const Student* b = (const Student*)right;\n    if (a->score != b->score)  {\n        return a->score > b->score ? -1 : 1;\n    }\n    return a->id - b->id;\n}\nint main(void)  {\n    int n;\n    // 输入位置就是原编号减一，排序时必须保留每位同学身份。\n    scanf(\"%d\", &n);\n    Student students[2000];\n    for (int i = 0; i < n; ++i)  {\n        students[i].id = i + 1;\n        scanf(\"%d\", &students[i].score);\n    }\n    // 先按积分降序，再按原编号升序；同分输出顺序不能任意改变。\n    qsort(students, n, sizeof(Student), compare_students);\n    int rank = 1;\n    for (int i = 0; i < n; ++i)  {\n        if (i == 0 || students[i].score != students[i - 1].score)  {\n            // 新分数组之前全部是更高分者，所以名次是当前位置加一；同分沿用名次。\n            rank = i + 1;\n        }\n        // 输出原编号和并列名次，积分不属于输出字段。\n        printf(\"%d %d\\n\", students[i].id, rank);\n    }\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main()  {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    // 输入位置就是原编号减一，排序时必须保留每位同学身份。\n    cin >> n;\n    vector<int> scores(n), order(n);\n    for (int i = 0; i < n; ++i)  {\n        cin >> scores[i];\n        order[i] = i;\n    }\n    // 先按积分降序，再按原编号升序；同分输出顺序不能任意改变。\n    sort(order.begin(), order.end(), [&](int a, int b)  {\n        if (scores[a] != scores[b])  {\n            return scores[a] > scores[b];\n        }\n        return a < b;\n    }\n    );\n    int rank = 1;\n    for (int i = 0; i < n; ++i)  {\n        if (i == 0 || scores[order[i]] != scores[order[i - 1]])  {\n            // 新分数组之前全部是更高分者，所以名次是当前位置加一；同分沿用名次。\n            rank = i + 1;\n        }\n        // 输出原编号和并列名次，积分不属于输出字段。\n        cout << order[i] + 1 << ' ' << rank << '\\n';\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\npublic class Main  {\n    static final class FastScanner  {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n        private int read() throws IOException  {\n            if (position == length)  {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0)  {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n        String next() throws IOException  {\n            int value;\n            do  {\n                value = read();\n            }\n            while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1)  {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n        int nextInt() throws IOException  {\n            return Integer.parseInt(next());\n        }\n        long nextLong() throws IOException  {\n            return Long.parseLong(next());\n        }\n    }\n    public static void main(String[] args) throws Exception  {\n        FastScanner scanner = new FastScanner();\n        // 输入位置就是原编号减一，排序时必须保留每位同学身份。\n        int n = scanner.nextInt();\n        int[] scores = new int[n];\n        Integer[] order = new Integer[n];\n        for (int i = 0; i < n; i++)  {\n            scores[i] = scanner.nextInt();\n            order[i] = i;\n        }\n        // 先按积分降序，再按原编号升序；同分输出顺序不能任意改变。\n        Arrays.sort(order, (a, b) ->  {\n            if (scores[a] != scores[b])  {\n                return Integer.compare(scores[b], scores[a]);\n            }\n            return Integer.compare(a, b);\n        }\n        );\n        StringBuilder answer = new StringBuilder();\n        int rank = 1;\n        for (int i = 0; i < n; i++)  {\n            if (i == 0 || scores[order[i]] != scores[order[i - 1]])  {\n                // 新分数组之前全部是更高分者，所以名次是当前位置加一；同分沿用名次。\n                rank = i + 1;\n            }\n            // 输出原编号和并列名次，积分不属于输出字段。\n            answer.append(order[i] + 1).append(' ').append(rank).append('\\n');\n        }\n        System.out.print(answer);\n    }\n}\n",
+      "python": "import sys\n\ndata = list(map(int, sys.stdin.buffer.read().split()))\n# 输入位置就是原编号减一，排序时必须保留每位同学身份。\nn = data[0]\nscores = data[1:]\n# 先按积分降序，再按原编号升序；同分输出顺序不能任意改变。\norder = sorted(range(n), key=lambda index: (-scores[index], index))\nanswer = []\nrank = 1\nfor position, index in enumerate(order):\n    if position == 0 or scores[index] != scores[order[position - 1]]:\n        # 新分数组之前全部是更高分者，所以名次是当前位置加一；同分沿用名次。\n        rank = position + 1\n    # 输出原编号和并列名次，积分不属于输出字段。\n    answer.append(f\"{index + 1} {rank}\")\nprint(\"\\n\".join(answer))\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    // 输入位置就是原编号减一，排序时必须保留每位同学身份。\n    let n: usize = tokens.next().unwrap().parse().unwrap();\n    let scores: Vec<i64> = tokens.map(|token| token.parse().unwrap()).collect();\n    let mut order: Vec<usize> = (0..n).collect();\n    // 先按积分降序，再按原编号升序；同分输出顺序不能任意改变。\n    order.sort_by(|&a, &b| scores[b].cmp(&scores[a]).then(a.cmp(&b)));\n    let mut rank = 1usize;\n    let mut answer = String::new();\n    for position in 0..n  {\n        let index = order[position];\n        if position == 0 || scores[index] != scores[order[position - 1]]  {\n            // 新分数组之前全部是更高分者，所以名次是当前位置加一；同分沿用名次。\n            rank = position + 1;\n        }\n        // 输出原编号和并列名次，积分不属于输出字段。\n        answer.push_str(&format!(\"{} {}\\n\", index + 1, rank));\n    }\n    print!(\"{}\", answer);\n}\n"
+    }
+  }
+}

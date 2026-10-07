@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "packs": 10,
+  "fields": 100,
+  "languages": [
+    "c",
+    "cpp",
+    "java",
+    "python",
+    "rust"
+  ]
+}

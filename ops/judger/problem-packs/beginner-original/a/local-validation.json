@@ -1,0 +1,358 @@
+{
+  "environment": "LOCAL_NATIVE_NOT_GO_JUDGE",
+  "packCount": 10,
+  "caseCount": 201,
+  "rounds": 3,
+  "caseExecutions": 2412,
+  "status": "PASSED",
+  "requestedLanguages": [
+    "c",
+    "cpp",
+    "java",
+    "python",
+    "rust"
+  ],
+  "missingLanguages": [
+    "rust"
+  ],
+  "toolVersions": {
+    "c": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+    "cpp": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+    "python": "Python 3.14.2",
+    "java": "javac 21.0.7"
+  },
+  "elapsedSeconds": 58.13,
+  "results": [
+    {
+      "slug": "original-acm-001",
+      "title": "延时提醒",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "e8802dd37e25482873b5770fccc05b94115d0af6f60c3d010b43632a62d1ead7",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-002",
+      "title": "终端使用积分",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "14fcf839392b0ac5b315d1275549a2ac1abbff7a1bb56ea0e895285b53dd8156",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-003",
+      "title": "贴纸等量分装",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "11094ff48affaeba1919a5cabbb3fa618c47e1b58e9c4277f717a016d0e785ae",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-004",
+      "title": "展示阶台",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "ae8043314e689006111ee2659080898b9dfa1a94aedc084c8c00f3eb662453c8",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-005",
+      "title": "领取码校验位",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "4e830b7b00fc46104acd51c924cf3055681471d285f22818fd258858aa9b4af9",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-006",
+      "title": "巡检编号",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "0551dbe82ce6fb3a6e8041d76dc41733c2d9192457777b82668495c3f4c92201",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-007",
+      "title": "网格边框灯",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "9005f953fd6224cfc43a76ef0f7ce4c9cda71d709a702e45a32f7e617b314e38",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-008",
+      "title": "明日值班日期",
+      "cases": 21,
+      "publicSamples": 3,
+      "packSha256": "64e82fafb3eb1ce3b9b3a143c02ff7f20bc7d79a3d1c51c3344ca514807ac1e7",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 63
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 63
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 63
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 63
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-009",
+      "title": "滚动编号",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "40b5a3ec90a90a2a58b947a078cc1a2b6ef6c34e842f806dee44ff29a426485d",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    },
+    {
+      "slug": "original-acm-010",
+      "title": "比例卡规范化",
+      "cases": 20,
+      "publicSamples": 3,
+      "packSha256": "c30b73e3cdd1096f1047eb53cdef88c342a3fdac3194809e065817a06d91a284",
+      "languages": [
+        {
+          "language": "c",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "cpp",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "python",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        },
+        {
+          "language": "java",
+          "status": "PASSED",
+          "rounds": 3,
+          "caseExecutions": 60
+        }
+      ]
+    }
+  ],
+  "productionValidation": "待 root 使用 GCC15.3/JDK27/Python3.14.7/Rust1.98.1 判题底座完成五语言三轮验证"
+}

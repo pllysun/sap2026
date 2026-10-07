@@ -184,6 +184,12 @@
             </resource>
         </resources>
         <plugins>
+            <!-- External macOS build volumes generate AppleDouble files beside classes. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration><excludes><exclude>**/._*</exclude></excludes></configuration>
+            </plugin>
             <!-- 同时过滤 JAR，避免增量构建把 target/classes 中残留的本地配置带入镜像。 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -234,6 +240,7 @@
                 <configuration>
                     <excludes>
                         <exclude>com/sap/entity/**</exclude>
+                        <exclude>**/._*</exclude>
                         <exclude>com/sap/dto/**</exclude>
                         <exclude>com/sap/vo/**</exclude>
                         <exclude>com/sap/mapper/**</exclude>

@@ -1,0 +1,7 @@
+# Combined execution progress and sandbox security release on the verified 1.5.24 runtime.
+ARG BASE_IMAGE=pllysun/sap@sha256:5b27ee4cd3299bc53452233ba92a08165f0c611eee8eec4daf15582e14075fdf
+FROM ${BASE_IMAGE}
+RUN rm -rf /app/static
+COPY app.jar /app/app.jar
+COPY static/ /app/static/
+COPY judger-agent.py /opt/judger/agent.py

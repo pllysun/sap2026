@@ -1,0 +1,1166 @@
+{
+  "image": "pllysun/sap:1.5.10",
+  "published": 70,
+  "languages": [
+    "c",
+    "cpp",
+    "java",
+    "python",
+    "rust"
+  ],
+  "rounds": 3,
+  "successfulExecutions": 30090,
+  "counts": {
+    "sources": {
+      "LeetCode": 40,
+      "洛谷": 5,
+      "原创": 25
+    },
+    "difficulty": {
+      "EASY": 40,
+      "MEDIUM": 22,
+      "HARD": 8
+    }
+  },
+  "imageReferences": 0,
+  "items": [
+    {
+      "slug": "leetcode-1",
+      "title": "两数之和",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-1/pack.json",
+      "sha256": "545a8b0d9f96593b0f836fc3f6d2f568ee22f584edb3f265cf87c2e3e66a708d",
+      "productionId": "2",
+      "validationJobId": "2",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 30,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-14",
+      "title": "最长公共前缀",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-14.json",
+      "sha256": "3a8aaada23a8a75e5fea910f9c779841bc8eec16401aa8dc4d76c6fa875914ef",
+      "productionId": "7",
+      "validationJobId": "320",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-20",
+      "title": "有效的括号",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-20/pack.json",
+      "sha256": "f4e77d9c7ab6ca8d7035348d19354d88677ac0c5336e9aba849b510130d8e109",
+      "productionId": "3",
+      "validationJobId": "3",
+      "modes": [
+        "FUNCTION"
+      ],
+      "cases": 35,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-206",
+      "title": "反转链表",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-206/pack.json",
+      "sha256": "6cdecd842f77a9db38dfb5570b2d0699a0b9e0026ff1704d669283e03294d78a",
+      "productionId": "6",
+      "validationJobId": "6",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 32,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-21",
+      "title": "合并两个有序链表",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-21.json",
+      "sha256": "bc9f19416979fec2e74817b47a7b4742158df8c54a4da2e0c50a02ba602398ac",
+      "productionId": "8",
+      "validationJobId": "321",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-26",
+      "title": "删除有序数组中的重复项",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-26.json",
+      "sha256": "a1b6a5ca09daf075309399158def74055c4546b55ec483fb00b3090f4680caf7",
+      "productionId": "9",
+      "validationJobId": "322",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-27",
+      "title": "移除元素",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-27.json",
+      "sha256": "64a37784a90ff7729efd8941dd587bcd593c4b9a099a420d1d6b55d626045e1d",
+      "productionId": "10",
+      "validationJobId": "323",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-28",
+      "title": "找出首次出现的位置",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-28.json",
+      "sha256": "b073ba77579e5871373fbf81c36f2f800314ff468d7b21d76dd72a271daa8477",
+      "productionId": "11",
+      "validationJobId": "324",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-35",
+      "title": "搜索插入位置",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-35.json",
+      "sha256": "d1286497d287a8ad3ee943f68bf75e06978880d913ec8361185f26851ff01fe5",
+      "productionId": "12",
+      "validationJobId": "325",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-58",
+      "title": "最后一个单词的长度",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-58.json",
+      "sha256": "bf15509cfa96edb3fc4d1ff6f3b1c5a700ebf117139eded8be34a44c0e6c0fdb",
+      "productionId": "13",
+      "validationJobId": "326",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 19,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-66",
+      "title": "加一",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-66.json",
+      "sha256": "254a525a8b09759716599d22ab8d003e660e9cbdc59c0da5d73a5d7ff4202eb6",
+      "productionId": "14",
+      "validationJobId": "327",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-69",
+      "title": "整数平方根",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-69.json",
+      "sha256": "5b25836c0ece6c239d66da883e54d7a751bbb3ca76caf35b131fca69b0fffd7b",
+      "productionId": "15",
+      "validationJobId": "328",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-70",
+      "title": "爬楼梯",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-70.json",
+      "sha256": "2dd8aacbf497ba0966e1e856c5d32776eceff00820844e3780314f15071ffd60",
+      "productionId": "16",
+      "validationJobId": "329",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-704",
+      "title": "二分查找",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-704/pack.json",
+      "sha256": "fd3a6182b0eeabc1b7c08654a4996cee65865560070d4c9d1abfc2af4da39939",
+      "productionId": "4",
+      "validationJobId": "4",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 32,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-88",
+      "title": "合并两个有序数组",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-88.json",
+      "sha256": "75901d5ef1f38b72713f59c641f783963a9ab2ced2d5f99c3f7086fdc23c30a9",
+      "productionId": "17",
+      "validationJobId": "330",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-9",
+      "title": "回文数",
+      "difficulty": "EASY",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-9.json",
+      "sha256": "af9cb48504da459333e33520310b1a43c9ad6ba5eb8f29b13df815da15321ddf",
+      "productionId": "18",
+      "validationJobId": "331",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 26,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-study-streak",
+      "title": "学习打卡最长连续段",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "original-study-streak.json",
+      "sha256": "b2c3fc4ea9629c73d2ae45e8113928438abee3ca359b0fa871698e4365092e94",
+      "productionId": "19",
+      "validationJobId": "332",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-club-range-sum",
+      "title": "社团积分区间查询",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "original-club-range-sum.json",
+      "sha256": "c186da08f99671171d008f2773caec922c822e6d18889b8ba311f6c05043d80e",
+      "productionId": "20",
+      "validationJobId": "333",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "luogu-p1001",
+      "title": "A+B Problem",
+      "difficulty": "EASY",
+      "sourcePlatform": "洛谷",
+      "file": "luogu-p1001/pack.json",
+      "sha256": "0b89cb942194734855f061a20f131f333703b5eff1f8e5fc7fa4d3c46c8ceba7",
+      "productionId": "1",
+      "validationJobId": "1",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "luogu-p1428",
+      "title": "小鱼比可爱",
+      "difficulty": "EASY",
+      "sourcePlatform": "洛谷",
+      "file": "luogu-p1428.json",
+      "sha256": "15df56a1443cc6d2c750d74b6eda7aafb9dd95fb904b16930f533bc920231b7e",
+      "productionId": "21",
+      "validationJobId": "334",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-11",
+      "title": "盛最多水的容器",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-11.json",
+      "sha256": "32c09fd8968f12ead80514f701415c7ef266cb062f32b0bc5315f8e5595b91d8",
+      "productionId": "22",
+      "validationJobId": "335",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-15",
+      "title": "三数之和",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-15.json",
+      "sha256": "cffa0d10212b6ab9673c4805b7e1559bbf37d13bfe9cb1e1028ef565dd3f6cf9",
+      "productionId": "23",
+      "validationJobId": "336",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-19",
+      "title": "删除链表的倒数第 N 个结点",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-19.json",
+      "sha256": "27fcaa3f3d41ca910a594a242e211de5cf9ef7df24d995bd9df9ecdccdf0602f",
+      "productionId": "24",
+      "validationJobId": "337",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-3",
+      "title": "无重复字符的最长子串",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-3.json",
+      "sha256": "ced08d921f72e313ba2321072b4d3891cba865e9a2248e06d04d69dad7a2ceb6",
+      "productionId": "25",
+      "validationJobId": "338",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 23,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-33",
+      "title": "搜索旋转排序数组",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-33.json",
+      "sha256": "959c63dfceedafd43b387c798de9d4edaaec34572a49381c962fdfd526eab40f",
+      "productionId": "26",
+      "validationJobId": "339",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-34",
+      "title": "在排序数组中查找首尾位置",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-34.json",
+      "sha256": "8a7f020e16198404a40ed6e5424bc66fc21f7126298c81c3b05bd3d0166441c1",
+      "productionId": "27",
+      "validationJobId": "340",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-46",
+      "title": "全排列",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-46.json",
+      "sha256": "bda3e6b5c34245ca0cd1dc3558c222f8e386336c1a2ff2ca0f8377660c502bf1",
+      "productionId": "28",
+      "validationJobId": "341",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 13,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-48",
+      "title": "旋转图像",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-48.json",
+      "sha256": "99f45f94326710307d2e2d21ce149b6c4128aa5f63338ba99b22b2f8f9e648b2",
+      "productionId": "29",
+      "validationJobId": "342",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-53",
+      "title": "最大子数组和",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-53/pack.json",
+      "sha256": "c01b07ad972b99552cdecb04038f4e2876f2a1f0f00beedf88b7cb6ad62ec837",
+      "productionId": "5",
+      "validationJobId": "138",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 35,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-54",
+      "title": "螺旋矩阵",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-54.json",
+      "sha256": "25c3a5d6a23c49c26ae4f6441df2449409cdb55989edeee0065904d474b07e89",
+      "productionId": "30",
+      "validationJobId": "343",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-55",
+      "title": "跳跃游戏",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-55.json",
+      "sha256": "cc3517f3be0e000dee5d85c64fd61e014053a8cd143be895c174cf2c56c4651a",
+      "productionId": "31",
+      "validationJobId": "344",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-56",
+      "title": "合并区间",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-56.json",
+      "sha256": "3ae8d04704cce978a9ea6b5811fcc392d856c4bf339ea2d312cddf68d783c166",
+      "productionId": "32",
+      "validationJobId": "345",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-62",
+      "title": "不同路径",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-62.json",
+      "sha256": "0fee6bcedd5ae83d8a0bf8e80d286191deed7cb0e6119d9192a8b4bdc2f64c45",
+      "productionId": "33",
+      "validationJobId": "346",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-64",
+      "title": "最小路径和",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-64.json",
+      "sha256": "fe53d4f1bffabf57eace2229d3ae8bb641d892fb5cf263fbde0c26d41e028f47",
+      "productionId": "34",
+      "validationJobId": "347",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-75",
+      "title": "颜色分类",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-75.json",
+      "sha256": "71f66d2e4f4113a19ac36c6329159735d53dfa83b996956cb4cdc18fded4e35e",
+      "productionId": "35",
+      "validationJobId": "348",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-98",
+      "title": "验证二叉搜索树",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-98.json",
+      "sha256": "39993e84c28c4e429c0bcb97a79e5d299109f935f87eb1c744fc7605990db705",
+      "productionId": "36",
+      "validationJobId": "349",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 33,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-study-min-window",
+      "title": "学习计划的最短达标区间",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "原创",
+      "file": "original-study-min-window.json",
+      "sha256": "61428eeead3c0a5343e9f6ba15836c0d7c31f875fb3261d327c4040cf1381626",
+      "productionId": "37",
+      "validationJobId": "350",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-attendance-components",
+      "title": "活动签到连通组",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "原创",
+      "file": "original-attendance-components.json",
+      "sha256": "fe19ee984af2c6a7cfd5af16452fbdd0233537d2ff9a6f0d2286fb0cab1aa089",
+      "productionId": "38",
+      "validationJobId": "351",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-points-min-coins",
+      "title": "积分兑换最少券数",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "原创",
+      "file": "original-points-min-coins.json",
+      "sha256": "7207031d361b6fabdb9ae43e9bb110a35392a9b0346caacf7d7a95b4bca18e33",
+      "productionId": "39",
+      "validationJobId": "352",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "luogu-p1048",
+      "title": "采药",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "洛谷",
+      "file": "luogu-p1048.json",
+      "sha256": "8ffb30a84c85b9dec6ea3f1db56be9daf337f74cd1e02f78c2d1697cb17d7c8a",
+      "productionId": "40",
+      "validationJobId": "353",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "luogu-p1216",
+      "title": "数字三角形",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "洛谷",
+      "file": "luogu-p1216.json",
+      "sha256": "4be12f04a057e3e28e897119e60be5d4970c20624cf501aace798e68b5a201e5",
+      "productionId": "41",
+      "validationJobId": "354",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 19,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "luogu-p1439",
+      "title": "排列的最长公共子序列",
+      "difficulty": "MEDIUM",
+      "sourcePlatform": "洛谷",
+      "file": "luogu-p1439.json",
+      "sha256": "67d63d6dd9eb640b01cf69cca47eb1ef24c87dc161bc2c2205681f1130f199c2",
+      "productionId": "42",
+      "validationJobId": "355",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-239",
+      "title": "滑动窗口最大值",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-239.json",
+      "sha256": "d2b0f4fb651a796fe0c86110af17c60b6b9823ba79acdae2ef604d43ab55e495",
+      "productionId": "43",
+      "validationJobId": "356",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 22,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-312",
+      "title": "戳气球",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-312.json",
+      "sha256": "fabec8cd83aabd4c7bd7c83b6d04e030f494069448e9cd96fca9a7f4d24a5943",
+      "productionId": "44",
+      "validationJobId": "357",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-32",
+      "title": "最长有效括号",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-32.json",
+      "sha256": "1d14da36c68079a213e3039ff7067a657cf777efdce04a6b138ff60286235258",
+      "productionId": "45",
+      "validationJobId": "358",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 23,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-4",
+      "title": "寻找两个有序数组的中位数",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-4.json",
+      "sha256": "08746f710d1da4710965f40ed404f42d862470b7607fd4a0d9fbe128b9bd7064",
+      "productionId": "46",
+      "validationJobId": "359",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-41",
+      "title": "缺失的第一个正数",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-41.json",
+      "sha256": "14d14aa5ff142944e148cfaaa7943759ae6f5662d975e13e5d4fef2dffefeae9",
+      "productionId": "47",
+      "validationJobId": "360",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-42",
+      "title": "接雨水",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-42.json",
+      "sha256": "4dfc1e0e57d3a15c95abe16b2648217447e16e6cc75d2278820a6c98d8013617",
+      "productionId": "48",
+      "validationJobId": "362",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 19,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-76",
+      "title": "最小覆盖子串",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-76.json",
+      "sha256": "6a7818d0ec9126cf8d5f03c9c34da85095c9008b16e367a0340e093225aa4c1d",
+      "productionId": "49",
+      "validationJobId": "363",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 23,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "leetcode-84",
+      "title": "柱状图中最大的矩形",
+      "difficulty": "HARD",
+      "sourcePlatform": "LeetCode",
+      "file": "leetcode-84.json",
+      "sha256": "32f96079e861e24f82a890bd1b70cc15bb93ba1a04ee66e562702b7e62ec3006",
+      "productionId": "50",
+      "validationJobId": "364",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-001",
+      "title": "延时提醒",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-001/pack.json",
+      "sha256": "e8802dd37e25482873b5770fccc05b94115d0af6f60c3d010b43632a62d1ead7",
+      "productionId": "51",
+      "validationJobId": "365",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-002",
+      "title": "终端使用积分",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-002/pack.json",
+      "sha256": "14fcf839392b0ac5b315d1275549a2ac1abbff7a1bb56ea0e895285b53dd8156",
+      "productionId": "52",
+      "validationJobId": "366",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-003",
+      "title": "贴纸等量分装",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-003/pack.json",
+      "sha256": "11094ff48affaeba1919a5cabbb3fa618c47e1b58e9c4277f717a016d0e785ae",
+      "productionId": "53",
+      "validationJobId": "367",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-004",
+      "title": "展示阶台",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-004/pack.json",
+      "sha256": "ae8043314e689006111ee2659080898b9dfa1a94aedc084c8c00f3eb662453c8",
+      "productionId": "54",
+      "validationJobId": "368",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-005",
+      "title": "领取码校验位",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-005/pack.json",
+      "sha256": "4e830b7b00fc46104acd51c924cf3055681471d285f22818fd258858aa9b4af9",
+      "productionId": "55",
+      "validationJobId": "369",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-006",
+      "title": "巡检编号",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-006/pack.json",
+      "sha256": "0551dbe82ce6fb3a6e8041d76dc41733c2d9192457777b82668495c3f4c92201",
+      "productionId": "56",
+      "validationJobId": "370",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-007",
+      "title": "网格边框灯",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-007/pack.json",
+      "sha256": "9005f953fd6224cfc43a76ef0f7ce4c9cda71d709a702e45a32f7e617b314e38",
+      "productionId": "57",
+      "validationJobId": "371",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-008",
+      "title": "明日值班日期",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-008/pack.json",
+      "sha256": "64e82fafb3eb1ce3b9b3a143c02ff7f20bc7d79a3d1c51c3344ca514807ac1e7",
+      "productionId": "58",
+      "validationJobId": "372",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 21,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-009",
+      "title": "滚动编号",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-009/pack.json",
+      "sha256": "40b5a3ec90a90a2a58b947a078cc1a2b6ef6c34e842f806dee44ff29a426485d",
+      "productionId": "59",
+      "validationJobId": "373",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-010",
+      "title": "比例卡规范化",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/a/original-acm-010/pack.json",
+      "sha256": "c30b73e3cdd1096f1047eb53cdef88c342a3fdac3194809e065817a06d91a284",
+      "productionId": "60",
+      "validationJobId": "374",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 20,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-011",
+      "title": "连续进步的记录",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-011/pack.json",
+      "sha256": "d79bd78eb8fd9e4677e1a096e9d09a725028c5ab90882a52e41830231959c789",
+      "productionId": "61",
+      "validationJobId": "375",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-012",
+      "title": "循环轮值表",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-012/pack.json",
+      "sha256": "1a38a43af044ce5e971e85a58de1c0012dd9097ff514bd3cbdb14da11888fcbd",
+      "productionId": "62",
+      "validationJobId": "376",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-013",
+      "title": "训练积分名次",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-013/pack.json",
+      "sha256": "35a70425ff806a79a2e66abca24e43e976c4ff11d56320667763b6cd990f49c2",
+      "productionId": "63",
+      "validationJobId": "377",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-014",
+      "title": "物资库的出入",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-014/pack.json",
+      "sha256": "e2c69e4df11ef4781f821599348ca17e668e3085548a23672272c5c4917d5beb",
+      "productionId": "64",
+      "validationJobId": "378",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-015",
+      "title": "分段温度调节",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-015/pack.json",
+      "sha256": "aab9fbe3c2c8a1946abb476c3b7425ef68b93df500cc3cf46ee458caa3fc0c7f",
+      "productionId": "65",
+      "validationJobId": "379",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-016",
+      "title": "海报字母统计",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-016/pack.json",
+      "sha256": "9be701251a1ef619f7550c11a01fd158f21e35fef532bd72d3bb1072256e265e",
+      "productionId": "66",
+      "validationJobId": "380",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-017",
+      "title": "值班留言的词数",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-017/pack.json",
+      "sha256": "cff36ae889615fe90956a1a4b98487207b5e9e56255fc9cd001ab68992f86bb5",
+      "productionId": "67",
+      "validationJobId": "381",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-018",
+      "title": "连续标记压缩",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-018/pack.json",
+      "sha256": "8183466f928260feea3354b05cf6445e4de47e96f687a3589e31292cf38cfe54",
+      "productionId": "68",
+      "validationJobId": "382",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-019",
+      "title": "灯位周边计数",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-019/pack.json",
+      "sha256": "68d0fbefe16b595f7cd7ed6453da2b6248c5c2594fbe5e6dff44adaa1c0f2385",
+      "productionId": "69",
+      "validationJobId": "383",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    },
+    {
+      "slug": "original-acm-020",
+      "title": "旋转数据表",
+      "difficulty": "EASY",
+      "sourcePlatform": "原创",
+      "file": "beginner-original/b/original-acm-020/pack.json",
+      "sha256": "4b1f5869e8af0b50b08021fd24085faf1b58c132041d5b535f83437603c9451c",
+      "productionId": "70",
+      "validationJobId": "384",
+      "modes": [
+        "STDIO"
+      ],
+      "cases": 25,
+      "status": "PUBLISHED",
+      "rounds": 3
+    }
+  ]
+}

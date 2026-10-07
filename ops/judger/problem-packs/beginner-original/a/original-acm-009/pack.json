@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-009",
+  "title": "滚动编号",
+  "difficulty": "EASY",
+  "tags": [
+    "递推",
+    "取模"
+  ],
+  "description": "观测仪按序生成编号 x₀、x₁、x₂……。给定两个初始数 a、b 和正整数 p：x₀=a 对 p 取余，x₁=b 对 p 取余；从 x₂ 开始，每个编号等于前两个编号之和对 p 取余，即 xᵢ=(xᵢ₋₁+xᵢ₋₂) mod p。请求出第 n 个编号 xₙ。编号从0开始，输入的 n 可以为0。",
+  "inputFormat": "一行四个整数 n、a、b、p。",
+  "outputFormat": "输出一个整数 xₙ，其值在0到p−1之间。",
+  "constraints": "0 ≤ n ≤ 10^6，0 ≤ a,b ≤ 10^9，1 ≤ p ≤ 10^9+7。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-009",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "5 1 1 100\n",
+      "expectedOutput": "8\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "0 123 5 10\n",
+      "expectedOutput": "3\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "4 2 3 7\n",
+      "expectedOutput": "6\n",
+      "sample": true
+    },
+    {
+      "name": "index-one",
+      "input": "1 123 45 10\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    },
+    {
+      "name": "modulus-one",
+      "input": "1000000 1000000000 1000000000 1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "zero-seeds",
+      "input": "1000000 0 0 1000000007\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "first-recurrence",
+      "input": "2 1000000000 1000000000 1000000007\n",
+      "expectedOutput": "999999993\n",
+      "sample": false
+    },
+    {
+      "name": "max-index",
+      "input": "1000000 1 1 1000000007\n",
+      "expectedOutput": "534400663\n",
+      "sample": false
+    },
+    {
+      "name": "small-modulus",
+      "input": "997 999999999 888888888 2\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "initial-zero",
+      "input": "0 0 1000000000 1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "936 716591128 495486796 724012722\n",
+      "expectedOutput": "70385980\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "870 454182101 235839772 750253448\n",
+      "expectedOutput": "260117665\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "492 699364853 552472480 753398393\n",
+      "expectedOutput": "665248462\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "632 438919205 489146881 484527908\n",
+      "expectedOutput": "305131426\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "751 151395763 366567116 529826787\n",
+      "expectedOutput": "284711236\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "984 811897562 628692605 175735336\n",
+      "expectedOutput": "124289186\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "546 586058183 868420652 76747914\n",
+      "expectedOutput": "17109865\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "766 465487521 89914998 743364805\n",
+      "expectedOutput": "697965324\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "163 745904374 210862433 26365536\n",
+      "expectedOutput": "11156165\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "978 232383943 409213633 239429775\n",
+      "expectedOutput": "10309313\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long n, a, b, modulus;\n    scanf(\"%lld%lld%lld%lld\", &n, &a, &b, &modulus);\n    a %= modulus;\n    b %= modulus;\n    for (long long i = 1; i < n; i++) {\n        long long next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    printf(\"%lld\\n\", n == 0 ? a : b);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long n, a, b, modulus;\n    std::cin >> n >> a >> b >> modulus;\n    a %= modulus;\n    b %= modulus;\n    for (long long i = 1; i < n; i++) {\n        long long next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    std::cout << (n == 0 ? a : b) << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long n = in.nextLong();\n        long a = in.nextLong();\n        long b = in.nextLong();\n        long modulus = in.nextLong();\n        a %= modulus;\n        b %= modulus;\n        for (long i = 1; i < n; i++) {\n            long next = (a + b) % modulus;\n            a = b;\n            b = next;\n        }\n        System.out.println(n == 0 ? a : b);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "n, a, b, modulus = map(int, input().split())\na %= modulus\nb %= modulus\nfor _ in range(1, n):\n    a, b = b, (a + b) % modulus\nprint(a if n == 0 else b)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let n: usize = words.next().unwrap().parse().unwrap();\n    let mut a: i64 = words.next().unwrap().parse().unwrap();\n    let mut b: i64 = words.next().unwrap().parse().unwrap();\n    let modulus: i64 = words.next().unwrap().parse().unwrap();\n    a %= modulus;\n    b %= modulus;\n    for _ in 1..n {\n        let next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    println!(\"{}\", if n == 0 { a } else { b });\n}\n"
+    }
+  }
+}

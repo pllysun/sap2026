@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-001",
+  "title": "延时提醒",
+  "difficulty": "EASY",
+  "tags": [
+    "输入输出",
+    "基础数学"
+  ],
+  "description": "实验室的提醒器显示当前时刻 h 时 m 分。设定延迟 d 分钟后，它会显示新的时刻，同时记录经过了多少次午夜。一天固定为24小时。请计算经过的天数和新的时、分。经过的天数从0开始计数，当前日期无须输入。",
+  "inputFormat": "一行三个整数 h、m、d，以空格分隔。",
+  "outputFormat": "输出三个整数：经过的天数、新的小时、新的分钟，以空格分隔。小时和分钟无须补前导零。",
+  "constraints": "0 ≤ h ≤ 23，0 ≤ m ≤ 59，0 ≤ d ≤ 10^9。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-001",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "10 20 45\n",
+      "expectedOutput": "0 11 5\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "23 50 20\n",
+      "expectedOutput": "1 0 10\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "8 0 2880\n",
+      "expectedOutput": "2 8 0\n",
+      "sample": true
+    },
+    {
+      "name": "zero-delay",
+      "input": "0 0 0\n",
+      "expectedOutput": "0 0 0\n",
+      "sample": false
+    },
+    {
+      "name": "before-midnight",
+      "input": "23 58 1\n",
+      "expectedOutput": "0 23 59\n",
+      "sample": false
+    },
+    {
+      "name": "exact-midnight",
+      "input": "23 59 1\n",
+      "expectedOutput": "1 0 0\n",
+      "sample": false
+    },
+    {
+      "name": "full-day",
+      "input": "0 0 1440\n",
+      "expectedOutput": "1 0 0\n",
+      "sample": false
+    },
+    {
+      "name": "max-delay",
+      "input": "23 59 1000000000\n",
+      "expectedOutput": "694445 10 39\n",
+      "sample": false
+    },
+    {
+      "name": "minute-carry",
+      "input": "7 59 1\n",
+      "expectedOutput": "0 8 0\n",
+      "sample": false
+    },
+    {
+      "name": "many-days",
+      "input": "12 34 999999999\n",
+      "expectedOutput": "694444 23 13\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "7 38 864275629\n",
+      "expectedOutput": "600191 17 27\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "0 15 349849430\n",
+      "expectedOutput": "242951 0 5\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "21 23 366189712\n",
+      "expectedOutput": "254299 7 15\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "6 37 344024037\n",
+      "expectedOutput": "238905 20 34\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "19 27 265433307\n",
+      "expectedOutput": "184329 11 54\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "4 46 198997885\n",
+      "expectedOutput": "138193 4 11\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "19 2 395964477\n",
+      "expectedOutput": "274976 2 59\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "2 58 756267740\n",
+      "expectedOutput": "525186 1 18\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "23 34 860988800\n",
+      "expectedOutput": "597909 20 54\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "16 52 582937566\n",
+      "expectedOutput": "404818 10 58\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long h, m, d;\n    scanf(\"%lld%lld%lld\", &h, &m, &d);\n    long long total = h * 60 + m + d;\n    printf(\"%lld %lld %lld\\n\", total / 1440, total % 1440 / 60, total % 60);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long h, m, d;\n    std::cin >> h >> m >> d;\n    long long total = h * 60 + m + d;\n    std::cout << total / 1440 << ' ' << total % 1440 / 60 << ' ' << total % 60 << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long h = in.nextLong();\n        long m = in.nextLong();\n        long d = in.nextLong();\n        long total = h * 60 + m + d;\n        System.out.println(total / 1440 + \" \" + total % 1440 / 60 + \" \" + total % 60);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "h, m, d = map(int, input().split())\ntotal = h * 60 + m + d\nprint(total // 1440, total % 1440 // 60, total % 60)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let h: i64 = words.next().unwrap().parse().unwrap();\n    let m: i64 = words.next().unwrap().parse().unwrap();\n    let d: i64 = words.next().unwrap().parse().unwrap();\n    let total = h * 60 + m + d;\n    println!(\"{} {} {}\", total / 1440, total % 1440 / 60, total % 60);\n}\n"
+    }
+  }
+}

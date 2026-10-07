@@ -91,3 +91,17 @@ logs/
 
 # ===== App 发版产物（APK 体积大，不入库；按版本归档在本地/分发渠道）=====
 /release/
+
+# ===== OJ 本地核验资料与未公开比赛内容 =====
+# 运行报告可能包含线上账户/部署信息；公开仓库仅保留源码和发布说明。
+/ops/judger/*.json
+/ops/judger/*.jsonl
+/ops/security-audit/**/*.json
+# 题解源快照、编写中间资料和完整清单均留在本地。
+/ops/judger/solutions/source-problems/
+/ops/judger/solutions/authoring/
+/ops/judger/solutions/*.json
+# 比赛发布前不向公开仓库上传题面、参考代码、测试集或题解。
+/ops/judger/problem-packs/contest-original/
+/ops/judger/solutions/documents/contest-original-*.json
+/ops/judger/PROBLEMSETS-RELEASE-1511.md

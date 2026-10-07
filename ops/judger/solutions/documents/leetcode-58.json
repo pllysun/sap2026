@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-58",
+  "problemRevision": 1,
+  "title": "最后一个单词的长度",
+  "summary": "按平台的词序列输入依次读完单词，用最后一次读取的长度作为答案。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "本题的“单词”是一个非空的英文字符串，要求最后一个单词包含多少个字母。例如公开样例 `Hello World` 的最后一个单词是 `World`，长度为 `5`。\n\n注意平台把句子改成了词序列输入：先给单词数 `n`，再给 `n` 个非空英文单词，而不是直接给一句没有长度的自然语言。读取时以空白分隔，换行、行首行尾空格不会成为单词内容。`n≥1`，所以最后一个单词一定存在。输出只要长度这个整数，不要把最后一个单词一起打印。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "既然题目只问最后一个单词，就没有必要保留前面所有单词。每读到一个单词，把它的长度覆盖到变量 `k`。读完第 `n` 个单词后，`k` 自然就是最后一个单词的长度。\n\n参考程序的 `readstr(a)` 把字符编码写进缓冲区 `a`，并返回本次长度。虽然前面单词的字符可能还留在数组中，后续答案只使用返回的 `k`，不会被旧字符干扰。不需要扫描寻找最后一个空格，也不用把题目不存在的空句子作为分支处理。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 `2 / Hello World` 的执行过程：\n\n| 步骤 | 读取内容 | k 的值 | 解释 |\n| --- | --- | --- | --- |\n| 初始化 | 单词数 2 | 0 | 接下来恰好读两个词 |\n| 第 1 次循环 | `Hello` | 5 | 暂时保存第一词长度 |\n| 第 2 次循环 | `World` | 5 | 覆盖为最后一词长度 |\n| 输出 | 无新输入 | 5 | 输出最终的 k |\n\n两个词恰好同长，变量仍被覆盖了。再用明确的练习 `3 / a code lab` 检查：`k` 依次是 `1,4,3`，最终输出 `3`。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. `n=read()` 读取单词数量。\n2. 初始化 `k=0`，使变量在循环前有确定值。\n3. `i` 从 0 到 `n-1`，每次执行 `k=readstr(a)`。字符下标从零开始，但 `readstr` 返回的是字符总数，不是最后一个下标。\n4. 循环完成后执行 `emit(k)`。\n\n五语言的辅助 `readstr` 都返回长度；其中识别 `-` 的分支属于通用读取器，本题输入仅包含非空英文单词，因此不会使用这个空串约定。`b/d/e` 也没有参与本题运算。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "在每次循环结束后，`k` 等于刚刚读到的单词长度。这在第一次读取后成立，以后每次直接用新长度覆盖，所以仍成立。总共读取 `n` 次，最后一次对应输入中最后一个单词；因此输出最终 `k` 就是题目要求的长度。此前单词不影响答案，所以覆盖它们的长度是安全的。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令 `S` 为全部单词字符数之和，`L` 为最长单词长度。参考读取器会转换每个读到的字符，因此时间为 `O(S)`，不能因为只输出最后一词的长度就说总时间是 `O(1)`。\n\n算法逻辑上只需当前单词和一个长度，空间为 `O(L)`。参考程序预留 `K=20000` 的固定数组 `a/b/d/e`，实际缓冲区占用为 `O(K)`；Python、Java、Rust 一次存储全部输入文本或分词结果，还占用 `O(S)` 输入空间。大 O 表示这些量增加时占用如何增长。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 第一项是单词数，不能把它当作句子的第一个单词。\n- 只有一个单词时，它也就是最后一个，应直接输出其长度。\n- 大写和小写字母都各占一个字符，本题不需要转换大小写。\n- 字符长度是数量，例如 `World` 长度为 5，最后一个字符下标才是 4。\n- 不要累加全部单词长度，题目只要求最后一个。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "重复覆盖同一个变量，可以让它在循环结束时保留“最后一项”的信息。\n\n练习：`2 / hi algorithm` 输出 `9`；`1 / x` 输出 `1`。把每次读取后的 `k` 写下来，就能检查是否误用了累计长度。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0;\n    // 先读单词数；后面按空白恰好读取 n 个非空英文单词。\n    n = read();\n    k = 0;\n    for (i = 0; i < n; i += 1) {\n        // 覆盖为当前单词的长度，循环最后一次就对应最后一个单词。\n        k = readstr(a);\n    }\n    // k 保存最后一次读取的长度，不是全部单词的总长度。\n    emit(k);\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0;\n    // 先读单词数；后面按空白恰好读取 n 个非空英文单词。\n    n = read();\n    k = 0;\n    for (i = 0; i < n; i += 1) {\n        // 覆盖为当前单词的长度，循环最后一次就对应最后一个单词。\n        k = readstr(a);\n    }\n    // k 保存最后一次读取的长度，不是全部单词的总长度。\n    emit(k);\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, k = 0, n = 0;\n        // 先读单词数；后面按空白恰好读取 n 个非空英文单词。\n        n = read();\n        k = 0;\n        for (i = 0; i < n; i += 1) {\n            // 覆盖为当前单词的长度，循环最后一次就对应最后一个单词。\n            k = readstr(a);\n        }\n        // k 保存最后一次读取的长度，不是全部单词的总长度。\n        emit(k);\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = k = n = 0\n# 先读单词数；后面按空白恰好读取 n 个非空英文单词。\nn = read()\nk = 0\nfor i in range(n):\n    # 覆盖为当前单词的长度，循环最后一次就对应最后一个单词。\n    k = readstr(a)\n# k 保存最后一次读取的长度，不是全部单词的总长度。\nemit(k)\n",
+      "rust": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut i: i32 = 0;\n    let mut k: i32 = 0;\n    let mut n: i32 = 0;\n    // 先读单词数；后面按空白恰好读取 n 个非空英文单词。\n    n = reader.read();\n    k = 0;\n    i = 0;\n    while i < n {\n        // 覆盖为当前单词的长度，循环最后一次就对应最后一个单词。\n        k = reader.readstr(&mut a);\n        i += 1;\n    }\n    // k 保存最后一次读取的长度，不是全部单词的总长度。\n    emit(k);\n}\n"
+    }
+  }
+}

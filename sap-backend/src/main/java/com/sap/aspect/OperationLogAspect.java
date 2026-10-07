@@ -1,6 +1,7 @@
 package com.sap.aspect;
 
 import com.sap.annotation.OperationLog;
+import com.sap.config.ApiRequestPolicy;
 import com.sap.entity.LogStats;
 import com.sap.entity.SysLog;
 import com.sap.entity.User;
@@ -18,12 +19,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Objects;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Aspect
 @Component
 public class OperationLogAspect {
+    public static final String LOGGED="sap.audit.logged", CODE="sap.audit.code", ACTOR="sap.audit.actor", DESCRIPTION="sap.audit.description";
 
     @Autowired
     private SysLogMapper sysLogMapper;
@@ -34,6 +37,8 @@ public class OperationLogAspect {
 
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs
+                && ApiRequestPolicy.isHealthCheck(attrs.getRequest())) return point.proceed();
         long start = System.currentTimeMillis();
         Long actor = null;
         try { if (StpUtil.isLogin()) actor = StpUtil.getLoginIdAsLong(); } catch (Exception ignored) { }
@@ -56,15 +61,24 @@ public class OperationLogAspect {
         return around(point, null);
     }
 
+    public void recordRequest(HttpServletRequest request,long duration,int code) {
+        try {saveRequest(request, null, duration, code, (Long)request.getAttribute(ACTOR));}
+        catch(Exception ignored) { /* Audit failures must not fail requests. */ }
+    }
     private void saveLog(OperationLog annotation, long duration, Object result, Throwable failure, Long actor) {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) return;
-        HttpServletRequest request = attrs.getRequest();
+        if (actor == null && attrs.getRequest().getAttribute(ACTOR) instanceof Long verifiedActor) actor = verifiedActor;
+        saveRequest(attrs.getRequest(),annotation,duration,failure instanceof com.sap.common.BusinessException e ? e.getCode() : failure != null ? 500 : result instanceof com.sap.common.Result<?> r ? r.getCode() : 200,actor);
+    }
+    private void saveRequest(HttpServletRequest request,OperationLog annotation,long duration,int code,Long actor) {
+        if(ApiRequestPolicy.isHealthCheck(request))return;
+        if(Boolean.TRUE.equals(request.getAttribute(LOGGED)))return;
 
         String httpMethod = request.getMethod();
         String path = request.getRequestURI();
         String ip = getIpAddr(request);
-        String description = annotation == null ? "接口调用" : annotation.value();
+        String description = annotation == null ? Objects.toString(request.getAttribute(DESCRIPTION),"接口调用") : annotation.value();
         String operationType = resolveOperationType(httpMethod);
 
         // 获取当前用户
@@ -94,8 +108,9 @@ public class OperationLogAspect {
         Object pattern = request.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         log.setEndpoint(pattern == null ? com.sap.service.LogAnalyticsService.normalizeEndpoint(path) : pattern.toString());
         log.setSource(com.sap.service.LogAnalyticsService.classify(path, request.getHeader("X-SAP-Client")));
-        log.setResultCode(failure instanceof com.sap.common.BusinessException e ? e.getCode() : failure != null ? 500 : result instanceof com.sap.common.Result<?> r ? r.getCode() : 200);
+        log.setResultCode(code);
         sysLogMapper.insert(log);
+        request.setAttribute(LOGGED,true);
 
         // 更新统计表
         updateStats(operationType, httpMethod);

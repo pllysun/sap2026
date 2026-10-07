@@ -127,7 +127,10 @@ class UserServiceTest extends BaseUnitTest {
         incoming.setAvatar("/a.png");
         incoming.setStatus(0);
 
-        service.updateUser(3L, incoming);
+        try (MockedStatic<StpUtil> stp=mockStatic(StpUtil.class)) {
+            service.updateUser(3L, incoming);
+            stp.verify(()->StpUtil.kickout(3L));
+        }
 
         assertEquals("nk", existing.getNickname());
         assertEquals(2, existing.getGender());

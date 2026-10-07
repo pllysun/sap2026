@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-017",
+  "problemRevision": 1,
+  "title": "值班留言的词数",
+  "summary": "在空格到字母的转换处计数，或用完整行的空白分词数量直接得到单词数。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入是一整行只含英文字母和普通空格的文本。单词是连续的一段字母，不要求字典里存在，也不区分大小写。行首行尾以及连续多个空格只是分隔，不算空单词。\n\n必须完整读这一行，不能只读第一个单词。公开样例`  hello   Code club  `有三个单词；整行只有三个空格时答案为0。输入保证至少一个字符，但这个字符可以是空格，所以不能默认答案至少为1。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "字符扫描版本用inside_word/insideWord表示上一位置是否在单词内，count表示已开始的单词数。读到字母且此前不在单词内，说明一个新单词开始，count加1。读到同一单词中的后续字母不增加；读到空格就把状态设为“不在单词内”。\n\nC/C++/Java参考实现使用这套有限状态规则。Python的`line.split()`、Rust的`split_whitespace()`会跳过首尾空白并合并连续空白，得到或遍历全部非空词段，因此直接统计词段数。这不是按一个空格分割出包含空串的列表，两类split用法要分清。\n\n本题只有普通空格和英文字母，读取时附带的行末换行也不会成为单词。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "用公开样例的词段推演：\n\n| 当前部分 | 进入前是否在词中 | 动作 | count |\n| --- | --- | --- | --- |\n| 开头两个空格 | 否 | 保持非词状态 | 0 |\n| hello的h | 否 | 新词开始，加1 | 1 |\n| hello其余字母 | 是 | 仍在同一词，不加 | 1 |\n| 三个空格 | 是→否 | 清除词内状态 | 1 |\n| Code的C | 否 | 新词开始 | 2 |\n| 空格、club的c | 先变否再遇字母 | 新词开始 | 3 |\n| 结尾空格 | 是→否 | 不产生新词 | 3 |\n\n因此输出3。全空格样例始终没有“非词→字母”的变化，count保持0。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. C使用fgets、C++用getline、Java用readLine、Python用readline，保证读取完整一行。Rust读取输入后遍历空白分隔词。\n2. 扫描版本初始化count=0、inside_word=false。\n3. 对每个letter检查是否属于A-Z或a-z。是字母且原inside_word为假时，count加1。\n4. 不论是否加1，都把inside_word设为本字符是否是字母，空格会使其为假。\n5. 输出count；Python/Rust使用分词数量得到同一结果。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "每个单词有且只有一个起始字母，它前面要么是空格，要么是行的起点。扫描在这两种情况下的第一个字母计数一次。词内后续字母前一状态为真，不会重复计数；空格不计数，因此不会产生空单词。\n\n所有单词的起始字母都被扫描到，也都增加一次count，所以没有漏算或多算。分词版本按相同的空白边界切出连续非空字母段，每一段对应一个单词，数量与扫描版本相同。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令L为文本长度。扫描或分词都会检查每个字符，时间O(L)，表示文本长度翻倍时主要处理量翻倍。\n\n状态扫描本身只需count和布尔状态，逻辑额外空间O(1)，但代码都保存了完整输入行。C使用固定10002字符缓冲区；C++/Java行字符串为O(L)，Java的toCharArray副本也为O(L)。Python split建立单词列表和字符串，额外O(L)；Rust在保存的输入文本上迭代切片，不新建单词数组，但输入存储仍O(L)。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 不能用只读取一个token的方法，否则会漏掉后面的词。\n- 全空格应输出0，不能默认第一个单词已经存在。\n- 连续空格不能重复增加count，只有字母开头才计数。\n- 大小写均是字母，不需要转换大小写，也不要漏掉A-Z。\n- 状态在空格后必须清除，后面的字母才能开始新词。\n- Python应使用无参数split()，用split(\" \")会产生额外空串。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "“数每个词段的起点”比“数空格再加一”更稳妥，后者无法直接处理连续和首尾空格。\n\n练习：`a  B`答案2；`   `答案0；`Code`答案1。逐字符标记是否刚进入一个新词。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint main(void) {\n    char line[10002];\n    // 整行读入，保留首尾及连续空格，不能只读第一个token。\n    fgets(line, sizeof(line), stdin);\n    int count = 0, inside_word = 0;\n    for (int i = 0; line[i] != '\\0'; ++i) {\n        char letter = line[i];\n        int is_letter = (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z');\n        // 只有从非单词位置进入字母段的第一字母才计数。\n        if (is_letter && !inside_word) {\n            ++count;\n        }\n        inside_word = is_letter;\n    }\n    // count统计词段开头数，整行空格时保持0。\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\n\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string line;\n    // 读取一整行，不用只读取单个词的cin >> line。\n    getline(cin, line);\n    int count = 0;\n    bool inside_word = false;\n    for (char letter : line) {\n        bool is_letter = (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z');\n        // 前一位置不在词中、当前是字母时才开始一个新词。\n        if (is_letter && !inside_word) {\n            ++count;\n        }\n        inside_word = is_letter;\n    }\n    // 只输出单词数量，连续和首尾空格都不会增加答案。\n    cout << count << '\\n';\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));\n        // 整行输入保留空格，用字符状态识别词段。\n        String line = reader.readLine();\n        int count = 0;\n        boolean insideWord = false;\n        for (char letter : line.toCharArray()) {\n            boolean isLetter = (letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z');\n            // 只在词段的第一个字母加1，同词后续字母不重复计数。\n            if (isLetter && !insideWord) {\n                count++;\n            }\n            insideWord = isLetter;\n        }\n        // 输出统计结果，整行无字母时为0。\n        System.out.println(count);\n    }\n}\n",
+      "python": "import sys\n\n# 完整读取一行，不能只读取首个非空单词。\nline = sys.stdin.readline()\n# 无参数split跳过首尾和连续空白，只保留非空词段。\n# 词段数量就是答案，整行空格会得到0。\nprint(len(line.split()))\n",
+      "rust": "use std::io::{self, Read};\n\nfn main() {\n    // 保存完整输入文本，后面按空白边界遍历词段。\n    let mut input = String::new();\n    // 读入所有文本而非只取第一个词，行末换行也按空白处理。\n    io::stdin().read_to_string(&mut input).unwrap();\n    // split_whitespace只产生非空段，count得到单词数后输出。\n    println!(\"{}\", input.split_whitespace().count());\n}\n"
+    }
+  }
+}

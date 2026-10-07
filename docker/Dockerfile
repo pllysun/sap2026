@@ -1,3 +1,10 @@
+# Source-built engine and pinned, isolated SDK (only one SAP container runs).
+FROM --platform=$BUILDPLATFORM golang:1.26.0-bookworm AS judger-build
+WORKDIR /source
+COPY third_party/go-judge/ ./
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags seccomp -trimpath -ldflags '-s -w' -o /go-judge ./cmd/go-judge
+FROM pllysun/sap-judger-sdk@sha256:ff9484d4ba7b2a510cd49b10e701d8ff2106a86f19cf36ee8fb2049298914ca0 AS judger-sdk
+
 # ============================================
 # 软件协会管理系统 - 多阶段 Docker 构建
 # ============================================
@@ -78,6 +85,20 @@ COPY ocr-sidecar/main.py /app/ocr/main.py
 # 清除代理环境变量（运行时不需要）
 ENV HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy=""
 
+# Runtime toolchains are visible only inside the sandbox, apart from business Java21/OCR Python.
+COPY --from=judger-sdk /usr/ /opt/judger/rootfs/usr/
+COPY --from=judger-sdk /opt/java27/ /opt/judger/rootfs/opt/java27/
+COPY --from=judger-sdk /opt/rust/ /opt/judger/rootfs/opt/rust/
+COPY --from=judger-sdk /etc/ld.so.cache /opt/judger/rootfs/etc/ld.so.cache
+COPY --from=judger-sdk /etc/alternatives/ /opt/judger/rootfs/etc/alternatives/
+COPY --from=judger-build /go-judge /opt/judger/go-judge
+COPY third_party/go-judge/ /opt/judger/source/
+COPY docker/judger-mount.yaml /opt/judger/mount.yaml
+COPY docker/start-judger.sh /opt/judger/start.sh
+RUN groupadd -g 2000 sapapp && useradd -u 2000 -g sapapp -M -s /usr/sbin/nologin sapapp && \
+    chmod 755 /opt/judger/start.sh
+
+
 # 拷贝前端构建产物
 COPY --from=frontend-build /build/sap-user/dist/ /app/static/user/
 COPY --from=frontend-build /build/sap-admin/dist/ /app/static/admin/
@@ -92,6 +113,7 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
+
 # 数据卷声明（含 SSL 证书和 Let's Encrypt 数据）
 VOLUME ["/app/data", "/app/logs", "/app/uploads", "/etc/letsencrypt"]
 
@@ -100,7 +122,8 @@ EXPOSE 80 443
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget --no-check-certificate -qO- https://localhost:443/ || exit 1
+    CMD wget -qO- http://localhost:8081/api/ping >/dev/null && \
+    { [ "${JUDGER_ENABLED:-false}" != true ] || wget -qO /dev/null --header="Authorization: Bearer $(cat /run/judger/token)" http://127.0.0.1:5050/config; } || exit 1
 
 # 安全说明：本容器当前以 root 用户运行。
 #   原因：同一容器内的 Nginx 与 Certbot 需要 root 权限监听 80/443
@@ -110,4 +133,8 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 #   后续可改进方向：拆分为多容器（Nginx/Certbot 与 Java 应用分离），
 #         或在 entrypoint 内用 su-exec/gosu 将 Java 进程降权为非 root 用户。
 #   此处不强制改 USER，以免破坏 Nginx/Certbot 对特权端口与证书目录的访问。
+COPY --chmod=0755 docker/judger-agent.py /opt/judger/agent.py
+COPY --chmod=0755 docker/node-start.sh /opt/judger/node-start.sh
+COPY --chmod=0755 docker/judger-health.sh /opt/judger/health.sh
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD /opt/judger/health.sh
 ENTRYPOINT ["/app/entrypoint.sh"]

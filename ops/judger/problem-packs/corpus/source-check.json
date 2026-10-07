@@ -1,0 +1,280 @@
+{
+  "checkedAt": "2026-10-01",
+  "sourcePages": [
+    {
+      "slug": "leetcode-14",
+      "url": "https://leetcode.com/problems/longest-common-prefix/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-21",
+      "url": "https://leetcode.com/problems/merge-two-sorted-lists/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-26",
+      "url": "https://leetcode.com/problems/remove-duplicates-from-sorted-array/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-27",
+      "url": "https://leetcode.com/problems/remove-element/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-28",
+      "url": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-35",
+      "url": "https://leetcode.com/problems/search-insert-position/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-58",
+      "url": "https://leetcode.com/problems/length-of-last-word/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-66",
+      "url": "https://leetcode.com/problems/plus-one/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-69",
+      "url": "https://leetcode.com/problems/sqrtx/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-70",
+      "url": "https://leetcode.com/problems/climbing-stairs/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-88",
+      "url": "https://leetcode.com/problems/merge-sorted-array/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-9",
+      "url": "https://leetcode.com/problems/palindrome-number/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "luogu-p1428",
+      "url": "https://www.luogu.com.cn/problem/P1428",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-11",
+      "url": "https://leetcode.com/problems/container-with-most-water/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-15",
+      "url": "https://leetcode.com/problems/3sum/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-19",
+      "url": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-3",
+      "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-33",
+      "url": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-34",
+      "url": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-46",
+      "url": "https://leetcode.com/problems/permutations/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-48",
+      "url": "https://leetcode.com/problems/rotate-image/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-54",
+      "url": "https://leetcode.com/problems/spiral-matrix/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-55",
+      "url": "https://leetcode.com/problems/jump-game/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-56",
+      "url": "https://leetcode.com/problems/merge-intervals/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-62",
+      "url": "https://leetcode.com/problems/unique-paths/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-64",
+      "url": "https://leetcode.com/problems/minimum-path-sum/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-75",
+      "url": "https://leetcode.com/problems/sort-colors/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-98",
+      "url": "https://leetcode.com/problems/validate-binary-search-tree/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "luogu-p1048",
+      "url": "https://www.luogu.com.cn/problem/P1048",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "luogu-p1216",
+      "url": "https://www.luogu.com.cn/problem/P1216",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "luogu-p1439",
+      "url": "https://www.luogu.com.cn/problem/P1439",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-239",
+      "url": "https://leetcode.com/problems/sliding-window-maximum/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-312",
+      "url": "https://leetcode.com/problems/burst-balloons/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-32",
+      "url": "https://leetcode.com/problems/longest-valid-parentheses/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-4",
+      "url": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-41",
+      "url": "https://leetcode.com/problems/first-missing-positive/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-42",
+      "url": "https://leetcode.com/problems/trapping-rain-water/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-76",
+      "url": "https://leetcode.com/problems/minimum-window-substring/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    },
+    {
+      "slug": "leetcode-84",
+      "url": "https://leetcode.com/problems/largest-rectangle-in-histogram/",
+      "retrievedAt": "2026-10-01",
+      "verification": "PUBLIC_SOURCE_PAGE_RETRIEVED",
+      "note": "Source identity/title checked. Local task is educational adaptation with explicitly stated local constraints. No hidden tests fetched."
+    }
+  ],
+  "sourceCount": 39,
+  "officialHiddenTestsFetched": false
+}

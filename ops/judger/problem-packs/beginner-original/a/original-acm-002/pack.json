@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-002",
+  "title": "终端使用积分",
+  "difficulty": "EASY",
+  "tags": [
+    "条件判断",
+    "基础数学"
+  ],
+  "description": "实验室按整分钟记录公共终端的一次使用时长 n。前15分钟免费；第16到第60分钟，每分钟扣除2积分；第61分钟起，每分钟扣除1积分。三个区间分别计费，而不是按最终时长对所有分钟统一收费。请计算本次扣除的总积分。",
+  "inputFormat": "一行一个整数 n，表示使用的整分钟数。",
+  "outputFormat": "输出一个整数，表示扣除的总积分。",
+  "constraints": "0 ≤ n ≤ 10^9。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-002",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "10\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "20\n",
+      "expectedOutput": "10\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "70\n",
+      "expectedOutput": "100\n",
+      "sample": true
+    },
+    {
+      "name": "unused",
+      "input": "0\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "free-limit",
+      "input": "15\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "first-charge",
+      "input": "16\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "before-second-limit",
+      "input": "59\n",
+      "expectedOutput": "88\n",
+      "sample": false
+    },
+    {
+      "name": "second-limit",
+      "input": "60\n",
+      "expectedOutput": "90\n",
+      "sample": false
+    },
+    {
+      "name": "third-start",
+      "input": "61\n",
+      "expectedOutput": "91\n",
+      "sample": false
+    },
+    {
+      "name": "max-duration",
+      "input": "1000000000\n",
+      "expectedOutput": "1000000030\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "666933997\n",
+      "expectedOutput": "666934027\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "737402705\n",
+      "expectedOutput": "737402735\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "323272857\n",
+      "expectedOutput": "323272887\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "419108063\n",
+      "expectedOutput": "419108093\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "27953657\n",
+      "expectedOutput": "27953687\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "240004272\n",
+      "expectedOutput": "240004302\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "107285221\n",
+      "expectedOutput": "107285251\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "138032334\n",
+      "expectedOutput": "138032364\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "497395350\n",
+      "expectedOutput": "497395380\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "778284008\n",
+      "expectedOutput": "778284038\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long n, total = 0;\n    scanf(\"%lld\", &n);\n    if (n > 15) {\n        long long end = n < 60 ? n : 60;\n        total += (end - 15) * 2;\n    }\n    if (n > 60) {\n        total += n - 60;\n    }\n    printf(\"%lld\\n\", total);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long n, total = 0;\n    std::cin >> n;\n    if (n > 15) {\n        long long end = n < 60 ? n : 60;\n        total += (end - 15) * 2;\n    }\n    if (n > 60) {\n        total += n - 60;\n    }\n    std::cout << total << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long n = in.nextLong();\n        long total = 0;\n        if (n > 15) {\n            total += (Math.min(n, 60) - 15) * 2;\n        }\n        if (n > 60) {\n            total += n - 60;\n        }\n        System.out.println(total);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "n = int(input())\ntotal = max(0, min(n, 60) - 15) * 2 + max(0, n - 60)\nprint(total)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let n: i64 = words.next().unwrap().parse().unwrap();\n    let total = (n.min(60) - 15).max(0) * 2 + (n - 60).max(0);\n    println!(\"{}\", total);\n}\n"
+    }
+  }
+}

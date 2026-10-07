@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-019",
+  "problemRevision": 1,
+  "title": "灯位周边计数",
+  "summary": "逐个空格检查八个相邻偏移，先做边界判断，再统计原网格中的灯并输出数字。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "网格中 # 表示有灯，. 表示空位。每个空位要变成它八个相邻方向里灯的数量：上、下、左、右及四个斜角。自己不属于邻居，超出网格的位置忽略，已有灯始终保留 #。\n\n输入 n、m，再给 n 行各 m 个字符。输出同样大小的字符网格，每行字符之间不加空格，空位数字范围为 0 到 8。不是寻找连通灯组，也不是不断传播亮灯状态；所有数量都根据原始 # 的布局计算。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "对每个位置 `(row,col)`，先判断是否有灯。如果有，直接输出 #。否则枚举行偏移 dr=-1、0、1 与列偏移 dc=-1、0、1 的所有组合，一共九种，跳过 `(0,0)` 剩下八个方向。\n\n邻居坐标是 r=row+dr、c=col+dc。先检查 `0<=r<n` 和 `0<=c<m`，再访问 grid[r][c] 是否为 #。参考程序不修改 grid，而是直接输出或把字符放进独立 answer，这样后续空位计算始终看到原始灯的位置。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开第一个样例三行是 `#..`、`.#.`、`...`，使用零起点坐标：\n\n| 检查位置 | 实际有效灯邻居 | 输出 |\n| --- | --- | --- |\n| 空位 (0,1) | 灯 (0,0)、(1,1) | 2 |\n| 空位 (0,2) | 灯 (1,1) | 1 |\n| 空位 (2,0) | 灯 (1,1) | 1 |\n| 灯位 (1,1) | 已有灯，不做空位计数 | 保留 # |\n\n逐格计算完整结果为 `#21`、`2#1`、`111`。公开第三样例中心空位八个方向全是 #，所以中心输出 8。1×1 空位样例没有任何有效邻居，输出 0。",
+      "diagram": {
+        "caption": "公开第三个样例中，中心空位四周八个方向全是灯，输出 8。边缘位置只检查仍在网格内的邻居。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 310\" role=\"img\" aria-label=\"空位周围八个方向计数\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"310\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">以中心空位为例：八个邻居，不含自身</text><rect x=\"40\" y=\"65\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"70\" y=\"103\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"110\" y=\"65\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"140\" y=\"103\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"180\" y=\"65\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"210\" y=\"103\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"40\" y=\"135\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"70\" y=\"173\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"110\" y=\"135\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e5f2ed\" stroke=\"#26816b\"/><text x=\"140\" y=\"173\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">8</text><rect x=\"180\" y=\"135\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"210\" y=\"173\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"40\" y=\"205\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"70\" y=\"243\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"110\" y=\"205\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"140\" y=\"243\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><rect x=\"180\" y=\"205\" width=\"60\" height=\"60\" rx=\"8\" fill=\"#e2edfc\" stroke=\"#3267b1\"/><text x=\"210\" y=\"243\" text-anchor=\"middle\" font-size=\"18\" fill=\"#244366\">#</text><text x=\"295\" y=\"96\" font-size=\"16\" fill=\"#3267b1\">上、下、左、右：4 个灯位</text><text x=\"295\" y=\"146\" font-size=\"16\" fill=\"#3267b1\">四个斜角：4 个灯位</text><text x=\"295\" y=\"196\" font-size=\"16\" fill=\"#26816b\">中心是空位，输出 4+4=8</text><text x=\"295\" y=\"246\" font-size=\"16\" fill=\"#244366\">已有灯的位置保留 #，原网格不改写</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 n、m 与原网格 grid。C 每行字符缓冲区比最大列数多一格，用于字符串结束符；其他语言存字符串或字节切片。\n2. 外层遍历行，内层遍历列。已有 # 直接输出或追加后 continue，避免把灯本身换成数字。\n3. 空位先设 count=0，再枚举 dr、dc。排除两者均为 0，边界合法且原字符是 # 时 count++。\n4. 输出 count 的单个数字字符或文本，行末换行。Python 的 grid 是字节序列，因此比较 `ord(\"#\")`；Rust 同样使用字节字面量。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "偏移集合 {-1,0,1}×{-1,0,1} 去掉 (0,0)，恰好覆盖八个邻居方向且没有重复。边界检查去掉不存在的位置，字符检查只留下实际装灯的位置，因此 count 正好等于当前空位周围灯数量。\n\n已有灯不替换，空位全部按原 grid 检查，处理顺序不会改变后续邻居状态。每个位置恰输出一次，按行列顺序排列，得到题目要求的同尺寸网格。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n、m 是行列数。每个位置最多检查九个固定偏移，时间 `O(nm)`，不是平方枚举整张网格；大 O 表示工作量随格子总数线性增长。输入网格需要 `O(nm)` 存储，计数与偏移变量只占 `O(1)` 算法状态。\n\nC/C++ 直接输出，除输入外基本为常数空间；Java、Python、Rust 缓存结果文本或行列表，额外空间为 `O(nm)`。C 原网格固定 40×41 缓冲区，实际预留受题目上限固定；其他语言按读取内容分配。结果最多一个字符一格，不会输出两位数字。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- `(dr,dc)=(0,0)` 必须排除，邻居不包含自身。\n- 先做边界检查再访问网格，尤其角落会产生负行列，Rust 不可先转成无符号下标。\n- 四个斜角也要统计，不能只看上下左右。\n- 已有 # 仍输出 #，不能输出它旁边灯的数量。\n- 不要边计算边覆盖原网格，否则后续检查可能看见数字而丢失原灯。\n- 每行字符之间没有空格，行数和列数都要保持原大小。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：用少量偏移枚举固定邻域；边界过滤后只看原图的 #。\n\n1. 两行 `#.`、`..` 的结果是什么？`#1`、`11`。\n2. 一行三个空位 `...` 呢？`000`，超出上、下边界的邻居都不存在。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint main(void)  {\n    int n, m;\n    char grid[40][41];\n    // 保存原网格；后续统计不能改写它，否则邻居状态会被污染。\n    scanf(\"%d%d\", &n, &m);\n    for (int row = 0; row < n; ++row)  {\n        scanf(\"%40s\", grid[row]);\n    }\n    for (int row = 0; row < n; ++row)  {\n        for (int col = 0; col < m; ++col)  {\n            if (grid[row][col] == '#')  {\n                putchar('#');\n                continue;\n            }\n            int count = 0;\n            // 九个偏移组合排除 (0,0)，只留下八个方向的邻居。\n            for (int dr = -1; dr <= 1; ++dr)  {\n                for (int dc = -1; dc <= 1; ++dc)  {\n                    int r = row + dr, c = col + dc;\n                    if ((dr != 0 || dc != 0) && r >= 0 && r < n && c >= 0 && c < m &&\n                    grid[r][c] == '#')  {\n                        ++count;\n                    }\n                }\n            }\n            // 计数范围 0..8，所以每个空位输出恰好一个数字字符。\n            putchar('0' + count);\n        }\n        putchar('\\n');\n    }\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main()  {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n, m;\n    // 保存原网格；后续统计不能改写它，否则邻居状态会被污染。\n    cin >> n >> m;\n    vector<string> grid(n);\n    for (string& row : grid)  {\n        cin >> row;\n    }\n    for (int row = 0; row < n; ++row)  {\n        for (int col = 0; col < m; ++col)  {\n            if (grid[row][col] == '#')  {\n                cout << '#';\n                continue;\n            }\n            int count = 0;\n            // 九个偏移组合排除 (0,0)，只留下八个方向的邻居。\n            for (int dr = -1; dr <= 1; ++dr)  {\n                for (int dc = -1; dc <= 1; ++dc)  {\n                    int r = row + dr, c = col + dc;\n                    if ((dr != 0 || dc != 0) && r >= 0 && r < n && c >= 0 && c < m &&\n                    grid[r][c] == '#')  {\n                        ++count;\n                    }\n                }\n            }\n            // 计数范围 0..8，所以每个空位输出恰好一个数字字符。\n            cout << count;\n        }\n        cout << '\\n';\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\npublic class Main  {\n    static final class FastScanner  {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n        private int read() throws IOException  {\n            if (position == length)  {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0)  {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n        String next() throws IOException  {\n            int value;\n            do  {\n                value = read();\n            }\n            while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1)  {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n        int nextInt() throws IOException  {\n            return Integer.parseInt(next());\n        }\n        long nextLong() throws IOException  {\n            return Long.parseLong(next());\n        }\n    }\n    public static void main(String[] args) throws Exception  {\n        FastScanner scanner = new FastScanner();\n        // 保存原网格；后续统计不能改写它，否则邻居状态会被污染。\n        int n = scanner.nextInt();\n        int m = scanner.nextInt();\n        String[] grid = new String[n];\n        for (int row = 0; row < n; row++)  {\n            grid[row] = scanner.next();\n        }\n        StringBuilder answer = new StringBuilder();\n        for (int row = 0; row < n; row++)  {\n            for (int col = 0; col < m; col++)  {\n                if (grid[row].charAt(col) == '#')  {\n                    answer.append('#');\n                    continue;\n                }\n                int count = 0;\n                // 九个偏移组合排除 (0,0)，只留下八个方向的邻居。\n                for (int dr = -1; dr <= 1; dr++)  {\n                    for (int dc = -1; dc <= 1; dc++)  {\n                        int r = row + dr;\n                        int c = col + dc;\n                        if ((dr != 0 || dc != 0) && r >= 0 && r < n && c >= 0 && c < m\n                        && grid[r].charAt(c) == '#')  {\n                            count++;\n                        }\n                    }\n                }\n                // 计数范围 0..8，所以每个空位输出恰好一个数字字符。\n                answer.append(count);\n            }\n            answer.append('\\n');\n        }\n        System.out.print(answer);\n    }\n}\n",
+      "python": "import sys\n\nlines = sys.stdin.buffer.read().split()\n# 保存原网格；后续统计不能改写它，否则邻居状态会被污染。\nn, m = map(int, lines[:2])\ngrid = lines[2:]\nanswer = []\nfor row in range(n):\n    result = []\n    for col in range(m):\n        if grid[row][col] == ord(\"#\"):\n            result.append(\"#\")\n            continue\n        count = 0\n        # 九个偏移组合排除 (0,0)，只留下八个方向的邻居。\n        for dr in range(-1, 2):\n            for dc in range(-1, 2):\n                r, c = row + dr, col + dc\n                if (dr or dc) and 0 <= r < n and 0 <= c < m and grid[r][c] == ord(\"#\"):\n                    count += 1\n        # 计数范围 0..8，所以每个空位输出恰好一个数字字符。\n        result.append(str(count))\n    answer.append(\"\".join(result))\nprint(\"\\n\".join(answer))\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    // 保存原网格；后续统计不能改写它，否则邻居状态会被污染。\n    let n: usize = tokens.next().unwrap().parse().unwrap();\n    let m: usize = tokens.next().unwrap().parse().unwrap();\n    let grid: Vec<&[u8]> = tokens.map(|row| row.as_bytes()).collect();\n    let mut answer = String::new();\n    for row in 0..n  {\n        for col in 0..m  {\n            if grid[row][col] == b'#'  {\n                answer.push('#');\n                continue;\n            }\n            let mut count = 0u8;\n            // 九个偏移组合排除 (0,0)，只留下八个方向的邻居。\n            for dr in -1i32..=1  {\n                for dc in -1i32..=1  {\n                    let r = row as i32 + dr;\n                    let c = col as i32 + dc;\n                    if (dr != 0 || dc != 0)\n                    && r >= 0\n                    && r < n as i32\n                    && c >= 0\n                    && c < m as i32\n                    && grid[r as usize][c as usize] == b'#'\n                    {\n                        count += 1;\n                    }\n                }\n            }\n            // 计数范围 0..8，所以每个空位输出恰好一个数字字符。\n            answer.push((b'0' + count) as char);\n        }\n        answer.push('\\n');\n    }\n    print!(\"{}\", answer);\n}\n"
+    }
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-006",
+  "title": "巡检编号",
+  "difficulty": "EASY",
+  "tags": [
+    "基础数学",
+    "区间计数"
+  ],
+  "description": "一排设备的编号都是非负整数。巡检规则要求检查编号能被 k 整除的设备。现在只负责编号从 L 到 R 的设备，两个端点都包含在内。请统计需要检查的设备数。编号0能被任意正整数 k 整除。",
+  "inputFormat": "一行三个整数 L、R、k。",
+  "outputFormat": "输出一个整数，表示区间内能被 k 整除的编号数。",
+  "constraints": "0 ≤ L ≤ R ≤ 10^12，1 ≤ k ≤ 10^9。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-006",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "3 16 4\n",
+      "expectedOutput": "4\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "0 0 7\n",
+      "expectedOutput": "1\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "5 7 10\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "unit-step",
+      "input": "0 1000000000000 1\n",
+      "expectedOutput": "1000000000001\n",
+      "sample": false
+    },
+    {
+      "name": "left-divisible",
+      "input": "12 12 4\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "single-not-divisible",
+      "input": "13 13 4\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "large-step",
+      "input": "0 1000000000000 1000000000\n",
+      "expectedOutput": "1001\n",
+      "sample": false
+    },
+    {
+      "name": "last-divisible",
+      "input": "7 21 7\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "both-excluded",
+      "input": "8 20 7\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "high-small-range",
+      "input": "999999999990 1000000000000 3\n",
+      "expectedOutput": "4\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "264306758300 439843912163 388274713\n",
+      "expectedOutput": "452\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "161286034515 264080746218 313634591\n",
+      "expectedOutput": "328\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "209126653795 440603947994 542562941\n",
+      "expectedOutput": "427\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "169506779299 613308398578 228201730\n",
+      "expectedOutput": "1945\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "688984524172 913920956150 761523599\n",
+      "expectedOutput": "296\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "529827440323 959253621346 204579301\n",
+      "expectedOutput": "2099\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "32585078552 131344185942 648212029\n",
+      "expectedOutput": "152\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "1109533481 55963764667 774197233\n",
+      "expectedOutput": "71\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "856560311283 879322520510 706575247\n",
+      "expectedOutput": "32\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "217539895982 609868926811 779392394\n",
+      "expectedOutput": "503\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long left, right, step;\n    scanf(\"%lld%lld%lld\", &left, &right, &step);\n    long long answer = right / step;\n    if (left == 0) {\n        answer++;\n    } else {\n        answer -= (left - 1) / step;\n    }\n    printf(\"%lld\\n\", answer);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long left, right, step;\n    std::cin >> left >> right >> step;\n    long long answer = right / step;\n    if (left == 0) {\n        answer++;\n    } else {\n        answer -= (left - 1) / step;\n    }\n    std::cout << answer << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long left = in.nextLong();\n        long right = in.nextLong();\n        long step = in.nextLong();\n        long answer = right / step;\n        if (left == 0) {\n            answer++;\n        } else {\n            answer -= (left - 1) / step;\n        }\n        System.out.println(answer);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "left, right, step = map(int, input().split())\nanswer = right // step + 1 if left == 0 else right // step - (left - 1) // step\nprint(answer)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let left: i64 = words.next().unwrap().parse().unwrap();\n    let right: i64 = words.next().unwrap().parse().unwrap();\n    let step: i64 = words.next().unwrap().parse().unwrap();\n    let answer = if left == 0 {\n        right / step + 1\n    } else {\n        right / step - (left - 1) / step\n    };\n    println!(\"{}\", answer);\n}\n"
+    }
+  }
+}

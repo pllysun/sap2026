@@ -1,0 +1,8 @@
+# Update tested application artifacts on the verified amd64 judge runtime.
+# The prebuilt context must contain real files, checked by build-image.sh.
+ARG BASE_IMAGE=pllysun/sap:1.5.31@sha256:51f17187a418740676ae475cc5486a699eb6fd28bbac660a5fb765abc441df14
+FROM ${BASE_IMAGE}
+RUN rm -rf /app/static
+COPY static/ /app/static/
+RUN find /app/static -type d -exec chmod 755 {} + && find /app/static -type f -exec chmod 644 {} +
+COPY app.jar /app/app.jar

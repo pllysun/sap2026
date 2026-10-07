@@ -1,6 +1,19 @@
 #!/bin/sh
 set -e
 
+if [ "${JUDGER_NODE_ONLY:-false}" = true ]; then
+    exec /opt/judger/node-start.sh
+fi
+
+# Nginx needs ordinary web-server capabilities, not the sandbox coordinator's extras.
+nginx() {
+    if [ "${JUDGER_ENABLED:-false}" = true ]; then
+        setpriv --bounding-set=-sys_admin,-sys_ptrace,-sys_resource --inh-caps=-all --ambient-caps=-all --no-new-privs /usr/sbin/nginx "$@"
+    else
+        /usr/sbin/nginx "$@"
+    fi
+}
+
 echo "========================================="
 echo "  CSUFTSAP - 软件协会管理系统"
 echo "========================================="
@@ -161,7 +174,7 @@ generate_https_config() {
             index index.html;
             try_files \$uri \$uri/ /index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
             }
@@ -173,7 +186,7 @@ generate_https_config() {
             index index.html;
             try_files \$uri \$uri/ /admin/index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
             }
@@ -213,6 +226,7 @@ events {
 
 http {
     include       /etc/nginx/mime.types;
+    types { application/wasm wasm; }
     default_type  application/octet-stream;
 
     sendfile    on;
@@ -220,7 +234,7 @@ http {
     keepalive_timeout 65;
 
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml application/wasm;
     gzip_min_length 1024;
     gzip_vary on;
 
@@ -287,7 +301,7 @@ http {
             index index.html;
             try_files \$uri \$uri/ /index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
             }
@@ -298,7 +312,7 @@ http {
             index index.html;
             try_files \$uri \$uri/ /admin/index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
             }
@@ -338,13 +352,25 @@ else
     echo "[SSL] 未设置 DOMAIN 变量，使用 HTTP 模式"
 fi
 
+# Business processes must not inherit the sandbox coordinator's capabilities.
+if [ "${JUDGER_ENABLED:-false}" = true ]; then
+    chown -R sapapp:sapapp /app/data /app/uploads /app/logs
+    /opt/judger/start.sh
+fi
+
 # ===== 启动 Redis（登录态持久化，本机 127.0.0.1:6379）=====
 # sa-token 把 token 存这里；AOF 落 /app/data/redis（挂载卷）→ 重启/重建容器都不丢登录。
 # 仅本机回环，不暴露公网。noeviction 保证内存到顶也绝不淘汰 token（数据极小，128mb 远够）。
 if command -v redis-server >/dev/null 2>&1; then
     echo "[REDIS] 启动 Redis (127.0.0.1:6379, AOF 持久化)..."
     mkdir -p /app/data/redis
-    redis-server \
+    REDIS_RUNNER=""
+    if [ "${JUDGER_ENABLED:-false}" = true ]; then
+        chown sapapp:sapapp /app/data/redis
+        REDIS_RUNNER="setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs"
+    fi
+    # Fixed runner, no user controlled command text.
+    $REDIS_RUNNER redis-server \
         --bind 127.0.0.1 --port 6379 \
         --dir /app/data/redis --appendonly yes --appendfsync everysec --save '' \
         --maxmemory 128mb --maxmemory-policy noeviction \
@@ -356,7 +382,11 @@ fi
 # 与主应用同容器。后端 jw.ocr-url 默认即 http://127.0.0.1:9000，无需额外环境变量。
 if [ -f /app/ocr/main.py ]; then
     echo "[OCR] 启动验证码识别服务 (127.0.0.1:9000)..."
-    ( cd /app/ocr && exec python3 -m uvicorn main:app --host 127.0.0.1 --port 9000 ) \
+    ( cd /app/ocr
+      if [ "${JUDGER_ENABLED:-false}" = true ]; then
+          exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs python3 -m uvicorn main:app --host 127.0.0.1 --port 9000
+      fi
+      exec python3 -m uvicorn main:app --host 127.0.0.1 --port 9000 ) \
         >> /app/logs/ocr.log 2>&1 &
     echo "[OCR] 已后台启动 (日志: /app/logs/ocr.log)"
 fi
@@ -375,6 +405,11 @@ nginx
 # 不再拼进命令行，避免泄露到进程列表。
 echo "[APP] 启动 Spring Boot..."
 # JAVA_OPTS 仅承载非敏感的额外 JVM/Spring 参数；为空时不传入空参数。
+if [ "${JUDGER_ENABLED:-false}" = true ]; then
+    # shellcheck disable=SC2086
+    exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs java $JAVA_OPTS -jar /app/app.jar \
+        --spring.profiles.active=docker --file.upload.path=/app/uploads/
+fi
 if [ -n "$JAVA_OPTS" ]; then
     # JVM 参数必须位于 -jar 之前；此处依赖按空白拆分以传递多个参数。
     # shellcheck disable=SC2086

@@ -37,3 +37,11 @@ mybatis-plus:
 logging:
   file:
     path: /app/logs
+
+judger:
+  node-key-file: /app/data/judger-node.key
+  enabled: ${JUDGER_ENABLED:false}
+  endpoint: http://127.0.0.1:5050
+  token-file: /run/judger/token
+  max-judge-group-ms: ${JUDGER_MAX_GROUP_MS:600000}
+  daily-submission-limit: ${JUDGER_DAILY_SUBMISSION_LIMIT:0}

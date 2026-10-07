@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/criyle/go-judge",
+  "commit": "e9d70a0d9a3df0c62182a6e7090d7af650a1d5f8",
+  "license": "MIT",
+  "patches": [
+    "Redact authentication token from startup logs"
+  ],
+  "build": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags seccomp -trimpath"
+}

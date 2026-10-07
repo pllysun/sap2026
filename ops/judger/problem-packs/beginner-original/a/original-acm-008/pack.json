@@ -1,0 +1,194 @@
+{
+  "slug": "original-acm-008",
+  "title": "明日值班日期",
+  "difficulty": "EASY",
+  "tags": [
+    "模拟",
+    "条件判断"
+  ],
+  "description": "值班表给出一个合法的公历日期 y 年 m 月 d 日。请计算第二天的日期。公历闰年规则：能被400整除的年份是闰年；或者能被4整除且不能被100整除的年份是闰年。闰年的2月有29天，平年的2月有28天。其余月份按通常的公历天数计算。",
+  "inputFormat": "一行三个整数 y、m、d，保证表示合法日期。",
+  "outputFormat": "输出第二天的年、月、日三个整数，以空格分隔，无须补前导零。",
+  "constraints": "1 ≤ y ≤ 9998，1 ≤ m ≤ 12，d 为对应年月中的合法日号。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-008",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "2026 10 1\n",
+      "expectedOutput": "2026 10 2\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "2024 2 28\n",
+      "expectedOutput": "2024 2 29\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "2026 12 31\n",
+      "expectedOutput": "2027 1 1\n",
+      "sample": true
+    },
+    {
+      "name": "first-date",
+      "input": "1 1 1\n",
+      "expectedOutput": "1 1 2\n",
+      "sample": false
+    },
+    {
+      "name": "ordinary-february",
+      "input": "2023 2 28\n",
+      "expectedOutput": "2023 3 1\n",
+      "sample": false
+    },
+    {
+      "name": "leap-last-day",
+      "input": "2000 2 29\n",
+      "expectedOutput": "2000 3 1\n",
+      "sample": false
+    },
+    {
+      "name": "century-not-leap",
+      "input": "1900 2 28\n",
+      "expectedOutput": "1900 3 1\n",
+      "sample": false
+    },
+    {
+      "name": "century-leap",
+      "input": "2000 2 28\n",
+      "expectedOutput": "2000 2 29\n",
+      "sample": false
+    },
+    {
+      "name": "thirty-day-month",
+      "input": "2026 4 30\n",
+      "expectedOutput": "2026 5 1\n",
+      "sample": false
+    },
+    {
+      "name": "thirty-one-day-month",
+      "input": "2026 1 31\n",
+      "expectedOutput": "2026 2 1\n",
+      "sample": false
+    },
+    {
+      "name": "max-year-end",
+      "input": "9998 12 31\n",
+      "expectedOutput": "9999 1 1\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "6836 10 11\n",
+      "expectedOutput": "6836 10 12\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "5369 2 8\n",
+      "expectedOutput": "5369 2 9\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "7065 10 24\n",
+      "expectedOutput": "7065 10 25\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "589 10 27\n",
+      "expectedOutput": "589 10 28\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "4920 5 1\n",
+      "expectedOutput": "4920 5 2\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "3400 9 1\n",
+      "expectedOutput": "3400 9 2\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "4443 3 25\n",
+      "expectedOutput": "4443 3 26\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "9386 6 4\n",
+      "expectedOutput": "9386 6 5\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "3443 11 8\n",
+      "expectedOutput": "3443 11 9\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "9853 10 6\n",
+      "expectedOutput": "9853 10 7\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    int year, month, day;\n    scanf(\"%d%d%d\", &year, &month, &day);\n    int lengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n    if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n        lengths[1] = 29;\n    }\n    day++;\n    if (day > lengths[month - 1]) {\n        day = 1;\n        month++;\n    }\n    if (month > 12) {\n        month = 1;\n        year++;\n    }\n    printf(\"%d %d %d\\n\", year, month, day);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    int year, month, day;\n    std::cin >> year >> month >> day;\n    int lengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n    if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n        lengths[1] = 29;\n    }\n    day++;\n    if (day > lengths[month - 1]) {\n        day = 1;\n        month++;\n    }\n    if (month > 12) {\n        month = 1;\n        year++;\n    }\n    std::cout << year << ' ' << month << ' ' << day << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        int year = in.nextInt();\n        int month = in.nextInt();\n        int day = in.nextInt();\n        int[] lengths = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n        if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n            lengths[1] = 29;\n        }\n        day++;\n        if (day > lengths[month - 1]) {\n            day = 1;\n            month++;\n        }\n        if (month > 12) {\n            month = 1;\n            year++;\n        }\n        System.out.println(year + \" \" + month + \" \" + day);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "year, month, day = map(int, input().split())\nlengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]\nif year % 400 == 0 or (year % 4 == 0 and year % 100 != 0):\n    lengths[1] = 29\nday += 1\nif day > lengths[month - 1]:\n    day = 1\n    month += 1\nif month > 12:\n    month = 1\n    year += 1\nprint(year, month, day)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let mut year: i32 = words.next().unwrap().parse().unwrap();\n    let mut month: usize = words.next().unwrap().parse().unwrap();\n    let mut day: i32 = words.next().unwrap().parse().unwrap();\n    let mut lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];\n    if year % 400 == 0 || (year % 4 == 0 && year % 100 != 0) {\n        lengths[1] = 29;\n    }\n    day += 1;\n    if day > lengths[month - 1] {\n        day = 1;\n        month += 1;\n    }\n    if month > 12 {\n        month = 1;\n        year += 1;\n    }\n    println!(\"{} {} {}\", year, month, day);\n}\n"
+    }
+  }
+}

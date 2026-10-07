@@ -1,0 +1,138 @@
+/* One composition scales with the available viewport, including the header. */
+.app-first-screen {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.app-first-screen .app-page-header {
+  position: relative;
+  flex: 0 0 calc(64px * var(--app-hero-scale));
+  width: 100%;
+  max-width: none;
+  height: calc(64px * var(--app-hero-scale));
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.app-header-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1320px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transform: translate(-50%, -50%) scale(var(--app-hero-scale));
+}
+
+.app-first-screen .app-hero {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  display: block;
+}
+
+.app-hero-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1200px;
+  height: 780px;
+  display: grid;
+  grid-template-columns: 530px 500px;
+  align-items: center;
+  gap: 170px;
+  transform: translate(-50%, -50%) scale(var(--app-hero-scale));
+}
+
+.app-first-screen .app-hero-copy {
+  width: 530px;
+  max-width: none;
+  margin: 0;
+}
+
+.app-first-screen .app-product-label { gap: 18px; }
+.app-first-screen .app-product-label img { width: 72px; height: 72px; border-radius: 22px; }
+.app-first-screen .app-product-label span { font-size: 12px; line-height: 2.2; }
+.app-first-screen .app-hero h1 { font-size: 58px; letter-spacing: -2px; margin: 31px 0 15px; }
+.app-first-screen .app-hero-lead { font-size: 32px; line-height: 1.55; margin: 0 0 21px; }
+.app-first-screen .app-hero-description { font-size: 14px; line-height: 2; }
+.app-first-screen .app-hero-facts { margin-top: 28px; }
+.app-first-screen .app-hero-facts span { font-size: 11px; }
+.app-first-screen .app-hero-facts span + span { padding-left: 15px; margin-left: 15px; }
+.app-first-screen .app-demo-caption { font-size: 10px; margin-top: 14px; }
+.app-first-screen .app-hero-copy :deep(.home-app-download) { width: 430px; margin-top: 24px; }
+
+.app-first-screen .app-hero-art {
+  width: 500px;
+  height: 748px;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.app-first-screen .hero-phone { zoom: 1; }
+.app-first-screen .orbit-one { width: 620px; height: 620px; }
+.app-first-screen .orbit-two { width: 510px; height: 510px; }
+.app-first-screen .app-floating-card { padding: 15px 18px; gap: 13px; font-size: 10px; }
+.app-first-screen .app-floating-card b { font-size: 12px; }
+.app-first-screen .app-floating-card svg { width: 18px; height: 18px; }
+.app-first-screen .floating-one { left: -48px; top: 116px; }
+.app-first-screen .floating-two { right: -35px; bottom: 100px; }
+.app-first-screen .app-art-caption { bottom: -27px; font-size: 10px; }
+
+/* Narrow screens reflow so controls remain readable instead of shrinking the desktop canvas. */
+@media (max-width: 760px), (orientation: portrait) {
+  .app-first-screen { height: auto; min-height: 100vh; min-height: 100dvh; }
+  .app-first-screen .app-page-header { flex-basis: 56px; height: 56px; padding: 0 22px; }
+  .app-header-stage { position: static; width: 100%; height: 56px; transform: none; }
+  .app-first-screen .app-hero { padding: 28px 22px 58px; }
+  .app-hero-stage { position: static; width: 100%; height: auto; max-width: 460px; margin: auto; display: flex; flex-direction: column; gap: 34px; transform: none; }
+  .app-first-screen .app-hero-copy { width: 100%; }
+  .app-first-screen .app-product-label { gap: 12px; }
+  .app-first-screen .app-product-label img { width: 48px; height: 48px; border-radius: 15px; }
+  .app-first-screen .app-product-label span { font-size: 10px; line-height: 2; }
+  .app-first-screen .app-hero h1 { font-size: 36px; letter-spacing: -1px; margin: 21px 0 10px; }
+  .app-first-screen .app-hero-lead { font-size: 24px; margin-bottom: 14px; }
+  .app-first-screen .app-hero-description { font-size: 12px; line-height: 1.9; }
+  .app-first-screen .app-hero-facts { margin-top: 21px; }
+  .app-first-screen .app-hero-facts span { font-size: 10px; }
+  .app-first-screen .app-hero-facts span + span { padding-left: 12px; margin-left: 12px; }
+  .app-first-screen .app-demo-caption { font-size: 9px; }
+  .app-first-screen .app-hero-copy :deep(.home-app-download) { width: 100%; max-width: none; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; padding: 11px; margin-top: 19px; }
+  .app-first-screen .app-hero-copy :deep(.app-download-mark) { width: 32px; height: 32px; }
+  .app-first-screen .app-hero-copy :deep(.app-download-copy strong) { font-size: 12px; }
+  .app-first-screen .app-hero-copy :deep(.app-download-copy span) { font-size: 9px; }
+  .app-first-screen .app-hero-copy :deep(.app-download-button) { grid-column: auto; justify-self: auto; margin-top: 0; padding: 9px; font-size: 10px; }
+  .app-first-screen .app-hero-art { width: 100%; height: 460px; }
+  .app-first-screen .hero-phone { zoom: .6; }
+  .app-first-screen .orbit-one { width: 345px; height: 345px; }
+  .app-first-screen .orbit-two { width: 295px; height: 295px; }
+  .app-first-screen .app-floating-card { padding: 11px 12px; gap: 9px; font-size: 9px; }
+  .app-first-screen .app-floating-card b { font-size: 10px; }
+  .app-first-screen .app-floating-card svg { width: 15px; height: 15px; }
+  .app-first-screen .floating-one { left: 0; top: 65px; }
+  .app-first-screen .floating-two { right: 0; bottom: 55px; }
+  .app-first-screen .app-art-caption { bottom: -15px; font-size: 9px; }
+}
+
+@media (max-width: 360px) {
+  .app-first-screen .app-page-header { padding: 0 16px; }
+  .app-first-screen .app-hero { padding-left: 16px; padding-right: 16px; }
+  .app-first-screen .app-hero-facts span + span { padding-left: 9px; margin-left: 9px; }
+  .app-first-screen .app-hero-copy :deep(.home-app-download) { gap: 8px; padding: 10px; }
+  .app-first-screen .app-hero-art { height: 408px; }
+  .app-first-screen .hero-phone { zoom: .54; }
+  .app-first-screen .floating-one { left: -3px; top: 55px; }
+  .app-first-screen .floating-two { right: -3px; bottom: 45px; }
+}

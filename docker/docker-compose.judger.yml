@@ -1,0 +1,15 @@
+# cgroup v1 override. Run the documented host preparation before enabling this.
+# docker compose -f docker/docker-compose.yml -f docker/docker-compose.judger.yml --env-file docker/.env up -d
+services:
+  app:
+    environment:
+      JUDGER_ENABLED: "true"
+    cap_add: [SYS_ADMIN, SYS_PTRACE, SYS_RESOURCE]
+    security_opt:
+      - systempaths=unconfined
+      - seccomp=./judger-seccomp.json
+    volumes:
+      - /sys/fs/cgroup/memory/sapjudger:/sys/fs/cgroup/memory:rw
+      - /sys/fs/cgroup/pids/sapjudger:/sys/fs/cgroup/pids:rw
+      - /sys/fs/cgroup/cpu,cpuacct/sapjudger:/sys/fs/cgroup/cpu,cpuacct:rw
+      - /sys/fs/cgroup/cpuset/sapjudger:/sys/fs/cgroup/cpuset:rw

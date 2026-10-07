@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-26",
+  "problemRevision": 1,
+  "title": "删除有序数组中的重复项",
+  "summary": "顺序扫描有序数组，只在首元素或数值变化时把当前值加入答案。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "非降序表示后面的数可以等于前面的数，但不能更小，例如 `[1,1,2,2,4]` 符合条件。“去重”就是同一个值只保留一次，并保持数值从小到大的顺序。平台这道改编题要求先输出不同值的数量，再输出这些值，并不是只返回一个数组长度。\n\n输入先给 n，再给 n 个整数。n 允许为 0，所以没有数字也属于合法输入；此时只输出 0。当前题目仅支持完整程序模式，不需要实现外站的原地修改核心函数。公开单元素样例输入 `1` 和数值 `1`，输出是 `1 1`：前一个 1 是数量，后一个 1 才是数组值。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "如果无序，判断一个数是否见过可能需要额外集合；但有序数组里，相同的值一定挨在一起。每一组相同数字的第一项，必然是数组首元素，或者与它前一个元素不同。\n\n参考程序用 a 保存输入，用 b 保存保留的值。i 是当前读位置，k 是已经保留的数量，也是 b 下一个可写的位置。只在 `i==0` 或 `a[i]!=a[i-1]` 时写 `b[k]=a[i]` 并让 k 加 1。虽然标签提到双指针，这份实现使用单次扫描加结果数组，不是外站常见的原地覆盖写法，也没有使用集合。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "额外手算例子 `[1,1,2,2,4]`，起始 k=0：\n\n| i | a[i] | 判断 | 保留结果 |\n| --- | --- | --- | --- |\n| 0 | 1 | 是首元素 | [1]，k=1 |\n| 1 | 1 | 等于前项 | [1]，k=1 |\n| 2 | 2 | 不同于前项 | [1,2]，k=2 |\n| 3 | 2 | 等于前项 | [1,2]，k=2 |\n| 4 | 4 | 不同于前项 | [1,2,4]，k=3 |\n\n最终输出 `3 1 2 4`。公开空数组样例 n=0 时，两个扫描循环都不执行，k 保持 0，因此输出 `0`。这些例子也说明输出里的“数量”不属于去重数组本身。",
+      "diagram": {
+        "caption": "例子中重复值被略过，只有新值才使写位置 k 前进。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 335\" role=\"img\" aria-label=\"有序数组去重：读位置 i 与写位置 k\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"335\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">有序数组去重：读位置 i 与写位置 k</text><text x=\"26.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">i</text><text x=\"196.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">当前值</text><text x=\"366.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">是否保留</text><text x=\"536.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">b 与 k</text><rect x=\"20\" y=\"82\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">0</text><text x=\"196.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">1</text><text x=\"366.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">是首元素</text><text x=\"536.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">[1]，k=1</text><rect x=\"20\" y=\"128\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">1</text><text x=\"196.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">1</text><text x=\"366.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">等于前项</text><text x=\"536.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">[1]，k=1</text><rect x=\"20\" y=\"174\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">2</text><text x=\"196.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">2</text><text x=\"366.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">不同于前项</text><text x=\"536.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">[1,2]，k=2</text><rect x=\"20\" y=\"220\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">3</text><text x=\"196.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">2</text><text x=\"366.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">等于前项</text><text x=\"536.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">[1,2]，k=2</text><rect x=\"20\" y=\"266\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#e5f2ed\"/><text x=\"26.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">4</text><text x=\"196.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">4</text><text x=\"366.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">不同于前项</text><text x=\"536.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">[1,2,4]，k=3</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读入 n，并把接下来的 n 个数放入 a 的下标 0 到 n-1。\n2. 设 k=0，扫描同样的下标范围。i=0 时直接保留，不访问 `a[-1]`。\n3. 对其余元素比较当前值和紧邻前项。相同时略过，不同时把当前值写入 b 的第 k 个位置，再让 k 加 1。\n4. 先 `emit(k)`，再输出 b 的下标 0 到 k-1。参考程序的 emit 会输出空格分隔的整数，判题按整数项比较。\n\n代码里的 d、e 以及某些读字符串工具属于通用参考框架，本题不使用；真正参与解题的是 a、b、i、k。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "扫描前 i 个数后，b 的前 k 项恰好包含这部分输入中每个不同值的第一次出现。开始没有处理任何数，b 为空，事实成立。\n\n处理下一个数时，如果它与前项相等，前一项所属的这一组值已保留，略过它不会漏掉新值。如果它不同于前项，由非降序条件可知它比前项更大，也比此前所有数都大，因此它是首次出现的新值，追加一次正好。首元素单独保留。这样处理到末尾，就既不会漏值，也不会重复保留；扫描顺序同时保证结果顺序正确。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 是输入数组的长度，核心扫描和输出最多各 n 次，所以时间为 `O(n)`，表示输入数量增加时工作量近似线性增加。按实际使用的数据量，输入 a 和结果 b 各需要 `O(n)` 存储，结果数组属于额外空间。\n\n参考框架各语言实际声明了容量 K=20000 的 a、b、d、e，因此这份代码的预留内存为 `O(K)`，其中 d、e 未参与算法；不是只分配 n 个位置。Java、Python、Rust 等动态创建并清零固定容量数组也有 `O(K)` 初始化成本，完整程序读取分词还占 `O(n)`。K 固定时通常将核心运行描述为线性时间，但应知道该参考实现有固定容量的开销。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- n=0 时只输出数量 0，不应先读取或访问 a[0]。\n- 必须使用相邻值不等的判断，不是把所有值当作都不同；连续三个相等的数也只保留一次。\n- 首元素必须先检查 `i==0`，短路判断会避免访问负下标。\n- 输出数量在前，值在后，不要把最后的 k 当成数组最大值。\n- 负数和 0 也是正常数组值，不能用它们充当“已经删除”的标记。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：有序让相同值连在一起，只保留每组的起点。\n\n1. `[0,0,0]` 应输出什么？答案 `1 0`。\n2. `[-3,-3,-1,2]` 应输出什么？答案 `3 -3 -1 2`。检查自己是否把负数误当作无效值。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0;\n    // 输入已按非降序排列；n 可以为 0，不能默认访问首元素。\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    k = 0;\n    for (i = 0; i < n; i += 1)  {\n        // 有序数组的每组相同值只保留第一项；先判断 i=0 避免访问负下标。\n        if ((i == 0) || (a[i] != a[(i - 1)]))  {\n            b[k] = a[i];\n            k = (k + 1);\n        }\n    }\n    // 先输出保留数量，再输出 b 的前 k 个值。\n    emit(k);\n    for (i = 0; i < k; i += 1)  {\n        emit(b[i]);\n    }\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0;\n    // 输入已按非降序排列；n 可以为 0，不能默认访问首元素。\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    k = 0;\n    for (i = 0; i < n; i += 1)  {\n        // 有序数组的每组相同值只保留第一项；先判断 i=0 避免访问负下标。\n        if ((i == 0) || (a[i] != a[(i - 1)]))  {\n            b[k] = a[i];\n            k = (k + 1);\n        }\n    }\n    // 先输出保留数量，再输出 b 的前 k 个值。\n    emit(k);\n    for (i = 0; i < k; i += 1)  {\n        emit(b[i]);\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, k = 0, n = 0;\n        // 输入已按非降序排列；n 可以为 0，不能默认访问首元素。\n        n = read();\n        for (i = 0; i < n; i += 1)  {\n            a[i] = read();\n        }\n        k = 0;\n        for (i = 0; i < n; i += 1)  {\n            // 有序数组的每组相同值只保留第一项；先判断 i=0 避免访问负下标。\n            if ((i == 0) || (a[i] != a[(i - 1)]))  {\n                b[k] = a[i];\n                k = (k + 1);\n            }\n        }\n        // 先输出保留数量，再输出 b 的前 k 个值。\n        emit(k);\n        for (i = 0; i < k; i += 1)  {\n            emit(b[i]);\n        }\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = k = n = 0\n# 输入已按非降序排列；n 可以为 0，不能默认访问首元素。\nn = read()\nfor i in range(n):\n    a[i] = read()\nk = 0\nfor i in range(n):\n    # 有序数组的每组相同值只保留第一项；先判断 i=0 避免访问负下标。\n    if (i == 0) or (a[i] != a[(i - 1)]):\n        b[k] = a[i]\n        k = k + 1\n# 先输出保留数量，再输出 b 的前 k 个值。\nemit(k)\nfor i in range(k):\n    emit(b[i])\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut i: i32 = 0;\n    let mut k: i32 = 0;\n    let mut n: i32 = 0;\n    // 输入已按非降序排列；n 可以为 0，不能默认访问首元素。\n    n = reader.read();\n    i = 0;\n    while i < n  {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    k = 0;\n    i = 0;\n    while i < n  {\n        // 有序数组的每组相同值只保留第一项；先判断 i=0 避免访问负下标。\n        if ((i == 0) || (a[(i) as usize] != a[(i - 1) as usize]))  {\n            b[(k) as usize] = a[(i) as usize];\n            k = (k + 1);\n        }\n        i += 1;\n    }\n    // 先输出保留数量，再输出 b 的前 k 个值。\n    emit(k);\n    i = 0;\n    while i < k  {\n        emit(b[(i) as usize]);\n        i += 1;\n    }\n}\n"
+    }
+  }
+}

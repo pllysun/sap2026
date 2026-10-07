@@ -29,9 +29,20 @@ public class AppVersionService {
 
     @Autowired
     private CosService cosService;
+    @Autowired
+    private com.sap.mapper.SettingMapper settingMapper;
 
     /** 读取当前已发布版本（未发布时 versionCode=0，客户端视为无更新）。 */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public AppVersionVO getLatest() {
+        AppVersionVO vo = getPublished();
+        // Metadata is safe to prefetch; downloading always starts at an authenticated same-origin gate.
+        vo.setDownloadUrl(vo.getVersionCode() > 0 ? "/api/app/download/current" : "");
+        return vo;
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public AppVersionVO getPublished() {
         AppVersionVO vo = new AppVersionVO();
         vo.setVersionCode(parseInt(settingService.getValue(K_CODE), 0));
         vo.setVersionName(nullToEmpty(settingService.getValue(K_NAME)));
@@ -47,8 +58,12 @@ public class AppVersionService {
     }
 
     /** 发布新版本：先把 APK 传 COS，再把元数据落库；返回落库后的最新版本。 */
+    @org.springframework.transaction.annotation.Transactional
     public AppVersionVO publish(MultipartFile apk, int versionCode, String versionName,
                                 String changelog, boolean forceUpdate, int minSupportedVersionCode) {
+        settingMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, K_CODE).last("FOR UPDATE"));
+        if (versionCode <= getPublished().getVersionCode() || versionName == null || versionName.isBlank() || versionName.length() > 64 || minSupportedVersionCode < 1 || minSupportedVersionCode > versionCode)
+            throw new com.sap.common.BusinessException(400, "版本号必须递增，最低支持版本不得超过发布版本");
         Map<String, Object> uploaded = cosService.uploadApk(apk);
 
         save(K_CODE, String.valueOf(versionCode), "App 最新 versionCode");

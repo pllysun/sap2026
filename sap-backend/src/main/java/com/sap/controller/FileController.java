@@ -27,6 +27,8 @@ public class FileController {
 
     @Autowired
     private com.sap.service.AppAccessService appAccessService;
+    @Autowired
+    private com.sap.service.AppDownloadService appDownloads;
 
     /**
      * 对象存储是否已配置（供前端上传前预检，未配置时给出明确引导）
@@ -70,6 +72,11 @@ public class FileController {
     public void download(@RequestParam String url,
                          @RequestParam(required = false, defaultValue = "file") String name,
                          jakarta.servlet.http.HttpServletResponse response) {
+        if (appDownloads.isLegacyDownload(url)) {
+            try { appDownloads.legacy(url, StpUtil.getLoginIdAsLong(), ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest(), response); }
+            catch (java.io.IOException e) { response.setStatus(502); }
+            return;
+        }
         // SSRF 防护：仅允许代理下载本系统对象存储(腾讯云 COS)域名下的文件，
         // 拒绝内网地址 / 云元数据 / 任意 http(s) 目标
         java.net.URI uri;
@@ -132,6 +139,11 @@ public class FileController {
     public void go(@RequestParam String url,
                    @RequestParam(required = false, defaultValue = "file") String name,
                    jakarta.servlet.http.HttpServletResponse response) {
+        if (appDownloads.isLegacyDownload(url)) {
+            try { appDownloads.legacy(url, StpUtil.getLoginIdAsLong(), ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes()).getRequest(), response); }
+            catch (java.io.IOException e) { response.setStatus(502); }
+            return;
+        }
         java.net.URI uri;
         try {
             uri = java.net.URI.create(url);

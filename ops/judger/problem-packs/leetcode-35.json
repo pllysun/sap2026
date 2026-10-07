@@ -1,0 +1,211 @@
+{
+  "slug": "leetcode-35",
+  "title": "搜索插入位置",
+  "difficulty": "EASY",
+  "tags": [
+    "二分查找"
+  ],
+  "description": "在严格递增数组中找到目标值的位置；若不存在，输出插入后仍保持有序的位置。",
+  "inputFormat": "n target，随后 n 个严格递增整数。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "0 <= n <= 200；值和 target 为 -1000..1000。",
+  "sourcePlatform": "LeetCode",
+  "sourceUrl": "https://leetcode.com/problems/search-insert-position/",
+  "sourceId": "35",
+  "sourceNote": "自写教学改编题面；算法任务参考来源链接，输入输出和数据范围以本题为准。测试均为自行生成，未获取外站隐藏官方测试。",
+  "sourceAuthor": "原作者以来源页署名为准；本题面由 SAP OJ 题库整理组改写",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": "EASY",
+  "modes": [
+    "STDIO",
+    "FUNCTION"
+  ],
+  "defaultMode": "FUNCTION",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": "int searchInsert(int* nums, int numsSize, int target) {\n    return 0;\n}\n",
+      "functionDriver": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\n\n__USER_CODE__\nint main(void) {\n    int a[20000];\n    int n = read();\n    int target = read();\n    for (int i = 0; i < n; i++) a[i] = read();\n    int ans = searchInsert(a, n, target);\n    emit(ans);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": "class Solution {\n   public:\n    int searchInsert(vector<int>& nums, int target) {\n        return 0;\n    }\n};\n",
+      "functionDriver": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\n#include <vector>\n#include <string>\nusing namespace std;\n__USER_CODE__\nint main() {\n    int n = read();\n    int target = read();\n    vector<int> a(n);\n    for (int i = 0; i < n; i++) a[i] = read();\n    emit(Solution().searchInsert(a, target));\n    return 0;\n}\n"
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": "class Solution {\n    public int searchInsert(int[] nums, int target) {\n        return 0;\n    }\n}\n",
+      "functionDriver": "import java.io.*;\nimport java.util.*;\n__USER_CODE__\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int n = read();\n        int target = read();\n        int[] a = new int[n];\n        for (int i = 0; i < n; i++) a[i] = read();\n        int ans = new Solution().searchInsert(a, target);\n        emit(ans);\n    }\n}\n"
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "class Solution:\n    def searchInsert(self, nums, target):\n        return 0\n",
+      "functionDriver": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a, target):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\n__USER_CODE__\nn = read()\ntarget = read()\na = [read() for _ in range(n)]\nans = Solution().searchInsert(a, target)\nemit(ans)\n"
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": "impl Solution {\n    pub fn search_insert(nums: Vec<i32>, target: i32) -> i32 {\n        0\n    }\n}\n",
+      "functionDriver": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nstruct Solution;\n__USER_CODE__\nfn main() {\n    let mut reader = Reader::new();\n    let n = reader.read();\n    let target = reader.read();\n    let mut a = Vec::new();\n    for _ in 0..n {\n        a.push(reader.read());\n    }\n    let ans = Solution::search_insert(a, target);\n    emit(ans);\n}\n"
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, m = 0, n = 0, r = 0, t = 0;\n    n = read();\n    t = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n    }\n    l = 0;\n    r = n;\n    while (l < r) {\n        m = ((l + r) / 2);\n        if (a[m] < t) {\n            l = (m + 1);\n        } else {\n            r = m;\n        }\n    }\n    emit(l);\n    return 0;\n}\n",
+      "FUNCTION": "int searchInsert(int* nums, int numsSize, int target) {\n    int t = target;\n    int* a = nums;\n    int n = numsSize;\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int l = 0, m = 0, r = 0;\n    l = 0;\n    r = n;\n    while (l < r) {\n        m = ((l + r) / 2);\n        if (a[m] < t) {\n            l = (m + 1);\n        } else {\n            r = m;\n        }\n    }\n    return l;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, m = 0, n = 0, r = 0, t = 0;\n    n = read();\n    t = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n    }\n    l = 0;\n    r = n;\n    while (l < r) {\n        m = ((l + r) / 2);\n        if (a[m] < t) {\n            l = (m + 1);\n        } else {\n            r = m;\n        }\n    }\n    emit(l);\n    return 0;\n}\n",
+      "FUNCTION": "class Solution {\n   public:\n    int searchInsert(vector<int>& nums, int target) {\n        int t = target;\n        int* a = nums.data();\n        int n = (int)nums.size();\n        static int b[20000];\n        static int d[20000];\n        static int e[20000];\n        int l = 0, m = 0, r = 0;\n        l = 0;\n        r = n;\n        while (l < r) {\n            m = ((l + r) / 2);\n            if (a[m] < t) {\n                l = (m + 1);\n            } else {\n                r = m;\n            }\n        }\n        return l;\n    }\n};\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, l = 0, m = 0, n = 0, r = 0, t = 0;\n        n = read();\n        t = read();\n        for (i = 0; i < n; i += 1) {\n            a[i] = read();\n        }\n        l = 0;\n        r = n;\n        while (l < r) {\n            m = ((l + r) / 2);\n            if (a[m] < t) {\n                l = (m + 1);\n            } else {\n                r = m;\n            }\n        }\n        emit(l);\n    }\n}\n",
+      "FUNCTION": "class Solution {\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    public int searchInsert(int[] nums, int target) {\n        int t = target;\n        int[] a = nums;\n        int n = nums.length;\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int l = 0, m = 0, r = 0;\n        l = 0;\n        r = n;\n        while (l < r) {\n            m = ((l + r) / 2);\n            if (a[m] < t) {\n                l = (m + 1);\n            } else {\n                r = m;\n            }\n        }\n        return l;\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = l = m = n = r = t = 0\nn = read()\nt = read()\nfor i in range(n):\n    a[i] = read()\nl = 0\nr = n\nwhile l < r:\n    m = (l + r) // 2\n    if a[m] < t:\n        l = m + 1\n    else:\n        r = m\nemit(l)\n",
+      "FUNCTION": "class Solution:\n    def searchInsert(self, nums, target):\n        t = target\n        a = nums\n        n = len(nums)\n        b = [0] * 20000\n        d = [0] * 20000\n        e = [0] * 20000\n        l = m = r = 0\n        l = 0\n        r = n\n        while l < r:\n            m = (l + r) // 2\n            if a[m] < t:\n                l = m + 1\n            else:\n                r = m\n        return l\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut i: i32 = 0;\n    let mut l: i32 = 0;\n    let mut m: i32 = 0;\n    let mut n: i32 = 0;\n    let mut r: i32 = 0;\n    let mut t: i32 = 0;\n    n = reader.read();\n    t = reader.read();\n    i = 0;\n    while i < n {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    l = 0;\n    r = n;\n    while (l < r) {\n        m = ((l + r) / 2);\n        if (a[(m) as usize] < t) {\n            l = (m + 1);\n        } else {\n            r = m;\n        }\n    }\n    emit(l);\n}\n",
+      "FUNCTION": "impl Solution {\n    pub fn search_insert(nums: Vec<i32>, target: i32) -> i32 {\n        let t = target;\n        let mut a = nums;\n        let n = a.len() as i32;\n        let mut b = vec![0i32; 20000];\n        let mut d = vec![0i32; 20000];\n        let mut e = vec![0i32; 20000];\n        let mut l: i32 = 0;\n        let mut m: i32 = 0;\n        let mut r: i32 = 0;\n        l = 0;\n        r = n;\n        while (l < r) {\n            m = ((l + r) / 2);\n            if (a[(m) as usize] < t) {\n                l = (m + 1);\n            } else {\n                r = m;\n            }\n        }\n        return l;\n    }\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "0 0\n\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "4 5\n1 3 5 6\n",
+      "expectedOutput": "2\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "4 2\n1 3 5 6\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "19 -24\n-20 -19 -18 -17 -14 -11 -8 -7 -6 -5 -4 -2 3 6 8 14 16 17 18\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "22 24\n-20 -19 -18 -17 -13 -12 -11 -10 -5 -3 -1 0 1 2 5 7 9 11 13 16 18 20\n",
+      "expectedOutput": "22\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "23 -8\n-20 -19 -18 -17 -16 -15 -13 -12 -10 -9 -8 -7 -5 -4 -2 -1 1 9 10 13 16 18 20\n",
+      "expectedOutput": "10\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "23 -14\n-20 -18 -12 -11 -10 -9 -8 -7 -6 -5 -4 -2 -1 3 4 5 8 9 13 16 17 18 20\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "21 3\n-20 -18 -17 -16 -14 -13 -12 -11 -8 -3 -2 -1 3 4 10 12 13 14 17 19 20\n",
+      "expectedOutput": "12\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "19 -16\n-19 -17 -13 -12 -11 -9 -8 -7 -6 -3 -1 1 3 6 10 12 15 19 20\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "22 7\n-19 -16 -15 -14 -11 -10 -9 -7 -6 -3 -2 0 1 2 3 5 12 13 14 16 17 19\n",
+      "expectedOutput": "16\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "25 -6\n-18 -17 -16 -15 -14 -13 -12 -11 -7 -6 -4 -3 -2 -1 0 3 6 8 9 10 11 14 16 17 19\n",
+      "expectedOutput": "9\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "22 -6\n-20 -17 -15 -14 -12 -10 -8 -7 -3 -2 -1 1 3 5 6 7 8 10 13 17 19 20\n",
+      "expectedOutput": "8\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "22 -22\n-20 -19 -16 -15 -13 -12 -11 -8 -7 -6 -4 0 1 2 3 4 5 11 13 16 19 20\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "22 -15\n-18 -17 -13 -12 -11 -10 -7 -3 -2 -1 0 1 2 3 4 5 6 7 8 14 15 16\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "23 -7\n-20 -19 -14 -13 -12 -10 -7 -5 -4 -3 0 1 2 3 4 5 8 12 14 15 16 17 18\n",
+      "expectedOutput": "6\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "22 25\n-20 -18 -17 -13 -12 -10 -9 -6 -5 -4 -2 1 2 3 4 6 9 12 13 16 17 19\n",
+      "expectedOutput": "22\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "19 -16\n-16 -13 -11 -5 -2 -1 1 2 5 6 7 8 10 11 12 13 14 15 17\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "20 17\n-16 -15 -11 -10 -9 -8 -6 -5 -4 -3 -1 0 1 3 4 5 6 10 16 19\n",
+      "expectedOutput": "19\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "22 24\n-19 -15 -12 -11 -10 -9 -8 -7 -6 -3 -1 2 4 5 6 8 9 10 11 13 17 19\n",
+      "expectedOutput": "22\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "200 -1000\n0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-21",
+      "input": "200 1000\n0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199\n",
+      "expectedOutput": "200\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

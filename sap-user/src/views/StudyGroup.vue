@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page study-page">
     <PageHeader title="学习小组" label="LEARN TOGETHER / 一起学习" description="管理学习任务，记录每一次进步。" />
 
     <!-- Tab Bar -->
@@ -64,14 +64,14 @@
                       target="_blank"
                       rel="noopener noreferrer"
                       class="btn btn--primary btn--full btn--sm btn--pill mt-3"
-                    >↓ 下载文件</a>
+                    ><UiIcon name="file-save" :size="16" /> 下载文件</a>
                   </div>
                   <p v-else class="t-caption" style="color:var(--ink-400); padding: var(--s6) 0; text-align: center;">本周暂无学习任务</p>
                 </div>
 
                 <!-- 右栏：我的作业 -->
                 <div class="hw-col">
-                  <div class="split__title">⬆ 我的作业</div>
+                  <div class="split__title"><UiIcon name="file-plus" /> 我的作业</div>
                   <!-- 已提交：文件卡 + 下载/替换/删除 -->
                   <div v-if="status.submitted && status.submissions && status.submissions.length">
                     <div v-for="s in status.submissions" :key="s.id" class="card card--gradient hw-file-card">
@@ -89,7 +89,7 @@
                           target="_blank"
                           rel="noopener noreferrer"
                           class="btn btn--primary btn--sm btn--pill"
-                        >↓ 下载</a>
+                        ><UiIcon name="file-save" :size="16" /> 下载</a>
                         <template v-if="!status.weekScore">
                           <label class="btn btn--secondary btn--sm btn--pill" style="cursor:pointer;">
                             🔄 替换
@@ -229,6 +229,8 @@
             <div
               v-for="(act, ai) in group.activities" :key="act.id"
               class="rank-act-card anim-in"
+              role="button" tabindex="0" :aria-label="'查看排名：' + (act.title || `第${act.seqNum}次活动`)"
+              @keydown.enter.prevent="openRankingDetail(act)" @keydown.space.prevent="openRankingDetail(act)"
               :class="{ 'rank-act-card--active': act.status === 1, 'rank-act-card--featured': gi === 0 && ai === 0 }"
               :style="{ animationDelay: ((gi * 0.08) + (ai * 0.04)) + 's' }"
               @click="openRankingDetail(act)"
@@ -247,7 +249,7 @@
                 <span v-if="act.memberCount">👥 {{ act.memberCount }}人</span>
               </div>
               <div class="rank-act-card__action">
-                <span>查看排名 →</span>
+                <span>查看排名 <UiIcon name="trophy" :size="16" /></span>
               </div>
             </div>
           </div>
@@ -259,16 +261,16 @@
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="rankDetailAct" class="rank-modal-overlay" @click.self="rankDetailAct = null">
-          <div class="rank-modal">
+          <div ref="rankDialog" class="rank-modal" role="dialog" aria-modal="true" aria-labelledby="ranking-title" tabindex="-1">
             <div class="rank-modal__header">
               <div>
-                <h2 class="rank-modal__title">{{ rankDetailAct.title || `第${rankDetailAct.seqNum}次活动` }}</h2>
+                <h2 id="ranking-title" class="rank-modal__title">{{ rankDetailAct.title || `第${rankDetailAct.seqNum}次活动` }}</h2>
                 <div class="rank-modal__subtitle">
                   <span class="badge" :class="rankDetailAct.status === 1 ? 'badge--gradient' : 'badge--default'" style="margin-right:8px;">{{ rankDetailAct.status === 1 ? '进行中' : '已归档' }}</span>
                   {{ rankDetailAct.grade }}届 · 共{{ rankDetailAct.currentWeek }}周
                 </div>
               </div>
-              <button class="rank-modal__close" @click="rankDetailAct = null">✕</button>
+              <button class="rank-modal__close" aria-label="关闭排名详情" @click="rankDetailAct = null">✕</button>
             </div>
 
             <div class="rank-modal__body">
@@ -287,9 +289,9 @@
                   </table>
                 </div>
                 <div class="pagination" v-if="total > pageSize">
-                  <button class="pagination__btn" :disabled="currentPage<=1" @click="currentPage--;loadRankingDetail()">‹</button>
+                  <button class="pagination__btn" aria-label="上一页排名" :disabled="currentPage<=1" @click="currentPage--;loadRankingDetail()"><UiIcon name="chevron-left" /></button>
                   <span class="t-caption">{{ currentPage }} / {{ Math.ceil(total/pageSize) }}</span>
-                  <button class="pagination__btn" :disabled="currentPage>=Math.ceil(total/pageSize)" @click="currentPage++;loadRankingDetail()">›</button>
+                  <button class="pagination__btn" aria-label="下一页排名" :disabled="currentPage>=Math.ceil(total/pageSize)" @click="currentPage++;loadRankingDetail()"><UiIcon name="chevron-right" /></button>
                 </div>
               </template>
               <div v-else class="empty" style="padding: var(--s6);"><div class="empty__text">暂无排名数据</div></div>
@@ -303,9 +305,11 @@
 
 <script setup>
 import PageHeader from '@/components/PageHeader.vue'
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
+import { useDialog } from '@/utils/useDialog'
 
 const userStore = useUserStore()
 const isGuest = computed(() => {
@@ -367,6 +371,8 @@ async function loadScores() { scoresLoading.value = true; try { const r = await 
 const allActivities = ref([])
 const rankingLoading = ref(false)
 const rankDetailAct = ref(null)
+const rankDialog = ref(null)
+useDialog(computed(() => !!rankDetailAct.value), rankDialog, () => { rankDetailAct.value = null })
 const detailLoading = ref(false)
 const records = ref([]); const total = ref(0); const currentPage = ref(1); const pageSize = 20
 
@@ -729,5 +735,17 @@ watch(isGuest, guest => { if (!guest) loadStatus() }, { immediate: true })
   }
   .rank-modal__header,
   .rank-modal__body { padding: var(--s4); }
+}
+</style>
+
+<style scoped>
+.hw-col, .hw-grid > *, .upload-zone { min-width: 0; }.upload-zone { overflow-wrap: anywhere; }
+.rank-modal__header > div { min-width: 0; }.rank-modal__title { overflow-wrap: anywhere; }.rank-modal__subtitle { flex-wrap: wrap; row-gap: 6px; }
+.rank-modal-overlay { padding: 24px; }.rank-modal { max-height: calc(100dvh - 48px); border: 1px solid var(--border-blue); border-radius: 18px; }.rank-modal__body { min-height: 0; overscroll-behavior: contain; }.rank-modal .table-wrap { max-width: 100%; }.rank-modal .table { min-width: 420px; }.rank-modal .pagination { flex-wrap: wrap; }
+@media (max-width: 600px) { .rank-modal-overlay { padding: 12px; }.rank-modal { margin: 0; max-height: calc(100dvh - 24px); }.rank-modal__header, .rank-modal__body { padding: 18px; }.rank-modal__title { font-size: 18px; }.rank-modal .table th, .rank-modal .table td { padding: 12px; }.rank-modal .table-wrap { margin: 0; }.status-banner { align-items: flex-start; }.status-banner__title { line-height: 1.8; }.hw-file-card { padding: 16px; } }
+@media (max-width: 600px) {
+  .rank-modal .table { min-width: 0; width: 100%; table-layout: fixed; }
+  .rank-modal .table :is(th, td) { padding: 12px 8px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+  .rank-modal .table th:first-child { width: 15%; }.rank-modal .table th:nth-child(2) { width: 29%; }.rank-modal .table th:nth-child(3) { width: 36%; }.rank-modal .table th:last-child { width: 20%; }
 }
 </style>

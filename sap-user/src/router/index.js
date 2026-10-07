@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  { path: '/schedule-app', name: 'ScheduleAppIntro', component: () => import('@/views/ScheduleAppIntro.vue') },
   { path: '/forgot-password', name: 'ForgotPassword', component: () => import('@/views/ForgotPassword.vue') },
   {
     path: '/login',
@@ -17,6 +18,10 @@ const routes = [
     component: () => import('@/views/Layout.vue'),
     redirect: '/home',
     children: [
+      { path: 'oj', name: 'OjProblems', component: () => import('@/views/oj/ProblemList.vue') },
+      { path: 'oj/sets/:setId', name: 'OjProblemSet', component: () => import('@/views/oj/SetDetail.vue') },
+      { path: 'oj/sets/:setId/items/:itemId', name: 'OjSetWorkspace', component: () => import('@/views/oj/SetWorkspace.vue') },
+      { path: 'oj/:id', name: 'OjWorkspace', component: () => import('@/views/oj/OjWorkspace.vue') },
       {
         path: 'home',
         name: 'Home',
@@ -65,6 +70,7 @@ const router = createRouter({
   history: createWebHistory(),
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
+    if (to.path === from.path && to.path.startsWith('/oj') && !to.hash) return false
     if (to.hash) return { el: to.hash, top: 84 }
     return { top: 0 }
   },

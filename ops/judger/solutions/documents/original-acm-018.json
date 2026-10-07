@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-018",
+  "problemRevision": 1,
+  "title": "连续标记压缩",
+  "summary": "用 start/end 扫描每段相邻相同字母，输出段首字母与 end−start，再从下一段继续。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "日志是一个只含大写字母的非空字符串。把每段**相邻且相同**的字母压缩成字母与次数，每段一行，保留段的出现顺序。同一种字母隔着其他字符再次出现，必须另输出一段。\n\n例如 `AAABBCA` 的连续段依次为 `AAA`、`BB`、`C`、`A`，输出 `A 3`、`B 2`、`C 1`、`A 1`。不能统计为全串 A 有 4 次，因为那会失去日志事件的先后关系。长度最多 10000，不涉及空串标记。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "start 指向尚未处理段的起点。先令 end=start+1，因为段至少包含一个字符；只要 end 仍在串内且字符与段首相同，就增加 end。\n\n停止时 end 是第一个不同字符的位置，或等于字符串长度，区间 `[start,end)` 恰好是这一段。半开区间不包含 end，长度就是 end−start。输出段首字符和段长，再令 start=end，继续寻找下一段。\n\n虽然有两层 while，下标不会重新从头寻找，所有字符只沿一个方向被扫描。C/C++/Java/Rust 可在确定段后直接输出，Python 把各段文字存到 answer 后合并换行。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 `AAABBCA`，下标从 0 到 6。\n\n| 段 | start | end 停止位置 | 区间字符 | 输出 |\n| --- | --- | --- | --- | --- |\n| 1 | 0 | 3，字符 B 与 A 不同 | 0..2 为 AAA | `A 3` |\n| 2 | 3 | 5，字符 C 与 B 不同 | 3..4 为 BB | `B 2` |\n| 3 | 5 | 6，字符 A 与 C 不同 | 5 为 C | `C 1` |\n| 4 | 6 | 7，到串尾 | 6 为 A | `A 1` |\n\n最后一段需要在 end 到串尾时正常输出，而不是只有遇到不同字符才输出。",
+      "diagram": {
+        "caption": "同样绿色的 A 分属首尾两段；两个不同段必须独立输出，不能按全局颜色合并。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 226\" role=\"img\" aria-label=\"AAABBCA 的最大连续段\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"226\" rx=\"14\" fill=\"#f4f8fd\"/><text x=\"24\" y=\"32\" font-size=\"18\" fill=\"#23466f\">AAABBCA 的最大连续段</text><text x=\"24\" y=\"79\" font-size=\"15\" fill=\"#3267b1\">原串下标</text><rect x=\"164\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"197.71428571428572\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">0</text><rect x=\"241.42857142857144\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"275.14285714285717\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">1</text><rect x=\"318.8571428571429\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"352.5714285714286\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">2</text><rect x=\"396.28571428571433\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"430.00000000000006\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">3</text><rect x=\"473.7142857142858\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"507.4285714285715\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">4</text><rect x=\"551.1428571428572\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"584.8571428571429\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">5</text><rect x=\"628.5714285714287\" y=\"52\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"662.2857142857143\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">6</text><text x=\"24\" y=\"133\" font-size=\"15\" fill=\"#3267b1\">原串字母</text><rect x=\"164\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"197.71428571428572\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">A</text><rect x=\"241.42857142857144\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"275.14285714285717\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">A</text><rect x=\"318.8571428571429\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"352.5714285714286\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">A</text><rect x=\"396.28571428571433\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"430.00000000000006\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">B</text><rect x=\"473.7142857142858\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"507.4285714285715\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">B</text><rect x=\"551.1428571428572\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b77930\" stroke-width=\"2\"/><text x=\"584.8571428571429\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#b77930\">C</text><rect x=\"628.5714285714287\" y=\"106\" width=\"67.42857142857143\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"662.2857142857143\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">A</text><text x=\"24\" y=\"187\" font-size=\"15\" fill=\"#3267b1\">连续段</text><rect x=\"164\" y=\"160\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"226.75\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">[0,3):A3</text><rect x=\"299.5\" y=\"160\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"362.25\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">[3,5):B2</text><rect x=\"435.0\" y=\"160\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b77930\" stroke-width=\"2\"/><text x=\"497.75\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#b77930\">[5,6):C1</text><rect x=\"570.5\" y=\"160\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"633.25\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">[6,7):A1</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读完整字母串 text，得到 length。\n2. 初始化 start=0。在 start<length 时建立 end=start+1。\n3. 先判断 end<length，再访问 `text[end]` 比较，避免串尾越界。\n4. 输出 `text[start]` 和 end−start，中间一个空格，一段一行。\n5. 令 start=end。Python 的答案列表按顺序加入段文字，最后用换行连接；其他语言依参考输出方式逐段产生结果。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "在每轮开始时，start 是第一处还未输出的位置。内循环延伸 end 时，经过的字符都与段首相同；停止时要么遇到不同字母，要么已到串尾，因此这一段既全部相同，又不能继续向右扩展，是完整的最大连续段。\n\n输出该段后令 start=end，恰好跳到下一处未处理字符，没有遗漏也没有重复。各段按原方向扫描，所以顺序保留；终止时所有字符都已经被它所在的唯一连续段覆盖。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 n 为字符串长度、g 为连续段数。end 在每段内部前进，所有段的字符数之和为 n，每个字符只被少量检查，时间 `O(n)`，不是 `O(n²)`。大 O 表示整串越长，扫描次数近似同比增加。\n\n扫描的 start/end 为常量额外空间。C/C++/Java/Rust 逐段输出时，算法额外空间 `O(1)`，原串占 `O(n)`；Python 保存 g 条答案，额外空间 `O(g)`（包含各段的计数文字），最坏 g=n。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 不相邻的相同字母不能合并，例如 `ABA` 要输出三段。\n- end 是第一个不属于本段的位置，段长为 end−start，不再加 1。\n- 先检查 end 边界再读取字符，末段一定可能走到 n。\n- 每段至少一字符，所以 end 从 start+1 起，不能让 start 不前进。\n- 一整串都同字母时应只输出一行；所有相邻字母都不同时每字母一行。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "连续段的本质是“相同字符的最大相邻区间”，用两端下标就能确定字母与数量。\n\n练习 `ZZZAABBZ`，输出 `Z 3`、`A 2`、`B 2`、`Z 1`。最后一个 Z 不应与第一段合并。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 只合并相邻且相同的大写字母，不做全串频数统计。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint main(void)  {\n    char text[10001];\n    scanf(\"%10000s\", text);\n    int length = (int)strlen(text);\n    int start = 0;\n    /* start 是段首，end 扩展到第一个不同字符或串尾，区间为 [start,end)。 */\n    while (start < length)  {\n        int end = start + 1;\n        while (end < length && text[end] == text[start])  {\n            ++end;\n        }\n        /* 输出段首字母和 end-start，然后从 end 开始下一段，最后一段也正常输出。 */\n        printf(\"%c %d\\n\", text[start], end - start);\n        start = end;\n    }\n    return 0;\n}\n",
+      "cpp": "/* 只合并相邻且相同的大写字母，不做全串频数统计。 */\n#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main()  {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string text;\n    cin >> text;\n    int start = 0;\n    int length = static_cast<int>(text.size());\n    /* start 是段首，end 扩展到第一个不同字符或串尾，区间为 [start,end)。 */\n    while (start < length)  {\n        int end = start + 1;\n        while (end < length && text[end] == text[start])  {\n            ++end;\n        }\n        /* 输出段首字母和 end-start，然后从 end 开始下一段，最后一段也正常输出。 */\n        cout << text[start] << ' ' << end - start << '\\n';\n        start = end;\n    }\n    return 0;\n}\n",
+      "java": "/* 只合并相邻且相同的大写字母，不做全串频数统计。 */\nimport java.io.*;\nimport java.util.*;\npublic class Main  {\n    static final class FastScanner  {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n        private int read() throws IOException  {\n            if (position == length)  {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0)  {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n        String next() throws IOException  {\n            int value;\n            do  {\n                value = read();\n            }\n            while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1)  {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n        int nextInt() throws IOException  {\n            return Integer.parseInt(next());\n        }\n        long nextLong() throws IOException  {\n            return Long.parseLong(next());\n        }\n    }\n    public static void main(String[] args) throws Exception  {\n        FastScanner scanner = new FastScanner();\n        String text = scanner.next();\n        StringBuilder answer = new StringBuilder();\n        int start = 0;\n        /* start 是段首，end 扩展到第一个不同字符或串尾，区间为 [start,end)。 */\n        while (start < text.length())  {\n            int end = start + 1;\n            while (end < text.length() && text.charAt(end) == text.charAt(start))  {\n                end++;\n            }\n            answer.append(text.charAt(start)).append(' ').append(end - start).append('\\n');\n            start = end;\n        }\n        System.out.print(answer);\n    }\n    /* 输出段首字母和 end-start，然后从 end 开始下一段，最后一段也正常输出。 */\n}\n",
+      "python": "# 只合并相邻且相同的大写字母，不做全串频数统计。\nimport sys\n\ntext = sys.stdin.readline().strip()\nanswer = []\nstart = 0\n# start 是段首，end 扩展到第一个不同字符或串尾，区间为 [start,end)。\nwhile start < len(text):\n    end = start + 1\n    while end < len(text) and text[end] == text[start]:\n        end += 1\n    answer.append(f\"{text[start]} {end - start}\")\n    start = end\n# 输出段首字母和 end-start，然后从 end 开始下一段，最后一段也正常输出。\nprint(\"\\n\".join(answer))\n",
+      "rust": "/* 只合并相邻且相同的大写字母，不做全串频数统计。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let text = input.trim().as_bytes();\n    let mut answer = String::new();\n    let mut start = 0usize;\n    /* start 是段首，end 扩展到第一个不同字符或串尾，区间为 [start,end)。 */\n    while start < text.len()  {\n        let mut end = start + 1;\n        while end < text.len() && text[end] == text[start]  {\n            end += 1;\n        }\n        answer.push_str(&format!(\"{} {}\\n\", text[start] as char, end - start));\n        start = end;\n    }\n    print!(\"{}\", answer);\n    /* 输出段首字母和 end-start，然后从 end 开始下一段，最后一段也正常输出。 */\n}\n"
+    }
+  }
+}

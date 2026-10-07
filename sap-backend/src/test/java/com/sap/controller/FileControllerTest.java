@@ -29,6 +29,7 @@ class FileControllerTest {
 
     @Mock CosService cosService;
     @Mock AppAccessService appAccessService;
+    @Mock com.sap.service.AppDownloadService appDownloads;
 
     @InjectMocks FileController controller;
 

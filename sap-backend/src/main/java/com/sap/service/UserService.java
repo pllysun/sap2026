@@ -58,6 +58,7 @@ public class UserService {
         existing.setStatus(user.getStatus());
         userMapper.updateById(existing);
         cacheService.updateUser(existing);
+        if (!Integer.valueOf(1).equals(existing.getStatus())) StpUtil.kickout(id);
     }
 
     @Transactional

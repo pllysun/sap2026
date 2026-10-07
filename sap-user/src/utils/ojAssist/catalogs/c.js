@@ -1,0 +1,47 @@
+import { fn, value, type, profile } from '../catalog.js'
+export default profile(
+  'auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while _Alignas _Alignof _Atomic _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local alignas alignof bool constexpr false nullptr static_assert thread_local true typeof typeof_unqual',
+  {
+    main: { detail: '完整程序入口', body: '#include <stdio.h>\n\nint main(void) {\n    ${code}\n    return 0;\n}' },
+    fori: { detail: '计数循环', body: 'for (int ${i} = 0; ${i} < ${n}; ${i}++) {\n    ${code}\n}' },
+    while: { detail: 'while 循环', body: 'while (${condition}) {\n    ${code}\n}' },
+    ifelse: { detail: '条件分支', body: 'if (${condition}) {\n    ${code}\n} else {\n    ${other}\n}' },
+    function: { detail: '定义函数', body: '${int} ${solve}(${parameters}) {\n    ${code}\n}' }
+  },
+  [
+    fn('printf', ['const char *format', '...'], 'int', '格式化输出。需要 <stdio.h>。'),
+    fn('scanf', ['const char *format', '...'], 'int', '格式化输入；读取数值时传入变量地址。需要 <stdio.h>。'),
+    fn('fgets', ['char *buffer', 'int size', 'FILE *stream'], 'char *', '读取一行，最多 size - 1 个字符。'),
+    fn('puts', ['const char *text'], 'int', '输出字符串并换行。'),
+    fn('putchar', ['int character'], 'int', '输出一个字符。'),
+    fn('getchar', [], 'int', '读取一个字符；到达末尾返回 EOF。'),
+    fn('strlen', ['const char *text'], 'size_t', '返回字符串长度，不含结束符。需要 <string.h>。'),
+    fn('strcmp', ['const char *left', 'const char *right'], 'int', '比较字符串；相等时返回 0。'),
+    fn('strcpy', ['char *destination', 'const char *source'], 'char *', '复制字符串；目标空间必须足够。'),
+    fn('strcat', ['char *destination', 'const char *source'], 'char *', '追加字符串；目标空间必须足够。'),
+    fn('strchr', ['const char *text', 'int character'], 'char *', '查找首次出现的字符。'),
+    fn('strstr', ['const char *text', 'const char *needle'], 'char *', '查找首次出现的子串。'),
+    fn('memset', ['void *buffer', 'int value', 'size_t count'], 'void *', '按字节填充内存。'),
+    fn('memcpy', ['void *destination', 'const void *source', 'size_t count'], 'void *', '复制不重叠的内存区域。'),
+    fn('memmove', ['void *destination', 'const void *source', 'size_t count'], 'void *', '复制内存，允许区域重叠。'),
+    fn('qsort', ['void *base', 'size_t count', 'size_t size', 'int (*compare)(const void *, const void *)'], 'void', '按比较函数对数组排序。需要 <stdlib.h>。'),
+    fn('bsearch', ['const void *key', 'const void *base', 'size_t count', 'size_t size', 'int (*compare)(const void *, const void *)'], 'void *', '在已排序数组中查找元素。'),
+    fn('malloc', ['size_t size'], 'void *', '分配内存；检查返回值并在使用后释放。'),
+    fn('calloc', ['size_t count', 'size_t size'], 'void *', '分配并清零内存。'),
+    fn('realloc', ['void *buffer', 'size_t size'], 'void *', '调整已分配内存的大小。'),
+    fn('free', ['void *buffer'], 'void', '释放动态分配的内存。'),
+    fn('abs', ['int value'], 'int', '整数绝对值。'),
+    fn('llabs', ['long long value'], 'long long', '长整数绝对值。'),
+    fn('strtol', ['const char *text', 'char **end', 'int base'], 'long', '按指定进制解析整数。'),
+    fn('strtoll', ['const char *text', 'char **end', 'int base'], 'long long', '按指定进制解析长整数。'),
+    fn('atoi', ['const char *text'], 'int', '将字符串转换为整数。'),
+    ...['sqrt', 'floor', 'ceil', 'round', 'fabs'].map(name => fn(name, ['double value'], 'double', '数学函数。需要 <math.h>。')),
+    fn('pow', ['double base', 'double exponent'], 'double', '计算乘方。需要 <math.h>。'),
+    value('stdin', 'FILE *', '标准输入流。'), value('stdout', 'FILE *', '标准输出流。'),
+    value('EOF', 'int', '输入结束标记。'), value('NULL', 'void *', '空指针。'),
+    value('INT_MAX', 'int', 'int 的最大值。需要 <limits.h>。'),
+    value('LLONG_MAX', 'long long', 'long long 的最大值。需要 <limits.h>。'),
+    type('size_t', '用于表示对象大小的无符号整数类型。'),
+    type('int64_t', '64 位有符号整数。需要 <stdint.h>。')
+  ], {}
+)

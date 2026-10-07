@@ -1,0 +1,182 @@
+[
+  {
+    "slug": "original-acm-011",
+    "title": "连续进步的记录",
+    "path": "original-acm-011/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001011
+  },
+  {
+    "slug": "original-acm-012",
+    "title": "循环轮值表",
+    "path": "original-acm-012/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001012
+  },
+  {
+    "slug": "original-acm-013",
+    "title": "训练积分名次",
+    "path": "original-acm-013/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001013
+  },
+  {
+    "slug": "original-acm-014",
+    "title": "物资库的出入",
+    "path": "original-acm-014/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001014
+  },
+  {
+    "slug": "original-acm-015",
+    "title": "分段温度调节",
+    "path": "original-acm-015/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001015
+  },
+  {
+    "slug": "original-acm-016",
+    "title": "海报字母统计",
+    "path": "original-acm-016/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001016
+  },
+  {
+    "slug": "original-acm-017",
+    "title": "值班留言的词数",
+    "path": "original-acm-017/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001017
+  },
+  {
+    "slug": "original-acm-018",
+    "title": "连续标记压缩",
+    "path": "original-acm-018/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001018
+  },
+  {
+    "slug": "original-acm-019",
+    "title": "灯位周边计数",
+    "path": "original-acm-019/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001019
+  },
+  {
+    "slug": "original-acm-020",
+    "title": "旋转数据表",
+    "path": "original-acm-020/pack.json",
+    "cases": 25,
+    "samples": 3,
+    "modes": [
+      "STDIO"
+    ],
+    "languages": [
+      "c",
+      "cpp",
+      "java",
+      "python",
+      "rust"
+    ],
+    "randomSeed": 20261001020
+  }
+]

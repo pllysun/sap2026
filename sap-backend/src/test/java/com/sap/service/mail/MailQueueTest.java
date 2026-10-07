@@ -25,6 +25,20 @@ class MailQueueTest {
     @AfterEach void stop(){queue.stop();}
     long count(String table){return db.queryForObject("SELECT COUNT(*) FROM "+table,Long.class);}
     String enqueue(){return queue.enqueueTest("user@example.com","Test","<p>private content</p>",1L);}
+    @Test void downloadAlertIsDeduplicatedPersistentAndUsesAuditedQueue() {
+        String first = queue.enqueueDownloadAlert("operator@example.com", "2026-10-04:epoch", "2026-10-04", 21, 20);
+        assertEquals(first, queue.enqueueDownloadAlert("operator@example.com", "2026-10-04:epoch", "2026-10-04", 22, 20));
+        assertEquals(1, count("sys_mail_queue"));
+        var message = db.queryForMap("SELECT * FROM sys_mail_queue");
+        assertEquals("APP_DOWNLOAD_ALERT", message.get("event_key"));
+        assertEquals("operator@example.com", message.get("recipient"));
+        String payload = message.get("payload").toString();
+        assertFalse(payload.contains("<h2>"));
+        assertTrue(com.sap.jw.util.AesUtil.decrypt("0123456789abcdef0123456789abcdef", payload).contains("防护计数已达 21 次"));
+        queue.enqueueDownloadAlert("operator@example.com", "2026-10-05:epoch", "2026-10-05", 21, 20);
+        assertEquals(2, count("sys_mail_queue"));
+        assertEquals(2, count("sys_mail_log"));
+    }
     void clearGap(){db.update("UPDATE sys_mail_worker SET next_at=0 WHERE id=1");}
     Map<String,Object> businessContext() {
         var user=new com.sap.entity.User();user.setId(10L);user.setName("触发时姓名");user.setStudentId("20260001");

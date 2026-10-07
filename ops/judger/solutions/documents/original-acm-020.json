@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-020",
+  "problemRevision": 1,
+  "title": "旋转数据表",
+  "summary": "新表每一行对应原表一列，自下而上取数，用 values[n-1-col][row] 直接输出旋转结果。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "原数据表有n行m列，顺时针旋转90度后变为m行n列。原左下角来到新左上角；数字值不改变，只改变位置。表格不一定是正方形，允许重复和负数。\n\n输入先给n、m，再按原表的行输入全部整数。输出必须为m行，每行n个整数，保留行的结构。例如公开样例2×3表`1 2 3 / 4 5 6`旋转后是3×2表`4 1 / 5 2 / 6 3`。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "观察新表第一行是原表第一列自下向上读出的值；新表第二行是原表第二列自下向上读出的值，以此类推。于是不用先建立新矩阵，读完原表后按新顺序访问并打印即可。\n\n新表位置(row,col)中，row表示取原表哪一列，col表示从原表底部向上数第几个位置，因此来自原表 `(n-1-col,row)`。反过来说，原位置(r,c)会来到新位置(c,n-1-r)。两个公式表达的是同一个顺时针旋转。\n\n需要先保存原表，因为第一项输出就可能来自最后一行；单纯按输入顺序读一个输出一个不行。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例2×3表按新行推演：\n\n| 新行row | 新列col依次取值 | 原位置 | 新行结果 |\n| --- | --- | --- | --- |\n| 0 | 0,1 | (1,0)，(0,0) | 4 1 |\n| 1 | 0,1 | (1,1)，(0,1) | 5 2 |\n| 2 | 0,1 | (1,2)，(0,2) | 6 3 |\n\n第一项新位置(0,0)来自原位置(n-1,0)，正是左下角4。公开样例3×1的原列1、2、3旋转后成为一行3、2、1，而不是1、2、3。",
+      "diagram": {
+        "caption": "公开样例2×3表顺时针旋转。蓝色原第0列从下往上变成绿色新第0行，原左下角4来到新左上角。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 300\" role=\"img\" aria-label=\"二行三列数据表顺时针旋转为三行二列\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"300\" rx=\"16\" fill=\"#f6f9ff\"/><text x=\"36\" y=\"34\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#24364b\">顺时针 90°：原来的列从下向上变成新行</text><rect x=\"45\" y=\"90\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#e7effb\" stroke=\"#bfd1e8\"/><text x=\"77\" y=\"125\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">1</text><rect x=\"115\" y=\"90\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"147\" y=\"125\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">2</text><rect x=\"185\" y=\"90\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"217\" y=\"125\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">3</text><rect x=\"45\" y=\"155\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#e7effb\" stroke=\"#bfd1e8\"/><text x=\"77\" y=\"190\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">4</text><rect x=\"115\" y=\"155\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"147\" y=\"190\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">5</text><rect x=\"185\" y=\"155\" width=\"64\" height=\"56\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"217\" y=\"190\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#3267b1\">6</text><text x=\"45\" y=\"70\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">原表：2 行 3 列</text><line x1=\"300\" y1=\"163\" x2=\"395\" y2=\"163\" stroke=\"#3267b1\" stroke-width=\"2\"/><polygon points=\"395,163 383,155 383,171\" fill=\"#3267b1\"/><text x=\"432\" y=\"70\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">新表：3 行 2 列</text><rect x=\"435\" y=\"90\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#edf7f2\" stroke=\"#bfd1e8\"/><text x=\"467\" y=\"123\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">4</text><rect x=\"505\" y=\"90\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#edf7f2\" stroke=\"#bfd1e8\"/><text x=\"537\" y=\"123\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">1</text><rect x=\"435\" y=\"150\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"467\" y=\"183\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">5</text><rect x=\"505\" y=\"150\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"537\" y=\"183\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">2</text><rect x=\"435\" y=\"210\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"467\" y=\"243\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">6</text><rect x=\"505\" y=\"210\" width=\"64\" height=\"52\" rx=\"6\" fill=\"#ffffff\" stroke=\"#bfd1e8\"/><text x=\"537\" y=\"243\" text-anchor=\"middle\" font-size=\"18\" font-family=\"sans-serif\" fill=\"#26816b\">3</text><text x=\"45\" y=\"259\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#24364b\">原表第 0 列：1 → 4</text><text x=\"435\" y=\"290\" font-size=\"15\" font-family=\"sans-serif\" fill=\"#26816b\">新表第 0 行：4 → 1</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取n、m，建立或使用二维values数组保存原表。\n2. 读入循环外层行0..n-1、内层列0..m-1。\n3. 输出循环的范围调换：新row从0到m-1，新col从0到n-1。\n4. 每项访问values[n-1-col][row]，同一新行的项用空格分隔，行末输出换行。\n5. C固定50×50；C++/Java/Rust按n、m分配；Python从data按每m项切出原行。所有值使用能够保存题目整数范围的类型。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "顺时针90度旋转时，原表的列从左到右依次成为新表的行，而原表同列中从下到上的顺序成为新行从左到右的顺序。输出循环正好按这个对应关系访问原表。\n\n新row覆盖每个原列，新col覆盖该列每个原行，且每个原位置只对应一个新位置，所以没有遗漏或重复。输出行数m、列数n也与旋转后的维度一致，因此数值及排布都正确。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令n、m为原表行列数。读入n×m项，输出n×m项，每项固定索引计算，时间O(nm)。原表存储为O(nm)输入空间；不另建旋转矩阵，除输出缓存外算法额外空间O(1)。\n\nC实际固定50×50数组，是题目上限下的固定缓冲区；Python除values还保存data/切片，仍为O(nm)。Java和Rust把输出拼成answer，输出存储O(nm)，Python单行输出生成器迭代不缓存整张新表。大O表示格子数增多带来的工作量。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 新表m行n列，不能保留原来的行列数。\n- 顺时针要求原列自下向上取值，不要输出成逆时针或仅做转置。\n- 取原行用n-1-col，不是m-1-col，长方形样例能发现这个错误。\n- 换行要放在每一新行结束后，不能把所有项当一行输出。\n- 1×1表旋转后不变；单行会变成一列，单列会反向变成一行。\n- 重复值与负数都是正常数据，旋转不排序也不修改数值。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "先用一个非正方形小表画出四个角的位置，再推导索引，能避免记错方向。\n\n练习：一行`7 8 9`旋转后是三行7、8、9；2×2表`1 2 / 3 4`旋转后为`3 1 / 4 2`。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint main(void) {\n    int n, m;\n    long long values[50][50];\n    // 读取原表维度；旋转后行数为m、列数为n。\n    scanf(\"%d%d\", &n, &m);\n    for (int row = 0; row < n; ++row) {\n        for (int col = 0; col < m; ++col) {\n            scanf(\"%lld\", &values[row][col]);\n        }\n    }\n    // 按新表行遍历原列，每个新行都从原表底部向上取数。\n    for (int row = 0; row < m; ++row) {\n        for (int col = 0; col < n; ++col) {\n            if (col > 0) {\n                printf(\" \");\n            }\n            // 新位置(row,col)对应原位置(n-1-col,row)，数值不变。\n            printf(\"%lld\", values[n - 1 - col][row]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\n\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n, m;\n    // 读取原表维度；旋转后行数为m、列数为n。\n    cin >> n >> m;\n    vector<vector<long long>> values(n, vector<long long>(m));\n    for (auto& row : values) {\n        for (auto& value : row) {\n            cin >> value;\n        }\n    }\n    // 按新表行遍历原列，每个新行都从原表底部向上取数。\n    for (int row = 0; row < m; ++row) {\n        for (int col = 0; col < n; ++col) {\n            // 新位置(row,col)对应原位置(n-1-col,row)，数值不变。\n            cout << (col ? \" \" : \"\") << values[n - 1 - col][row];\n        }\n        cout << '\\n';\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    static final class FastScanner {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n\n        private int read() throws IOException {\n            if (position == length) {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0) {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n\n        String next() throws IOException {\n            int value;\n            do {\n                value = read();\n            } while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1) {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n\n        int nextInt() throws IOException {\n            return Integer.parseInt(next());\n        }\n\n        long nextLong() throws IOException {\n            return Long.parseLong(next());\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        FastScanner scanner = new FastScanner();\n        // 读取原表维度；旋转后行数为m、列数为n。\n        int n = scanner.nextInt();\n        int m = scanner.nextInt();\n        long[][] values = new long[n][m];\n        for (int row = 0; row < n; row++) {\n            for (int col = 0; col < m; col++) {\n                values[row][col] = scanner.nextLong();\n            }\n        }\n        StringBuilder answer = new StringBuilder();\n        // 按新表行遍历原列，每个新行都从原表底部向上取数。\n        for (int row = 0; row < m; row++) {\n            for (int col = 0; col < n; col++) {\n                if (col > 0) {\n                    answer.append(' ');\n                }\n                // 新位置(row,col)对应原位置(n-1-col,row)，数值不变。\n                answer.append(values[n - 1 - col][row]);\n            }\n            answer.append('\\n');\n        }\n        System.out.print(answer);\n    }\n}\n",
+      "python": "import sys\n\ndata = list(map(int, sys.stdin.buffer.read().split()))\n# 原表n行m列，先完整读入才能按旋转顺序输出。\nn, m = data[:2]\n# 按每m个输入数建立一行，保存原表而不建立新表。\nvalues = [data[2 + row * m : 2 + (row + 1) * m] for row in range(n)]\n# 每个新行对应原来的一列，按n-1-col自下向上访问。\nfor row in range(m):\n    # 一次打印新表的一整行，确保旋转后的m行n列结构。\n    print(*(values[n - 1 - col][row] for col in range(n)))\n",
+      "rust": "use std::io::{\n    self, Read\n}\n;\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    // 读取原表维度；旋转后行数为m、列数为n。\n    let n: usize = tokens.next().unwrap().parse().unwrap();\n    let m: usize = tokens.next().unwrap().parse().unwrap();\n    let mut values = vec![vec![0i64;\n    m];\n    n];\n    for row in &mut values {\n        for value in row {\n            *value = tokens.next().unwrap().parse().unwrap();\n        }\n    }\n    let mut answer = String::new();\n    // 按新表行遍历原列，每个新行都从原表底部向上取数。\n    for row in 0..m {\n        for col in 0..n {\n            if col > 0 {\n                answer.push(' ');\n            }\n            // 新位置(row,col)对应原位置(n-1-col,row)，数值不变。\n            answer.push_str(&values[n - 1 - col][row].to_string());\n        }\n        answer.push('\\n');\n    }\n    print!(\"{}\", answer);\n}\n"
+    }
+  }
+}

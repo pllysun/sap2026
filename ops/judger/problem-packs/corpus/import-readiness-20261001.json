@@ -1,0 +1,2153 @@
+{
+  "schemaVersion": 1,
+  "auditedAt": "2026-10-01T15:03:43.008476+00:00",
+  "scope": "READ_ONLY_LOCAL_PACKAGE_AUDIT; no SSH, import, deployment, credentials or judge execution on server",
+  "classicCorpus": {
+    "count": 50,
+    "pilotCount": 6,
+    "remainingCount": 44,
+    "sourceCounts": {
+      "LeetCode": 40,
+      "原创": 5,
+      "洛谷": 5
+    },
+    "difficultyCounts": {
+      "EASY": 20,
+      "MEDIUM": 22,
+      "HARD": 8
+    },
+    "modeCounts": {
+      "STDIO/FUNCTION": 18,
+      "STDIO": 31,
+      "FUNCTION": 1
+    },
+    "caseCount": 1116,
+    "languageModeCombinations": 340,
+    "caseExecutionsPerRoundAllLanguages": 7775,
+    "duplicateSlugs": [],
+    "allPublishedSourceUrlsPresent": true,
+    "allOriginalsLabelledOriginal": true,
+    "allFiveLanguageReferencesPresent": true,
+    "allTemplatesMultiline": true,
+    "allFunctionDriversHaveExactlyOneInsertionMarker": true,
+    "allHavePublicSamples": true,
+    "allCurrentHashesMatchFormattedManifest": true,
+    "integrityIssues": [],
+    "manifestPathWarnings": [
+      {
+        "slug": "leetcode-1",
+        "declaredPath": "ops/judger/problem-packs/leetcode-1.json",
+        "resolvedPath": "ops/judger/problem-packs/leetcode-1/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      },
+      {
+        "slug": "leetcode-20",
+        "declaredPath": "ops/judger/problem-packs/leetcode-20.json",
+        "resolvedPath": "ops/judger/problem-packs/leetcode-20/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      },
+      {
+        "slug": "leetcode-206",
+        "declaredPath": "ops/judger/problem-packs/leetcode-206.json",
+        "resolvedPath": "ops/judger/problem-packs/leetcode-206/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      },
+      {
+        "slug": "leetcode-704",
+        "declaredPath": "ops/judger/problem-packs/leetcode-704.json",
+        "resolvedPath": "ops/judger/problem-packs/leetcode-704/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      },
+      {
+        "slug": "luogu-p1001",
+        "declaredPath": "ops/judger/problem-packs/luogu-p1001.json",
+        "resolvedPath": "ops/judger/problem-packs/luogu-p1001/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      },
+      {
+        "slug": "leetcode-53",
+        "declaredPath": "ops/judger/problem-packs/leetcode-53.json",
+        "resolvedPath": "ops/judger/problem-packs/leetcode-53/pack.json",
+        "severity": "NON_BLOCKING_IF_PATH_RESOLVER_USED"
+      }
+    ],
+    "items": [
+      {
+        "slug": "leetcode-1",
+        "title": "两数之和",
+        "path": "ops/judger/problem-packs/leetcode-1/pack.json",
+        "sha256": "545a8b0d9f96593b0f836fc3f6d2f568ee22f584edb3f265cf87c2e3e66a708d",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "1",
+        "sourceUrl": "https://leetcode.com/problems/two-sum/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 30,
+        "publicSampleCount": 3,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "leetcode-14",
+        "title": "最长公共前缀",
+        "path": "ops/judger/problem-packs/leetcode-14.json",
+        "sha256": "3a8aaada23a8a75e5fea910f9c779841bc8eec16401aa8dc4d76c6fa875914ef",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "14",
+        "sourceUrl": "https://leetcode.com/problems/longest-common-prefix/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-20",
+        "title": "有效的括号",
+        "path": "ops/judger/problem-packs/leetcode-20/pack.json",
+        "sha256": "f4e77d9c7ab6ca8d7035348d19354d88677ac0c5336e9aba849b510130d8e109",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "20",
+        "sourceUrl": "https://leetcode.com/problems/valid-parentheses/",
+        "modes": [
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 35,
+        "publicSampleCount": 5,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "leetcode-206",
+        "title": "反转链表",
+        "path": "ops/judger/problem-packs/leetcode-206/pack.json",
+        "sha256": "6cdecd842f77a9db38dfb5570b2d0699a0b9e0026ff1704d669283e03294d78a",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "206",
+        "sourceUrl": "https://leetcode.com/problems/reverse-linked-list/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 32,
+        "publicSampleCount": 3,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "leetcode-21",
+        "title": "合并两个有序链表",
+        "path": "ops/judger/problem-packs/leetcode-21.json",
+        "sha256": "bc9f19416979fec2e74817b47a7b4742158df8c54a4da2e0c50a02ba602398ac",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "21",
+        "sourceUrl": "https://leetcode.com/problems/merge-two-sorted-lists/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-26",
+        "title": "删除有序数组中的重复项",
+        "path": "ops/judger/problem-packs/leetcode-26.json",
+        "sha256": "a1b6a5ca09daf075309399158def74055c4546b55ec483fb00b3090f4680caf7",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "26",
+        "sourceUrl": "https://leetcode.com/problems/remove-duplicates-from-sorted-array/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-27",
+        "title": "移除元素",
+        "path": "ops/judger/problem-packs/leetcode-27.json",
+        "sha256": "64a37784a90ff7729efd8941dd587bcd593c4b9a099a420d1d6b55d626045e1d",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "27",
+        "sourceUrl": "https://leetcode.com/problems/remove-element/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-28",
+        "title": "找出首次出现的位置",
+        "path": "ops/judger/problem-packs/leetcode-28.json",
+        "sha256": "b073ba77579e5871373fbf81c36f2f800314ff468d7b21d76dd72a271daa8477",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "28",
+        "sourceUrl": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-35",
+        "title": "搜索插入位置",
+        "path": "ops/judger/problem-packs/leetcode-35.json",
+        "sha256": "d1286497d287a8ad3ee943f68bf75e06978880d913ec8361185f26851ff01fe5",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "35",
+        "sourceUrl": "https://leetcode.com/problems/search-insert-position/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-58",
+        "title": "最后一个单词的长度",
+        "path": "ops/judger/problem-packs/leetcode-58.json",
+        "sha256": "bf15509cfa96edb3fc4d1ff6f3b1c5a700ebf117139eded8be34a44c0e6c0fdb",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "58",
+        "sourceUrl": "https://leetcode.com/problems/length-of-last-word/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 19,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-66",
+        "title": "加一",
+        "path": "ops/judger/problem-packs/leetcode-66.json",
+        "sha256": "254a525a8b09759716599d22ab8d003e660e9cbdc59c0da5d73a5d7ff4202eb6",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "66",
+        "sourceUrl": "https://leetcode.com/problems/plus-one/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-69",
+        "title": "整数平方根",
+        "path": "ops/judger/problem-packs/leetcode-69.json",
+        "sha256": "5b25836c0ece6c239d66da883e54d7a751bbb3ca76caf35b131fca69b0fffd7b",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "69",
+        "sourceUrl": "https://leetcode.com/problems/sqrtx/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-70",
+        "title": "爬楼梯",
+        "path": "ops/judger/problem-packs/leetcode-70.json",
+        "sha256": "2dd8aacbf497ba0966e1e856c5d32776eceff00820844e3780314f15071ffd60",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "70",
+        "sourceUrl": "https://leetcode.com/problems/climbing-stairs/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-704",
+        "title": "二分查找",
+        "path": "ops/judger/problem-packs/leetcode-704/pack.json",
+        "sha256": "fd3a6182b0eeabc1b7c08654a4996cee65865560070d4c9d1abfc2af4da39939",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "704",
+        "sourceUrl": "https://leetcode.com/problems/binary-search/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 32,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "leetcode-88",
+        "title": "合并两个有序数组",
+        "path": "ops/judger/problem-packs/leetcode-88.json",
+        "sha256": "75901d5ef1f38b72713f59c641f783963a9ab2ced2d5f99c3f7086fdc23c30a9",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "88",
+        "sourceUrl": "https://leetcode.com/problems/merge-sorted-array/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-9",
+        "title": "回文数",
+        "path": "ops/judger/problem-packs/leetcode-9.json",
+        "sha256": "af9cb48504da459333e33520310b1a43c9ad6ba5eb8f29b13df815da15321ddf",
+        "difficulty": "EASY",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "9",
+        "sourceUrl": "https://leetcode.com/problems/palindrome-number/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 26,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "original-study-streak",
+        "title": "学习打卡最长连续段",
+        "path": "ops/judger/problem-packs/original-study-streak.json",
+        "sha256": "b2c3fc4ea9629c73d2ae45e8113928438abee3ca359b0fa871698e4365092e94",
+        "difficulty": "EASY",
+        "sourcePlatform": "原创",
+        "sourceId": "SAP001",
+        "sourceUrl": "",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "original-club-range-sum",
+        "title": "社团积分区间查询",
+        "path": "ops/judger/problem-packs/original-club-range-sum.json",
+        "sha256": "c186da08f99671171d008f2773caec922c822e6d18889b8ba311f6c05043d80e",
+        "difficulty": "EASY",
+        "sourcePlatform": "原创",
+        "sourceId": "SAP002",
+        "sourceUrl": "",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "luogu-p1001",
+        "title": "A+B Problem",
+        "path": "ops/judger/problem-packs/luogu-p1001/pack.json",
+        "sha256": "0b89cb942194734855f061a20f131f333703b5eff1f8e5fc7fa4d3c46c8ceba7",
+        "difficulty": "EASY",
+        "sourcePlatform": "洛谷",
+        "sourceId": "P1001",
+        "sourceUrl": "https://www.luogu.com.cn/problem/P1001",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 25,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "luogu-p1428",
+        "title": "小鱼比可爱",
+        "path": "ops/judger/problem-packs/luogu-p1428.json",
+        "sha256": "15df56a1443cc6d2c750d74b6eda7aafb9dd95fb904b16930f533bc920231b7e",
+        "difficulty": "EASY",
+        "sourcePlatform": "洛谷",
+        "sourceId": "P1428",
+        "sourceUrl": "https://www.luogu.com.cn/problem/P1428",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-11",
+        "title": "盛最多水的容器",
+        "path": "ops/judger/problem-packs/leetcode-11.json",
+        "sha256": "32c09fd8968f12ead80514f701415c7ef266cb062f32b0bc5315f8e5595b91d8",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "11",
+        "sourceUrl": "https://leetcode.com/problems/container-with-most-water/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-15",
+        "title": "三数之和",
+        "path": "ops/judger/problem-packs/leetcode-15.json",
+        "sha256": "cffa0d10212b6ab9673c4805b7e1559bbf37d13bfe9cb1e1028ef565dd3f6cf9",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "15",
+        "sourceUrl": "https://leetcode.com/problems/3sum/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-19",
+        "title": "删除链表的倒数第 N 个结点",
+        "path": "ops/judger/problem-packs/leetcode-19.json",
+        "sha256": "27fcaa3f3d41ca910a594a242e211de5cf9ef7df24d995bd9df9ecdccdf0602f",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "19",
+        "sourceUrl": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-3",
+        "title": "无重复字符的最长子串",
+        "path": "ops/judger/problem-packs/leetcode-3.json",
+        "sha256": "ced08d921f72e313ba2321072b4d3891cba865e9a2248e06d04d69dad7a2ceb6",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "3",
+        "sourceUrl": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 23,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-33",
+        "title": "搜索旋转排序数组",
+        "path": "ops/judger/problem-packs/leetcode-33.json",
+        "sha256": "959c63dfceedafd43b387c798de9d4edaaec34572a49381c962fdfd526eab40f",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "33",
+        "sourceUrl": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-34",
+        "title": "在排序数组中查找首尾位置",
+        "path": "ops/judger/problem-packs/leetcode-34.json",
+        "sha256": "8a7f020e16198404a40ed6e5424bc66fc21f7126298c81c3b05bd3d0166441c1",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "34",
+        "sourceUrl": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-46",
+        "title": "全排列",
+        "path": "ops/judger/problem-packs/leetcode-46.json",
+        "sha256": "bda3e6b5c34245ca0cd1dc3558c222f8e386336c1a2ff2ca0f8377660c502bf1",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "46",
+        "sourceUrl": "https://leetcode.com/problems/permutations/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 13,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-48",
+        "title": "旋转图像",
+        "path": "ops/judger/problem-packs/leetcode-48.json",
+        "sha256": "99f45f94326710307d2e2d21ce149b6c4128aa5f63338ba99b22b2f8f9e648b2",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "48",
+        "sourceUrl": "https://leetcode.com/problems/rotate-image/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-53",
+        "title": "最大子数组和",
+        "path": "ops/judger/problem-packs/leetcode-53/pack.json",
+        "sha256": "c01b07ad972b99552cdecb04038f4e2876f2a1f0f00beedf88b7cb6ad62ec837",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "53",
+        "sourceUrl": "https://leetcode.com/problems/maximum-subarray/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 35,
+        "publicSampleCount": 3,
+        "formattedManifestHashMatches": true,
+        "pilot": true
+      },
+      {
+        "slug": "leetcode-54",
+        "title": "螺旋矩阵",
+        "path": "ops/judger/problem-packs/leetcode-54.json",
+        "sha256": "25c3a5d6a23c49c26ae4f6441df2449409cdb55989edeee0065904d474b07e89",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "54",
+        "sourceUrl": "https://leetcode.com/problems/spiral-matrix/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-55",
+        "title": "跳跃游戏",
+        "path": "ops/judger/problem-packs/leetcode-55.json",
+        "sha256": "cc3517f3be0e000dee5d85c64fd61e014053a8cd143be895c174cf2c56c4651a",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "55",
+        "sourceUrl": "https://leetcode.com/problems/jump-game/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-56",
+        "title": "合并区间",
+        "path": "ops/judger/problem-packs/leetcode-56.json",
+        "sha256": "3ae8d04704cce978a9ea6b5811fcc392d856c4bf339ea2d312cddf68d783c166",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "56",
+        "sourceUrl": "https://leetcode.com/problems/merge-intervals/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-62",
+        "title": "不同路径",
+        "path": "ops/judger/problem-packs/leetcode-62.json",
+        "sha256": "0fee6bcedd5ae83d8a0bf8e80d286191deed7cb0e6119d9192a8b4bdc2f64c45",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "62",
+        "sourceUrl": "https://leetcode.com/problems/unique-paths/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-64",
+        "title": "最小路径和",
+        "path": "ops/judger/problem-packs/leetcode-64.json",
+        "sha256": "fe53d4f1bffabf57eace2229d3ae8bb641d892fb5cf263fbde0c26d41e028f47",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "64",
+        "sourceUrl": "https://leetcode.com/problems/minimum-path-sum/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-75",
+        "title": "颜色分类",
+        "path": "ops/judger/problem-packs/leetcode-75.json",
+        "sha256": "71f66d2e4f4113a19ac36c6329159735d53dfa83b996956cb4cdc18fded4e35e",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "75",
+        "sourceUrl": "https://leetcode.com/problems/sort-colors/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-98",
+        "title": "验证二叉搜索树",
+        "path": "ops/judger/problem-packs/leetcode-98.json",
+        "sha256": "39993e84c28c4e429c0bcb97a79e5d299109f935f87eb1c744fc7605990db705",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "98",
+        "sourceUrl": "https://leetcode.com/problems/validate-binary-search-tree/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 33,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "original-study-min-window",
+        "title": "学习计划的最短达标区间",
+        "path": "ops/judger/problem-packs/original-study-min-window.json",
+        "sha256": "61428eeead3c0a5343e9f6ba15836c0d7c31f875fb3261d327c4040cf1381626",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "原创",
+        "sourceId": "SAP003",
+        "sourceUrl": "",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "original-attendance-components",
+        "title": "活动签到连通组",
+        "path": "ops/judger/problem-packs/original-attendance-components.json",
+        "sha256": "fe19ee984af2c6a7cfd5af16452fbdd0233537d2ff9a6f0d2286fb0cab1aa089",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "原创",
+        "sourceId": "SAP004",
+        "sourceUrl": "",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "original-points-min-coins",
+        "title": "积分兑换最少券数",
+        "path": "ops/judger/problem-packs/original-points-min-coins.json",
+        "sha256": "7207031d361b6fabdb9ae43e9bb110a35392a9b0346caacf7d7a95b4bca18e33",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "原创",
+        "sourceId": "SAP005",
+        "sourceUrl": "",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "luogu-p1048",
+        "title": "采药",
+        "path": "ops/judger/problem-packs/luogu-p1048.json",
+        "sha256": "8ffb30a84c85b9dec6ea3f1db56be9daf337f74cd1e02f78c2d1697cb17d7c8a",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "洛谷",
+        "sourceId": "P1048",
+        "sourceUrl": "https://www.luogu.com.cn/problem/P1048",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "luogu-p1216",
+        "title": "数字三角形",
+        "path": "ops/judger/problem-packs/luogu-p1216.json",
+        "sha256": "4be12f04a057e3e28e897119e60be5d4970c20624cf501aace798e68b5a201e5",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "洛谷",
+        "sourceId": "P1216",
+        "sourceUrl": "https://www.luogu.com.cn/problem/P1216",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 19,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "luogu-p1439",
+        "title": "排列的最长公共子序列",
+        "path": "ops/judger/problem-packs/luogu-p1439.json",
+        "sha256": "67d63d6dd9eb640b01cf69cca47eb1ef24c87dc161bc2c2205681f1130f199c2",
+        "difficulty": "MEDIUM",
+        "sourcePlatform": "洛谷",
+        "sourceId": "P1439",
+        "sourceUrl": "https://www.luogu.com.cn/problem/P1439",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-239",
+        "title": "滑动窗口最大值",
+        "path": "ops/judger/problem-packs/leetcode-239.json",
+        "sha256": "d2b0f4fb651a796fe0c86110af17c60b6b9823ba79acdae2ef604d43ab55e495",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "239",
+        "sourceUrl": "https://leetcode.com/problems/sliding-window-maximum/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 22,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-312",
+        "title": "戳气球",
+        "path": "ops/judger/problem-packs/leetcode-312.json",
+        "sha256": "fabec8cd83aabd4c7bd7c83b6d04e030f494069448e9cd96fca9a7f4d24a5943",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "312",
+        "sourceUrl": "https://leetcode.com/problems/burst-balloons/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-32",
+        "title": "最长有效括号",
+        "path": "ops/judger/problem-packs/leetcode-32.json",
+        "sha256": "1d14da36c68079a213e3039ff7067a657cf777efdce04a6b138ff60286235258",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "32",
+        "sourceUrl": "https://leetcode.com/problems/longest-valid-parentheses/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 23,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-4",
+        "title": "寻找两个有序数组的中位数",
+        "path": "ops/judger/problem-packs/leetcode-4.json",
+        "sha256": "08746f710d1da4710965f40ed404f42d862470b7607fd4a0d9fbe128b9bd7064",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "4",
+        "sourceUrl": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-41",
+        "title": "缺失的第一个正数",
+        "path": "ops/judger/problem-packs/leetcode-41.json",
+        "sha256": "14d14aa5ff142944e148cfaaa7943759ae6f5662d975e13e5d4fef2dffefeae9",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "41",
+        "sourceUrl": "https://leetcode.com/problems/first-missing-positive/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 21,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-42",
+        "title": "接雨水",
+        "path": "ops/judger/problem-packs/leetcode-42.json",
+        "sha256": "4dfc1e0e57d3a15c95abe16b2648217447e16e6cc75d2278820a6c98d8013617",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "42",
+        "sourceUrl": "https://leetcode.com/problems/trapping-rain-water/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 19,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-76",
+        "title": "最小覆盖子串",
+        "path": "ops/judger/problem-packs/leetcode-76.json",
+        "sha256": "6a7818d0ec9126cf8d5f03c9c34da85095c9008b16e367a0340e093225aa4c1d",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "76",
+        "sourceUrl": "https://leetcode.com/problems/minimum-window-substring/",
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 23,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      },
+      {
+        "slug": "leetcode-84",
+        "title": "柱状图中最大的矩形",
+        "path": "ops/judger/problem-packs/leetcode-84.json",
+        "sha256": "32f96079e861e24f82a890bd1b70cc15bb93ba1a04ee66e562702b7e62ec3006",
+        "difficulty": "HARD",
+        "sourcePlatform": "LeetCode",
+        "sourceId": "84",
+        "sourceUrl": "https://leetcode.com/problems/largest-rectangle-in-histogram/",
+        "modes": [
+          "STDIO",
+          "FUNCTION"
+        ],
+        "defaultMode": "FUNCTION",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ],
+        "caseCount": 20,
+        "publicSampleCount": 2,
+        "formattedManifestHashMatches": true,
+        "pilot": false
+      }
+    ]
+  },
+  "images": {
+    "fieldsScanned": [
+      "description",
+      "inputFormat",
+      "outputFormat",
+      "constraints",
+      "sourceNote"
+    ],
+    "patterns": [
+      "Markdown image syntax",
+      "HTML img tags",
+      "external image URLs with common image extensions"
+    ],
+    "count": 0,
+    "cosMigrationRequired": false,
+    "references": [],
+    "note": "sourceUrl links to origin problem pages are attribution, not embedded images.",
+    "newOriginalCount": 0,
+    "combinedCount": 0,
+    "combinedCosMigrationRequired": false
+  },
+  "validationEvidence": {
+    "original": {
+      "report": "ops/judger/corpus-gojudge-validation.json",
+      "manifest": "ops/judger/corpus-gojudge-input-manifest.json",
+      "environment": "SERVER_GO_JUDGE",
+      "rounds": 3,
+      "passedCombinations": 340,
+      "failedCombinations": 0,
+      "caseExecutions": 23325,
+      "toolVersions": {
+        "c": "gcc (GCC) 15.3.0",
+        "cpp": "g++ (GCC) 15.3.0",
+        "java": "openjdk version \"27\" 2026-09-15",
+        "python": "Python 3.14.7",
+        "rust": "rustc 1.98.1 (48a229cea 2026-09-01)"
+      },
+      "currentExactBytesMatchOriginalManifest": false,
+      "note": "All current package file hashes changed during multiline code formatting; original 3-round evidence cannot be described as current exact-byte validation."
+    },
+    "formatted": {
+      "report": "ops/judger/formatted-corpus-validation.json",
+      "manifest": "ops/judger/formatted-corpus-input-manifest.json",
+      "environment": "LIVE_ISOLATED_GO_JUDGE",
+      "rounds": 1,
+      "passedCombinations": 340,
+      "failedCombinations": 0,
+      "caseExecutions": 7775,
+      "allCurrentFileHashesMatch": true
+    },
+    "publicSampleRecheck": {
+      "environment": "LOCAL_PYTHON_PUBLIC_SAMPLE_RECHECK",
+      "pythonVersion": "3.14.2",
+      "sampleModeExecutions": 145,
+      "passed": 145,
+      "failed": 0,
+      "note": "Executed each public sample in every allowed mode with the current Python reference and function driver, TOKENS/UNORDERED_TOKENS comparison. Local native Python; not go-judge toolchain evidence."
+    },
+    "priorRelease": {
+      "report": "ops/judger/final-release-validation.json",
+      "image": "pllysun/sap:1.5.9",
+      "publishedProblemCount": 6,
+      "remaining44Imported": false,
+      "note": "Stored prior-release evidence only; live state was not read by this audit."
+    }
+  },
+  "newOriginal20": {
+    "status": "PASS_READY_FOR_PLATFORM_VALIDATION",
+    "countExpected": 20,
+    "auditedCount": 20,
+    "difficultyCounts": {
+      "EASY": 20
+    },
+    "modes": [
+      "STDIO"
+    ],
+    "caseCount": 451,
+    "publicSampleCount": 60,
+    "allCasesLegalityAndIndependentOraclePassed": true,
+    "pythonReferenceCaseExecutions": 451,
+    "pythonVersion": "3.14.2",
+    "elapsedSeconds": 7.77,
+    "issues": [],
+    "items": [
+      {
+        "slug": "original-acm-001",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-001/pack.json",
+        "sha256AtAudit": "e8802dd37e25482873b5770fccc05b94115d0af6f60c3d010b43632a62d1ead7",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "e8802dd37e25482873b5770fccc05b94115d0af6f60c3d010b43632a62d1ead7",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "延时提醒",
+        "difficulty": "EASY",
+        "tags": [
+          "输入输出",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-001",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-002",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-002/pack.json",
+        "sha256AtAudit": "14fcf839392b0ac5b315d1275549a2ac1abbff7a1bb56ea0e895285b53dd8156",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "14fcf839392b0ac5b315d1275549a2ac1abbff7a1bb56ea0e895285b53dd8156",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "终端使用积分",
+        "difficulty": "EASY",
+        "tags": [
+          "条件判断",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-002",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-003",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-003/pack.json",
+        "sha256AtAudit": "11094ff48affaeba1919a5cabbb3fa618c47e1b58e9c4277f717a016d0e785ae",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "11094ff48affaeba1919a5cabbb3fa618c47e1b58e9c4277f717a016d0e785ae",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "贴纸等量分装",
+        "difficulty": "EASY",
+        "tags": [
+          "输入输出",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-003",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-004",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-004/pack.json",
+        "sha256AtAudit": "ae8043314e689006111ee2659080898b9dfa1a94aedc084c8c00f3eb662453c8",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "ae8043314e689006111ee2659080898b9dfa1a94aedc084c8c00f3eb662453c8",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "展示阶台",
+        "difficulty": "EASY",
+        "tags": [
+          "基础数学",
+          "等差数列"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-004",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-005",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-005/pack.json",
+        "sha256AtAudit": "4e830b7b00fc46104acd51c924cf3055681471d285f22818fd258858aa9b4af9",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "4e830b7b00fc46104acd51c924cf3055681471d285f22818fd258858aa9b4af9",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "领取码校验位",
+        "difficulty": "EASY",
+        "tags": [
+          "字符串",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-005",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-006",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-006/pack.json",
+        "sha256AtAudit": "0551dbe82ce6fb3a6e8041d76dc41733c2d9192457777b82668495c3f4c92201",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "0551dbe82ce6fb3a6e8041d76dc41733c2d9192457777b82668495c3f4c92201",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "巡检编号",
+        "difficulty": "EASY",
+        "tags": [
+          "基础数学",
+          "区间计数"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-006",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-007",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-007/pack.json",
+        "sha256AtAudit": "9005f953fd6224cfc43a76ef0f7ce4c9cda71d709a702e45a32f7e617b314e38",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "9005f953fd6224cfc43a76ef0f7ce4c9cda71d709a702e45a32f7e617b314e38",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "网格边框灯",
+        "difficulty": "EASY",
+        "tags": [
+          "条件判断",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-007",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-008",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-008/pack.json",
+        "sha256AtAudit": "64e82fafb3eb1ce3b9b3a143c02ff7f20bc7d79a3d1c51c3344ca514807ac1e7",
+        "caseCount": 21,
+        "auditedAndPythonPassed": 21,
+        "sha256": "64e82fafb3eb1ce3b9b3a143c02ff7f20bc7d79a3d1c51c3344ca514807ac1e7",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "明日值班日期",
+        "difficulty": "EASY",
+        "tags": [
+          "模拟",
+          "条件判断"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-008",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-009",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-009/pack.json",
+        "sha256AtAudit": "40b5a3ec90a90a2a58b947a078cc1a2b6ef6c34e842f806dee44ff29a426485d",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "40b5a3ec90a90a2a58b947a078cc1a2b6ef6c34e842f806dee44ff29a426485d",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "滚动编号",
+        "difficulty": "EASY",
+        "tags": [
+          "递推",
+          "取模"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-009",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-010",
+        "path": "ops/judger/problem-packs/beginner-original/a/original-acm-010/pack.json",
+        "sha256AtAudit": "c30b73e3cdd1096f1047eb53cdef88c342a3fdac3194809e065817a06d91a284",
+        "caseCount": 20,
+        "auditedAndPythonPassed": 20,
+        "sha256": "c30b73e3cdd1096f1047eb53cdef88c342a3fdac3194809e065817a06d91a284",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "比例卡规范化",
+        "difficulty": "EASY",
+        "tags": [
+          "基础数学",
+          "最大公约数"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-010",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-011",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-011/pack.json",
+        "sha256AtAudit": "d79bd78eb8fd9e4677e1a096e9d09a725028c5ab90882a52e41830231959c789",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "d79bd78eb8fd9e4677e1a096e9d09a725028c5ab90882a52e41830231959c789",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "连续进步的记录",
+        "difficulty": "EASY",
+        "tags": [
+          "数组",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-011",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-012",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-012/pack.json",
+        "sha256AtAudit": "1a38a43af044ce5e971e85a58de1c0012dd9097ff514bd3cbdb14da11888fcbd",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "1a38a43af044ce5e971e85a58de1c0012dd9097ff514bd3cbdb14da11888fcbd",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "循环轮值表",
+        "difficulty": "EASY",
+        "tags": [
+          "数组",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-012",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-013",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-013/pack.json",
+        "sha256AtAudit": "35a70425ff806a79a2e66abca24e43e976c4ff11d56320667763b6cd990f49c2",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "35a70425ff806a79a2e66abca24e43e976c4ff11d56320667763b6cd990f49c2",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "训练积分名次",
+        "difficulty": "EASY",
+        "tags": [
+          "排序",
+          "数组"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-013",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-014",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-014/pack.json",
+        "sha256AtAudit": "e2c69e4df11ef4781f821599348ca17e668e3085548a23672272c5c4917d5beb",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "e2c69e4df11ef4781f821599348ca17e668e3085548a23672272c5c4917d5beb",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "物资库的出入",
+        "difficulty": "EASY",
+        "tags": [
+          "模拟",
+          "基础数学"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-014",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-015",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-015/pack.json",
+        "sha256AtAudit": "aab9fbe3c2c8a1946abb476c3b7425ef68b93df500cc3cf46ee458caa3fc0c7f",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "aab9fbe3c2c8a1946abb476c3b7425ef68b93df500cc3cf46ee458caa3fc0c7f",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "分段温度调节",
+        "difficulty": "EASY",
+        "tags": [
+          "差分数组",
+          "前缀和"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-015",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-016",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-016/pack.json",
+        "sha256AtAudit": "9be701251a1ef619f7550c11a01fd158f21e35fef532bd72d3bb1072256e265e",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "9be701251a1ef619f7550c11a01fd158f21e35fef532bd72d3bb1072256e265e",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "海报字母统计",
+        "difficulty": "EASY",
+        "tags": [
+          "字符串",
+          "计数"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-016",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-017",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-017/pack.json",
+        "sha256AtAudit": "cff36ae889615fe90956a1a4b98487207b5e9e56255fc9cd001ab68992f86bb5",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "cff36ae889615fe90956a1a4b98487207b5e9e56255fc9cd001ab68992f86bb5",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "值班留言的词数",
+        "difficulty": "EASY",
+        "tags": [
+          "字符串",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-017",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-018",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-018/pack.json",
+        "sha256AtAudit": "8183466f928260feea3354b05cf6445e4de47e96f687a3589e31292cf38cfe54",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "8183466f928260feea3354b05cf6445e4de47e96f687a3589e31292cf38cfe54",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "连续标记压缩",
+        "difficulty": "EASY",
+        "tags": [
+          "字符串",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-018",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-019",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-019/pack.json",
+        "sha256AtAudit": "68d0fbefe16b595f7cd7ed6453da2b6248c5c2594fbe5e6dff44adaa1c0f2385",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "68d0fbefe16b595f7cd7ed6453da2b6248c5c2594fbe5e6dff44adaa1c0f2385",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "灯位周边计数",
+        "difficulty": "EASY",
+        "tags": [
+          "二维数组",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-019",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      },
+      {
+        "slug": "original-acm-020",
+        "path": "ops/judger/problem-packs/beginner-original/b/original-acm-020/pack.json",
+        "sha256AtAudit": "4b1f5869e8af0b50b08021fd24085faf1b58c132041d5b535f83437603c9451c",
+        "caseCount": 25,
+        "auditedAndPythonPassed": 25,
+        "sha256": "4b1f5869e8af0b50b08021fd24085faf1b58c132041d5b535f83437603c9451c",
+        "finalInputManifestHashMatches": true,
+        "hashUnchangedSinceIndependentCaseAudit": true,
+        "title": "旋转数据表",
+        "difficulty": "EASY",
+        "tags": [
+          "二维数组",
+          "模拟"
+        ],
+        "sourcePlatform": "原创",
+        "sourceId": "ORIGINAL-ACM-020",
+        "sourceUrl": "https://csuftsap.top/oj",
+        "publicSampleCount": 3,
+        "modes": [
+          "STDIO"
+        ],
+        "defaultMode": "STDIO",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python",
+          "rust"
+        ]
+      }
+    ],
+    "platformFiveLanguageThreeRoundValidationStillRequired": true,
+    "notes": [
+      "Independent input legality, oracle and Python execution review completed after root formatting; all 20 audited file SHA-256 values still match the final input manifest.",
+      "Case input legality checked against each statement, including line content, counts, bounds and calendar validity. Expected outputs independently recomputed and current Python STDIO references executed once for every full case.",
+      "Stored four-language native local reports do not prove JDK 27, Rust, cgroups or production sandbox behavior. Runtime publishing still requires platform five-language three-round validation."
+    ],
+    "finalInputManifest": "ops/judger/original-input-manifest.json",
+    "allFinalHashesMatch": true,
+    "filesStableAtAuditCompletion": true,
+    "fileStabilityIssues": [],
+    "allFiveLanguageProfilesAndReferencesPresent": true,
+    "allTemplatesMultiline": true,
+    "templatesDoNotExposeReferenceSolutions": true,
+    "noLinkedListContent": true,
+    "duplicateSlugs": [],
+    "allSourceLabelsOriginal": true,
+    "allHaveProjectSourceUrlAndReferenceListAttribution": true,
+    "exactTaskDuplicatesAmongExistingFiveOriginals": [],
+    "imageReferences": [],
+    "oracleMethods": {
+      "001": "Arithmetic clock decomposition; midnight count and bounds",
+      "002": "Per-minute enumeration of fee classes with bulk flat-rate tail",
+      "003": "Division/remainder conservation",
+      "004": "Pairing symmetric layer widths; small explicit sums",
+      "005": "Enumerate valid check digit over weighted string positions",
+      "006": "First divisible number and step enumeration for short intervals",
+      "007": "All grid cells minus strict interior; small cell enumeration",
+      "008": "Python datetime calendar increment",
+      "009": "Independent logarithmic Fibonacci doubling modulo p",
+      "010": "Python Fraction canonical numerator/denominator",
+      "011": "Distance between all adjacent descent positions",
+      "012": "collections.deque rotation",
+      "013": "Sorted scores with bisect strict-greater count",
+      "014": "Sequential inventory model preserving stock after failures",
+      "015": "Direct per-cell update of every range operation",
+      "016": "Counter over lowercase letters and alphabetical tie break",
+      "017": "Regular-expression word extraction",
+      "018": "itertools.groupby contiguous runs",
+      "019": "Set of occupied lamps, finite eight-neighbor membership count",
+      "020": "Reverse rows then transpose with zip"
+    },
+    "localNativeReports": [
+      {
+        "path": "ops/judger/problem-packs/beginner-original/a/local-validation.json",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python"
+        ],
+        "rounds": 3,
+        "caseExecutions": 2412,
+        "passed": true,
+        "missingLanguage": "rust",
+        "runtimeIsGoJudge": false
+      },
+      {
+        "path": "ops/judger/problem-packs/beginner-original/b/validation-local.json",
+        "languages": [
+          "c",
+          "cpp",
+          "java",
+          "python"
+        ],
+        "rounds": 3,
+        "caseExecutions": 3000,
+        "passed": true,
+        "missingLanguage": "rust",
+        "runtimeIsGoJudge": false
+      }
+    ]
+  },
+  "importReadiness": {
+    "classicStructuralReadiness": "PASS_WITH_PATH_RESOLUTION_WARNING",
+    "userRequestNowExplicitlyAuthorizesFullImport": true,
+    "recommendedResolution": "Resolve listed manifest file first; fallback to <slug>/pack.json for pilot packages. Import drafts, validate allowed languages/modes for 3 rounds on the active platform, then publish only with valid runtime/config signature.",
+    "platformValidationStillRequired": true,
+    "newOriginal20ValidationStillRequired": true,
+    "newOriginalStructuralReadiness": "PASS",
+    "newOriginalIndependentFullCaseReview": "PASS",
+    "filesStableRecommendedForValidation": true,
+    "recommendedImportOrder": "Preserve existing 6 pilot problem IDs, then append remaining 44 classic packages in catalog order and new originals 001 through 020. Each new import remains draft until current platform validation and publish signature succeed."
+  },
+  "combinedCorpus": {
+    "count": 70,
+    "sourceCounts": {
+      "LeetCode": 40,
+      "洛谷": 5,
+      "原创": 25
+    },
+    "difficultyCounts": {
+      "EASY": 40,
+      "MEDIUM": 22,
+      "HARD": 8
+    },
+    "uniqueSlugs": 70,
+    "caseCount": 1567,
+    "languageModeCombinations": 440,
+    "caseExecutionsPerRoundAllLanguages": 10030,
+    "cosImageMigrationCount": 0,
+    "classicFilesStableAtAuditCompletion": true,
+    "classicHashChanges": []
+  }
+}

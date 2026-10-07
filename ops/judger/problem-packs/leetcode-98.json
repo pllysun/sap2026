@@ -1,0 +1,284 @@
+{
+  "slug": "leetcode-98",
+  "title": "验证二叉搜索树",
+  "difficulty": "MEDIUM",
+  "tags": [
+    "二叉树",
+    "深度优先搜索"
+  ],
+  "description": "判断二叉树是否满足严格二叉搜索树规则：每个结点的左子树所有值小于该结点，右子树所有值大于该结点；重复值不合法。空树合法，输出 1 或 0。",
+  "inputFormat": "n，接下来 n 行 value left right；结点按 0..n-1 编号，根为 0；缺失子结点为 -1。输入保证结构为一棵树。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "0 <= n <= 100；结点值 -1000..1000。",
+  "sourcePlatform": "LeetCode",
+  "sourceUrl": "https://leetcode.com/problems/validate-binary-search-tree/",
+  "sourceId": "98",
+  "sourceNote": "自写教学改编题面；算法任务参考来源链接，输入输出和数据范围以本题为准。测试均为自行生成，未获取外站隐藏官方测试。",
+  "sourceAuthor": "原作者以来源页署名为准；本题面由 SAP OJ 题库整理组改写",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": "MEDIUM",
+  "modes": [
+    "STDIO",
+    "FUNCTION"
+  ],
+  "defaultMode": "FUNCTION",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": "int isValidBST(TreeNode* root) {\n    return 0;\n}\n",
+      "functionDriver": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode *left, *right;\n} TreeNode;\n__USER_CODE__\nint main(void) {\n    int n = read();\n    TreeNode nodes[101];\n    int left[101], right[101];\n    for (int i = 0; i < n; i++) {\n        nodes[i].val = read();\n        left[i] = read();\n        right[i] = read();\n    }\n    for (int i = 0; i < n; i++) {\n        nodes[i].left = left[i] < 0 ? NULL : &nodes[left[i]];\n        nodes[i].right = right[i] < 0 ? NULL : &nodes[right[i]];\n    }\n    emit(isValidBST(n ? &nodes[0] : NULL));\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": "class Solution {\n   public:\n    bool isValidBST(TreeNode* root) {\n        return 0;\n    }\n};\n",
+      "functionDriver": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\n#include <vector>\n#include <string>\nusing namespace std;\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode *left, *right;\n} TreeNode;\n__USER_CODE__\nint main() {\n    int n = read();\n    TreeNode nodes[101];\n    int left[101], right[101];\n    for (int i = 0; i < n; i++) {\n        nodes[i].val = read();\n        left[i] = read();\n        right[i] = read();\n    }\n    for (int i = 0; i < n; i++) {\n        nodes[i].left = left[i] < 0 ? NULL : &nodes[left[i]];\n        nodes[i].right = right[i] < 0 ? NULL : &nodes[right[i]];\n    }\n    emit(Solution().isValidBST(n ? &nodes[0] : NULL));\n    return 0;\n}\n"
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": "class Solution {\n    public boolean isValidBST(TreeNode root) {\n        return false;\n    }\n}\n",
+      "functionDriver": "import java.io.*;\nimport java.util.*;\nclass TreeNode {\n    int val;\n    TreeNode left, right;\n    TreeNode(int v) {\n        val = v;\n    }\n}\n__USER_CODE__\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int n = read();\n        TreeNode[] nodes = new TreeNode[n];\n        int[] left = new int[n], right = new int[n];\n        for (int i = 0; i < n; i++) {\n            nodes[i] = new TreeNode(read());\n            left[i] = read();\n            right[i] = read();\n        }\n        for (int i = 0; i < n; i++) {\n            nodes[i].left = left[i] < 0 ? null : nodes[left[i]];\n            nodes[i].right = right[i] < 0 ? null : nodes[right[i]];\n        }\n        emit(new Solution().isValidBST(n == 0 ? null : nodes[0]) ? 1 : 0);\n    }\n}\n"
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "class Solution:\n    def isValidBST(self, root):\n        return False\n",
+      "functionDriver": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\nclass TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n\n\n__USER_CODE__\nn = read()\nnodes = []\nleft = []\nright = []\nfor i in range(n):\n    nodes.append(TreeNode(read()))\n    left.append(read())\n    right.append(read())\nfor i in range(n):\n    nodes[i].left = None if left[i] < 0 else nodes[left[i]]\n    nodes[i].right = None if right[i] < 0 else nodes[right[i]]\nemit(int(Solution().isValidBST(nodes[0] if n else None)))\n"
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": "impl Solution {\n    pub fn is_valid_bst(root: Option<Rc<RefCell<TreeNode>>>) -> bool {\n        false\n    }\n}\n",
+      "functionDriver": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nuse std::cell::RefCell;\nuse std::rc::Rc;\n#[derive(Debug)]\npub struct TreeNode {\n    pub val: i32,\n    pub left: Option<Rc<RefCell<TreeNode>>>,\n    pub right: Option<Rc<RefCell<TreeNode>>>,\n}\nstruct Solution;\n__USER_CODE__\nfn main() {\n    let mut reader = Reader::new();\n    let n = reader.read() as usize;\n    let mut nodes = Vec::new();\n    let mut left = Vec::new();\n    let mut right = Vec::new();\n    for _ in 0..n {\n        nodes.push(Rc::new(RefCell::new(TreeNode {\n            val: reader.read(),\n            left: None,\n            right: None,\n        })));\n        left.push(reader.read());\n        right.push(reader.read());\n    }\n    for i in 0..n {\n        nodes[i].borrow_mut().left = if left[i] < 0 {\n            None\n        } else {\n            Some(nodes[left[i] as usize].clone())\n        };\n        nodes[i].borrow_mut().right = if right[i] < 0 {\n            None\n        } else {\n            Some(nodes[right[i] as usize].clone())\n        };\n    }\n    let root = if n == 0 { None } else { Some(nodes[0].clone()) };\n    emit(if Solution::is_valid_bst(root) { 1 } else { 0 });\n}\n"
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cur = 0, i = 0, n = 0, ok = 0, prev = 0, top = 0;\n    n = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n        b[i] = read();\n        d[i] = read();\n    }\n    top = 0;\n    cur = (-1);\n    if (n > 0) {\n        cur = 0;\n    }\n    prev = (-1000000000);\n    ok = 1;\n    while ((cur != (-1)) || (top > 0)) {\n        while (cur != (-1)) {\n            e[top] = cur;\n            top = (top + 1);\n            cur = b[cur];\n        }\n        top = (top - 1);\n        cur = e[top];\n        if (a[cur] <= prev) {\n            ok = 0;\n        }\n        prev = a[cur];\n        cur = d[cur];\n    }\n    emit(ok);\n    return 0;\n}\n",
+      "FUNCTION": "int bstCheck(TreeNode* root, int lo, int hi) {\n    if (!root) return 1;\n    return root->val > lo && root->val < hi && bstCheck(root->left, lo, root->val) &&\n           bstCheck(root->right, root->val, hi);\n}\nint isValidBST(TreeNode* root) {\n    return bstCheck(root, -1000000000, 1000000000);\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cur = 0, i = 0, n = 0, ok = 0, prev = 0, top = 0;\n    n = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n        b[i] = read();\n        d[i] = read();\n    }\n    top = 0;\n    cur = (-1);\n    if (n > 0) {\n        cur = 0;\n    }\n    prev = (-1000000000);\n    ok = 1;\n    while ((cur != (-1)) || (top > 0)) {\n        while (cur != (-1)) {\n            e[top] = cur;\n            top = (top + 1);\n            cur = b[cur];\n        }\n        top = (top - 1);\n        cur = e[top];\n        if (a[cur] <= prev) {\n            ok = 0;\n        }\n        prev = a[cur];\n        cur = d[cur];\n    }\n    emit(ok);\n    return 0;\n}\n",
+      "FUNCTION": "class Solution {\n   public:\n    int bstCheck(TreeNode* root, int lo, int hi) {\n        if (!root) return 1;\n        return root->val > lo && root->val < hi && bstCheck(root->left, lo, root->val) &&\n               bstCheck(root->right, root->val, hi);\n    }\n    bool isValidBST(TreeNode* root) {\n        return bstCheck(root, -1000000000, 1000000000);\n    }\n};\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int cur = 0, i = 0, n = 0, ok = 0, prev = 0, top = 0;\n        n = read();\n        for (i = 0; i < n; i += 1) {\n            a[i] = read();\n            b[i] = read();\n            d[i] = read();\n        }\n        top = 0;\n        cur = (-1);\n        if (n > 0) {\n            cur = 0;\n        }\n        prev = (-1000000000);\n        ok = 1;\n        while ((cur != (-1)) || (top > 0)) {\n            while (cur != (-1)) {\n                e[top] = cur;\n                top = (top + 1);\n                cur = b[cur];\n            }\n            top = (top - 1);\n            cur = e[top];\n            if (a[cur] <= prev) {\n                ok = 0;\n            }\n            prev = a[cur];\n            cur = d[cur];\n        }\n        emit(ok);\n    }\n}\n",
+      "FUNCTION": "class Solution {\n    boolean check(TreeNode node, long lo, long hi) {\n        return node == null\n            || node.val > lo && node.val < hi && check(node.left, lo, node.val)\n            && check(node.right, node.val, hi);\n    }\n    public boolean isValidBST(TreeNode root) {\n        return check(root, Long.MIN_VALUE, Long.MAX_VALUE);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ncur = i = n = ok = prev = top = 0\nn = read()\nfor i in range(n):\n    a[i] = read()\n    b[i] = read()\n    d[i] = read()\ntop = 0\ncur = -1\nif n > 0:\n    cur = 0\nprev = -1000000000\nok = 1\nwhile (cur != (-1)) or (top > 0):\n    while cur != (-1):\n        e[top] = cur\n        top = top + 1\n        cur = b[cur]\n    top = top - 1\n    cur = e[top]\n    if a[cur] <= prev:\n        ok = 0\n    prev = a[cur]\n    cur = d[cur]\nemit(ok)\n",
+      "FUNCTION": "class Solution:\n    def isValidBST(self, root):\n        def check(node, lo, hi):\n            return (\n                node is None\n                or lo < node.val < hi\n                and check(node.left, lo, node.val)\n                and check(node.right, node.val, hi)\n            )\n\n        return check(root, float(\"-inf\"), float(\"inf\"))\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut cur: i32 = 0;\n    let mut i: i32 = 0;\n    let mut n: i32 = 0;\n    let mut ok: i32 = 0;\n    let mut prev: i32 = 0;\n    let mut top: i32 = 0;\n    n = reader.read();\n    i = 0;\n    while i < n {\n        a[(i) as usize] = reader.read();\n        b[(i) as usize] = reader.read();\n        d[(i) as usize] = reader.read();\n        i += 1;\n    }\n    top = 0;\n    cur = (-1);\n    if (n > 0) {\n        cur = 0;\n    }\n    prev = (-1000000000);\n    ok = 1;\n    while ((cur != (-1)) || (top > 0)) {\n        while (cur != (-1)) {\n            e[(top) as usize] = cur;\n            top = (top + 1);\n            cur = b[(cur) as usize];\n        }\n        top = (top - 1);\n        cur = e[(top) as usize];\n        if (a[(cur) as usize] <= prev) {\n            ok = 0;\n        }\n        prev = a[(cur) as usize];\n        cur = d[(cur) as usize];\n    }\n    emit(ok);\n}\n",
+      "FUNCTION": "impl Solution {\n    pub fn is_valid_bst(root: Option<Rc<RefCell<TreeNode>>>) -> bool {\n        fn check(root: &Option<Rc<RefCell<TreeNode>>>, lo: i64, hi: i64) -> bool {\n            match root {\n                None => true,\n                Some(node) => {\n                    let node = node.borrow();\n                    let v = node.val as i64;\n                    v > lo && v < hi && check(&node.left, lo, v) && check(&node.right, v, hi)\n                }\n            }\n        }\n        check(&root, i64::MIN, i64::MAX)\n    }\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "0\n",
+      "expectedOutput": "1\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "1\n0 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "3\n2 1 2\n1 -1 -1\n3 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "5\n5 1 2\n1 -1 -1\n4 3 4\n3 -1 -1\n6 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "2\n2 1 -1\n2 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "100\n0 -1 1\n1 -1 2\n2 -1 3\n3 -1 4\n4 -1 5\n5 -1 6\n6 -1 7\n7 -1 8\n8 -1 9\n9 -1 10\n10 -1 11\n11 -1 12\n12 -1 13\n13 -1 14\n14 -1 15\n15 -1 16\n16 -1 17\n17 -1 18\n18 -1 19\n19 -1 20\n20 -1 21\n21 -1 22\n22 -1 23\n23 -1 24\n24 -1 25\n25 -1 26\n26 -1 27\n27 -1 28\n28 -1 29\n29 -1 30\n30 -1 31\n31 -1 32\n32 -1 33\n33 -1 34\n34 -1 35\n35 -1 36\n36 -1 37\n37 -1 38\n38 -1 39\n39 -1 40\n40 -1 41\n41 -1 42\n42 -1 43\n43 -1 44\n44 -1 45\n45 -1 46\n46 -1 47\n47 -1 48\n48 -1 49\n49 -1 50\n50 -1 51\n51 -1 52\n52 -1 53\n53 -1 54\n54 -1 55\n55 -1 56\n56 -1 57\n57 -1 58\n58 -1 59\n59 -1 60\n60 -1 61\n61 -1 62\n62 -1 63\n63 -1 64\n64 -1 65\n65 -1 66\n66 -1 67\n67 -1 68\n68 -1 69\n69 -1 70\n70 -1 71\n71 -1 72\n72 -1 73\n73 -1 74\n74 -1 75\n75 -1 76\n76 -1 77\n77 -1 78\n78 -1 79\n79 -1 80\n80 -1 81\n81 -1 82\n82 -1 83\n83 -1 84\n84 -1 85\n85 -1 86\n86 -1 87\n87 -1 88\n88 -1 89\n89 -1 90\n90 -1 91\n91 -1 92\n92 -1 93\n93 -1 94\n94 -1 95\n95 -1 96\n96 -1 97\n97 -1 98\n98 -1 99\n99 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "9\n124 2 1\n-678 3 -1\n-201 4 -1\n167 7 5\n-694 -1 -1\n90 6 -1\n-774 -1 -1\n517 8 -1\n-935 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "5\n176 -1 1\n-580 2 -1\n36 4 3\n-697 -1 -1\n692 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "1\n-976 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "16\n-796 1 -1\n216 3 2\n346 15 7\n-949 4 -1\n-419 5 9\n-993 11 6\n-357 -1 8\n-625 -1 -1\n-767 10 -1\n-462 -1 -1\n-362 -1 -1\n461 12 14\n504 -1 13\n-836 -1 -1\n717 -1 -1\n509 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "16\n605 2 1\n-482 3 5\n-953 4 7\n803 9 -1\n623 6 -1\n163 12 -1\n-977 13 8\n168 11 -1\n-400 10 -1\n920 -1 14\n487 -1 -1\n-291 -1 -1\n683 -1 -1\n988 -1 -1\n150 -1 15\n806 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "20\n867 2 1\n749 3 -1\n585 4 -1\n850 18 13\n103 5 -1\n173 7 6\n-650 8 9\n-868 -1 -1\n881 11 -1\n519 10 -1\n-238 -1 -1\n906 12 14\n-74 -1 15\n309 -1 17\n19 -1 -1\n-401 16 -1\n423 19 -1\n-76 -1 -1\n-429 -1 -1\n-96 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "8\n-483 -1 1\n589 2 6\n1 3 -1\n-848 4 5\n-321 7 -1\n-135 -1 -1\n-273 -1 -1\n931 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "10\n183 1 2\n14 4 8\n-248 3 6\n573 -1 5\n588 -1 -1\n-81 7 -1\n617 -1 9\n953 -1 -1\n-29 -1 -1\n350 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "15\n39 2 1\n390 10 3\n-990 8 6\n288 11 4\n856 5 -1\n468 7 13\n-541 -1 -1\n-870 -1 14\n-786 -1 9\n-611 -1 -1\n504 -1 -1\n-130 -1 12\n-843 -1 -1\n-541 -1 -1\n605 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "17\n401 1 5\n380 2 3\n-19 -1 13\n377 -1 4\n-846 10 6\n-285 -1 9\n-857 -1 7\n-944 8 12\n-95 14 -1\n765 -1 -1\n404 -1 11\n-118 -1 -1\n-516 -1 15\n-441 -1 -1\n-344 -1 -1\n-823 -1 16\n327 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "7\n-504 -1 1\n-158 2 4\n-811 -1 3\n-348 -1 -1\n697 5 -1\n-334 6 -1\n-94 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "20\n437 1 8\n878 6 2\n-924 -1 3\n-160 -1 4\n-744 -1 5\n485 -1 11\n-485 7 18\n294 15 9\n-482 16 10\n223 -1 -1\n688 12 14\n-996 -1 -1\n-733 -1 13\n-219 -1 -1\n-613 -1 19\n-847 17 -1\n723 -1 -1\n912 -1 -1\n-727 -1 -1\n-230 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "7\n258 1 -1\n710 2 -1\n-393 3 -1\n-375 4 -1\n713 5 6\n-713 -1 -1\n-752 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "9\n-347 3 1\n450 6 2\n-956 -1 4\n-494 -1 -1\n699 7 5\n-918 -1 -1\n429 -1 8\n448 -1 -1\n-335 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-21",
+      "input": "2\n-484 -1 1\n-964 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-22",
+      "input": "19\n-521 6 1\n39 2 3\n751 4 7\n32 5 10\n474 8 12\n-470 -1 -1\n-729 -1 -1\n-175 15 -1\n-28 9 -1\n95 -1 17\n-341 11 13\n696 -1 -1\n741 14 16\n-684 -1 -1\n-886 18 -1\n181 -1 -1\n-46 -1 -1\n912 -1 -1\n-709 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-23",
+      "input": "3\n5 -1 1\n6 2 -1\n4 -1 -1\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-24",
+      "input": "67\n-113 1 34\n-466 2 18\n-680 3 11\n-796 4 8\n-910 5 7\n-964 6 -1\n-972 -1 -1\n-881 -1 -1\n-714 9 10\n-768 -1 -1\n-705 -1 -1\n-593 12 15\n-604 13 14\n-653 -1 -1\n-600 -1 -1\n-492 16 17\n-505 -1 -1\n-479 -1 -1\n-307 19 27\n-352 20 24\n-367 21 23\n-400 22 -1\n-451 -1 -1\n-363 -1 -1\n-327 25 26\n-342 -1 -1\n-321 -1 -1\n-137 28 31\n-289 29 30\n-299 -1 -1\n-198 -1 -1\n-134 32 33\n-135 -1 -1\n-126 -1 -1\n416 35 51\n173 36 44\n99 37 41\n75 38 40\n-100 39 -1\n-111 -1 -1\n94 -1 -1\n118 42 43\n112 -1 -1\n169 -1 -1\n342 45 48\n320 46 47\n270 -1 -1\n339 -1 -1\n377 49 50\n375 -1 -1\n413 -1 -1\n798 52 60\n696 53 57\n613 54 56\n605 55 -1\n560 -1 -1\n648 -1 -1\n780 58 59\n766 -1 -1\n781 -1 -1\n931 61 64\n823 62 63\n810 -1 -1\n915 -1 -1\n978 65 66\n956 -1 -1\n999 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-25",
+      "input": "83\n134 1 42\n-402 2 22\n-728 3 13\n-793 4 9\n-858 5 7\n-891 6 -1\n-924 -1 -1\n-810 8 -1\n-833 -1 -1\n-745 10 12\n-758 11 -1\n-763 -1 -1\n-744 -1 -1\n-508 14 18\n-579 15 17\n-606 16 -1\n-643 -1 -1\n-560 -1 -1\n-465 19 21\n-470 20 -1\n-481 -1 -1\n-442 -1 -1\n-13 23 33\n-257 24 29\n-272 25 27\n-336 26 -1\n-338 -1 -1\n-260 28 -1\n-261 -1 -1\n-122 30 32\n-169 31 -1\n-203 -1 -1\n-31 -1 -1\n34 34 38\n18 35 37\n3 36 -1\n-2 -1 -1\n21 -1 -1\n89 39 41\n60 40 -1\n45 -1 -1\n108 -1 -1\n701 43 63\n438 44 54\n353 45 50\n302 46 48\n217 47 -1\n181 -1 -1\n333 49 -1\n309 -1 -1\n403 51 53\n365 52 -1\n361 -1 -1\n421 -1 -1\n558 55 59\n529 56 58\n471 57 -1\n463 -1 -1\n537 -1 -1\n628 60 62\n573 61 -1\n572 -1 -1\n662 -1 -1\n859 64 74\n766 65 70\n729 66 68\n727 67 -1\n705 -1 -1\n758 69 -1\n751 -1 -1\n783 71 73\n775 72 -1\n769 -1 -1\n832 -1 -1\n910 75 79\n897 76 78\n883 77 -1\n861 -1 -1\n904 -1 -1\n956 80 82\n938 81 -1\n919 -1 -1\n970 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-26",
+      "input": "72\n102 1 37\n-515 2 20\n-727 3 12\n-891 4 8\n-941 5 7\n-943 6 -1\n-981 -1 -1\n-894 -1 -1\n-779 9 11\n-830 10 -1\n-881 -1 -1\n-746 -1 -1\n-582 13 17\n-630 14 16\n-721 15 -1\n-724 -1 -1\n-594 -1 -1\n-540 18 19\n-555 -1 -1\n-533 -1 -1\n-169 21 29\n-385 22 26\n-453 23 25\n-460 24 -1\n-489 -1 -1\n-403 -1 -1\n-256 27 28\n-360 -1 -1\n-206 -1 -1\n20 30 34\n-56 31 33\n-114 32 -1\n-160 -1 -1\n1 -1 -1\n51 35 36\n42 -1 -1\n94 -1 -1\n425 38 55\n303 39 47\n235 40 44\n196 41 43\n146 42 -1\n115 -1 -1\n209 -1 -1\n282 45 46\n238 -1 -1\n293 -1 -1\n377 48 52\n349 49 51\n337 50 -1\n314 -1 -1\n354 -1 -1\n391 53 54\n384 -1 -1\n421 -1 -1\n630 56 64\n503 57 61\n446 58 60\n438 59 -1\n436 -1 -1\n469 -1 -1\n516 62 63\n515 -1 -1\n553 -1 -1\n721 65 69\n666 66 68\n639 67 -1\n637 -1 -1\n701 -1 -1\n862 70 71\n801 -1 -1\n941 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-27",
+      "input": "99\n-86 1 50\n-703 2 26\n-791 3 15\n-887 4 10\n-944 5 8\n-990 6 7\n-995 -1 -1\n-959 -1 -1\n-898 9 -1\n-903 -1 -1\n-838 11 13\n-850 12 -1\n-858 -1 -1\n-799 14 -1\n-815 -1 -1\n-736 16 21\n-741 17 19\n-749 18 -1\n-783 -1 -1\n-737 20 -1\n-740 -1 -1\n-718 22 24\n-719 23 -1\n-726 -1 -1\n-705 25 -1\n-713 -1 -1\n-395 27 39\n-532 28 34\n-582 29 32\n-657 30 31\n-683 -1 -1\n-634 -1 -1\n-544 33 -1\n-577 -1 -1\n-424 35 37\n-447 36 -1\n-493 -1 -1\n-406 38 -1\n-418 -1 -1\n-201 40 45\n-260 41 43\n-323 42 -1\n-354 -1 -1\n-255 44 -1\n-259 -1 -1\n-153 46 48\n-166 47 -1\n-181 -1 -1\n-110 49 -1\n-113 -1 -1\n476 51 75\n263 52 64\n110 53 59\n92 54 57\n-79 55 56\n-82 -1 -1\n-6 -1 -1\n107 58 -1\n104 -1 -1\n170 60 62\n126 61 -1\n122 -1 -1\n252 63 -1\n229 -1 -1\n425 65 70\n324 66 68\n308 67 -1\n283 -1 -1\n396 69 -1\n393 -1 -1\n442 71 73\n441 72 -1\n439 -1 -1\n463 74 -1\n462 -1 -1\n751 76 88\n609 77 83\n569 78 81\n510 79 80\n477 -1 -1\n543 -1 -1\n583 82 -1\n581 -1 -1\n667 84 86\n646 85 -1\n636 -1 -1\n718 87 -1\n707 -1 -1\n871 89 94\n831 90 92\n779 91 -1\n777 -1 -1\n846 93 -1\n840 -1 -1\n958 95 97\n937 96 -1\n932 -1 -1\n998 98 -1\n973 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-28",
+      "input": "79\n-53 1 40\n-510 2 21\n-794 3 12\n-887 4 8\n-924 5 7\n-929 6 -1\n-981 -1 -1\n-899 -1 -1\n-803 9 11\n-810 10 -1\n-873 -1 -1\n-798 -1 -1\n-647 13 17\n-682 14 16\n-769 15 -1\n-785 -1 -1\n-656 -1 -1\n-540 18 20\n-555 19 -1\n-601 -1 -1\n-539 -1 -1\n-286 22 31\n-416 23 27\n-438 24 26\n-441 25 -1\n-452 -1 -1\n-420 -1 -1\n-306 28 30\n-397 29 -1\n-413 -1 -1\n-305 -1 -1\n-186 32 36\n-212 33 35\n-218 34 -1\n-246 -1 -1\n-202 -1 -1\n-103 37 39\n-136 38 -1\n-168 -1 -1\n-69 -1 -1\n498 41 60\n190 42 51\n65 43 47\n15 44 46\n12 45 -1\n8 -1 -1\n40 -1 -1\n149 48 50\n118 49 -1\n102 -1 -1\n181 -1 -1\n332 52 56\n269 53 55\n236 54 -1\n210 -1 -1\n282 -1 -1\n436 57 59\n394 58 -1\n388 -1 -1\n475 -1 -1\n750 61 70\n672 62 66\n612 63 65\n598 64 -1\n590 -1 -1\n648 -1 -1\n716 67 69\n707 68 -1\n675 -1 -1\n739 -1 -1\n891 71 75\n864 72 74\n836 73 -1\n755 -1 -1\n881 -1 -1\n939 76 78\n919 77 -1\n917 -1 -1\n964 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-29",
+      "input": "26\n-78 1 14\n-548 2 8\n-691 3 6\n-747 4 5\n-788 -1 -1\n-706 -1 -1\n-602 7 -1\n-613 -1 -1\n-192 9 12\n-487 10 11\n-541 -1 -1\n-486 -1 -1\n-101 13 -1\n-139 -1 -1\n734 15 21\n375 16 19\n125 17 18\n70 -1 -1\n127 -1 -1\n693 20 -1\n525 -1 -1\n872 22 24\n868 23 -1\n768 -1 -1\n886 25 -1\n873 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-30",
+      "input": "54\n208 1 28\n-381 2 15\n-782 3 9\n-939 4 7\n-975 5 6\n-984 -1 -1\n-967 -1 -1\n-801 8 -1\n-871 -1 -1\n-656 10 13\n-725 11 12\n-777 -1 -1\n-691 -1 -1\n-384 14 -1\n-620 -1 -1\n-48 16 22\n-114 17 20\n-194 18 19\n-327 -1 -1\n-168 -1 -1\n-93 21 -1\n-99 -1 -1\n7 23 26\n-36 24 25\n-37 -1 -1\n-9 -1 -1\n119 27 -1\n31 -1 -1\n601 29 42\n412 30 36\n263 31 34\n232 32 33\n219 -1 -1\n256 -1 -1\n367 35 -1\n284 -1 -1\n569 37 40\n457 38 39\n453 -1 -1\n479 -1 -1\n588 41 -1\n576 -1 -1\n866 43 49\n756 44 47\n655 45 46\n615 -1 -1\n671 -1 -1\n814 48 -1\n774 -1 -1\n924 50 52\n917 51 -1\n898 -1 -1\n994 53 -1\n948 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-31",
+      "input": "5\n122 1 3\n31 2 -1\n-895 -1 -1\n484 4 -1\n280 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-32",
+      "input": "36\n200 1 19\n-360 2 11\n-705 3 7\n-730 4 6\n-821 5 -1\n-901 -1 -1\n-714 -1 -1\n-446 8 10\n-579 9 -1\n-646 -1 -1\n-391 -1 -1\n20 12 16\n-124 13 15\n-128 14 -1\n-205 -1 -1\n-96 -1 -1\n158 17 18\n22 -1 -1\n165 -1 -1\n647 20 28\n455 21 25\n377 22 24\n265 23 -1\n227 -1 -1\n415 -1 -1\n608 26 27\n529 -1 -1\n611 -1 -1\n889 29 33\n815 30 32\n779 31 -1\n669 -1 -1\n879 -1 -1\n951 34 35\n891 -1 -1\n968 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-33",
+      "input": "56\n-57 1 29\n-496 2 16\n-828 3 10\n-915 4 7\n-975 5 6\n-991 -1 -1\n-957 -1 -1\n-891 8 9\n-912 -1 -1\n-880 -1 -1\n-665 11 14\n-748 12 13\n-794 -1 -1\n-733 -1 -1\n-547 15 -1\n-579 -1 -1\n-242 17 23\n-343 18 21\n-397 19 20\n-482 -1 -1\n-359 -1 -1\n-293 22 -1\n-302 -1 -1\n-127 24 27\n-199 25 26\n-224 -1 -1\n-174 -1 -1\n-90 28 -1\n-103 -1 -1\n521 30 43\n245 31 37\n88 32 35\n12 33 34\n-50 -1 -1\n64 -1 -1\n239 36 -1\n142 -1 -1\n475 38 41\n412 39 40\n260 -1 -1\n472 -1 -1\n487 42 -1\n486 -1 -1\n827 44 50\n601 45 48\n571 46 47\n556 -1 -1\n584 -1 -1\n788 49 -1\n751 -1 -1\n893 51 54\n874 52 53\n873 -1 -1\n879 -1 -1\n945 55 -1\n921 -1 -1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

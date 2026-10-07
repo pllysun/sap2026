@@ -1,0 +1,1133 @@
+{
+  "version": 1,
+  "seed": 20261001,
+  "autoImport": false,
+  "counts": {
+    "total": 50,
+    "difficulty": {
+      "EASY": 20,
+      "MEDIUM": 22,
+      "HARD": 8
+    },
+    "platform": {
+      "LeetCode": 40,
+      "洛谷": 5,
+      "原创": 5
+    }
+  },
+  "items": [
+    {
+      "slug": "leetcode-1",
+      "title": "两数之和",
+      "difficulty": "EASY",
+      "tags": [
+        "数组",
+        "哈希"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceId": "1",
+      "sourceUrl": "https://leetcode.com/problems/two-sum/",
+      "file": "leetcode-1/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "2",
+      "validationJobId": "2",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-14",
+      "title": "最长公共前缀",
+      "difficulty": "EASY",
+      "tags": [
+        "字符串"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/longest-common-prefix/",
+      "sourceId": "14",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-14.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "7",
+      "validationJobId": "320",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-20",
+      "title": "有效的括号",
+      "difficulty": "EASY",
+      "tags": [
+        "字符串",
+        "栈"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceId": "20",
+      "sourceUrl": "https://leetcode.com/problems/valid-parentheses/",
+      "file": "leetcode-20/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "3",
+      "validationJobId": "3",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-206",
+      "title": "反转链表",
+      "difficulty": "EASY",
+      "tags": [
+        "链表"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceId": "206",
+      "sourceUrl": "https://leetcode.com/problems/reverse-linked-list/",
+      "file": "leetcode-206/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "6",
+      "validationJobId": "6",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-21",
+      "title": "合并两个有序链表",
+      "difficulty": "EASY",
+      "tags": [
+        "链表",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/merge-two-sorted-lists/",
+      "sourceId": "21",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-21.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "8",
+      "validationJobId": "321",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-26",
+      "title": "删除有序数组中的重复项",
+      "difficulty": "EASY",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/remove-duplicates-from-sorted-array/",
+      "sourceId": "26",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-26.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "9",
+      "validationJobId": "322",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-27",
+      "title": "移除元素",
+      "difficulty": "EASY",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/remove-element/",
+      "sourceId": "27",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-27.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "10",
+      "validationJobId": "323",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-28",
+      "title": "找出首次出现的位置",
+      "difficulty": "EASY",
+      "tags": [
+        "字符串"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+      "sourceId": "28",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-28.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "11",
+      "validationJobId": "324",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-35",
+      "title": "搜索插入位置",
+      "difficulty": "EASY",
+      "tags": [
+        "二分查找"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/search-insert-position/",
+      "sourceId": "35",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-35.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "12",
+      "validationJobId": "325",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-58",
+      "title": "最后一个单词的长度",
+      "difficulty": "EASY",
+      "tags": [
+        "字符串"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/length-of-last-word/",
+      "sourceId": "58",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-58.json",
+      "caseCount": 19,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "13",
+      "validationJobId": "326",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-66",
+      "title": "加一",
+      "difficulty": "EASY",
+      "tags": [
+        "数组",
+        "数学"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/plus-one/",
+      "sourceId": "66",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-66.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "14",
+      "validationJobId": "327",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-69",
+      "title": "整数平方根",
+      "difficulty": "EASY",
+      "tags": [
+        "二分查找",
+        "数学"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/sqrtx/",
+      "sourceId": "69",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-69.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "15",
+      "validationJobId": "328",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-70",
+      "title": "爬楼梯",
+      "difficulty": "EASY",
+      "tags": [
+        "动态规划"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/climbing-stairs/",
+      "sourceId": "70",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-70.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "16",
+      "validationJobId": "329",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-704",
+      "title": "二分查找",
+      "difficulty": "EASY",
+      "tags": [
+        "二分查找"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceId": "704",
+      "sourceUrl": "https://leetcode.com/problems/binary-search/",
+      "file": "leetcode-704/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "4",
+      "validationJobId": "4",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-88",
+      "title": "合并两个有序数组",
+      "difficulty": "EASY",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/merge-sorted-array/",
+      "sourceId": "88",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-88.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "17",
+      "validationJobId": "330",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-9",
+      "title": "回文数",
+      "difficulty": "EASY",
+      "tags": [
+        "数学"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/palindrome-number/",
+      "sourceId": "9",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-9.json",
+      "caseCount": 26,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "18",
+      "validationJobId": "331",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "original-study-streak",
+      "title": "学习打卡最长连续段",
+      "difficulty": "EASY",
+      "tags": [
+        "数组"
+      ],
+      "sourcePlatform": "原创",
+      "sourceUrl": "",
+      "sourceId": "SAP001",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "original-study-streak.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "19",
+      "validationJobId": "332",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "original-club-range-sum",
+      "title": "社团积分区间查询",
+      "difficulty": "EASY",
+      "tags": [
+        "前缀和"
+      ],
+      "sourcePlatform": "原创",
+      "sourceUrl": "",
+      "sourceId": "SAP002",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "original-club-range-sum.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "20",
+      "validationJobId": "333",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "luogu-p1001",
+      "title": "A+B Problem",
+      "difficulty": "EASY",
+      "tags": [
+        "输入输出"
+      ],
+      "sourcePlatform": "洛谷",
+      "sourceId": "P1001",
+      "sourceUrl": "https://www.luogu.com.cn/problem/P1001",
+      "file": "luogu-p1001/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "1",
+      "validationJobId": "1",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "luogu-p1428",
+      "title": "小鱼比可爱",
+      "difficulty": "EASY",
+      "tags": [
+        "数组"
+      ],
+      "sourcePlatform": "洛谷",
+      "sourceUrl": "https://www.luogu.com.cn/problem/P1428",
+      "sourceId": "P1428",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "luogu-p1428.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "21",
+      "validationJobId": "334",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-11",
+      "title": "盛最多水的容器",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/container-with-most-water/",
+      "sourceId": "11",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-11.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "22",
+      "validationJobId": "335",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-15",
+      "title": "三数之和",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "数组",
+        "排序",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/3sum/",
+      "sourceId": "15",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-15.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "23",
+      "validationJobId": "336",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-19",
+      "title": "删除链表的倒数第 N 个结点",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "链表",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+      "sourceId": "19",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-19.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "24",
+      "validationJobId": "337",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-3",
+      "title": "无重复字符的最长子串",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "字符串",
+        "滑动窗口"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+      "sourceId": "3",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-3.json",
+      "caseCount": 23,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "25",
+      "validationJobId": "338",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-33",
+      "title": "搜索旋转排序数组",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "二分查找"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+      "sourceId": "33",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-33.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "26",
+      "validationJobId": "339",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-34",
+      "title": "在排序数组中查找首尾位置",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "二分查找"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+      "sourceId": "34",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-34.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "27",
+      "validationJobId": "340",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-46",
+      "title": "全排列",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "回溯"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/permutations/",
+      "sourceId": "46",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-46.json",
+      "caseCount": 13,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "28",
+      "validationJobId": "341",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-48",
+      "title": "旋转图像",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "矩阵"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/rotate-image/",
+      "sourceId": "48",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-48.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "29",
+      "validationJobId": "342",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-53",
+      "title": "最大子数组和",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceId": "53",
+      "sourceUrl": "https://leetcode.com/problems/maximum-subarray/",
+      "file": "leetcode-53/pack.json",
+      "status": "PUBLISHED_VALIDATED",
+      "productionId": "5",
+      "validationJobId": "138",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-54",
+      "title": "螺旋矩阵",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "矩阵"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/spiral-matrix/",
+      "sourceId": "54",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-54.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "30",
+      "validationJobId": "343",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-55",
+      "title": "跳跃游戏",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "贪心"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/jump-game/",
+      "sourceId": "55",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-55.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "31",
+      "validationJobId": "344",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-56",
+      "title": "合并区间",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "排序",
+        "区间"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/merge-intervals/",
+      "sourceId": "56",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-56.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "32",
+      "validationJobId": "345",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-62",
+      "title": "不同路径",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划",
+        "组合数学"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/unique-paths/",
+      "sourceId": "62",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-62.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "33",
+      "validationJobId": "346",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-64",
+      "title": "最小路径和",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划",
+        "矩阵"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/minimum-path-sum/",
+      "sourceId": "64",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-64.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "34",
+      "validationJobId": "347",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-75",
+      "title": "颜色分类",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/sort-colors/",
+      "sourceId": "75",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-75.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "35",
+      "validationJobId": "348",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-98",
+      "title": "验证二叉搜索树",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "二叉树",
+        "深度优先搜索"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/validate-binary-search-tree/",
+      "sourceId": "98",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-98.json",
+      "caseCount": 33,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "36",
+      "validationJobId": "349",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "original-study-min-window",
+      "title": "学习计划的最短达标区间",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "滑动窗口"
+      ],
+      "sourcePlatform": "原创",
+      "sourceUrl": "",
+      "sourceId": "SAP003",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "original-study-min-window.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "37",
+      "validationJobId": "350",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "original-attendance-components",
+      "title": "活动签到连通组",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "图",
+        "并查集"
+      ],
+      "sourcePlatform": "原创",
+      "sourceUrl": "",
+      "sourceId": "SAP004",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "original-attendance-components.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "38",
+      "validationJobId": "351",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "original-points-min-coins",
+      "title": "积分兑换最少券数",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划",
+        "完全背包"
+      ],
+      "sourcePlatform": "原创",
+      "sourceUrl": "",
+      "sourceId": "SAP005",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "original-points-min-coins.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "39",
+      "validationJobId": "352",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "luogu-p1048",
+      "title": "采药",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划",
+        "01背包"
+      ],
+      "sourcePlatform": "洛谷",
+      "sourceUrl": "https://www.luogu.com.cn/problem/P1048",
+      "sourceId": "P1048",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "luogu-p1048.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "40",
+      "validationJobId": "353",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "luogu-p1216",
+      "title": "数字三角形",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "动态规划"
+      ],
+      "sourcePlatform": "洛谷",
+      "sourceUrl": "https://www.luogu.com.cn/problem/P1216",
+      "sourceId": "P1216",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "luogu-p1216.json",
+      "caseCount": 19,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "41",
+      "validationJobId": "354",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "luogu-p1439",
+      "title": "排列的最长公共子序列",
+      "difficulty": "MEDIUM",
+      "tags": [
+        "最长递增子序列",
+        "动态规划"
+      ],
+      "sourcePlatform": "洛谷",
+      "sourceUrl": "https://www.luogu.com.cn/problem/P1439",
+      "sourceId": "P1439",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "luogu-p1439.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "42",
+      "validationJobId": "355",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-239",
+      "title": "滑动窗口最大值",
+      "difficulty": "HARD",
+      "tags": [
+        "数组",
+        "单调队列"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/sliding-window-maximum/",
+      "sourceId": "239",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-239.json",
+      "caseCount": 22,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "43",
+      "validationJobId": "356",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-312",
+      "title": "戳气球",
+      "difficulty": "HARD",
+      "tags": [
+        "区间动态规划"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/burst-balloons/",
+      "sourceId": "312",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-312.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "44",
+      "validationJobId": "357",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-32",
+      "title": "最长有效括号",
+      "difficulty": "HARD",
+      "tags": [
+        "字符串",
+        "栈",
+        "动态规划"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/longest-valid-parentheses/",
+      "sourceId": "32",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-32.json",
+      "caseCount": 23,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "45",
+      "validationJobId": "358",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-4",
+      "title": "寻找两个有序数组的中位数",
+      "difficulty": "HARD",
+      "tags": [
+        "二分查找"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+      "sourceId": "4",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-4.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "46",
+      "validationJobId": "359",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-41",
+      "title": "缺失的第一个正数",
+      "difficulty": "HARD",
+      "tags": [
+        "数组",
+        "哈希"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/first-missing-positive/",
+      "sourceId": "41",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-41.json",
+      "caseCount": 21,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "47",
+      "validationJobId": "360",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-42",
+      "title": "接雨水",
+      "difficulty": "HARD",
+      "tags": [
+        "数组",
+        "双指针"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/trapping-rain-water/",
+      "sourceId": "42",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-42.json",
+      "caseCount": 19,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "48",
+      "validationJobId": "362",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-76",
+      "title": "最小覆盖子串",
+      "difficulty": "HARD",
+      "tags": [
+        "字符串",
+        "滑动窗口"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/minimum-window-substring/",
+      "sourceId": "76",
+      "modes": [
+        "STDIO"
+      ],
+      "defaultMode": "STDIO",
+      "file": "leetcode-76.json",
+      "caseCount": 23,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "PLANNED",
+      "productionId": "49",
+      "validationJobId": "363",
+      "validatedRounds": 3
+    },
+    {
+      "slug": "leetcode-84",
+      "title": "柱状图中最大的矩形",
+      "difficulty": "HARD",
+      "tags": [
+        "数组",
+        "单调栈"
+      ],
+      "sourcePlatform": "LeetCode",
+      "sourceUrl": "https://leetcode.com/problems/largest-rectangle-in-histogram/",
+      "sourceId": "84",
+      "modes": [
+        "STDIO",
+        "FUNCTION"
+      ],
+      "defaultMode": "FUNCTION",
+      "file": "leetcode-84.json",
+      "caseCount": 20,
+      "status": "PUBLISHED_VALIDATED",
+      "functionExtension": "COMPLETE",
+      "productionId": "50",
+      "validationJobId": "364",
+      "validatedRounds": 3
+    }
+  ],
+  "deployment": {
+    "image": "pllysun/sap:1.5.10",
+    "approvedBulkImport": true,
+    "published": 50,
+    "validationReport": "../classic-import-production.json"
+  }
+}

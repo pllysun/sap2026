@@ -51,14 +51,14 @@
                   target="_blank"
                   rel="noopener noreferrer"
                   class="btn btn--primary btn--sm btn--pill mt-3"
-                >↓ 下载文件</a>
+                ><UiIcon name="file-save" :size="16" /> 下载文件</a>
               </div>
               <p v-else class="t-caption">本周暂无学习任务</p>
             </div>
 
             <!-- Right: Submit -->
             <div>
-              <div class="split__title">⬆ 我的作业提交</div>
+              <div class="split__title"><UiIcon name="file-plus" /> 我的作业提交</div>
               <div v-if="status.submitted">
                 <span class="badge badge--success mb-2">已提交</span>
                 <div v-if="status.submissions && status.submissions.length">
@@ -89,6 +89,7 @@
 </template>
 
 <script setup>
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, onMounted } from 'vue'
 import request from '@/utils/request'
 

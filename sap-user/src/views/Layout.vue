@@ -15,6 +15,7 @@
         <router-link to="/home" class="nav__link" :class="{ active: $route.path === '/home' }">首页</router-link>
         <router-link to="/study" class="nav__link" :class="{ active: $route.path.startsWith('/study') }">学习小组</router-link>
         <router-link to="/activities" class="nav__link" :class="{ active: $route.path === '/activities' }">软协活动</router-link>
+        <router-link to="/oj" class="nav__link" :class="{ active: $route.path.startsWith('/oj') }">算法题库</router-link>
         <router-link to="/notes" class="nav__link" :class="{ active: $route.path.startsWith('/notes') }">软协笔记</router-link>
         <router-link to="/message-board" class="nav__link" :class="{ active: $route.path === '/message-board' }">留言板</router-link>
       </div>
@@ -22,9 +23,9 @@
       <div class="nav__user" v-click-outside="() => userMenuOpen = false">
         <button class="nav__user-toggle" @click="userMenuOpen = !userMenuOpen" :aria-expanded="userMenuOpen" aria-label="用户菜单" @keydown.esc="userMenuOpen = false">
           <UserAvatar :src="userStore.user?.avatar" :name="userName" />
-          <span class="nav__username">{{ userName }}</span><span class="nav__chevron">⌄</span>
+          <span class="nav__username">{{ userName }}</span><UiIcon class="nav__chevron" name="chevron-down" :size="14" />
         </button>
-        <div class="nav__dropdown-menu" :style="{
+        <div v-if="userMenuOpen" class="nav__dropdown-menu" :style="{
           opacity: userMenuOpen ? 1 : 0, pointerEvents: userMenuOpen ? 'auto' : 'none',
           top: 'calc(100% + 8px)', right: 0, left: 'auto', transform: 'none'
         }">
@@ -38,7 +39,7 @@
     <teleport to="body">
       <template v-if="drawerOpen">
         <div class="mobile-drawer-overlay" @click="drawerOpen = false"></div>
-        <div class="mobile-drawer" role="dialog" aria-modal="true" aria-label="导航菜单" @keydown.esc="drawerOpen = false">
+        <div ref="drawerDialog" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="导航菜单" tabindex="-1" @keydown.esc="drawerOpen = false">
           <div class="mobile-drawer__header">
             <img src="/logo.png" alt="Logo" />
             <span>软件协会</span>
@@ -48,6 +49,7 @@
             <router-link to="/home" class="mobile-drawer__link" :class="{ active: $route.path === '/home' }" @click="drawerOpen = false">🏠 首页</router-link>
             <router-link to="/study" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/study') }" @click="drawerOpen = false">📚 学习小组</router-link>
             <router-link to="/activities" class="mobile-drawer__link" :class="{ active: $route.path === '/activities' }" @click="drawerOpen = false">🎉 软协活动</router-link>
+            <router-link to="/oj" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/oj') }" @click="drawerOpen = false">💻 算法题库</router-link>
             <router-link to="/notes" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/notes') }" @click="drawerOpen = false">📝 软协笔记</router-link>
             <router-link to="/message-board" class="mobile-drawer__link" :class="{ active: $route.path === '/message-board' }" @click="drawerOpen = false">💬 留言板</router-link>
           </div>
@@ -59,7 +61,7 @@
           </div>
           <div class="mobile-drawer__actions">
             <router-link to="/profile" class="mobile-drawer__action" @click="drawerOpen = false">👤 个人信息</router-link>
-            <span class="mobile-drawer__action mobile-drawer__action--danger" @click="() => { handleLogout(); drawerOpen = false }" style="cursor:pointer;">🚪 退出登录</span>
+            <button class="mobile-drawer__action mobile-drawer__action--danger" @click="() => { handleLogout(); drawerOpen = false }">🚪 退出登录</button>
           </div>
         </div>
       </template>
@@ -77,7 +79,7 @@
       </div>
       <div class="qr-float" v-if="hasAnyQr">
         <div class="qr-float__item" v-if="footerSettings.qr_qq_group_url">
-          <div class="qr-float__thumb">
+          <div class="qr-float__thumb" role="button" tabindex="0" aria-label="查看 QQ 群二维码" @click="qrPreview = { url: footerSettings.qr_qq_group_url, name: footerSettings.qr_qq_group_name || 'QQ 群' }" @keydown.enter.prevent="$event.currentTarget.click()" @keydown.space.prevent="$event.currentTarget.click()">
             <img :src="footerSettings.qr_qq_group_url" alt="QQ群二维码" />
             <div class="qr-float__popup">
               <img :src="footerSettings.qr_qq_group_url" alt="QQ群二维码" />
@@ -87,7 +89,7 @@
           <span class="qr-float__label" v-if="footerSettings.qr_qq_group_name">{{ footerSettings.qr_qq_group_name }}</span>
         </div>
         <div class="qr-float__item" v-if="footerSettings.qr_qq_account_url">
-          <div class="qr-float__thumb">
+          <div class="qr-float__thumb" role="button" tabindex="0" aria-label="查看官方 QQ 二维码" @click="qrPreview = { url: footerSettings.qr_qq_account_url, name: footerSettings.qr_qq_account_name || '官方 QQ' }" @keydown.enter.prevent="$event.currentTarget.click()" @keydown.space.prevent="$event.currentTarget.click()">
             <img :src="footerSettings.qr_qq_account_url" alt="QQ号二维码" />
             <div class="qr-float__popup">
               <img :src="footerSettings.qr_qq_account_url" alt="QQ号二维码" />
@@ -98,21 +100,27 @@
         </div>
       </div>
     </footer>
+    <Teleport to="body"><div v-if="qrPreview" class="contact-overlay" @click.self="qrPreview = null"><div ref="contactDialog" class="contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-title" tabindex="-1"><button class="contact-dialog__close" aria-label="关闭二维码预览" @click="qrPreview = null">×</button><h2 id="contact-title">{{ qrPreview.name }}</h2><img :src="qrPreview.url" :alt="qrPreview.name + '二维码'" /><p>使用 QQ 扫码，或保存图片后识别</p></div></div></Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
+import UiIcon from '@/components/UiIcon.vue'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { useDialog } from '@/utils/useDialog'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const userMenuOpen = ref(false)
 const drawerOpen = ref(false)
+const drawerDialog = ref(null), contactDialog = ref(null), qrPreview = ref(null)
+useDialog(drawerOpen, drawerDialog, () => { drawerOpen.value = false })
+useDialog(computed(() => !!qrPreview.value), contactDialog, () => { qrPreview.value = null })
 const currentYear = ref(new Date().getFullYear())
 const userName = computed(() => userStore.user?.nickname?.trim() || userStore.user?.name?.trim() || '软协同学')
 
@@ -139,13 +147,7 @@ onMounted(async () => {
 
 function handleLogout() { userStore.logout(); userMenuOpen.value = false; router.push('/login') }
 
-let previousOverflow = ''
-watch(drawerOpen, open => {
-  if (open) { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden' }
-  else document.body.style.overflow = previousOverflow
-})
 watch(() => route.path, () => { drawerOpen.value = false; userMenuOpen.value = false })
-onUnmounted(() => { if (drawerOpen.value) document.body.style.overflow = previousOverflow })
 
 const vClickOutside = {
   mounted(el, binding) { el.__h = (e) => { if (!el.contains(e.target)) binding.value() }; document.addEventListener('click', el.__h) },
@@ -154,7 +156,7 @@ const vClickOutside = {
 </script>
 
 <style scoped>
-.nav--association{background:#f8fafbed;backdrop-filter:blur(18px);box-shadow:none;border-bottom:1px solid #dde3e9;padding-inline:max(32px,calc((100vw - 1400px)/2));gap:24px}
+.nav--association{background:#f8fafbed;backdrop-filter:blur(18px);box-shadow:none;border-bottom:1px solid #dde3e9;padding-inline:clamp(20px,5vw,180px);gap:24px}
 .nav--association .nav__name{color:#222f3c;font-size:17px;letter-spacing:2px;line-height:1.3}.nav__name small{display:block;font-size:9px;letter-spacing:1.5px;color:#5d7791;font-weight:400;margin-top:4px}
 .nav--association .nav__links-wrap{position:static;transform:none;background:none;gap:5px;padding:0;margin-left:auto;margin-right:auto}.nav--association .nav__link{font-size:13px;color:#536b83;padding:9px 17px;border-radius:6px}.nav--association .nav__link:hover{color:#24384b;background:#e8edf2}.nav--association .nav__link.active{color:#24384b;background:#dfe7ee;box-shadow:none}.nav--association .nav__username{color:#394959;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav__user-toggle{display:flex;align-items:center;gap:9px}.nav__chevron{color:#577089;font-size:14px}.nav--association .nav__user:hover{background:#e8edf2}.nav--association .nav__hamburger span{background:#354453}.nav--association :is(a,button):focus-visible{outline:2px solid #39638d;outline-offset:3px}.drawer-close{margin-left:auto;font-size:27px;padding:0 7px;color:#51687f}
 .main-content {
@@ -279,7 +281,10 @@ const vClickOutside = {
     gap: var(--s4);
   }
   .qr-float {
-    display: none;
+    display: flex; justify-content: center; flex-wrap: wrap;
   }
 }
+.footer__text { min-width: 0; overflow-wrap: anywhere; }.qr-float__thumb { cursor: pointer; }.mobile-drawer { max-width: calc(100vw - 32px); overflow-y: auto; overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom); }.mobile-drawer__action { text-align: left; }
+.contact-overlay { position: fixed; inset: 0; z-index: 1500; display: grid; place-items: center; padding: 20px; background: #17345066; backdrop-filter: blur(5px); }.contact-dialog { width: min(380px, 100%); padding: 30px; position: relative; background: #fff; border: 1px solid var(--border-blue); border-radius: 20px; text-align: center; max-height: calc(100dvh - 40px); overflow: auto; }.contact-dialog h2 { font-size: 20px; padding: 10px 15px 20px; overflow-wrap: anywhere; }.contact-dialog img { width: 100%; height: auto; object-fit: contain; }.contact-dialog p { font-size: 12px; color: var(--ink-500); margin-top: 17px; }.contact-dialog__close { position: absolute; top: 9px; right: 11px; width: 34px; height: 34px; font-size: 23px; color: var(--ink-500); }
+@media (hover: none) { .qr-float__popup { display: none; } }
 </style>

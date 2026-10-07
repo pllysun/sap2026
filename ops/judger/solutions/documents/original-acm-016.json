@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-016",
+  "problemRevision": 1,
+  "title": "海报字母统计",
+  "summary": "统一小写后统计 26 个字母的频次，按字母顺序仅在严格更多时更新答案。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入整行海报文字，只含英文字母与普通空格，至少有一个字母。统计最常出现的字母，大小写视为同一种，空格不算。最多频次相同时选字母表中更靠前的字母，输出小写字母和次数。\n\n例如 Code Club 中 C 和 c 同属字母 c，合计 2 次，其余字母各出现一次，输出 `c 2`。输入可以有行首、行尾与连续空格，不能只读取遇空格前的第一个单词。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "英文字母只有 26 种，用 counts[0..25] 对应 a 到 z。大写先转小写，遇到 a..z 才增加相应计数，其他字符忽略。字母下标可由字符编码相减得到，例如 `c-'a'=2`。\n\n统计完成后，从 a 到 z 扫描频次，best 保存当前选中字母的下标。只有 `counts[i]>counts[best]` 才替换答案，相同频次不替换，先遇到的更靠前字母便自动胜出。C/C++/Java 手动判断大写范围，Python 使用 lower，Rust 使用 ASCII 转小写；输入只含英文字母，结果一致。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 `bBaA`：\n\n| 步骤 | 计数变化 | 选择规则 |\n| --- | --- | --- |\n| 读 b | b 计数变为 1 | 当前只是累计 |\n| 读 B | 转小写 b，计数为 2 | 大小写合并 |\n| 读 a、A | a 计数也为 2 | 最终 a 与 b 并列 |\n| 扫描 a 再 b | 先选 a，b 未严格更多 | 保留 a，输出 a 2 |\n\n尽管 b 在文本里先出现，最后仍选 a，因为平局规则看字母表顺序，不看出现顺序。公开包含多个空格的 `   Z  z Z   ` 把三个字母统一成 z，输出 `z 3`。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 使用整行读取：C 的 fgets、C++ getline、Java readLine、Python readline；Rust 读入文本后遍历字节。题目只有这一行。\n2. 将 counts 的 26 项置零。逐字符转换成小写，仅在 a..z 范围内更新下标。\n3. 设 best=0，从下标 1 到 25 检查频次，严格更大时替换 best。\n4. 由 `'a'+best` 还原小写字符，输出它和 counts[best]。换行符即便被读入也不在字母范围里，所以会忽略。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "遍历每个输入字符时，若是字母，就将它统一到唯一的小写种类并增加一次；若为空格，则不增加任何计数。因此完成后 counts 每项准确记录该字母不分大小写的总次数。\n\n按字母顺序扫描时，best 始终指向已扫描字母中频次最大、且并列时最靠前的一项。严格更大就替换，保证最大频次；相同不替换，保证保留更靠前者。最后扫描全部 26 种，得到全局所需答案。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "L 是一行文字长度，扫描字符为 `O(L)`，找最大频次只检查固定 26 种，合起来仍为 `O(L)`。大 O 表示文字长度增加时处理次数近似同比增长。计数数组固定 26 项，算法额外空间 `O(1)`。\n\n参考实现需要保存输入行，逻辑为 `O(L)` 输入存储。Python lower 会生成新的同长度小写字符串，Java toCharArray 也复制出 L 长度字符数组，实际额外临时内存为 `O(L)`；Rust 直接遍历输入字节、C/C++ 逐字符处理，不需这份转换数组。C 的行缓冲区固定容量 10002，与本题上限匹配。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 读完整一行，不使用只读第一个单词的接口。\n- 必须先区分字母和空格，再计算字母下标，空格不能拿来索引 counts。\n- 大小写合并，不能把 C 与 c 作为两种竞争答案。\n- 平局时不能用 >= 更新，否则更靠后的字母会覆盖更靠前者。\n- 平局规则不是“先在文本中出现的字母”，bBaA 的答案应为 a。\n- 题目保证至少一个字母，无需为全空格输入发明输出协议。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：种类固定可以计数，再用扫描次序自然落实平局规则。\n\n1. `Aa Bb` 输出什么？`a 2`。\n2. `Zzz yY` 呢？`z 3`，次数优先于字母顺序。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint main(void)  {\n    char line[10002];\n    int counts[26] =  {\n        0\n    }\n    ;\n    // 读取整行而非第一个单词，普通空格不参与字母计数。\n    fgets(line, sizeof(line), stdin);\n    for (int i = 0; line[i] != '\\0'; ++i)  {\n        char letter = line[i];\n        if (letter >= 'A' && letter <= 'Z')  {\n            letter = (char)(letter - 'A' + 'a');\n        }\n        // 统一小写并确认是字母后才计算 0..25 下标，避免空格越界。\n        if (letter >= 'a' && letter <= 'z')  {\n            ++counts[letter - 'a'];\n        }\n    }\n    int best = 0;\n    for (int i = 1; i < 26; ++i)  {\n        // 只在次数严格更多时替换，平局保留字母表中更靠前者。\n        if (counts[i] > counts[best])  {\n            best = i;\n        }\n    }\n    // 输出选中字母的小写形式与它的总出现次数。\n    printf(\"%c %d\\n\", 'a' + best, counts[best]);\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main()  {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string line;\n    // 读取整行而非第一个单词，普通空格不参与字母计数。\n    getline(cin, line);\n    int counts[26] =  {\n    }\n    ;\n    for (char letter : line)  {\n        if (letter >= 'A' && letter <= 'Z')  {\n            letter = static_cast<char>(letter - 'A' + 'a');\n        }\n        // 统一小写并确认是字母后才计算 0..25 下标，避免空格越界。\n        if (letter >= 'a' && letter <= 'z')  {\n            ++counts[letter - 'a'];\n        }\n    }\n    int best = 0;\n    for (int i = 1; i < 26; ++i)  {\n        // 只在次数严格更多时替换，平局保留字母表中更靠前者。\n        if (counts[i] > counts[best])  {\n            best = i;\n        }\n    }\n    // 输出选中字母的小写形式与它的总出现次数。\n    cout << static_cast<char>('a' + best) << ' ' << counts[best] << '\\n';\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\npublic class Main  {\n    public static void main(String[] args) throws Exception  {\n        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));\n        // 读取整行而非第一个单词，普通空格不参与字母计数。\n        String line = reader.readLine();\n        int[] counts = new int[26];\n        for (char letter : line.toCharArray())  {\n            if (letter >= 'A' && letter <= 'Z')  {\n                letter = (char) (letter - 'A' + 'a');\n            }\n            // 统一小写并确认是字母后才计算 0..25 下标，避免空格越界。\n            if (letter >= 'a' && letter <= 'z')  {\n                counts[letter - 'a']++;\n            }\n        }\n        int best = 0;\n        for (int i = 1; i < 26; i++)  {\n            // 只在次数严格更多时替换，平局保留字母表中更靠前者。\n            if (counts[i] > counts[best])  {\n                best = i;\n            }\n        }\n        // 输出选中字母的小写形式与它的总出现次数。\n        System.out.println((char) ('a' + best) + \" \" + counts[best]);\n    }\n}\n",
+      "python": "import sys\n\n# 读取整行而非第一个单词，普通空格不参与字母计数。\nline = sys.stdin.readline().lower()\ncounts = [0] * 26\nfor letter in line:\n    # 统一小写并确认是字母后才计算 0..25 下标，避免空格越界。\n    if \"a\" <= letter <= \"z\":\n        counts[ord(letter) - ord(\"a\")] += 1\nbest = 0\nfor index in range(1, 26):\n    # 只在次数严格更多时替换，平局保留字母表中更靠前者。\n    if counts[index] > counts[best]:\n        best = index\n# 输出选中字母的小写形式与它的总出现次数。\nprint(chr(ord(\"a\") + best), counts[best])\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    // 读取整行而非第一个单词，普通空格不参与字母计数。\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut counts = [0usize;\n    26];\n    for byte in input.bytes()  {\n        let letter = byte.to_ascii_lowercase();\n        // 统一小写并确认是字母后才计算 0..25 下标，避免空格越界。\n        if letter.is_ascii_lowercase()  {\n            counts[(letter - b'a') as usize] += 1;\n        }\n    }\n    let mut best = 0usize;\n    for i in 1..26  {\n        // 只在次数严格更多时替换，平局保留字母表中更靠前者。\n        if counts[i] > counts[best]  {\n            best = i;\n        }\n    }\n    // 输出选中字母的小写形式与它的总出现次数。\n    println!(\"{} {}\", (b'a' + best as u8) as char, counts[best]);\n}\n"
+    }
+  }
+}

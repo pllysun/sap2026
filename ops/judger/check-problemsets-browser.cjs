@@ -1,0 +1,46 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require('/Users/pllysun/Library/Caches/ms-playwright-go/1.57.0/package');
+const production=process.argv.includes('--production'),root='/Users/pllysun/Library/Caches/sap-problemsets-1511';
+const admin=JSON.parse(fs.readFileSync(production?'/Users/pllysun/Library/Caches/sap-oj-test-session.json':root+'/candidate-session.json'));
+const user=production?admin:JSON.parse(fs.readFileSync(root+'/candidate-users.json')).B;
+const seed=JSON.parse(fs.readFileSync(path.join(__dirname,production?'sets-seed-production.json':'sets-seed-candidate.json')));
+const practice=seed.sets.find(s=>s.mode==='PRACTICE'),contest=seed.sets.find(s=>s.mode==='CONTEST');
+async function api(r){const v=await(await fetch(admin.base+r,{headers:{'sap-token':admin.token}})).json();assert.equal(v.code,200,r+': '+v.message);return v.data;}
+(async()=>{
+ const b=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+ const checks=[],errors=[],failed=[];
+ try{
+  const page=await b.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));page.on('response',async r=>{if(new URL(r.url()).pathname.startsWith('/api/'))try{const body=await r.json();if(body.code!==200)failed.push({path:new URL(r.url()).pathname,code:body.code});}catch{}});
+  await page.addInitScript(({admin,user})=>{localStorage.setItem('sap-token',admin.token);localStorage.setItem('sap_token',user.token)},{admin,user});
+  await page.goto(admin.base+'/oj?tab=sets');await page.locator('.oj-set-row').filter({hasText:practice.name}).waitFor();
+  assert(!(await page.locator('.oj-set-list').innerText()).includes(contest.name));
+  for(const width of [390,768,1024,1440,1920]){await page.setViewportSize({width,height:1000});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Set list overflow '+width);}
+  await page.locator('.oj-set-row').filter({hasText:practice.name}).click();await page.locator('.oj-set-problem').first().waitFor();assert.equal(await page.locator('.oj-set-problem').count(),20);
+  await page.getByRole('tab',{name:'排名',exact:true}).click();await page.locator('.oj-set-rank-row').first().waitFor();
+  for(const width of [390,768,1024,1440,1920]){await page.setViewportSize({width,height:1000});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Ranking overflow '+width);assert(await page.locator('.oj-set-score-cells').first().evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Score cells clipped '+width);if([390,1440].includes(width))await page.screenshot({path:root+`/sets-${production?'production':'candidate'}-rank-${width}.png`,fullPage:true});}
+  if(!production){await page.getByRole('checkbox',{name:'仅显示完成全部题目'}).check();await page.waitForFunction(()=>document.querySelectorAll('.oj-set-rank-row').length===1);assert((await page.locator('.oj-set-rank-row').innerText()).includes('20'));}
+  checks.push('Published practice list, hidden contest draft, 20 ordered questions, names/accounts, progress and complete score matrix at five viewport widths');
+  await page.getByRole('tab',{name:'提交记录',exact:true}).click();await page.getByRole('button',{name:'提交范围',exact:true}).click();await page.getByRole('option',{name:'全部提交',exact:true}).click();await page.locator('.oj-set-history-row').first().waitFor();
+  await page.getByRole('button',{name:'查看代码',exact:true}).first().click();await page.locator('dialog .cm-content').waitFor();assert.equal(await page.locator('dialog .cm-content').getAttribute('contenteditable'),'false');await page.keyboard.press('Escape');assert(!(await page.locator('dialog').isVisible()));
+  checks.push('Submission scope selector, shared formal source in read-only editor and Escape-close dialog');
+  await page.goto(`${admin.base}/oj/sets/${practice.id}/items/${practice.itemIds[0]}`);await page.locator('.cm-content').waitFor();await page.waitForFunction(()=>!document.querySelector('.oj-template-loading'));assert((await page.locator('.oj-set-workspace-strip').innerText()).includes(practice.name));
+  await page.getByRole('button',{name:'题单题目导航',exact:true}).click();assert.equal(await page.getByRole('option').count(),20);await page.keyboard.press('Escape');
+  for(const width of [390,768,1024,1440,1920]){await page.setViewportSize({width,height:1000});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Workspace overflow '+width);}
+  if(!production){await page.setViewportSize({width:1440,height:1000});const marker='// 题单独立草稿验证\nint main(){return 0;}';await page.locator('.cm-content').click();await page.keyboard.press('Meta+A');await page.keyboard.insertText(marker);await page.waitForTimeout(550);await page.getByRole('button',{name:'题单题目导航',exact:true}).click();await page.getByRole('option').nth(1).click();await page.waitForURL(`**/oj/sets/${practice.id}/items/${practice.itemIds[1]}`);await page.locator('.cm-content').waitFor();await page.waitForFunction(()=>!document.querySelector('.oj-template-loading'));assert(!(await page.locator('.cm-content').innerText()).includes('题单独立草稿验证'));await page.goto(`${admin.base}/oj/sets/${practice.id}/items/${practice.itemIds[0]}`);await page.locator('.cm-content').waitFor();await page.waitForFunction(()=>!document.querySelector('.oj-template-loading'));assert((await page.locator('.cm-content').innerText()).includes('题单独立草稿验证'));}
+  checks.push('Set workspace context, 20-question navigator, responsive layout and draft separation');
+  await page.setViewportSize({width:1440,height:1000});await page.goto(admin.base+'/admin/oj');await page.getByRole('tab',{name:'题单管理',exact:true}).click();await page.locator('.oj-set-admin .el-table__row').first().waitFor();
+  const draftRow=page.locator('.oj-set-admin .el-table__row').filter({hasText:contest.name}).filter({hasNotText:'副本'});assert.equal(await draftRow.count(),1);assert((await draftRow.innerText()).includes('草稿'));await draftRow.getByRole('button',{name:'编辑',exact:true}).click();await page.locator('.set-selected-row').first().waitFor();assert.equal(await page.locator('.set-selected-row').count(),5);assert((await page.getByRole('dialog').innerText()).includes('比赛模式'));await page.getByRole('button',{name:'取消',exact:true}).click();await page.locator('.set-editor').waitFor({state:'hidden'});
+  for(const width of [390,768,1024,1440,1920]){await page.setViewportSize({width,height:1000});await page.waitForTimeout(350);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Admin page overflow '+width);if(width<900)assert(await page.locator('.main-area').evaluate(e=>e.getBoundingClientRect().width>=innerWidth-65),'Sidebar did not collapse '+width);if([390,1440].includes(width))await page.screenshot({path:root+`/sets-${production?'production':'candidate'}-admin-${width}.png`,fullPage:true});}
+  if(!production){
+   await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'新建题单',exact:true}).click();await page.locator('.set-editor .el-form-item').first().waitFor();const editor=page.locator('.set-editor');const title='浏览器题单与排序验收 '+Date.now();await editor.locator('.el-form-item').filter({has:page.getByText('名称',{exact:true})}).getByRole('textbox').fill(title);await editor.getByRole('button',{name:'添加题目',exact:true}).click();await editor.locator('.set-picker .el-table__row').first().waitFor();
+   for(const name of ['A+B Problem','两数之和'])await editor.locator('.set-picker .el-table__row').filter({hasText:name}).getByRole('button',{name:'添加',exact:true}).click();assert.equal(await editor.locator('.set-selected-row').count(),2);await editor.getByRole('button',{name:'上移 两数之和',exact:true}).click();assert((await editor.locator('.set-selected-row').first().innerText()).includes('两数之和'));await editor.getByRole('button',{name:'保存草稿',exact:true}).click();await editor.waitFor({state:'hidden'});
+   const rows=await api('/api/admin/oj/sets?keyword='+encodeURIComponent(title));assert.equal(rows.records.length,1);const d=await api('/api/admin/oj/sets/'+rows.records[0].id);assert.deepEqual(d.items.map(i=>i.title),['两数之和','A+B Problem']);
+   checks.push('Admin creates a real draft from validated questions, changes order in UI, saves and reloads persisted order');
+  }
+  checks.push('Admin contest draft is editable, displays all five private questions and time fields; responsive container/table');
+  // The separate review database is H2. The pre-existing global leaderboard
+  // uses MySQL JSON functions; it is checked without exceptions in production.
+  const knownLimitations=production?[]:failed.filter(r=>r.path==='/api/oj/leaderboard' && r.code===500);
+  assert.deepEqual(errors,[]);assert.deepEqual(failed.filter(r=>!knownLimitations.includes(r)),[]);const report={passed:true,environment:admin.base,widths:[390,768,1024,1440,1920],runtimeErrors:errors.length,failedApiCalls:failed,knownLimitations,checks};fs.writeFileSync(path.join(__dirname,production?'sets-browser-production.json':'sets-browser-candidate.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+ }finally{await b.close()}
+})().catch(e=>{console.error(e.stack);process.exitCode=1});

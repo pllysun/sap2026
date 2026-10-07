@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-004",
+  "title": "展示阶台",
+  "difficulty": "EASY",
+  "tags": [
+    "基础数学",
+    "等差数列"
+  ],
+  "description": "社团用方块搭建一个有 n 层的展示阶台：第一层放1块，第二层放2块，依此类推，第 i 层恰好放 i 块。方块只按每层的规定计数，不额外添加支撑块。请计算需要的方块总数。",
+  "inputFormat": "一行一个整数 n，表示层数。",
+  "outputFormat": "输出一个整数，表示方块总数。",
+  "constraints": "1 ≤ n ≤ 10^9。答案可能超过32位整数范围。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-004",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "1\n",
+      "expectedOutput": "1\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "4\n",
+      "expectedOutput": "10\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "10\n",
+      "expectedOutput": "55\n",
+      "sample": true
+    },
+    {
+      "name": "two-levels",
+      "input": "2\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "odd-levels",
+      "input": "3\n",
+      "expectedOutput": "6\n",
+      "sample": false
+    },
+    {
+      "name": "int32-edge",
+      "input": "65535\n",
+      "expectedOutput": "2147450880\n",
+      "sample": false
+    },
+    {
+      "name": "above-int32",
+      "input": "65536\n",
+      "expectedOutput": "2147516416\n",
+      "sample": false
+    },
+    {
+      "name": "large-even",
+      "input": "1000000000\n",
+      "expectedOutput": "500000000500000000\n",
+      "sample": false
+    },
+    {
+      "name": "large-odd",
+      "input": "999999999\n",
+      "expectedOutput": "499999999500000000\n",
+      "sample": false
+    },
+    {
+      "name": "thousand",
+      "input": "1000\n",
+      "expectedOutput": "500500\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "755355181\n",
+      "expectedOutput": "285280725109448971\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "72026584\n",
+      "expectedOutput": "2593914437367820\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "48408066\n",
+      "expectedOutput": "1171670451134211\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "576040954\n",
+      "expectedOutput": "165911590630635535\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "484797249\n",
+      "expectedOutput": "117514186561382625\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "423586853\n",
+      "expectedOutput": "89712911229015231\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "716216434\n",
+      "expectedOutput": "256482990523946395\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "802936665\n",
+      "expectedOutput": "322353644402129445\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "402514247\n",
+      "expectedOutput": "81008859720245628\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "625977107\n",
+      "expectedOutput": "195923669557033278\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    printf(\"%lld\\n\", n * (n + 1) / 2);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long n;\n    std::cin >> n;\n    std::cout << n * (n + 1) / 2 << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long n = in.nextLong();\n        System.out.println(n * (n + 1) / 2);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "n = int(input())\nprint(n * (n + 1) // 2)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let n: i64 = words.next().unwrap().parse().unwrap();\n    println!(\"{}\", n * (n + 1) / 2);\n}\n"
+    }
+  }
+}

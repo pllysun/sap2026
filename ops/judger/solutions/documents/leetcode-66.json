@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-66",
+  "problemRevision": 1,
+  "title": "加一",
+  "summary": "把初始进位设为 1，从个位向最高位逐位计算余数与进位，必要时在最前面补 1。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "一个很长的整数可以不放进单个整数变量，而是把每一位存在数组里。`[1,2,9]` 表示 129：左侧是最高位，右侧是个位。要输出加一后的每个数字，例如 `[1,3,0]`。\n\n输入先给位数 `n`，再给 `n` 个 0 到 9 的数字；除 0 本身外没有前导零。输出仍是各位数字、用空格分隔，而不是直接输出一个普通整数。本题位数可能达 200，不能先转成 C 的整数或 Java 的 `long` 再加一。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "手算加一时从最右边开始。个位不是 9，就把它加一；个位是 9，就写 0 并向左进一位。这个向左传递的 1 叫“进位”。\n\n参考程序令 `carry=1`，统一把“加一”当成初始进位。每位计算 `x=a[i]+carry`，新数字为 `x%10`，新进位为 `x/10` 的整数部分。当进位变为 0 后，继续扫描左边数字也不会改变它们。若全部处理后还有进位，说明原数字全为 9，应在最前面输出 1。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "用额外小例子 `[1,2,9]`。\n\n| 处理位 | 原数字 | `x=数字+carry` | 写回数字 | 新 `carry` |\n| --- | --- | --- | --- | --- |\n| 个位，下标 2 | 9 | 10 | 0 | 1 |\n| 十位，下标 1 | 2 | 3 | 3 | 0 |\n| 百位，下标 0 | 1 | 1 | 1 | 0 |\n\n最终数组是 `[1,3,0]`。公开样例 `[9]` 则会在处理唯一一位后得到数组 `[0]`、进位 1，先输出 1 再输出 0，形成 `[1,0]`。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 把数字按原顺序存入 `a`，保留“最高位在前”的约定。\n2. 设置 `carry=1`。逆序循环从 `n-1` 到 0，两端都要处理。\n3. `x` 保存当前位与进位的和；`a[i]=x%10` 留下个位，`carry=x/10` 保存需要向左传递的十位。Python 用 `//` 表示整数除法。\n4. 循环后若 `carry==1`，先输出新增最高位 1。\n5. 按原数组顺序输出已经更新的 `n` 个数字，不能逆序输出。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "处理某位时，加一对更右侧各位的影响已经计算完成，尚未解决的影响只剩 `carry`，取值只能是 0 或 1。等式 `x=10*carry+当前位余数` 把当前位结果正确拆成写回数字和向左的进位。\n\n每次向左移动都维护这个关系，所以处理完最高位后，所有原位都已正确。若还有进位，它代表额外的一位；若没有，原有位数足够。两种输出合在一起恰好表示原数加一。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 `n` 为数字位数。读入、逆序计算、输出都扫描各位，时间 `O(n)`；大 O 表示位数增加时，工作量按同样比例增加。\n\n原数组就地更新，进位与临时和只用常量空间，算法额外空间 `O(1)`。输入数组占 `O(n)`；实际生成参考代码还保留固定容量工作数组。即使 Python 可以表示大整数，参考实现也坚持逐位运算，因此五种语言采用同样的计算逻辑。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 全为 9 时长度会增加一位，不能只输出更新后的全 0 数组。\n- 0 加一是 1，初始 `carry` 必须是 1，不能是 0。\n- 必须从右向左传递进位，正向计算会过早处理左边位。\n- Python 用整数除法 `//`，普通 `/` 会生成小数并破坏数字类型。\n- 输入已经没有无效前导零，不必额外删除有效数字 0。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键是每一位都使用同一个“除以 10 留进位、对 10 取余留数字”的规则。\n\n手算 `[9,9,9]`，答案 `[1,0,0,0]`。再试 `[4,0,8]`，答案 `[4,0,9]`；进位消失后，左侧各位保持不变。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 数字数组最高位在前，不把整个 200 位整数转换成机器整数。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int carry = 0, i = 0, n = 0, x = 0;\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    /* 初始 carry=1，从右向左传播进位：取余留下本位，整数除法留下进位。 */\n    carry = 1;\n    for (i = (n - 1); i > (-1); i += -1)  {\n        x = (a[i] + carry);\n        a[i] = (x % 10);\n        carry = (x / 10);\n    }\n    if (carry == 1)  {\n        /* 若最高位仍有进位，先输出 1，再按原顺序输出更新后的各位。 */\n        emit(1);\n    }\n    for (i = 0; i < n; i += 1)  {\n        emit(a[i]);\n    }\n    return 0;\n}\n",
+      "cpp": "/* 数字数组最高位在前，不把整个 200 位整数转换成机器整数。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int carry = 0, i = 0, n = 0, x = 0;\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    /* 初始 carry=1，从右向左传播进位：取余留下本位，整数除法留下进位。 */\n    carry = 1;\n    for (i = (n - 1); i > (-1); i += -1)  {\n        x = (a[i] + carry);\n        a[i] = (x % 10);\n        carry = (x / 10);\n    }\n    if (carry == 1)  {\n        /* 若最高位仍有进位，先输出 1，再按原顺序输出更新后的各位。 */\n        emit(1);\n    }\n    for (i = 0; i < n; i += 1)  {\n        emit(a[i]);\n    }\n    return 0;\n}\n",
+      "java": "/* 数字数组最高位在前，不把整个 200 位整数转换成机器整数。 */\nimport java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\")) return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0) System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int carry = 0, i = 0, n = 0, x = 0;\n        n = read();\n        for (i = 0; i < n; i += 1)  {\n            a[i] = read();\n        }\n        /* 初始 carry=1，从右向左传播进位：取余留下本位，整数除法留下进位。 */\n        carry = 1;\n        for (i = (n - 1); i > (-1); i += -1)  {\n            x = (a[i] + carry);\n            a[i] = (x % 10);\n            carry = (x / 10);\n        }\n        if (carry == 1)  {\n            /* 若最高位仍有进位，先输出 1，再按原顺序输出更新后的各位。 */\n            emit(1);\n        }\n        for (i = 0; i < n; i += 1)  {\n            emit(a[i]);\n        }\n    }\n}\n",
+      "python": "# 数字数组最高位在前，不把整个 200 位整数转换成机器整数。\nimport sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ncarry = i = n = x = 0\nn = read()\nfor i in range(n):\n    a[i] = read()\n# 初始 carry=1，从右向左传播进位：取余留下本位，整数除法留下进位。\ncarry = 1\nfor i in range((n - 1), (-1), (-1)):\n    x = a[i] + carry\n    a[i] = x % 10\n    carry = x // 10\nif carry == 1:\n    # 若最高位仍有进位，先输出 1，再按原顺序输出更新后的各位。\n    emit(1)\nfor i in range(n):\n    emit(a[i])\n",
+      "rust": "/* 数字数组最高位在前，不把整个 200 位整数转换成机器整数。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>, p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(), p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut carry: i32 = 0;\n    let mut i: i32 = 0;\n    let mut n: i32 = 0;\n    let mut x: i32 = 0;\n    n = reader.read();\n    i = 0;\n    while i < n  {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    /* 初始 carry=1，从右向左传播进位：取余留下本位，整数除法留下进位。 */\n    carry = 1;\n    i = (n - 1);\n    while i > (-1)  {\n        x = (a[(i) as usize] + carry);\n        a[(i) as usize] = (x % 10);\n        carry = (x / 10);\n        i += -1;\n    }\n    if (carry == 1)  {\n        /* 若最高位仍有进位，先输出 1，再按原顺序输出更新后的各位。 */\n        emit(1);\n    }\n    i = 0;\n    while i < n  {\n        emit(a[(i) as usize]);\n        i += 1;\n    }\n}\n"
+    }
+  }
+}

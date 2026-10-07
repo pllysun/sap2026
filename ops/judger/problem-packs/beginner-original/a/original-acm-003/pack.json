@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-003",
+  "title": "贴纸等量分装",
+  "difficulty": "EASY",
+  "tags": [
+    "输入输出",
+    "基础数学"
+  ],
+  "description": "活动组准备了 m 张贴纸，要装入 n 个袋子。每个袋子必须装相同数量，并尽量装满；无法等量分装的贴纸留在桌上。请计算每个袋子的贴纸数和留在桌上的数量。允许袋子为空。",
+  "inputFormat": "一行两个整数 n、m，分别表示袋子数和贴纸总数。",
+  "outputFormat": "输出两个整数，依次表示每个袋子的贴纸数、剩余贴纸数。",
+  "constraints": "1 ≤ n ≤ 10^6，0 ≤ m ≤ 10^12。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-003",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "4 19\n",
+      "expectedOutput": "4 3\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "5 3\n",
+      "expectedOutput": "0 3\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "1 25\n",
+      "expectedOutput": "25 0\n",
+      "sample": true
+    },
+    {
+      "name": "no-stickers",
+      "input": "1 0\n",
+      "expectedOutput": "0 0\n",
+      "sample": false
+    },
+    {
+      "name": "zero-large-bags",
+      "input": "1000000 0\n",
+      "expectedOutput": "0 0\n",
+      "sample": false
+    },
+    {
+      "name": "exact-division",
+      "input": "7 49\n",
+      "expectedOutput": "7 0\n",
+      "sample": false
+    },
+    {
+      "name": "one-short",
+      "input": "100 99\n",
+      "expectedOutput": "0 99\n",
+      "sample": false
+    },
+    {
+      "name": "one-extra",
+      "input": "100 101\n",
+      "expectedOutput": "1 1\n",
+      "sample": false
+    },
+    {
+      "name": "large-total",
+      "input": "1 1000000000000\n",
+      "expectedOutput": "1000000000000 0\n",
+      "sample": false
+    },
+    {
+      "name": "large-both",
+      "input": "999983 1000000000000\n",
+      "expectedOutput": "1000017 289\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "809246 734459408967\n",
+      "expectedOutput": "907584 687303\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "811848 358128551109\n",
+      "expectedOutput": "441127 478413\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "419348 887071859746\n",
+      "expectedOutput": "2115359 293814\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "219918 484532642204\n",
+      "expectedOutput": "2203242 68048\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "380246 536586608123\n",
+      "expectedOutput": "1411156 183747\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "305908 184853504114\n",
+      "expectedOutput": "604278 29690\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "633000 550704738247\n",
+      "expectedOutput": "869991 435247\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "393067 154382659370\n",
+      "expectedOutput": "392764 92182\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "623381 623913179155\n",
+      "expectedOutput": "1000853 435162\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "684365 168083481493\n",
+      "expectedOutput": "245605 15668\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long n, m;\n    scanf(\"%lld%lld\", &n, &m);\n    printf(\"%lld %lld\\n\", m / n, m % n);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long n, m;\n    std::cin >> n >> m;\n    std::cout << m / n << ' ' << m % n << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long n = in.nextLong();\n        long m = in.nextLong();\n        System.out.println(m / n + \" \" + m % n);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "n, m = map(int, input().split())\nprint(m // n, m % n)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let n: i64 = words.next().unwrap().parse().unwrap();\n    let m: i64 = words.next().unwrap().parse().unwrap();\n    println!(\"{} {}\", m / n, m % n);\n}\n"
+    }
+  }
+}
