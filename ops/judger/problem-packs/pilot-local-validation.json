@@ -1,0 +1,365 @@
+{
+  "rounds": 3,
+  "results": [
+    {
+      "slug": "luogu-p1001",
+      "language": "c",
+      "mode": "STDIO",
+      "caseCount": 25,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.628
+    },
+    {
+      "slug": "luogu-p1001",
+      "language": "cpp",
+      "mode": "STDIO",
+      "caseCount": 25,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.354
+    },
+    {
+      "slug": "luogu-p1001",
+      "language": "java",
+      "mode": "STDIO",
+      "caseCount": 25,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 6.699
+    },
+    {
+      "slug": "luogu-p1001",
+      "language": "python",
+      "mode": "STDIO",
+      "caseCount": 25,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.218
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "c",
+      "mode": "STDIO",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.406
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "c",
+      "mode": "FUNCTION",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.394
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "cpp",
+      "mode": "STDIO",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.437
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "cpp",
+      "mode": "FUNCTION",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.42
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "java",
+      "mode": "STDIO",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.594
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "java",
+      "mode": "FUNCTION",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.683
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "python",
+      "mode": "STDIO",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.491
+    },
+    {
+      "slug": "leetcode-1",
+      "language": "python",
+      "mode": "FUNCTION",
+      "caseCount": 30,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.526
+    },
+    {
+      "slug": "leetcode-20",
+      "language": "c",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.416
+    },
+    {
+      "slug": "leetcode-20",
+      "language": "cpp",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.436
+    },
+    {
+      "slug": "leetcode-20",
+      "language": "java",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 8.249
+    },
+    {
+      "slug": "leetcode-20",
+      "language": "python",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.751
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "c",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.397
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "c",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.402
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "cpp",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.478
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "cpp",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.453
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "java",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.464
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "java",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.41
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "python",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.587
+    },
+    {
+      "slug": "leetcode-704",
+      "language": "python",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.603
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "c",
+      "mode": "STDIO",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.422
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "c",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.422
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "cpp",
+      "mode": "STDIO",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.858
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "cpp",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.858
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "java",
+      "mode": "STDIO",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 8.774
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "java",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.976
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "python",
+      "mode": "STDIO",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.848
+    },
+    {
+      "slug": "leetcode-53",
+      "language": "python",
+      "mode": "FUNCTION",
+      "caseCount": 35,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.824
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "c",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.394
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "c",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.39
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "cpp",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.42
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "cpp",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 0.428
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "java",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.081
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "java",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 7.085
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "python",
+      "mode": "STDIO",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.598
+    },
+    {
+      "slug": "leetcode-206",
+      "language": "python",
+      "mode": "FUNCTION",
+      "caseCount": 32,
+      "rounds": 3,
+      "status": "PASS",
+      "seconds": 1.568
+    }
+  ]
+}

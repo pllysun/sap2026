@@ -1,0 +1,4 @@
+# Preserve the verified homepage and admin UI while correcting the APK cache path.
+ARG BASE_IMAGE=pllysun/sap:1.5.33@sha256:21f2089c99baea581d4c8b2376245d73084c378e567b0a730473cfc8e489c4da
+FROM ${BASE_IMAGE}
+COPY app.jar /app/app.jar

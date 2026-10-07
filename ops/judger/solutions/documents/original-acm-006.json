@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-006",
+  "problemRevision": 1,
+  "title": "巡检编号",
+  "summary": "通过右端点和左端点前一位的整数除法计数相减，左端点为 0 时单独补上编号 0。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "巡检只检查能被 k 整除的设备编号，也就是除以 k 没有余数的编号。现在负责闭区间 `[L,R]`，两端都包含。编号都是非负整数，**0 也算可整除**，因为 `0=k*0`。\n\n输入三个数 L、R、k，输出符合条件的设备数，不用列出这些编号。比如 L=3、R=16、k=4，符合的是 4、8、12、16，共 4 台。区间可能非常长，最大端点达一万亿，不应逐编号扫描。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "先考虑正编号 1..R，其中 k 的倍数是 k、2k、3k……，数量等于 R 除以 k 的整数部分。若 L>0，先数到 R，再减去 1..L−1 的倍数数目，即 `R/k−(L−1)/k`。\n\n必须减到 L−1，才保留可能符合规则的左端点 L。如果 L=0，就没有正数左侧段可减，但还要把编号 0 算进去，此时答案是 `R/k+1`。参考程序直接用这个分支，避免对负数做除法而混淆不同语言舍入规则。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 `L=3,R=16,k=4`。\n\n| 步骤 | 计数范围 | 结果 |\n| --- | --- | --- |\n| 1 | 正编号 1..16 的倍数 | `16/4=4`，即 4、8、12、16 |\n| 2 | 排除 1..2 的倍数 | `2/4=0` |\n| 3 | 相减保留闭区间 | `4−0=4` |\n\n公开 `[0,0]`、k=7：右侧正倍数为 0 个，但单独的编号 0 合法，所以输出 1。公开 `[5,7]`、k=10：两个正倍数前缀都为 0，输出 0。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 用宽整数读 `left/right/step`，它们对应题面的 L、R、k。\n2. 先计算 `answer=right/step`，得到不超过右端点的正倍数数目。\n3. 若 left=0，answer 加一；否则减去 `(left−1)/step`。\n4. Python 使用 `//` 进行整数除法；其他语言保持整数运算，不转浮点。\n5. 输出 answer。当前输入保证 step 为正，且 left 不超过 right，无需尝试修正输入区间。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "每个不超过 R 的正倍数都有唯一的正整数乘数 t，满足 `t*k<=R`，t 可以取 1 到 `floor(R/k)`，所以计数正确。\n\nL>0 时，不超过 R 的正倍数被分成左侧 1..L−1 与目标 L..R 两部分。减去第一部分恰好留下目标区间且包含两端。L=0 时目标额外包含 0，并且 0 不在正倍数计数中，补一正好不重不漏。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "程序用固定次数的除法、判断和加减，不随 R−L 的长度增长，时间 `O(1)`、额外空间 `O(1)`。大 O 中的 1 表示无需遍历设备，即使区间有一万亿个编号，计算步骤仍相同。\n\n按当前固定 64 位整数范围分析。端点和可能的数量都能超过 32 位上限，五语言代码使用宽整数或 Python 整数保存，不建立设备数组。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- L=0 时必须把编号 0 补上，不能把 0 当作无设备。\n- 公式减的是 L−1，不是 L，否则会漏掉能整除的左端点。\n- R 本身能整除时要计入，整数除法已经包含它。\n- k 大于 R 不一定答案为 0：若 L=0，仍有编号 0。\n- 不要改成浮点除法再四舍五入，所需的是整数部分。\n- 不逐编号循环，巨大区间会导致超时。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "先对“从 1 开始的整除编号”建立累计计数，再用区间相减；0 则按题意单独处理。\n\n练习 `[4,12]`、k=4，答案 3，两个端点都计入。再试 `[0,5]`、k=3，符合 0、3，答案 2。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 负责闭区间 [L,R]，编号 0 合法且能被任意正 k 整除。 */\n#include <stdio.h>\nint main(void)  {\n    long long left, right, step;\n    scanf(\"%lld%lld%lld\", &left, &right, &step);\n    long long answer = right / step;\n    /* 先计算正倍数前缀；L>0 减到 L-1，L=0 则额外计入编号 0。 */\n    if (left == 0)  {\n        answer++;\n    }\n    else  {\n        answer -= (left - 1) / step;\n    }\n    /* 输出数量而非倍数列表，64 位整数支持一万亿级端点。 */\n    printf(\"%lld\\n\", answer);\n    return 0;\n}\n",
+      "cpp": "/* 负责闭区间 [L,R]，编号 0 合法且能被任意正 k 整除。 */\n#include <iostream>\n#include <string>\nint main()  {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n    long long left, right, step;\n    std::cin >> left >> right >> step;\n    long long answer = right / step;\n    /* 先计算正倍数前缀；L>0 减到 L-1，L=0 则额外计入编号 0。 */\n    if (left == 0)  {\n        answer++;\n    }\n    else  {\n        answer -= (left - 1) / step;\n    }\n    std::\n    /* 输出数量而非倍数列表，64 位整数支持一万亿级端点。 */\n    cout << answer << '\\n';\n    return 0;\n}\n",
+      "java": "/* 负责闭区间 [L,R]，编号 0 合法且能被任意正 k 整除。 */\nimport java.util.Scanner;\npublic class Main  {\n    public static void main(String[] args)  {\n        Scanner in = new Scanner(System.in);\n        long left = in.nextLong();\n        long right = in.nextLong();\n        long step = in.nextLong();\n        long answer = right / step;\n        /* 先计算正倍数前缀；L>0 减到 L-1，L=0 则额外计入编号 0。 */\n        if (left == 0)  {\n            answer++;\n        }\n        else  {\n            answer -= (left - 1) / step;\n        }\n        System.out.\n        /* 输出数量而非倍数列表，64 位整数支持一万亿级端点。 */\n        println(answer);\n    }\n}\n",
+      "python": "# 负责闭区间 [L,R]，编号 0 合法且能被任意正 k 整除。\nleft, right, step = map(int, input().split())\n# 先计算正倍数前缀；L>0 减到 L-1，L=0 则额外计入编号 0。\nanswer = right // step + 1 if left == 0 else right // step - (left - 1) // step\n# 输出数量而非倍数列表，64 位整数支持一万亿级端点。\nprint(answer)\n",
+      "rust": "/* 负责闭区间 [L,R]，编号 0 合法且能被任意正 k 整除。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n    let left: i64 = words.next().unwrap().parse().unwrap();\n    let right: i64 = words.next().unwrap().parse().unwrap();\n    let step: i64 = words.next().unwrap().parse().unwrap();\n    let answer =\n    /* 先计算正倍数前缀；L>0 减到 L-1，L=0 则额外计入编号 0。 */\n    if left == 0  {\n        right / step + 1\n    }\n    else  {\n        right / step - (left - 1) / step\n    }\n    ;\n    /* 输出数量而非倍数列表，64 位整数支持一万亿级端点。 */\n    println!(\"{}\", answer);\n}\n"
+    }
+  }
+}

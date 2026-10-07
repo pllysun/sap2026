@@ -1,3 +1,4 @@
+FROM pllysun/sap-judger-sdk@sha256:ff9484d4ba7b2a510cd49b10e701d8ff2106a86f19cf36ee8fb2049298914ca0 AS judger-sdk
 # Package tested, self-contained artifacts without inheriting an old application
 # image. Old application layers can retain removed configuration or credentials.
 # Context: app.jar, static/{admin,user}, ocr/, nginx.conf, entrypoint.sh.
@@ -16,6 +17,16 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip && \
 COPY ocr/main.py /app/ocr/main.py
 ENV HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy=""
 
+COPY --from=judger-sdk /usr/ /opt/judger/rootfs/usr/
+COPY --from=judger-sdk /opt/java27/ /opt/judger/rootfs/opt/java27/
+COPY --from=judger-sdk /opt/rust/ /opt/judger/rootfs/opt/rust/
+COPY --from=judger-sdk /etc/ld.so.cache /opt/judger/rootfs/etc/ld.so.cache
+COPY --from=judger-sdk /etc/alternatives/ /opt/judger/rootfs/etc/alternatives/
+COPY judger/ /opt/judger/
+RUN groupadd -g 2000 sapapp && useradd -u 2000 -g sapapp -M -s /usr/sbin/nologin sapapp && \
+    chmod 755 /opt/judger/start.sh /opt/judger/go-judge
+
+
 COPY app.jar /app/app.jar
 COPY static/ /app/static/
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -24,8 +35,14 @@ RUN chmod 755 /app/entrypoint.sh && chmod 644 /app/app.jar && \
     find /app/static -type d -exec chmod 755 {} + && \
     find /app/static -type f -exec chmod 644 {} +
 
+
 VOLUME ["/app/data", "/app/logs", "/app/uploads", "/etc/letsencrypt"]
 EXPOSE 80 443
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget --no-check-certificate -qO- https://localhost:443/ || exit 1
+    CMD wget -qO- http://localhost:8081/api/ping >/dev/null && \
+    { [ "${JUDGER_ENABLED:-false}" != true ] || wget -qO /dev/null --header="Authorization: Bearer $(cat /run/judger/token)" http://127.0.0.1:5050/config; } || exit 1
+COPY --chmod=0755 judger-agent.py /opt/judger/agent.py
+COPY --chmod=0755 node-start.sh /opt/judger/node-start.sh
+COPY --chmod=0755 judger-health.sh /opt/judger/health.sh
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD /opt/judger/health.sh
 ENTRYPOINT ["/app/entrypoint.sh"]

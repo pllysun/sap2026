@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-012",
+  "problemRevision": 1,
+  "title": "循环轮值表",
+  "summary": "先将移动次数对长度取余，再把末尾 shift 个值移到开头，或按等价来源下标输出。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "将整张轮值表向右循环移动一次，就是把最后一个编号搬到最前面，其余每项向右一格。循环表示越过末尾后回到开头，元素不会丢失。\n\n输入 n、k 和 n 个编号，输出向右移动 k 次后的序列。编号可以重复或为负数，它们只是要保留的值，不决定移动方式。例如 `[10,20,30,40,50]` 右移 2 次后为 `[40,50,10,20,30]`。n 至少为 1，k 可能为 0 或很大。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "移动 n 次后，每个元素都绕完整圈，轮值表回到原样。所以只需 `shift=k%n` 次，不能模拟多达十亿次移动。\n\n右移 shift 次等价于把原数组最后 shift 项放到最前面，其余项接在后面。Python 正是用两个切片拼接；当 shift=0 时，尾部切片为空，整个原表接在后面，仍正确。\n\n其他参考语言直接按结果下标 i 找来源，来源为 `(i−shift+n)%n`。加 n 避免 i−shift 为负，而取余负责回绕。两种实现访问的数字和次序完全相同。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 n=5、k=2，原表 `[10,20,30,40,50]`，shift=2。\n\n| 结果位置 i | 来源下标 `(i−2+5)%5` | 输出编号 |\n| --- | --- | --- |\n| 0 | 3 | 40 |\n| 1 | 4 | 50 |\n| 2 | 0 | 10 |\n| 3 | 1 | 20 |\n| 4 | 2 | 30 |\n\n可以看到原末尾两项成为新开头，其余三项整体接在后面；无需逐次改动数组。",
+      "diagram": {
+        "caption": "绿色尾部两项保留相对顺序，移到开头；蓝色前段也保留相对顺序。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 226\" role=\"img\" aria-label=\"右移 2 位：尾段 [40,50] 接到前面\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"226\" rx=\"14\" fill=\"#f4f8fd\"/><text x=\"24\" y=\"32\" font-size=\"18\" fill=\"#23466f\">右移 2 位：尾段 [40,50] 接到前面</text><text x=\"24\" y=\"79\" font-size=\"15\" fill=\"#3267b1\">原表</text><rect x=\"164\" y=\"52\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"213.2\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">10</text><rect x=\"272.4\" y=\"52\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"321.59999999999997\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">20</text><rect x=\"380.79999999999995\" y=\"52\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"429.99999999999994\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">30</text><rect x=\"489.19999999999993\" y=\"52\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"538.4\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">40</text><rect x=\"597.5999999999999\" y=\"52\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"646.8\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">50</text><text x=\"24\" y=\"133\" font-size=\"15\" fill=\"#3267b1\">分成两段</text><rect x=\"164\" y=\"106\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"294.5\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">前段 10,20,30</text><rect x=\"435.0\" y=\"106\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"565.5\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">尾段 40,50</text><text x=\"24\" y=\"187\" font-size=\"15\" fill=\"#3267b1\">右移结果</text><rect x=\"164\" y=\"160\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"213.2\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">40</text><rect x=\"272.4\" y=\"160\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"321.59999999999997\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">50</text><rect x=\"380.79999999999995\" y=\"160\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"429.99999999999994\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">10</text><rect x=\"489.19999999999993\" y=\"160\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"538.4\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">20</text><rect x=\"597.5999999999999\" y=\"160\" width=\"98.4\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"646.8\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">30</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 n、k 与原表 `values`，保持原编号值不变。\n2. 计算 shift=k%n，得到 0..n−1 内的等效次数。\n3. C/C++/Java/Rust 对 i=0..n−1 计算来源下标并输出 `values[source]`。\n4. Python 构造 `values[n−shift:]+values[:n−shift]`，再输出拼接结果。\n5. 输出用空格分隔，只有一个元素时也保持正常格式。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "原下标 j 的元素右移 shift 次后落在 `(j+shift)%n`。因此目标下标 i 的来源必然是 `(i−shift+n)%n`，这是循环移动的逆映射。\n\n每个结果位置计算一个合法来源，映射覆盖原下标且不会重复，所以元素一个不漏。完整 n 次移动是恒等变化，对 k 取余只去掉了若干整圈，因此等效 shift 得到的结果与实际移动 k 次相同。Python 拼接尾段和前段正是在相同映射次序下输出。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 n 为轮值表长度。取余是固定一次运算，按来源输出 n 个值，所以时间 `O(n)`，与巨大 k 不成正比；大 O 表示主要开销只随表长度增长。\n\nC/C++/Java/Rust 不另存结果，除输入外算法额外空间 `O(1)`；Python 两个切片与拼接结果需要 `O(n)` 额外空间，读入整数列表也有 `O(n)`。五语言都需要保存原表的 `O(n)` 输入空间。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 方向是向右，不能误用 `(i+shift)%n` 作为来源，那会向左移动。\n- k>=n 要先取余，大量逐次移动会超时。\n- 来源下标先加 n 再取余，避免 C/Java 中负余数导致负下标。\n- k=0 或 k 是 n 的倍数时结果应完全不变。\n- 重复编号和负编号照常移动，不应去重或按编号排序。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "利用周期先去掉整圈，再通过来源下标一次输出，比反复挪动元素简单。\n\n练习 `[1,2,3,4]`、k=5，等效右移 1，答案 `[4,1,2,3]`。再试 `[8]`、k=100，答案仍为 `[8]`。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 编号只是原值；n 为正，右移次数可很大但每 n 次回到原表。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint main(void)  {\n    int n;\n    long long k, values[10000];\n    scanf(\"%d%lld\", &n, &k);\n    for (int i = 0; i < n; ++i)  {\n        scanf(\"%lld\", &values[i]);\n    }\n    int\n    /* shift=k%n；结果位置 i 的来源是 (i-shift+n)%n，等价于尾段接到开头。 */\n    shift = (int)(k % n);\n    for (int i = 0; i < n; ++i)  {\n        if (i > 0)  {\n            /* 按结果位置输出全部 n 项，Python 切片拼接会另外建立结果列表。 */\n            printf(\" \");\n        }\n        printf(\"%lld\", values[(i - shift + n) % n]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
+      "cpp": "/* 编号只是原值；n 为正，右移次数可很大但每 n 次回到原表。 */\n#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\nint main()  {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    long long k;\n    cin >> n >> k;\n    vector<long long> values(n);\n    for (auto& value : values)  {\n        cin >> value;\n    }\n    int\n    /* shift=k%n；结果位置 i 的来源是 (i-shift+n)%n，等价于尾段接到开头。 */\n    shift = static_cast<int>(k % n);\n    rotate(values.begin(), values.end() - shift, values.end());\n    for (int i = 0; i < n; ++i)  {\n        /* 按结果位置输出全部 n 项，Python 切片拼接会另外建立结果列表。 */\n        cout << (i ? \" \" : \"\") << values[i];\n    }\n    cout << '\\n';\n    return 0;\n}\n",
+      "java": "/* 编号只是原值；n 为正，右移次数可很大但每 n 次回到原表。 */\nimport java.io.*;\nimport java.util.*;\npublic class Main  {\n    static final class FastScanner  {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n        private int read() throws IOException  {\n            if (position == length)  {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0)  {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n        String next() throws IOException  {\n            int value;\n            do  {\n                value = read();\n            }\n            while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1)  {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n        int nextInt() throws IOException  {\n            return Integer.parseInt(next());\n        }\n        long nextLong() throws IOException  {\n            return Long.parseLong(next());\n        }\n    }\n    public static void main(String[] args) throws Exception  {\n        FastScanner scanner = new FastScanner();\n        int n = scanner.nextInt();\n        int\n        /* shift=k%n；结果位置 i 的来源是 (i-shift+n)%n，等价于尾段接到开头。 */\n        shift = (int) (scanner.nextLong() % n);\n        long[] values = new long[n];\n        for (int i = 0; i < n; i++)  {\n            values[i] = scanner.nextLong();\n        }\n        StringBuilder answer = new StringBuilder();\n        for (int i = 0; i < n; i++)  {\n            if (i > 0)  {\n                answer.append(' ');\n            }\n            answer.append(values[(i - shift + n) % n]);\n        }\n        System.out.\n        /* 按结果位置输出全部 n 项，Python 切片拼接会另外建立结果列表。 */\n        println(answer);\n    }\n}\n",
+      "python": "# 编号只是原值；n 为正，右移次数可很大但每 n 次回到原表。\nimport sys\n\ndata = list(map(int, sys.stdin.buffer.read().split()))\nn, k = data[:2]\nvalues = data[2:]\n# shift=k%n；结果位置 i 的来源是 (i-shift+n)%n，等价于尾段接到开头。\nshift = k % n\nresult = values[n - shift :] + values[: n - shift]\n# 按结果位置输出全部 n 项，Python 切片拼接会另外建立结果列表。\nprint(*result)\n",
+      "rust": "/* 编号只是原值；n 为正，右移次数可很大但每 n 次回到原表。 */\nuse std::io:: {\n    self, Read\n}\n;\n/* shift=k%n；结果位置 i 的来源是 (i-shift+n)%n，等价于尾段接到开头。 */\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    let n: usize = tokens.next().unwrap().parse().unwrap();\n    let k: usize = tokens.next().unwrap().parse().unwrap();\n    let mut values: Vec<i64> = tokens.map(|token| token.parse().unwrap()).collect();\n    values.rotate_right(k % n);\n    let answer = values .iter() .map(|value| value.to_string()) .collect::<Vec<_>>() .join(\" \");\n    /* 按结果位置输出全部 n 项，Python 切片拼接会另外建立结果列表。 */\n    println!(\"{}\", answer);\n}\n"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-014",
+  "problemRevision": 1,
+  "title": "物资库的出入",
+  "summary": "按操作顺序维护64位库存，入库累加，出库先检查数量，不足时只输出失败而不改变库存。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "初始库存为S，需要按给定顺序执行q次操作。`IN x`总能成功，库存增加x；`OUT x`只有库存不少于x才成功，并减少x。每次成功输出操作后的库存，出库失败输出-1，失败不会改变库存，也不会取消后面的操作。\n\n输出恰好q行，与q次操作一一对应。库存可以降为0，但不能为负。数量可能超过32位整数范围，因此C/C++用long long、Java用long、Rust用i64，Python int可自动扩展。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "这是状态模拟：stock是当前库存，把题目给出的每个规则翻译为一次状态变化。按顺序读操作与amount，先判断是不是IN，是则加；否则是OUT，再比较stock≥amount，满足才减，不满足什么也不减。\n\n失败和库存为0是不同概念。失败输出-1属于本次请求结果，不应该把stock设成-1。也不能先扣减再发现负数才尝试恢复，那会增加出错机会；先判断能否成功更直接。\n\n操作有依赖关系，必须顺序处理，不能先累计所有入库再计算出库。参考实现有的边处理边打印，有的把每次结果放到answer后统一输出，但计算顺序相同。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例初始5，四次操作依次为OUT3、OUT3、IN4、OUT6：\n\n| 操作 | 处理前stock | 判断 / 更新 | 输出 / 处理后stock |\n| --- | --- | --- | --- |\n| OUT 3 | 5 | 5≥3，成功减3 | 2 / 2 |\n| OUT 3 | 2 | 2<3，失败 | -1 / 2 |\n| IN 4 | 2 | 入库总成功，加4 | 6 / 6 |\n| OUT 6 | 6 | 刚好够，减6 | 0 / 0 |\n\n第二次失败后库存仍是2，所以后续入库才得到6。若误把库存设为-1或减为-1，后两次结果都会错。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取stock=S和q。\n2. 循环q次，每轮读operation及amount。操作名称区分IN和OUT。\n3. IN分支更新stock+=amount，并输出新库存。\n4. OUT且库存足够时更新stock-=amount，输出新库存；不足时输出-1，stock保持原值。\n5. 若使用answer缓存，最后按行输出全部结果。Python读入bytes，因此与b\"IN\"比较；不能拿bytes与普通字符串\"IN\"直接比较。\n\n所有库存计算从变量定义到读写格式都保持64位，不能只在最后输出时再转类型。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "初始stock等于真实库存。若当前值正确，入库按题意增加amount后，得到新的真实库存；成功出库按题意减少amount后，得到新的真实库存；失败出库保持原值，也正好符合库存不变的规则。\n\n每次输出与当前操作是否成功一致，且下一轮从这次操作后的正确库存继续，所以按顺序处理完所有操作后，每一行结果和最终库存都正确。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令q为操作次数，每轮仅固定比较与加减，时间O(q)。打印q个结果也需O(q)，不能把批量输出当成O(1)。\n\n库存状态只需O(1)额外空间，C/C++边读边输出，输入缓冲区固定，实际额外空间O(1)。Python/Java/Rust将结果缓存到answer，使用O(q)输出存储；Python/Rust还读取整份输入文本，使用O(q)输入存储。整数文本长度在题目范围内有固定上限。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- stock==amount时出库成功，条件是≥，不是>。\n- 出库失败不能扣减库存，也不能把库存改为-1。\n- 失败后还要继续处理后续操作，不要提前退出程序。\n- 使用64位整数保存库存和amount，连续入库可能超过32位范围。\n- 按原顺序处理，不能把操作排序或把入库全部提前。\n- Python bytes输入与b\"IN\"比较，其他语言按各自字符串类型比较。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "把当前状态与本次输出分开：库存失败时保持，返回给请求者的结果则是-1。\n\n练习：初始0，操作OUT1、IN1、OUT1，输出-1、1、0；初始2，OUT2立即得到0。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint main(void) {\n    long long stock, amount;\n    int q;\n    // stock 保存64位库存，后续操作必须依次处理。\n    scanf(\"%lld%d\", &stock, &q);\n    for (int i = 0; i < q; ++i) {\n        char operation[4];\n        scanf(\"%3s%lld\", operation, &amount);\n        // 入库无条件累加；出库先检查数量，不足时不能修改库存。\n        if (strcmp(operation, \"IN\") == 0) {\n            stock += amount;\n            // 输出与本次操作对应的结果，失败只返回-1，不会成为库存。\n            printf(\"%lld\\n\", stock);\n        } else if (stock >= amount) {\n            stock -= amount;\n            printf(\"%lld\\n\", stock);\n        } else {\n            printf(\"-1\\n\");\n        }\n    }\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\n\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    long long stock, amount;\n    int q;\n    // stock 保存64位库存，后续操作必须依次处理。\n    cin >> stock >> q;\n    for (int i = 0; i < q; ++i) {\n        string operation;\n        cin >> operation >> amount;\n        // 入库无条件累加；出库先检查数量，不足时不能修改库存。\n        if (operation == \"IN\") {\n            stock += amount;\n            // 输出与本次操作对应的结果，失败只返回-1，不会成为库存。\n            cout << stock << '\\n';\n        } else if (stock >= amount) {\n            stock -= amount;\n            cout << stock << '\\n';\n        } else {\n            cout << -1 << '\\n';\n        }\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    static final class FastScanner {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n\n        private int read() throws IOException {\n            if (position == length) {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0) {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n\n        String next() throws IOException {\n            int value;\n            do {\n                value = read();\n            } while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1) {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n\n        int nextInt() throws IOException {\n            return Integer.parseInt(next());\n        }\n\n        long nextLong() throws IOException {\n            return Long.parseLong(next());\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        FastScanner scanner = new FastScanner();\n        // stock 保存64位库存，后续操作必须依次处理。\n        long stock = scanner.nextLong();\n        int q = scanner.nextInt();\n        StringBuilder answer = new StringBuilder();\n        for (int i = 0; i < q; i++) {\n            String operation = scanner.next();\n            long amount = scanner.nextLong();\n            // 入库无条件累加；出库先检查数量，不足时不能修改库存。\n            if (operation.equals(\"IN\")) {\n                stock += amount;\n                answer.append(stock);\n            } else if (stock >= amount) {\n                stock -= amount;\n                answer.append(stock);\n            } else {\n                answer.append(-1);\n            }\n            answer.append('\\n');\n        }\n        // 输出与本次操作对应的结果，失败只返回-1，不会成为库存。\n        System.out.print(answer);\n    }\n}\n",
+      "python": "import sys\n\ntokens = iter(sys.stdin.buffer.read().split())\n# 读取初始库存，Python整数可容纳连续入库后的数量。\nstock = int(next(tokens))\nq = int(next(tokens))\nanswer = []\nfor _ in range(q):\n    operation = next(tokens)\n    amount = int(next(tokens))\n    # 输入token是bytes，按bytes比较操作；失败分支不修改stock。\n    if operation == b\"IN\":\n        stock += amount\n        answer.append(str(stock))\n    elif stock >= amount:\n        stock -= amount\n        answer.append(str(stock))\n    else:\n        answer.append(\"-1\")\n# 每次操作一个输出，按操作顺序逐行打印。\nprint(\"\\n\".join(answer))\n",
+      "rust": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    // stock 保存64位库存，后续操作必须依次处理。\n    let mut stock: i64 = tokens.next().unwrap().parse().unwrap();\n    let q: usize = tokens.next().unwrap().parse().unwrap();\n    let mut answer = String::new();\n    for _ in 0..q {\n        let operation = tokens.next().unwrap();\n        let amount: i64 = tokens.next().unwrap().parse().unwrap();\n        // 入库无条件累加；出库先检查数量，不足时不能修改库存。\n        let result = if operation == \"IN\" {\n            stock += amount;\n            stock\n        } else if stock >= amount {\n            stock -= amount;\n            stock\n        } else {\n            -1\n        };\n        answer.push_str(&format!(\"{}\\n\", result));\n    }\n    // 输出与本次操作对应的结果，失败只返回-1，不会成为库存。\n    print!(\"{}\", answer);\n}\n"
+    }
+  }
+}

@@ -37,18 +37,31 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @org.springframework.beans.factory.annotation.Autowired
     private RateLimitInterceptor rateLimitInterceptor;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sap.service.judger.OjService ojService;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Observe the request before authentication and rate-limit denials.
+        registry.addInterceptor(apiStatInterceptor).addPathPatterns("/api/**")
+                .excludePathPatterns("/api/file/uploads/**");
         // 限流最先执行：登录/注册等异常刷量在鉴权之前就被挡掉，避免无谓占用后端资源
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns("/api/ping", "/api/file/uploads/**");
 
-        registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
+        registry.addInterceptor(new SaInterceptor(handle -> {
+            StpUtil.checkLogin();
+            String path=cn.dev33.satoken.context.SaHolder.getRequest().getRequestPath();
+            if(path.startsWith("/api/oj/") || path.startsWith("/api/admin/oj/"))
+                ojService.requireActiveAccount(StpUtil.getLoginIdAsLong());
+        }))
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/ping",
+                        // Possession of a 60-second, IP-bound, single-use authenticated ticket is checked by AppDownloadService.
+                        "/api/app/download/file",
+                        "/api/oj-nodes/*/heartbeat",
                         "/api/auth/login",
                         "/api/auth/admin/login",
                         "/api/auth/app/login",
@@ -63,10 +76,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/join/status"
                 );
 
-        // 全局接口请求计数（在登录拦截之后；统计自身与静态资源排除，避免自激增长）
-        registry.addInterceptor(apiStatInterceptor)
-                .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/stats/**", "/api/file/uploads/**");
     }
 
     @Override

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-206",
+  "problemRevision": 1,
+  "title": "反转链表",
+  "summary": "保存未处理的后继节点，把当前节点的 next 指向已反转前缀，逐个改向直到链表结束。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "单向链表由一个个节点组成。每个节点有数字 `val` 和指向下一个节点的 `next`；“表头”是第一个节点。空指针表示没有后续节点。题目要求把连接方向全部反过来，并返回新的表头。\n\n例如 `1→2→3→空` 变为 `3→2→1→空`，没有增加或删除节点。完整程序先读 `n` 和 `n` 个值，建立链表，反转后输出值序列；`n=0` 时输出空行。核心函数接收 `head`，节点定义由平台驱动提供。五语言参考实现都实际修改链表连接，包括 C；C 只是在驱动中一次分配了连续的节点内存。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "把整个问题拆为“已经反转的左半段”和“还没处理的右半段”。`prev` 指向已反转部分的头，初始为空；`head` 指向下一个要处理的节点。\n\n每次先保存 `head.next` 为 `next/nxt`，因为稍后会覆盖这条连接。再把 `head.next` 改为 `prev`，当前节点就接到了反转部分前面；最后让 `prev` 指向当前节点、`head` 移到刚才保存的后继。\n\nRust 用 `Option<Box<ListNode>>` 表示可能存在的节点。`take()` 把后继从当前节点中取出，允许把两个链段的所有权分别交给 `head` 和 `prev`；逻辑与其他语言相同。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "用额外小例子 `1→2→3` 观察三次循环。\n\n| 完成的步骤 | 已反转部分 `prev` | 待处理部分 `head` | 刚才保存的后继 |\n| --- | --- | --- | --- |\n| 1 | `1→空` | `2→3→空` | 节点 2 |\n| 2 | `2→1→空` | `3→空` | 节点 3 |\n| 3 | `3→2→1→空` | 空 | 空 |\n\n第一步把节点 1 的连接从 2 改为空；第二步把节点 2 的连接从 3 改为 1；第三步把节点 3 的连接从空改为 2。结束时 `head` 为空，`prev` 正好是新的头。图中的箭头表示真实的 `next`，不是数字大小关系。",
+      "diagram": {
+        "caption": "反转 1→2→3 的三个状态。上方是已反转链段，下方是仍待处理链段，每个节点的连接方向逐步改写。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 310\" role=\"img\" aria-label=\"反转链表的三个状态\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"310\" rx=\"14\" fill=\"#f4f8fd\"/><text x=\"24\" y=\"30\" font-size=\"18\" fill=\"#23466f\">保存后继后，当前节点接到 prev 前面</text><text x=\"24\" y=\"88\" font-size=\"15\" fill=\"#3267b1\">第 1 步</text><text x=\"145\" y=\"68\" font-size=\"14\" fill=\"#26816b\">prev：1 → 空</text><text x=\"145\" y=\"101\" font-size=\"16\" fill=\"#b77930\">head：2 → 3 → 空</text><line x1=\"145\" y1=\"119\" x2=\"670\" y2=\"119\" stroke=\"#d4e1f2\"/><text x=\"24\" y=\"166\" font-size=\"15\" fill=\"#3267b1\">第 2 步</text><text x=\"145\" y=\"146\" font-size=\"16\" fill=\"#26816b\">prev：2 → 1 → 空</text><text x=\"145\" y=\"179\" font-size=\"16\" fill=\"#b77930\">head：3 → 空</text><line x1=\"145\" y1=\"197\" x2=\"670\" y2=\"197\" stroke=\"#d4e1f2\"/><text x=\"24\" y=\"244\" font-size=\"15\" fill=\"#3267b1\">第 3 步</text><text x=\"145\" y=\"224\" font-size=\"16\" fill=\"#26816b\">prev：3 → 2 → 1 → 空</text><text x=\"145\" y=\"257\" font-size=\"16\" fill=\"#b77930\">head：空，循环结束</text><text x=\"24\" y=\"292\" font-size=\"14\" fill=\"#23466f\">节点没有复制；变化的是每个节点的 next 连接。</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 完整程序按输入顺序连接节点；核心函数直接使用传来的 `head`。\n2. 初始化 `prev` 为空，它也是反转后尾节点的后继。\n3. 只要当前节点存在，先保存后继，再改向，再推进两个工作指针。C/C++/Java 使用 `next`，Python 使用 `nxt`；名字不同，含义相同。\n4. Rust 从 `head` 解出 `node`，用 `node.next.take()` 接续未处理部分，把 `prev` 移给 `node.next`，再用 `Some(node)` 更新反转头。\n5. 返回 `prev`。完整程序沿新头输出所有值；参考驱动同时检查节点数量，防止错误环导致无限遍历。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "循环开始时，`prev` 包含所有已处理节点，顺序与原链表相反；`head` 包含剩余节点，仍保持原顺序，两个部分互不丢失。\n\n保存后继保证原链表的剩余部分仍能找到。当前节点接到 `prev` 前面，相当于把原序列的下一个元素放到已反转序列的最前端，所以反转关系继续成立。随后推进 `head`，已处理节点增加一个，剩余节点减少一个。\n\n当剩余部分为空时，所有节点都恰好处理一次，`prev` 就含有全部节点的反序。最初把节点 1 指向空还保证了最终链尾正确，不会形成环。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 `n` 为链表节点数。每个节点只做固定次数的保存与赋值，反转时间 `O(n)`；大 O 的含义是节点数翻倍时，主要工作量也约翻倍。\n\n算法本身只用几个工作指针，五语言额外空间都为 `O(1)`，没有递归栈。原链表的节点占 `O(n)` 输入空间。完整程序的建链、验证与输出也需 `O(n)` 时间，Rust/Python 的输出数组、C++ 的节点回收记录等可能占 `O(n)` 驱动空间；它们不是反转算法新增的链表。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 空链表应返回空，不要直接访问 `head.next`。\n- 单个节点反转后仍是自己，但其 `next` 应为空。\n- 必须先保存后继再修改连接，否则会找不到后面的节点。\n- 更新 `prev` 和 `head` 的先后关系不可随意交换；Python 的并行赋值先求右侧，所以不会覆盖旧值。\n- 数字可以相同，节点却是不同对象；按值交换不能替代本题要求的连接反转。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "记住一个操作顺序：保存后继、当前改向、前后推进。`prev` 总是已反转部分的头，这比同时想象整条链更容易。\n\n练习反转 `5→5→8`：每轮 `prev` 依次是 `5`、`5→5`、`8→5→5`。再想一想若第一轮不保存后继，会丢掉哪部分：原来的第二个 5 及其后的 8 都将无法继续访问。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\nstruct ListNode  {\n    int val;\n    struct ListNode*next;\n}\n;\nstruct ListNode* reverseList(struct ListNode*head) {\n    struct ListNode*prev=NULL;\n    while(head) {\n        struct ListNode*next=head->next;\n        head->next=prev;\n        prev=head;\n        head=next;\n    }\n    return prev;\n}\nint main(void) {\n    int n;\n    scanf(\"%d\",&n);\n    struct ListNode *nodes=calloc(n?n:1,sizeof(*nodes));\n    for(int i=0; i<n; i++) {\n        scanf(\"%d\",&nodes[i].val);\n        nodes[i].next=i+1<n?&nodes[i+1]:NULL;\n    }\n    struct ListNode*p=reverseList(n?nodes:NULL);\n    int k=0;\n    /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n    while(p&&k<n) {\n        if(k)\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        printf(\" \");\n        printf(\"%d\",p->val);\n        p=p->next;\n        k++;\n    }\n    if(p||k!=n)return 3;\n    printf(\"\\n\");\n    free(nodes);\n    return 0;\n}\n",
+      "cpp": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\n#include <iostream>\n#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\nstruct ListNode  {\n    int val;\n    ListNode*next;\n    ListNode(int x):val(x),next(nullptr) {\n    }\n}\n;\nclass Solution  {\n    public:ListNode* reverseList(ListNode*head) {\n        ListNode*prev=nullptr;\n        while(head) {\n            auto next=head->next;\n            head->next=prev;\n            prev=head;\n            head=next;\n        }\n        return prev;\n    }\n}\n;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    cin>>n;\n    vector<ListNode*>nodes;\n    ListNode*head=nullptr,*tail=nullptr;\n    for(int i=0; i<n; i++) {\n        int v;\n        cin>>v;\n        auto p=new ListNode(v);\n        nodes.push_back(p);\n        if(tail)tail->next=p;\n        else head=p;\n        tail=p;\n    }\n    auto p=Solution().reverseList(head);\n    int k=0;\n    /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n    while(p&&k<n) {\n        if(k)\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        cout<<\" \";\n        cout<<p->val;\n        p=p->next;\n        k++;\n    }\n    if(p||k!=n)return 3;\n    cout<<\"\\n\";\n    for(auto q:nodes)delete q;\n    return 0;\n}\n",
+      "java": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nimport java.util.*;\nclass ListNode  {\n    int val;\n    ListNode next;\n    ListNode(int x) {\n        val=x;\n    }\n}\nclass Solution  {\n    public ListNode reverseList(ListNode head) {\n        ListNode prev=null;\n        while(head!=null) {\n            ListNode next=head.next;\n            head.next=prev;\n            prev=head;\n            head=next;\n        }\n        return prev;\n    }\n}\npublic class Main  {\n    static class Fast  {\n        private final byte[] b=new byte[65536];\n        int p=0,n=0;\n        int read()throws Exception {\n            if(p>=n) {\n                n=System.in.read(b);\n                p=0;\n                if(n<0)return -1;\n            }\n            return b[p++];\n        }\n        String next()throws Exception {\n            StringBuilder s=new StringBuilder();\n            int c;\n            do {\n                c=read();\n            }\n            while(c<=32&&c>=0);\n            while(c>32) {\n                s.append((char)c);\n                c=read();\n            }\n            return s.toString();\n        }\n        int num()throws Exception {\n            return Integer.parseInt(next());\n        }\n    }\n    public static void main(String[]args)throws Exception {\n        Fast f=new Fast();\n        int n=f.num();\n        ListNode head=null,tail=null;\n        for(int i=0; i<n; i++) {\n            ListNode p=new ListNode(f.num());\n            if(tail==null)head=p;\n            else tail.next=p;\n            tail=p;\n        }\n        ListNode p=new Solution().reverseList(head);\n        StringBuilder out=new StringBuilder();\n        int k=0;\n        /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n        while(p!=null&&k<n) {\n            if(k>0)out.append(\" \");\n            out.append(p.val);\n            p=p.next;\n            k++;\n        }\n        if(p!=null||k!=n)throw new IllegalStateException(\"invalid list length/cycle\");\n        System.out.\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        println(out);\n    }\n}\n",
+      "python": "# head 是链表头；节点类型由平台提供，空指针表示空链表。\nimport sys\nclass ListNode:\n    def __init__(self,val=0,next=None):self.val,self.next=val,next\n\nclass Solution:\n    def reverseList(self,head):\n        prev=None\n        # 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。\n        while head:\n            nxt=head.next\n            head.next=prev\n            prev,head=head,nxt\n        # prev 指向全部已处理节点的反序，循环结束后它就是新表头。\n        return prev\n\ndata=sys.stdin.buffer.read().split()\nn=int(data[0]);head=None\nfor v in reversed(data[1:]):head=ListNode(int(v),head)\np=Solution().reverseList(head);out=[]\nwhile p is not None and len(out)<n:\n    out.append(str(p.val));p=p.next\nif p is not None or len(out)!=n:raise ValueError(\"invalid list length/cycle\")\nprint(\" \".join(out))\n",
+      "rust": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nuse std::io:: {\n    self, Read\n}\n;\nuse std::collections::HashMap;\nstruct Solution;\n#[derive(Debug)]\npub struct ListNode  {\n    pub val:i32,pub next:Option<Box<ListNode>>\n}\nimpl Solution  {\n    pub fn reverse_list(mut head:Option<Box<ListNode>>)->Option<Box<ListNode>> {\n        let mut prev=None;\n        while let Some(mut node)=head {\n            head=node.next.take();\n            node.next=prev;\n            prev=Some(node);\n        }\n        prev\n    }\n}\nfn main() {\n    let mut s=String::new();\n    io::stdin().read_to_string(&mut s).unwrap();\n    let mut it=s.split_whitespace();\n    let n:usize=it.next().unwrap().parse().unwrap();\n    let vals:Vec<i32>=(0..n).map(|_|it.next().unwrap().parse().unwrap()).collect();\n    let mut head=None;\n    for &v in vals.iter().rev() {\n        head=Some(Box::new(ListNode {\n            val:v,next:head\n        }\n        ));\n    }\n    let mut p=Solution::reverse_list(head);\n    let mut out=Vec::new();\n    /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n    while let Some(mut node)=p {\n        assert!(out.len()<n,\"invalid list length\");\n        out.push(node.val.to_string());\n        p=node.next.take();\n    }\n    assert_eq!(out.len(),n);\n    /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n    println!(\"{}\",out.join(\" \"));\n}\n"
+    },
+    "FUNCTION": {
+      "c": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nstruct ListNode* reverseList(struct ListNode*head) {\n    struct ListNode*prev=NULL;\n    /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n    while(head) {\n        struct ListNode*next=head->next;\n        head->next=prev;\n        prev=head;\n        head=next;\n    }\n    /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n    return prev;\n}\n",
+      "cpp": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nclass Solution  {\n    public:ListNode* reverseList(ListNode*head) {\n        ListNode*prev=nullptr;\n        /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n        while(head) {\n            auto next=head->next;\n            head->next=prev;\n            prev=head;\n            head=next;\n        }\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        return prev;\n    }\n}\n;\n",
+      "java": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nclass Solution  {\n    public ListNode reverseList(ListNode head) {\n        ListNode prev=null;\n        /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n        while(head!=null) {\n            ListNode next=head.next;\n            head.next=prev;\n            prev=head;\n            head=next;\n        }\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        return prev;\n    }\n}\n",
+      "python": "# head 是链表头；节点类型由平台提供，空指针表示空链表。\nclass Solution:\n    def reverseList(self,head):\n        prev=None\n        # 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。\n        while head:\n            nxt=head.next\n            head.next=prev\n            prev,head=head,nxt\n        # prev 指向全部已处理节点的反序，循环结束后它就是新表头。\n        return prev\n",
+      "rust": "/* head 是链表头；节点类型由平台提供，空指针表示空链表。 */\nimpl Solution  {\n    pub fn reverse_list(mut head:Option<Box<ListNode>>)->Option<Box<ListNode>> {\n        let mut prev=None;\n        /* 先保存原 next，再让当前节点连接已反转前缀，否则会丢失剩余链。 */\n        while let Some(mut node)=head {\n            head=node.next.take();\n            node.next=prev;\n            prev=Some(node);\n        }\n        /* prev 指向全部已处理节点的反序，循环结束后它就是新表头。 */\n        prev\n    }\n}\n"
+    }
+  }
+}

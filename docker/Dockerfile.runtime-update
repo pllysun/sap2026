@@ -1,0 +1,15 @@
+# Incremental update from the verified credential-free 1.5.11 image. Its runtime
+# was sanitized FROM scratch; never substitute an unverified earlier runtime.
+ARG SAP_RUNTIME=pllysun/sap@sha256:6330cb0f43e30c357c289d3184fcda4f2160260bcd23909610677a9d771173ee
+FROM ${SAP_RUNTIME}
+RUN rm -rf /app/static
+COPY app.jar /app/app.jar
+COPY static/ /app/static/
+RUN chmod 644 /app/app.jar && find /app/static -type d -exec chmod 755 {} + && find /app/static -type f -exec chmod 644 {} +
+COPY judger-agent.py /opt/judger/agent.py
+COPY node-start.sh /opt/judger/node-start.sh
+COPY start-judger.sh /opt/judger/start.sh
+COPY entrypoint.sh /app/entrypoint.sh
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD /opt/judger/health.sh
+COPY judger-health.sh /opt/judger/health.sh
+RUN chmod 755 /opt/judger/agent.py /opt/judger/node-start.sh /opt/judger/start.sh /opt/judger/health.sh /app/entrypoint.sh

@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-010",
+  "title": "比例卡规范化",
+  "difficulty": "EASY",
+  "tags": [
+    "基础数学",
+    "最大公约数"
+  ],
+  "description": "一张比例卡用两个整数 a、b 表示分数 a/b，其中 b 不为0。为了统一展示，需要把它改写为最简分数：分母必须为正，分子和分母的最大公约数为1；零统一写成0/1。请输出规范化后的分子和分母。",
+  "inputFormat": "一行两个整数 a、b。",
+  "outputFormat": "输出两个整数，依次为最简分数的分子、正分母。",
+  "constraints": "−10^12 ≤ a,b ≤ 10^12，b ≠ 0。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-010",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "12 18\n",
+      "expectedOutput": "2 3\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "9 -6\n",
+      "expectedOutput": "-3 2\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "0 -8\n",
+      "expectedOutput": "0 1\n",
+      "sample": true
+    },
+    {
+      "name": "both-negative",
+      "input": "-12 -18\n",
+      "expectedOutput": "2 3\n",
+      "sample": false
+    },
+    {
+      "name": "negative-numerator",
+      "input": "-7 3\n",
+      "expectedOutput": "-7 3\n",
+      "sample": false
+    },
+    {
+      "name": "equal-max",
+      "input": "1000000000000 1000000000000\n",
+      "expectedOutput": "1 1\n",
+      "sample": false
+    },
+    {
+      "name": "coprime-large",
+      "input": "999999999999 1000000000000\n",
+      "expectedOutput": "999999999999 1000000000000\n",
+      "sample": false
+    },
+    {
+      "name": "zero-positive",
+      "input": "0 1000000000000\n",
+      "expectedOutput": "0 1\n",
+      "sample": false
+    },
+    {
+      "name": "unit-negative-denominator",
+      "input": "1 -1\n",
+      "expectedOutput": "-1 1\n",
+      "sample": false
+    },
+    {
+      "name": "opposite-max",
+      "input": "-1000000000000 1000000000000\n",
+      "expectedOutput": "-1 1\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "113750094510 488626906354\n",
+      "expectedOutput": "56875047255 244313453177\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "-296165549068 81301651212\n",
+      "expectedOutput": "-74041387267 20325412803\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "-261880499145 -36855804348\n",
+      "expectedOutput": "87293499715 12285268116\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "-193401862823 -709109066393\n",
+      "expectedOutput": "14877066371 54546851261\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "526165107523 -417270221122\n",
+      "expectedOutput": "-526165107523 417270221122\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "-43626609437 -247921678881\n",
+      "expectedOutput": "43626609437 247921678881\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "-655105569682 -886083314271\n",
+      "expectedOutput": "655105569682 886083314271\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "309647092334 463870525105\n",
+      "expectedOutput": "309647092334 463870525105\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "-426136651305 515162733941\n",
+      "expectedOutput": "-426136651305 515162733941\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "996265927540 -641773594712\n",
+      "expectedOutput": "-249066481885 160443398678\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long a, b;\n    scanf(\"%lld%lld\", &a, &b);\n    if (b < 0) {\n        a = -a;\n        b = -b;\n    }\n    long long x = a < 0 ? -a : a;\n    long long y = b;\n    while (y != 0) {\n        long long remainder = x % y;\n        x = y;\n        y = remainder;\n    }\n    printf(\"%lld %lld\\n\", a / x, b / x);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long a, b;\n    std::cin >> a >> b;\n    if (b < 0) {\n        a = -a;\n        b = -b;\n    }\n    long long x = a < 0 ? -a : a;\n    long long y = b;\n    while (y != 0) {\n        long long remainder = x % y;\n        x = y;\n        y = remainder;\n    }\n    std::cout << a / x << ' ' << b / x << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long a = in.nextLong();\n        long b = in.nextLong();\n        if (b < 0) {\n            a = -a;\n            b = -b;\n        }\n        long x = Math.abs(a);\n        long y = b;\n        while (y != 0) {\n            long remainder = x % y;\n            x = y;\n            y = remainder;\n        }\n        System.out.println(a / x + \" \" + b / x);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "from math import gcd\n\na, b = map(int, input().split())\nif b < 0:\n    a, b = -a, -b\ncommon = gcd(a, b)\nprint(a // common, b // common)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let mut a: i64 = words.next().unwrap().parse().unwrap();\n    let mut b: i64 = words.next().unwrap().parse().unwrap();\n    if b < 0 {\n        a = -a;\n        b = -b;\n    }\n    let mut x = a.abs();\n    let mut y = b;\n    while y != 0 {\n        let remainder = x % y;\n        x = y;\n        y = remainder;\n    }\n    println!(\"{} {}\", a / x, b / x);\n}\n"
+    }
+  }
+}

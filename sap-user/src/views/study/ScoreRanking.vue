@@ -29,9 +29,9 @@
         </table>
       </div>
       <div class="pagination" v-if="total > pageSize">
-        <button class="pagination__btn" :disabled="currentPage<=1" @click="currentPage--;loadRanking()">‹</button>
+        <button class="pagination__btn" aria-label="上一页排名" :disabled="currentPage<=1" @click="currentPage--;loadRanking()"><UiIcon name="chevron-left" /></button>
         <span class="t-caption">{{ currentPage }} / {{ Math.ceil(total/pageSize) }}</span>
-        <button class="pagination__btn" :disabled="currentPage>=Math.ceil(total/pageSize)" @click="currentPage++;loadRanking()">›</button>
+        <button class="pagination__btn" aria-label="下一页排名" :disabled="currentPage>=Math.ceil(total/pageSize)" @click="currentPage++;loadRanking()"><UiIcon name="chevron-right" /></button>
       </div>
     </div>
     <div v-else class="empty"><div class="empty__text">暂无排名数据</div></div>
@@ -39,6 +39,7 @@
 </template>
 
 <script setup>
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, onMounted } from 'vue'
 import request from '@/utils/request'
 const years = ref([]); const selectedGrade = ref(''); const activityList = ref([]); const selectedActivityId = ref(null)

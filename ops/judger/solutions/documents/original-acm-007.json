@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-007",
+  "problemRevision": 1,
+  "title": "网格边框灯",
+  "summary": "单行或单列直接统计全部灯，否则把四条边相加并减去重复的四个角。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "灯板有 r 行 c 列，只点亮最外一圈：顶行、底行、最左列、最右列。角上的灯同时属于一行和一列，但只能算一盏。若只有一行或一列，则所有位置都属于边框。\n\n输入一行 r、c，输出亮灯数量，不需要画灯板或输出每个灯的位置。两个尺寸都可达到 10^9，因此不可能真的创建 r*c 的二维网格。公开 3×4 样例点亮 10 盏；1×5 样例亮全部 5 盏。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "先区分退化矩形与正常矩形。若 r=1 或 c=1，全部灯属于边框，答案 r*c。\n\n否则，顶行和底行一共有 2*c 盏；最左与最右列一共有 2*r 盏。直接相加时，四个角每个都被统计两次，要各减掉一次，所以答案 `2*r+2*c-4`。也可以理解成两整行，加两列各自除去上下角的 r-2 盏，得到 `2*c+2*(r-2)`，同一个公式。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 r=3、c=4：\n\n| 步骤 | 计算 | 累计解释 |\n| --- | --- | --- |\n| 上、下两行 | 4+4=8 | 两行不同，各有 4 盏 |\n| 左、右两列 | 3+3=6 | 临时总和 14 |\n| 去掉重复角 | 14-4=10 | 每个角多算一次 |\n\n第二个公开样例 1×5 不能套正常公式，否则会误得 8。它只有一整行，直接 r*c=5。2×2 时四格都是四个角，公式得到 4，也符合直观结果。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读入 rows、columns，分别对应题面 r、c。\n2. 若任一维等于 1，设 answer=rows*columns；这分支先于普通四边计数。\n3. 否则设 answer=2*rows+2*columns-4。\n4. 打印 answer。所有变量采用 64 位整数，Python 直接使用整数类型。这里不需要循环或数组，尺寸只是计算参数。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "单行或单列时，每个格子本身都在最外侧，所以总格数正好就是亮灯数。普通矩形中，每盏边框灯至少属于四条边的一条；除了四个角，其余边框灯只属于一条边，统计一次。四角恰好各属于两条边，统计两次，减去四个重复部分后每盏亮灯恰算一次。\n\n内部位置不属于任何边，不会进入四边之和。因此公式既无漏灯，也没有重复或把内灯算进去。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "算法只有固定判断和几次算术运算，时间 `O(1)`、额外空间 `O(1)`。大 O 表示随行列尺寸增长的工作量：尺寸再大，也只计算一遍，不去访问每个格子。\n\n普通矩形边框数量可接近 4*10^9，超出 32 位有符号整数上限；参考实现使用 64 位整数。单行分支乘积等于另一维，不超过 10^9；即便一般 r*c 最大到 10^18，64 位也可容纳，但本题只在退化分支计算它。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 必须先处理 r=1 或 c=1，四角去重公式在退化矩形里不适用。\n- 普通公式减的是 4，不是 8：每个角只多算一次。\n- 不能输出所有格子总数 r*c，正常矩形内部灯不亮。\n- 2×任意列时没有内部行，但普通公式仍正确，不需要额外特殊分支。\n- 使用足够宽的整数类型，最大边框数会超过 32 位。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：先排除一维退化情况，再修正四角重复计数。\n\n1. 4×4 灯板亮几盏？12。\n2. 5×1 灯板呢？5，全部属于边框。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\nint main(void)  {\n    // 行列可很大，只计算数量；使用 64 位整数，不创建二维灯板。\n    long long rows, columns;\n    scanf(\"%lld%lld\", &rows, &columns);\n    long long answer;\n    // 单行或单列的四条边重合，必须直接返回全部格子数量。\n    if (rows == 1 || columns == 1)  {\n        answer = rows * columns;\n    }\n    else  {\n        answer = 2 * rows + 2 * columns - 4;\n    }\n    // 普通矩形四个角各多算一次，修正后的 answer 才是独立灯数。\n    printf(\"%lld\\n\", answer);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\n#include <string>\nint main()  {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n    // 行列可很大，只计算数量；使用 64 位整数，不创建二维灯板。\n    long long rows, columns;\n    std::cin >> rows >> columns;\n    long long answer;\n    // 单行或单列的四条边重合，必须直接返回全部格子数量。\n    if (rows == 1 || columns == 1)  {\n        answer = rows * columns;\n    }\n    else  {\n        answer = 2 * rows + 2 * columns - 4;\n    }\n    // 普通矩形四个角各多算一次，修正后的 answer 才是独立灯数。\n    std::cout << answer << '\\n';\n    return 0;\n}\n",
+      "java": "import java.util.Scanner;\npublic class Main  {\n    public static void main(String[] args)  {\n        Scanner in = new Scanner(System.in);\n        // 行列可很大，只计算数量；使用 64 位整数，不创建二维灯板。\n        long rows = in.nextLong();\n        long columns = in.nextLong();\n        // 单行或单列的四条边重合，必须直接返回全部格子数量。\n        long answer = rows == 1 || columns == 1 ? rows * columns : 2 * rows + 2 * columns - 4;\n        // 普通矩形四个角各多算一次，修正后的 answer 才是独立灯数。\n        System.out.println(answer);\n    }\n}\n",
+      "python": "# 行列可很大，只计算数量；使用 64 位整数，不创建二维灯板。\nrows, columns = map(int, input().split())\n# 单行或单列的四条边重合，必须直接返回全部格子数量。\nanswer = rows * columns if rows == 1 or columns == 1 else 2 * rows + 2 * columns - 4\n# 普通矩形四个角各多算一次，修正后的 answer 才是独立灯数。\nprint(answer)\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n    // 行列可很大，只计算数量；使用 64 位整数，不创建二维灯板。\n    let rows: i64 = words.next().unwrap().parse().unwrap();\n    let columns: i64 = words.next().unwrap().parse().unwrap();\n    // 单行或单列的四条边重合，必须直接返回全部格子数量。\n    let answer = if rows == 1 || columns == 1  {\n        rows * columns\n    }\n    else  {\n        2 * rows + 2 * columns - 4\n    }\n    ;\n    // 普通矩形四个角各多算一次，修正后的 answer 才是独立灯数。\n    println!(\"{}\", answer);\n}\n"
+    }
+  }
+}

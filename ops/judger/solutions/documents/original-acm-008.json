@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-008",
+  "problemRevision": 1,
+  "title": "明日值班日期",
+  "summary": "先按闰年规则确定月长，再依次处理日进位、月进位，得到下一天。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入一个合法公历日期year、month、day，要求第二天的日期。输入保证日期本身有效，因此无需检查是否存在2月30日等非法日期。输出年、月、日三个整数，不要求补前导零。\n\n闰年并不只是每四年一次：年份能被400整除是闰年；否则只有能被4整除且不能被100整除才是闰年。闰年2月29天，平年28天。日期最多跨到9999年，仍在常见整数范围中。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "先准备12个月的天数表，默认2月28天，根据闰年条件把第二项改为29。月份从1到12，数组下标从0到11，所以月份m的天数应查lengths[m-1]。\n\n把day加1。如果仍未超过本月天数，已经得到明天；否则day改为1、month加1，表示进入下一个月。若month变成13，就把month改为1、year加1，表示进入下一年。\n\n按“日→月→年”的顺序进位，能同时覆盖普通日、月底和年底，不需要为每个日期写很多独立条件。12月31日只会跨一个月、一个年，也不需要重复进位循环。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "对公开样例2026年12月31日，变化如下：\n\n| 步骤 | 年 / 月 / 日 | 检查结果 |\n| --- | --- | --- |\n| 设置月长 | 2026 / 12 / 31 | 12月有31天，2026为平年 |\n| 日加1 | 2026 / 12 / 32 | 32超过月长31 |\n| 进到下月 | 2026 / 13 / 1 | 月份13超过12 |\n| 进到下年 | 2027 / 1 / 1 | 得到合法明天 |\n\n公开样例2024年2月28日中，闰年把2月月长改为29，day加1得到29，未超月长，所以仍是2024年2月29日。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取year、month、day。\n2. lengths数组写入固定月长；检查 year%400==0 或 year%4==0且year%100!=0，成立时lengths[1]=29。\n3. day增加1，再与lengths[month-1]比较；超过则day=1、month增加1。\n4. 另行检查month>12，成立则month=1、year增加1。不能写成与前一判断互斥的else，否则年底进位可能被跳过。\n5. 输出三个整数，用空格分隔。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "闰年检查和月长表准确给出当前月合法的最后一天。原日期保证合法，因此day加1后只有两种情况：仍在本月，或恰好为本月天数加1。前者就是同月下一天；后者按公历应转到下月1日。\n\n月份加1后也只可能仍在1到12，或由12变成13。后一种情况准确对应新年1月1日。进位处理没有跨过额外日期，所以最终结果正好比输入晚一天。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "日期包含固定数量的整数，月份表固定12项，所有条件只执行固定次数，时间O(1)、额外空间O(1)。O(1)表示不会因为年份很大或月底进位而遍历前面所有日期。这里没有调用时区相关库，计算纯粹使用题目规定的公历规则。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 1900能被100整除但不能被400整除，不是闰年；2000是闰年。\n- 月份是1基，查表用month-1，不能直接用month。\n- 2月月长必须先根据输入年份确定，再做日进位。\n- 日进位后还要继续检查月进位，两个if不能互相排斥。\n- 输出不要求补零，不需要把1月写成01或附加“年/月/日”文字。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "日期模拟的关键是把周期长度先确定，再按由小到大的单位依次进位。\n\n练习：1900 2 28的明天是1900 3 1；2000 2 28的明天是2000 2 29。用它们检查闰年例外规则。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n\nint main(void) {\n    int year, month, day;\n    // 输入日期保证合法，接下来按公历月长处理进位。\n    scanf(\"%d%d%d\", &year, &month, &day);\n    int lengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n    // 能被100整除的年份要额外检查400，不能只看能否被4整除。\n    if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n        lengths[1] = 29;\n    }\n    day++;\n    // 先处理日进位；月份从1开始，查月长时减1。\n    if (day > lengths[month - 1]) {\n        day = 1;\n        month++;\n    }\n    if (month > 12) {\n        month = 1;\n        year++;\n    }\n    // 月进位也处理完以后，输出明天的年、月、日。\n    printf(\"%d %d %d\\n\", year, month, day);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    int year, month, day;\n    // 输入日期保证合法，接下来按公历月长处理进位。\n    std::cin >> year >> month >> day;\n    int lengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n    // 能被100整除的年份要额外检查400，不能只看能否被4整除。\n    if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n        lengths[1] = 29;\n    }\n    day++;\n    // 先处理日进位；月份从1开始，查月长时减1。\n    if (day > lengths[month - 1]) {\n        day = 1;\n        month++;\n    }\n    if (month > 12) {\n        month = 1;\n        year++;\n    }\n    // 月进位也处理完以后，输出明天的年、月、日。\n    std::cout << year << ' ' << month << ' ' << day << '\\n';\n    return 0;\n}\n",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        // 输入日期保证合法，接下来按公历月长处理进位。\n        int year = in.nextInt();\n        int month = in.nextInt();\n        int day = in.nextInt();\n        int[] lengths = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n        // 能被100整除的年份要额外检查400，不能只看能否被4整除。\n        if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)) {\n            lengths[1] = 29;\n        }\n        day++;\n        // 先处理日进位；月份从1开始，查月长时减1。\n        if (day > lengths[month - 1]) {\n            day = 1;\n            month++;\n        }\n        if (month > 12) {\n            month = 1;\n            year++;\n        }\n        // 月进位也处理完以后，输出明天的年、月、日。\n        System.out.println(year + \" \" + month + \" \" + day);\n    }\n}\n",
+      "python": "# 按输入顺序读取合法年月日。\nyear, month, day = map(int, input().split())\nlengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]\n# 修正闰年2月月长，100和400的例外必须保留。\nif year % 400 == 0 or (year % 4 == 0 and year % 100 != 0):\n    lengths[1] = 29\nday += 1\n# 日加一越过月末时转到下一月1日，再检查是否跨年。\nif day > lengths[month - 1]:\n    day = 1\n    month += 1\nif month > 12:\n    month = 1\n    year += 1\n# 输出整数年月日，不需要补前导零。\nprint(year, month, day)\n",
+      "rust": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    // 输入日期保证合法，接下来按公历月长处理进位。\n    let mut year: i32 = words.next().unwrap().parse().unwrap();\n    let mut month: usize = words.next().unwrap().parse().unwrap();\n    let mut day: i32 = words.next().unwrap().parse().unwrap();\n    let mut lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];\n    // 能被100整除的年份要额外检查400，不能只看能否被4整除。\n    if year % 400 == 0 || (year % 4 == 0 && year % 100 != 0) {\n        lengths[1] = 29;\n    }\n    day += 1;\n    // 先处理日进位；月份从1开始，查月长时减1。\n    if day > lengths[month - 1] {\n        day = 1;\n        month += 1;\n    }\n    if month > 12 {\n        month = 1;\n        year += 1;\n    }\n    // 月进位也处理完以后，输出明天的年、月、日。\n    println!(\"{} {} {}\", year, month, day);\n}\n"
+    }
+  }
+}

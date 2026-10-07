@@ -107,6 +107,17 @@ class RateLimitInterceptorTest {
         assertTrue(it.preHandle(req("POST", "/api/auth/login"), resp, new Object()));
         assertNotEquals(429, resp.getStatus());
     }
+    @Test void protectedAppDownloadsEnforceRateLimitsEvenInObservationMode() throws Exception {
+        var limiter = mock(RateLimiterService.class); var props = new RateLimitProperties(); props.setDryRun(true);
+        var it = interceptor(limiter, props);
+        for (String path : new String[]{"/api/app/download/file", "/api/app/download/current", "/api/app/download/tickets", "/api/app/download/file;extra=x"}) {
+            var response = new MockHttpServletResponse();
+            assertFalse(it.preHandle(req("GET", path), response, new Object()));
+            assertEquals(429, response.getStatus());
+        }
+        verify(limiter, times(4)).tryAcquireEnforced(anyString(), anyInt(), anyDouble());
+        verify(limiter, never()).tryAcquire(anyString(), anyInt(), anyDouble());
+    }
 
     @Test
     void 桶键_登录按IP_jw按用户或IP() {

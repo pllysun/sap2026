@@ -1,0 +1,199 @@
+{
+  "slug": "original-club-range-sum",
+  "title": "社团积分区间查询",
+  "difficulty": "EASY",
+  "tags": [
+    "前缀和"
+  ],
+  "description": "给出每天获得的积分，对每个闭区间 [l,r] 查询积分总和。下标从 1 开始。",
+  "inputFormat": "n q，随后 n 个整数，再有 q 行 l r。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "1 <= n,q <= 200；积分 -1000..1000；1 <= l <= r <= n。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "",
+  "sourceId": "SAP002",
+  "sourceNote": "软件协会原创",
+  "sourceAuthor": "SAP OJ 题库整理组",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": null,
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, n = 0, q = 0, r = 0;\n    n = read();\n    q = read();\n    for (i = 1; i < (n + 1); i += 1) {\n        a[i] = (a[(i - 1)] + read());\n    }\n    for (i = 0; i < q; i += 1) {\n        l = read();\n        r = read();\n        emit((a[r] - a[(l - 1)]));\n    }\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, n = 0, q = 0, r = 0;\n    n = read();\n    q = read();\n    for (i = 1; i < (n + 1); i += 1) {\n        a[i] = (a[(i - 1)] + read());\n    }\n    for (i = 0; i < q; i += 1) {\n        l = read();\n        r = read();\n        emit((a[r] - a[(l - 1)]));\n    }\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, l = 0, n = 0, q = 0, r = 0;\n        n = read();\n        q = read();\n        for (i = 1; i < (n + 1); i += 1) {\n            a[i] = (a[(i - 1)] + read());\n        }\n        for (i = 0; i < q; i += 1) {\n            l = read();\n            r = read();\n            emit((a[r] - a[(l - 1)]));\n        }\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = l = n = q = r = 0\nn = read()\nq = read()\nfor i in range(1, (n + 1)):\n    a[i] = a[(i - 1)] + read()\nfor i in range(q):\n    l = read()\n    r = read()\n    emit((a[r] - a[(l - 1)]))\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut i: i32 = 0;\n    let mut l: i32 = 0;\n    let mut n: i32 = 0;\n    let mut q: i32 = 0;\n    let mut r: i32 = 0;\n    n = reader.read();\n    q = reader.read();\n    i = 1;\n    while i < (n + 1) {\n        a[(i) as usize] = (a[(i - 1) as usize] + reader.read());\n        i += 1;\n    }\n    i = 0;\n    while i < q {\n        l = reader.read();\n        r = reader.read();\n        emit((a[(r) as usize] - a[(l - 1) as usize]));\n        i += 1;\n    }\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "1 13\n601\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n1 1\n",
+      "expectedOutput": "601 601 601 601 601 601 601 601 601 601 601 601 601\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "2 13\n-646 216\n1 2\n1 1\n2 2\n1 1\n1 2\n1 2\n1 2\n1 2\n1 1\n2 2\n1 1\n1 2\n1 1\n",
+      "expectedOutput": "-430 -646 216 -646 -430 -430 -430 -430 -646 216 -646 -430 -646\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "200 13\n834 682 -793 428 665 -147 -340 642 628 837 -454 124 805 588 200 -404 24 -873 427 226 390 -240 -797 439 -354 720 -926 593 29 -348 594 813 952 -806 19 -240 -79 328 558 -545 815 -207 75 -592 529 887 -970 427 -438 -598 321 852 -378 -885 842 -413 -608 -577 937 -296 385 -37 -951 -471 404 99 -446 -391 686 -796 119 -669 803 962 387 -749 -88 136 173 725 -258 532 -444 661 940 -361 317 -995 383 132 -589 -166 -229 -433 262 -126 -457 623 -109 755 427 -549 991 -450 202 -474 -858 -527 -147 315 -437 -364 -495 856 -1000 586 -730 222 -522 -948 -29 -787 -697 -523 479 -365 814 390 482 690 29 228 505 -290 13 913 175 130 549 -616 -937 -870 -626 -963 885 157 -698 -282 171 -132 733 181 -493 188 358 -236 -62 -299 87 -732 505 -733 929 308 148 814 -156 545 -371 507 -233 555 411 -687 843 850 -786 250 943 -909 -592 -224 376 -836 -915 554 -170 -620 -598 60 653 -834 425 -371 125 -206 467 -767 -151 391\n1 200\n1 1\n200 200\n91 95\n33 185\n65 148\n69 79\n28 150\n113 188\n152 173\n72 168\n169 193\n1 11\n",
+      "expectedOutput": "759 834 391 -1155 -3211 -3353 964 -2797 -2205 2221 -904 -1348 2982\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "28 13\n-331 -910 -72 -242 828 918 -509 -261 -700 -33 555 -291 935 906 -788 711 17 372 -515 -13 476 -188 -363 -181 -470 -139 -563 -51\n1 28\n1 1\n28 28\n18 24\n1 19\n4 14\n12 14\n9 12\n18 20\n13 23\n16 21\n13 20\n24 28\n",
+      "expectedOutput": "-902 -331 -51 -412 590 2106 1550 -469 -156 1550 1048 1625 -1404\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "28 13\n813 873 -80 -700 99 760 -642 379 269 -769 -351 81 -714 -342 23 -708 680 507 6 -919 -803 796 304 917 78 141 386 -943\n1 28\n1 1\n28 28\n9 25\n12 19\n2 17\n12 25\n5 6\n19 23\n17 23\n13 17\n7 18\n3 23\n",
+      "expectedOutput": "141 813 -943 -945 -467 -1142 -94 859 -616 571 -1061 -1587 -2124\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "9 13\n865 241 -928 368 345 -801 779 686 -135\n1 9\n1 1\n9 9\n4 4\n3 9\n3 4\n4 8\n5 7\n3 4\n3 9\n4 8\n4 8\n2 8\n",
+      "expectedOutput": "1420 865 -135 368 314 -560 1377 323 -560 314 1377 1377 690\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "26 13\n-508 -906 768 -681 -314 -219 97 -765 -460 774 540 158 951 378 -45 -453 417 191 -618 -949 357 -674 646 -899 536 -97\n1 26\n1 1\n26 26\n2 22\n5 6\n12 23\n1 4\n4 19\n18 21\n11 13\n22 25\n20 22\n2 7\n",
+      "expectedOutput": "-1775 -508 -97 -1453 -533 359 -1327 -49 -1019 1649 -391 -1266 -1255\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "12 13\n-421 -287 -26 376 -445 88 51 -322 433 -85 65 -31\n1 12\n1 1\n12 12\n5 9\n4 9\n4 9\n7 11\n7 9\n6 10\n8 10\n7 10\n6 12\n1 11\n",
+      "expectedOutput": "-604 -421 -31 -195 181 181 142 162 165 26 77 199 -573\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "7 13\n18 -774 985 112 967 -421 -1000\n1 7\n1 1\n7 7\n1 7\n1 3\n4 6\n3 3\n1 1\n3 6\n5 6\n2 3\n3 7\n1 5\n",
+      "expectedOutput": "-113 18 -1000 -113 229 658 985 18 1643 546 211 643 1308\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "30 13\n450 356 -891 246 337 -100 225 784 -785 -219 -667 588 -57 -879 843 839 -727 -7 896 128 713 259 754 235 575 308 697 269 -260 291\n1 30\n1 1\n30 30\n16 24\n5 12\n14 19\n15 19\n1 27\n14 26\n12 19\n17 18\n3 29\n2 26\n",
+      "expectedOutput": "5201 450 291 3090 163 965 1844 4901 3937 1496 -734 4104 3754\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "26 13\n114 -415 -882 765 -200 114 797 18 657 -115 347 -86 632 47 -936 869 -520 -850 699 -285 -893 710 427 736 57 802\n1 26\n1 1\n26 26\n1 7\n3 7\n2 14\n6 14\n3 25\n5 25\n11 25\n3 14\n7 23\n5 23\n",
+      "expectedOutput": "2609 114 802 293 594 1679 2411 2108 2225 954 2094 1518 1432\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "21 13\n-954 -972 -643 132 168 999 762 -429 723 955 251 102 -343 -526 685 -758 169 722 232 786 486\n1 21\n1 1\n21 21\n14 17\n2 9\n11 20\n17 18\n16 19\n5 8\n16 17\n4 18\n1 19\n12 18\n",
+      "expectedOutput": "2547 -954 486 -430 740 1320 891 365 1500 -589 3612 1275 51\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "21 13\n763 324 295 393 407 572 -411 394 127 767 -65 510 -5 461 -294 334 -137 -801 -146 249 -646\n1 21\n1 1\n21 21\n8 12\n5 17\n20 21\n4 11\n4 17\n9 19\n9 14\n14 16\n4 12\n4 18\n",
+      "expectedOutput": "3091 763 -646 1733 2660 -397 2184 3053 751 1795 501 2694 2252\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "30 13\n-45 904 380 676 -141 -939 381 -126 -588 892 -83 542 -437 69 -257 80 604 467 -48 703 351 -192 152 39 730 -695 53 -941 -464 -555\n1 30\n1 1\n30 30\n8 29\n3 5\n28 30\n11 11\n18 28\n10 15\n10 28\n15 16\n10 13\n15 17\n",
+      "expectedOutput": "1512 -45 -555 851 915 -1960 -83 619 726 2029 -177 914 427\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "3 13\n-633 -625 -138\n1 3\n1 1\n3 3\n1 3\n2 2\n2 3\n1 2\n3 3\n2 3\n1 2\n1 2\n1 1\n1 3\n",
+      "expectedOutput": "-1396 -633 -138 -1396 -625 -763 -1258 -138 -763 -1258 -1258 -633 -1396\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "21 13\n832 -560 -980 -722 -660 -105 -994 -640 -32 101 511 -879 145 -92 178 -654 426 806 -21 598 -387\n1 21\n1 1\n21 21\n3 21\n2 17\n6 7\n6 16\n13 15\n20 21\n3 14\n6 17\n4 20\n3 5\n",
+      "expectedOutput": "-3129 832 -387 -3401 -4957 -1099 -2461 231 211 -4347 -2035 -2034 -2362\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "27 13\n420 478 784 -601 423 558 716 192 578 605 -210 -357 -523 -403 -194 -392 233 422 678 477 831 -576 475 585 -643 -274 -91\n1 27\n1 1\n27 27\n2 24\n12 27\n1 7\n1 6\n14 18\n10 14\n4 16\n3 23\n7 11\n13 20\n",
+      "expectedOutput": "4191 420 -91 4779 248 2778 2062 -334 -888 392 3716 1881 298\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "2 13\n-375 772\n1 2\n1 1\n2 2\n1 2\n1 1\n1 2\n1 2\n1 2\n1 1\n2 2\n1 2\n1 2\n1 2\n",
+      "expectedOutput": "397 -375 772 397 -375 397 397 397 -375 772 397 397 397\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "15 13\n-224 -874 990 328 570 706 -83 -87 689 580 -79 516 853 -387 -514\n1 15\n1 1\n15 15\n2 12\n1 5\n3 6\n3 11\n7 9\n4 6\n6 14\n4 13\n10 13\n1 4\n",
+      "expectedOutput": "2984 -224 -514 3256 790 2594 3614 519 1604 2708 3993 1870 220\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "200 200\n-1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000 -1000\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n1 200\n",
+      "expectedOutput": "-200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000 -200000\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

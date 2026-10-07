@@ -1,0 +1,152 @@
+[
+  {
+    "slug": "original-acm-001",
+    "title": "延时提醒",
+    "difficulty": "EASY",
+    "tags": [
+      "输入输出",
+      "基础数学"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-001/pack.json"
+  },
+  {
+    "slug": "original-acm-002",
+    "title": "终端使用积分",
+    "difficulty": "EASY",
+    "tags": [
+      "条件判断",
+      "基础数学"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-002/pack.json"
+  },
+  {
+    "slug": "original-acm-003",
+    "title": "贴纸等量分装",
+    "difficulty": "EASY",
+    "tags": [
+      "输入输出",
+      "基础数学"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-003/pack.json"
+  },
+  {
+    "slug": "original-acm-004",
+    "title": "展示阶台",
+    "difficulty": "EASY",
+    "tags": [
+      "基础数学",
+      "等差数列"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-004/pack.json"
+  },
+  {
+    "slug": "original-acm-005",
+    "title": "领取码校验位",
+    "difficulty": "EASY",
+    "tags": [
+      "字符串",
+      "基础数学"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-005/pack.json"
+  },
+  {
+    "slug": "original-acm-006",
+    "title": "巡检编号",
+    "difficulty": "EASY",
+    "tags": [
+      "基础数学",
+      "区间计数"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-006/pack.json"
+  },
+  {
+    "slug": "original-acm-007",
+    "title": "网格边框灯",
+    "difficulty": "EASY",
+    "tags": [
+      "条件判断",
+      "基础数学"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-007/pack.json"
+  },
+  {
+    "slug": "original-acm-008",
+    "title": "明日值班日期",
+    "difficulty": "EASY",
+    "tags": [
+      "模拟",
+      "条件判断"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 21,
+    "publicSamples": 3,
+    "path": "original-acm-008/pack.json"
+  },
+  {
+    "slug": "original-acm-009",
+    "title": "滚动编号",
+    "difficulty": "EASY",
+    "tags": [
+      "递推",
+      "取模"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-009/pack.json"
+  },
+  {
+    "slug": "original-acm-010",
+    "title": "比例卡规范化",
+    "difficulty": "EASY",
+    "tags": [
+      "基础数学",
+      "最大公约数"
+    ],
+    "modes": [
+      "STDIO"
+    ],
+    "cases": 20,
+    "publicSamples": 3,
+    "path": "original-acm-010/pack.json"
+  }
+]

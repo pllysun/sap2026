@@ -1,0 +1,308 @@
+{
+  "kind": "MUTATION_COVERAGE",
+  "notes": "Representative wrong algorithms only; not proof of complete coverage or source constraints equivalence.",
+  "checked": 16,
+  "detected": 16,
+  "results": [
+    {
+      "slug": "leetcode-9",
+      "incorrectAlgorithm": "忽略负号的回文检查",
+      "detected": true,
+      "rejectingCases": [
+        "sample-1",
+        "boundary-random-19",
+        "boundary-random-22"
+      ]
+    },
+    {
+      "slug": "leetcode-3",
+      "incorrectAlgorithm": "统计全串不同字符，而非连续子串",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-8"
+      ]
+    },
+    {
+      "slug": "leetcode-11",
+      "incorrectAlgorithm": "只比较相邻柱子",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20"
+      ]
+    },
+    {
+      "slug": "leetcode-32",
+      "incorrectAlgorithm": "只统计可配对括号总数，忽略连续与顺序",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-21",
+        "boundary-random-22"
+      ]
+    },
+    {
+      "slug": "leetcode-41",
+      "incorrectAlgorithm": "取最大值加一",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20",
+        "boundary-random-21"
+      ]
+    },
+    {
+      "slug": "leetcode-42",
+      "incorrectAlgorithm": "按全局最高柱计算水量",
+      "detected": true,
+      "rejectingCases": [
+        "sample-2",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19"
+      ]
+    },
+    {
+      "slug": "leetcode-69",
+      "incorrectAlgorithm": "四舍五入平方根",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-5",
+        "boundary-random-7",
+        "boundary-random-9",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-21",
+        "boundary-random-22"
+      ]
+    },
+    {
+      "slug": "leetcode-70",
+      "incorrectAlgorithm": "错误初始状态：ways(1)=0",
+      "detected": true,
+      "rejectingCases": [
+        "sample-1",
+        "sample-2",
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20"
+      ]
+    },
+    {
+      "slug": "leetcode-84",
+      "incorrectAlgorithm": "把所有柱子面积相加",
+      "detected": true,
+      "rejectingCases": [
+        "sample-2",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20"
+      ]
+    },
+    {
+      "slug": "leetcode-35",
+      "incorrectAlgorithm": "目标缺失时错误返回-1",
+      "detected": true,
+      "rejectingCases": [
+        "sample-1",
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-7",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-16",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20",
+        "boundary-random-21"
+      ]
+    },
+    {
+      "slug": "leetcode-33",
+      "incorrectAlgorithm": "直接对旋转数组做普通二分",
+      "detected": true,
+      "rejectingCases": [
+        "sample-2",
+        "boundary-random-20"
+      ]
+    },
+    {
+      "slug": "leetcode-55",
+      "incorrectAlgorithm": "只检查第一步是否非零",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-3"
+      ]
+    },
+    {
+      "slug": "leetcode-62",
+      "incorrectAlgorithm": "错误使用网格面积作为路径数",
+      "detected": true,
+      "rejectingCases": [
+        "sample-2",
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20",
+        "boundary-random-21"
+      ]
+    },
+    {
+      "slug": "leetcode-98",
+      "incorrectAlgorithm": "只比较直接子结点，未检查祖先约束",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-23"
+      ]
+    },
+    {
+      "slug": "leetcode-239",
+      "incorrectAlgorithm": "只输出整个数组最大值",
+      "detected": true,
+      "rejectingCases": [
+        "sample-2",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-8",
+        "boundary-random-9",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-16",
+        "boundary-random-17",
+        "boundary-random-18",
+        "boundary-random-19",
+        "boundary-random-20",
+        "boundary-random-21"
+      ]
+    },
+    {
+      "slug": "leetcode-312",
+      "incorrectAlgorithm": "每次只计算初始邻居，未更新",
+      "detected": true,
+      "rejectingCases": [
+        "boundary-random-3",
+        "boundary-random-4",
+        "boundary-random-5",
+        "boundary-random-6",
+        "boundary-random-7",
+        "boundary-random-10",
+        "boundary-random-11",
+        "boundary-random-12",
+        "boundary-random-13",
+        "boundary-random-14",
+        "boundary-random-15",
+        "boundary-random-17",
+        "boundary-random-19",
+        "boundary-random-20"
+      ]
+    }
+  ]
+}

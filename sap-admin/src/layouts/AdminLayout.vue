@@ -31,6 +31,10 @@
           <el-icon><Reading /></el-icon>
           <span>学习小组</span>
         </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/oj">
+          <el-icon><Reading /></el-icon>
+          <span>算法题库</span>
+        </el-menu-item>
         <el-menu-item index="/note">
           <el-icon><Notebook /></el-icon>
           <span>软协笔记</span>

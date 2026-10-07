@@ -1,0 +1,218 @@
+{
+  "slug": "leetcode-76",
+  "title": "最小覆盖子串",
+  "difficulty": "HARD",
+  "tags": [
+    "字符串",
+    "滑动窗口"
+  ],
+  "description": "找出 s 中包含 t 全部字符及出现次数的最短连续子串；同长度取起点最小的。无解输出 -。",
+  "inputFormat": "两个小写字符串 s t；空串使用 -。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "s,t 长度 0..200。",
+  "sourcePlatform": "LeetCode",
+  "sourceUrl": "https://leetcode.com/problems/minimum-window-substring/",
+  "sourceId": "76",
+  "sourceNote": "自写教学改编题面；算法任务参考来源链接，输入输出和数据范围以本题为准。测试均为自行生成，未获取外站隐藏官方测试。",
+  "sourceAuthor": "原作者以来源页署名为准；本题面由 SAP OJ 题库整理组改写",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": "HARD",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int best = 0, i = 0, left = 0, m = 0, n = 0, need = 0, right = 0, start = 0, x = 0;\n    n = readstr(a);\n    m = readstr(b);\n    for (i = 0; i < m; i += 1) {\n        d[b[i]] = (d[b[i]] + 1);\n    }\n    left = 0;\n    need = m;\n    best = (n + 1);\n    start = 0;\n    for (right = 0; right < n; right += 1) {\n        x = a[right];\n        if (e[x] < d[x]) {\n            need = (need - 1);\n        }\n        e[x] = (e[x] + 1);\n        while ((need == 0) && (left <= right)) {\n            if (((right - left) + 1) < best) {\n                best = ((right - left) + 1);\n                start = left;\n            }\n            x = a[left];\n            e[x] = (e[x] - 1);\n            if (e[x] < d[x]) {\n                need = (need + 1);\n            }\n            left = (left + 1);\n        }\n    }\n    if ((m == 0) || (best == (n + 1))) {\n        emitstr(b, 0);\n    } else {\n        for (i = 0; i < best; i += 1) {\n            b[i] = a[(start + i)];\n        }\n        emitstr(b, best);\n    }\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int best = 0, i = 0, left = 0, m = 0, n = 0, need = 0, right = 0, start = 0, x = 0;\n    n = readstr(a);\n    m = readstr(b);\n    for (i = 0; i < m; i += 1) {\n        d[b[i]] = (d[b[i]] + 1);\n    }\n    left = 0;\n    need = m;\n    best = (n + 1);\n    start = 0;\n    for (right = 0; right < n; right += 1) {\n        x = a[right];\n        if (e[x] < d[x]) {\n            need = (need - 1);\n        }\n        e[x] = (e[x] + 1);\n        while ((need == 0) && (left <= right)) {\n            if (((right - left) + 1) < best) {\n                best = ((right - left) + 1);\n                start = left;\n            }\n            x = a[left];\n            e[x] = (e[x] - 1);\n            if (e[x] < d[x]) {\n                need = (need + 1);\n            }\n            left = (left + 1);\n        }\n    }\n    if ((m == 0) || (best == (n + 1))) {\n        emitstr(b, 0);\n    } else {\n        for (i = 0; i < best; i += 1) {\n            b[i] = a[(start + i)];\n        }\n        emitstr(b, best);\n    }\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int best = 0, i = 0, left = 0, m = 0, n = 0, need = 0, right = 0, start = 0, x = 0;\n        n = readstr(a);\n        m = readstr(b);\n        for (i = 0; i < m; i += 1) {\n            d[b[i]] = (d[b[i]] + 1);\n        }\n        left = 0;\n        need = m;\n        best = (n + 1);\n        start = 0;\n        for (right = 0; right < n; right += 1) {\n            x = a[right];\n            if (e[x] < d[x]) {\n                need = (need - 1);\n            }\n            e[x] = (e[x] + 1);\n            while ((need == 0) && (left <= right)) {\n                if (((right - left) + 1) < best) {\n                    best = ((right - left) + 1);\n                    start = left;\n                }\n                x = a[left];\n                e[x] = (e[x] - 1);\n                if (e[x] < d[x]) {\n                    need = (need + 1);\n                }\n                left = (left + 1);\n            }\n        }\n        if ((m == 0) || (best == (n + 1))) {\n            emitstr(b, 0);\n        } else {\n            for (i = 0; i < best; i += 1) {\n                b[i] = a[(start + i)];\n            }\n            emitstr(b, best);\n        }\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\nbest = i = left = m = n = need = right = start = x = 0\nn = readstr(a)\nm = readstr(b)\nfor i in range(m):\n    d[b[i]] = d[b[i]] + 1\nleft = 0\nneed = m\nbest = n + 1\nstart = 0\nfor right in range(n):\n    x = a[right]\n    if e[x] < d[x]:\n        need = need - 1\n    e[x] = e[x] + 1\n    while (need == 0) and (left <= right):\n        if ((right - left) + 1) < best:\n            best = (right - left) + 1\n            start = left\n        x = a[left]\n        e[x] = e[x] - 1\n        if e[x] < d[x]:\n            need = need + 1\n        left = left + 1\nif (m == 0) or (best == (n + 1)):\n    emitstr(b, 0)\nelse:\n    for i in range(best):\n        b[i] = a[(start + i)]\n    emitstr(b, best)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut best: i32 = 0;\n    let mut i: i32 = 0;\n    let mut left: i32 = 0;\n    let mut m: i32 = 0;\n    let mut n: i32 = 0;\n    let mut need: i32 = 0;\n    let mut right: i32 = 0;\n    let mut start: i32 = 0;\n    let mut x: i32 = 0;\n    n = reader.readstr(&mut a);\n    m = reader.readstr(&mut b);\n    i = 0;\n    while i < m {\n        d[(b[(i) as usize]) as usize] = (d[(b[(i) as usize]) as usize] + 1);\n        i += 1;\n    }\n    left = 0;\n    need = m;\n    best = (n + 1);\n    start = 0;\n    right = 0;\n    while right < n {\n        x = a[(right) as usize];\n        if (e[(x) as usize] < d[(x) as usize]) {\n            need = (need - 1);\n        }\n        e[(x) as usize] = (e[(x) as usize] + 1);\n        while ((need == 0) && (left <= right)) {\n            if (((right - left) + 1) < best) {\n                best = ((right - left) + 1);\n                start = left;\n            }\n            x = a[(left) as usize];\n            e[(x) as usize] = (e[(x) as usize] - 1);\n            if (e[(x) as usize] < d[(x) as usize]) {\n                need = (need + 1);\n            }\n            left = (left + 1);\n        }\n        right += 1;\n    }\n    if ((m == 0) || (best == (n + 1))) {\n        emitstr(&b, 0);\n    } else {\n        i = 0;\n        while i < best {\n            b[(i) as usize] = a[(start + i) as usize];\n            i += 1;\n        }\n        emitstr(&b, best);\n    }\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "adobecodebanc abc\n",
+      "expectedOutput": "banc\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "a aa\n",
+      "expectedOutput": "-\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "- a\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "abc -\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "aaaa aa\n",
+      "expectedOutput": "aa\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "cbbcaab babab\n",
+      "expectedOutput": "bbcaab\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "bcb caab\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "bbaaaccb b\n",
+      "expectedOutput": "b\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "cbcbacaabcaaacaabc bb\n",
+      "expectedOutput": "bcb\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "aacbbbbaaca cbaabc\n",
+      "expectedOutput": "cbbbbaac\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "abcb bcbbcaab\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "bbcbbcbaacccaaba a\n",
+      "expectedOutput": "a\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "abbba bcab\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "aaaa c\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "ccacbcacaccabcaca cbabcb\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "abaaccbc c\n",
+      "expectedOutput": "c\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "bbcaacabaca aacacc\n",
+      "expectedOutput": "caacabac\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "cbcacbaccbaa bcbcbbcc\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "aacbbababacaa bca\n",
+      "expectedOutput": "acb\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "bbcc c\n",
+      "expectedOutput": "c\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-21",
+      "input": "acabbaaaaacabbb cba\n",
+      "expectedOutput": "cab\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-22",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+      "expectedOutput": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-23",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b\n",
+      "expectedOutput": "-\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

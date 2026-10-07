@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "luogu-p1428",
+  "problemRevision": 1,
+  "title": "小鱼比可爱",
+  "summary": "对每个位置枚举它之前的元素，只统计数值严格更小的个数。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "给出 n 条小鱼的数值，顺序就是它们的位置。对第 i 条小鱼，只看排在它前面的小鱼，统计其中数值严格小于它的数量。不是统计整排里比它小的所有小鱼，也不是只比较相邻的前一条。\n\n完整程序先读 n，再读 n 个整数，按原顺序输出 n 个计数，空格分隔。比如数值相等不算更小；公开样例 `[1,1,1]` 三个计数都是 0。n 至少为 1，第一条之前没有小鱼，因此第一项永远是 0。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "题目 n<=100，一个位置最多检查 99 个前项，直接枚举完全足够。用数组 a 保存数值，外层 i 指向当前鱼，内层 j 依次走过 0 到 i-1，遇到 `a[j]<a[i]` 就让 cnt 加 1。\n\n每换一条当前鱼，cnt 必须重新从 0 开始。不能排序，因为排序会改变“在它之前”的含义；也不需要复杂树状数组。本参考实现正是双重循环，理解这个方法比套用更复杂算法更适合当前范围。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "额外例子 `[3,1,4,3]`：\n\n| 当前小鱼 | 前项比较 | cnt |\n| --- | --- | --- |\n| i=0，值=3 | 没有前项 | 0 |\n| i=1，值=1 | 3 不小于 1 | 0 |\n| i=2，值=4 | 3、1 都更小 | 2 |\n| i=3，值=3 | 只有 1 更小，3 相等不算 | 1 |\n\n输出 `0 0 2 1`。最后一条只比前面的 1 大，前面的 3 相等而不计数。公开单条样例不进入内层循环，直接输出 0。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 n，并按原顺序存放到 a[0] 至 a[n-1]；下标从 0 开始。\n2. 外层扫描每个 i，先重置 cnt=0。\n3. 内层只枚举 j<i，判断 `a[j]<a[i]`，每符合一次就累加 1。\n4. 内层结束立即输出 cnt，再处理下一条小鱼。不要在外层结束后只打印最后一个计数。\n\n参考框架的 b、d、e 与字符串读写函数未使用；cnt、i、j 和 a 才是本题主要变量。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "固定一个 i。内层从 j=0 到 i-1，恰好访问每条排在当前鱼前面的小鱼一次，不访问当前项或后项。每次只在数值严格小于当前值时增加计数，因此循环结束时 cnt 正好是题目要求的人数。\n\n每个 i 都从 cnt=0 开始，各条鱼的计数相互独立；外层按原顺序输出所有 i 的结果，所以整个输出既数量正确，也与输入顺序一一对应。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 是鱼的数量。比较次数为 `0+1+...+(n-1)=n(n-1)/2`，时间 `O(n²)`，意味着 n 翻倍时比较量约为四倍。不能因为循环只检查前项就写成 `O(n)`。\n\n逻辑输入存储为 `O(n)`，除输入外只需计数和两个下标，额外空间 `O(1)`。实际参考框架各语言预留四个容量 K=20000 的数组，内存是 `O(K)`，其中只有 a 被使用；Java、Python、Rust 等还需初始化这些数组。读入全部分词所用内存也属于输入开销。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 比较必须是严格 `<`，相等数值不计入。\n- 内层上界是 i，不是 n，也不是 i+1；后面的小鱼与当前小鱼都不能计入。\n- 每条鱼的 cnt 都要清零，不能沿用上一条的累计结果。\n- 不排序、不交换输入，原位置本身就是题意的一部分。\n- 第一项为 0 是正常结果；0 不代表读取失败或者缺少输出。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：题意同时限制位置在前和数值更小，双重循环分别落实这两个条件。\n\n1. `[1,2,3]` 输出什么？`0 1 2`。\n2. `[3,2,1]` 输出什么？`0 0 0`。每条鱼前面的数都更大。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cnt = 0, i = 0, j = 0, n = 0;\n    // 必须保留输入顺序；第一条之前没有任何鱼。\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    for (i = 0; i < n; i += 1)  {\n        // 每条鱼独立计数，不能累计上一条的答案。\n        cnt = 0;\n        for (j = 0; j < i; j += 1)  {\n            if (a[j] < a[i])  {\n                cnt = (cnt + 1);\n            }\n        }\n        // 内层只统计 j<i 且 a[j]<a[i]，然后按输入顺序输出。\n        emit(cnt);\n    }\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cnt = 0, i = 0, j = 0, n = 0;\n    // 必须保留输入顺序；第一条之前没有任何鱼。\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    for (i = 0; i < n; i += 1)  {\n        // 每条鱼独立计数，不能累计上一条的答案。\n        cnt = 0;\n        for (j = 0; j < i; j += 1)  {\n            if (a[j] < a[i])  {\n                cnt = (cnt + 1);\n            }\n        }\n        // 内层只统计 j<i 且 a[j]<a[i]，然后按输入顺序输出。\n        emit(cnt);\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int cnt = 0, i = 0, j = 0, n = 0;\n        // 必须保留输入顺序；第一条之前没有任何鱼。\n        n = read();\n        for (i = 0; i < n; i += 1)  {\n            a[i] = read();\n        }\n        for (i = 0; i < n; i += 1)  {\n            // 每条鱼独立计数，不能累计上一条的答案。\n            cnt = 0;\n            for (j = 0; j < i; j += 1)  {\n                if (a[j] < a[i])  {\n                    cnt = (cnt + 1);\n                }\n            }\n            // 内层只统计 j<i 且 a[j]<a[i]，然后按输入顺序输出。\n            emit(cnt);\n        }\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ncnt = i = j = n = 0\n# 必须保留输入顺序；第一条之前没有任何鱼。\nn = read()\nfor i in range(n):\n    a[i] = read()\nfor i in range(n):\n    # 每条鱼独立计数，不能累计上一条的答案。\n    cnt = 0\n    for j in range(i):\n        if a[j] < a[i]:\n            cnt = cnt + 1\n    # 内层只统计 j<i 且 a[j]<a[i]，然后按输入顺序输出。\n    emit(cnt)\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut cnt: i32 = 0;\n    let mut i: i32 = 0;\n    let mut j: i32 = 0;\n    let mut n: i32 = 0;\n    // 必须保留输入顺序；第一条之前没有任何鱼。\n    n = reader.read();\n    i = 0;\n    while i < n  {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    i = 0;\n    while i < n  {\n        // 每条鱼独立计数，不能累计上一条的答案。\n        cnt = 0;\n        j = 0;\n        while j < i  {\n            if (a[(j) as usize] < a[(i) as usize])  {\n                cnt = (cnt + 1);\n            }\n            j += 1;\n        }\n        // 内层只统计 j<i 且 a[j]<a[i]，然后按输入顺序输出。\n        emit(cnt);\n        i += 1;\n    }\n}\n"
+    }
+  }
+}

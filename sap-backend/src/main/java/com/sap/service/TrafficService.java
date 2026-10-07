@@ -120,6 +120,13 @@ public class TrafficService {
             cosTrafficMapper.upsert(LocalDate.now(), (Long) cu[0], (String) cu[1], "DOWNLOAD", size);
         } catch (Exception ignore) {}
     }
+    /** Ticket downloads have no long-lived login token in their URL; attribute their existing traffic metric to the verified ticket owner. */
+    public void recordDownloadForUser(long size, long userId) {
+        try {
+            User user = userMapper.selectById(userId);
+            if (user != null) cosTrafficMapper.upsert(LocalDate.now(), userId, user.getName() != null ? user.getName() : user.getStudentId(), "DOWNLOAD", size);
+        } catch (Exception ignore) {}
+    }
 
     /** 按 url 查登记的文件大小，找不到返回 -1。 */
     public long sizeOf(String url) {

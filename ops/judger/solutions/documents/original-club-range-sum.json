@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-club-range-sum",
+  "problemRevision": 1,
+  "title": "社团积分区间查询",
+  "summary": "先保存从第 1 天开始的累计积分，用 prefix[r]−prefix[l−1] 回答每个闭区间查询。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "有 `n` 天的积分记录，积分可以是负数。每次查询给出 `[l,r]`，要把第 `l` 天到第 `r` 天的积分全部相加，两个端点都包括。这里天数编号从 1 开始，而很多数组例题从 0 开始，不能混用。\n\n输入依次是 `n q`、`n` 个每日积分、`q` 对查询端点。输出每次查询的总和，顺序与输入查询一致。比如积分 `[2,−1,4]`，查询 `[2,3]` 要计算 `−1+4=3`，不是比较积分高低，也不是计算天数。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "若每次查询都重新逐天相加，重复查询会再次做相同工作。可以先建立“前缀和”：前缀就是从开头到某个位置的一段，`a[i]` 在参考代码中保存前 `i` 天的总积分，**不是第 i 天自己的积分**。\n\n设 `a[0]=0`，按顺序得到 `a[i]=a[i−1]+当天积分`。查询 `[l,r]` 时，前 `r` 天的和包括了不需要的前 `l−1` 天，把后者减掉，余下正好是目标区间。因此每次只需两次数组访问和一次减法。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "用额外小例子，每日积分 `[2,−1,4]`。\n\n| 读入到第几天 | 当天积分 | 计算前缀 | 保存值 |\n| --- | --- | --- | --- |\n| 1 | 2 | `a[0]+2` | `a[1]=2` |\n| 2 | −1 | `a[1]−1` | `a[2]=1` |\n| 3 | 4 | `a[2]+4` | `a[3]=5` |\n\n查询 `[2,3]`：`a[3]−a[1]=5−2=3`。查询 `[1,2]`：`a[2]−a[0]=1−0=1`。查询 `[3,3]`：`a[3]−a[2]=4`，即一天本身的积分。",
+      "diagram": {
+        "caption": "减去的是 l−1 的前缀，第 l 天的积分仍然保留。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 226\" role=\"img\" aria-label=\"积分 [2,-1,4]：前缀相减取出第 2..3 天\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"226\" rx=\"14\" fill=\"#f4f8fd\"/><text x=\"24\" y=\"32\" font-size=\"18\" fill=\"#23466f\">积分 [2,-1,4]：前缀相减取出第 2..3 天</text><text x=\"24\" y=\"79\" font-size=\"15\" fill=\"#3267b1\">前缀下标</text><rect x=\"164\" y=\"52\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"226.75\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">0</text><rect x=\"299.5\" y=\"52\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"362.25\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">1</text><rect x=\"435.0\" y=\"52\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"497.75\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">2</text><rect x=\"570.5\" y=\"52\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"633.25\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">3</text><text x=\"24\" y=\"133\" font-size=\"15\" fill=\"#3267b1\">前缀和 a</text><rect x=\"164\" y=\"106\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"226.75\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">0</text><rect x=\"299.5\" y=\"106\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b77930\" stroke-width=\"2\"/><text x=\"362.25\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#b77930\">2</text><rect x=\"435.0\" y=\"106\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"497.75\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">1</text><rect x=\"570.5\" y=\"106\" width=\"125.5\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"633.25\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">5</text><text x=\"24\" y=\"187\" font-size=\"15\" fill=\"#3267b1\">查询 [2,3]</text><rect x=\"164\" y=\"160\" width=\"170.66666666666666\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"249.33333333333331\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">a[3]=5</text><rect x=\"344.66666666666663\" y=\"160\" width=\"170.66666666666666\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b77930\" stroke-width=\"2\"/><text x=\"429.99999999999994\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#b77930\">a[1]=2</text><rect x=\"525.3333333333333\" y=\"160\" width=\"170.66666666666666\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"610.6666666666666\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">5−2=3</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 `n/q`。参考数组初始为 0，所以 `a[0]` 表示 0 天的积分和。\n2. `i` 从 1 到 `n`，每次读一个积分并立即累加到 `a[i]`，不另存每日原值。\n3. `q` 次循环各读 `l/r`，计算 `a[r]−a[l−1]`。\n4. 立即输出这一查询的结果；不能把查询数组排序，因为输出需要保留原次序。\n5. 程序中的 `b/d/e` 是固定生成缓冲，本题没有用于查询逻辑，不必把它们解释为其他数据结构。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "初始 `a[0]=0` 等于前 0 天的和。如果 `a[i−1]` 已经是前 `i−1` 天的和，那么再加第 `i` 天积分就得到前 `i` 天的和。因此全部前缀都正确。\n\n`a[r]` 由前 `l−1` 天与第 `l..r` 天两段相加构成，减掉正确的 `a[l−1]` 后，目标段恰好留下。负数也遵循相同加减关系，所以不需要特别分支。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 `n` 为天数、`q` 为查询数。前缀构建 `O(n)`，每次查询 `O(1)`，合计时间 `O(n+q)`；大 O 表示工作量与数据和查询的总规模成正比，而不是每个查询再乘一个 n。\n\n实际需要保存 `n+1` 个累计值，逻辑额外空间 `O(n)`，原积分不再单独保存。参考五语言固定分配长度 20000 的工作数组；给定上界下积分总和绝对值至多 200000，32 位整数足够，若扩大题目范围则需要重新评估。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 公式是 `a[r]−a[l−1]`，写成 `a[r]−a[l]` 会漏掉左端点。\n- `l=1` 要访问合法的 `a[0]=0`，不能访问下标 −1。\n- `l=r` 仍是一个有效查询，要返回该天积分。\n- 负积分会让前缀减少，但公式仍成立，不需要强行令和非负。\n- 重复查询应重复输出结果，不能将它去重。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "保存一次累计信息，就能通过相减取出任意连续区间。\n\n手算积分 `[5,−2,7,−1]` 的前缀为 `[0,5,3,10,9]`。查询 `[2,4]` 的答案是 `9−5=4`；查询 `[1,1]` 的答案为 5。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 查询使用从 1 开始的闭区间，a[0]=0 表示前 0 天积分。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, n = 0, q = 0, r = 0;\n    n = read();\n    q = read();\n    /* 读入时直接累计，a[i] 保存前 i 天之和，不再是某一天原值。 */\n    for (i = 1; i < (n + 1); i += 1)  {\n        a[i] = (a[(i - 1)] + read());\n    }\n    for (i = 0; i < q; i += 1)  {\n        l = read();\n        r = read();\n        /* 前 r 天总和减去前 l-1 天总和，保留两端都包含的目标区间。 */\n        emit((a[r] - a[(l - 1)]));\n    }\n    return 0;\n}\n",
+      "cpp": "/* 查询使用从 1 开始的闭区间，a[0]=0 表示前 0 天积分。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, l = 0, n = 0, q = 0, r = 0;\n    n = read();\n    q = read();\n    /* 读入时直接累计，a[i] 保存前 i 天之和，不再是某一天原值。 */\n    for (i = 1; i < (n + 1); i += 1)  {\n        a[i] = (a[(i - 1)] + read());\n    }\n    for (i = 0; i < q; i += 1)  {\n        l = read();\n        r = read();\n        /* 前 r 天总和减去前 l-1 天总和，保留两端都包含的目标区间。 */\n        emit((a[r] - a[(l - 1)]));\n    }\n    return 0;\n}\n",
+      "java": "/* 查询使用从 1 开始的闭区间，a[0]=0 表示前 0 天积分。 */\nimport java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\")) return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0) System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, l = 0, n = 0, q = 0, r = 0;\n        n = read();\n        q = read();\n        /* 读入时直接累计，a[i] 保存前 i 天之和，不再是某一天原值。 */\n        for (i = 1; i < (n + 1); i += 1)  {\n            a[i] = (a[(i - 1)] + read());\n        }\n        for (i = 0; i < q; i += 1)  {\n            l = read();\n            r = read();\n            /* 前 r 天总和减去前 l-1 天总和，保留两端都包含的目标区间。 */\n            emit((a[r] - a[(l - 1)]));\n        }\n    }\n}\n",
+      "python": "# 查询使用从 1 开始的闭区间，a[0]=0 表示前 0 天积分。\nimport sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = l = n = q = r = 0\nn = read()\nq = read()\n# 读入时直接累计，a[i] 保存前 i 天之和，不再是某一天原值。\nfor i in range(1, (n + 1)):\n    a[i] = a[(i - 1)] + read()\nfor i in range(q):\n    l = read()\n    r = read()\n    # 前 r 天总和减去前 l-1 天总和，保留两端都包含的目标区间。\n    emit((a[r] - a[(l - 1)]))\n",
+      "rust": "/* 查询使用从 1 开始的闭区间，a[0]=0 表示前 0 天积分。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>, p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(), p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut i: i32 = 0;\n    let mut l: i32 = 0;\n    let mut n: i32 = 0;\n    let mut q: i32 = 0;\n    let mut r: i32 = 0;\n    n = reader.read();\n    q = reader.read();\n    i = 1;\n    /* 读入时直接累计，a[i] 保存前 i 天之和，不再是某一天原值。 */\n    while i < (n + 1)  {\n        a[(i) as usize] = (a[(i - 1) as usize] + reader.read());\n        i += 1;\n    }\n    i = 0;\n    while i < q  {\n        l = reader.read();\n        r = reader.read();\n        /* 前 r 天总和减去前 l-1 天总和，保留两端都包含的目标区间。 */\n        emit((a[(r) as usize] - a[(l - 1) as usize]));\n        i += 1;\n    }\n}\n"
+    }
+  }
+}

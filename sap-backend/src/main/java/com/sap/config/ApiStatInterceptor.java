@@ -19,12 +19,25 @@ public class ApiStatInterceptor implements HandlerInterceptor {
     @Autowired
     private TrafficService trafficService;
 
+    @Override public boolean preHandle(HttpServletRequest request,HttpServletResponse response,Object handler) {
+        if (ApiRequestPolicy.isHealthCheck(request)) return true;
+        try {
+            if(cn.dev33.satoken.stp.StpUtil.isLogin())request.setAttribute(com.sap.aspect.OperationLogAspect.ACTOR,cn.dev33.satoken.stp.StpUtil.getLoginIdAsLong());
+            if(handler instanceof org.springframework.web.method.HandlerMethod method) {
+                var annotation=method.getMethodAnnotation(com.sap.annotation.OperationLog.class);
+                if(annotation!=null)request.setAttribute(com.sap.aspect.OperationLogAspect.DESCRIPTION,annotation.value());
+            }
+        }catch(Exception ignored){}
+        return true;
+    }
+
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
                                 Object handler, Exception ex) {
         try {
             String method = request.getMethod();
             if ("OPTIONS".equalsIgnoreCase(method)) return; // 跳过 CORS 预检
+            if (ApiRequestPolicy.isHealthCheck(request)) return;
 
             Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
             if (pattern == null) return; // 无匹配处理器(静态/404)，跳过

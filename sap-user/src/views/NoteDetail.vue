@@ -7,14 +7,14 @@
     <template v-else-if="note">
       <div class="note-detail__header anim-in">
         <button class="note-detail__back" @click="$router.push('/notes')">
-          ← 返回列表
+          <UiIcon name="list" :size="16" /> 返回列表
         </button>
         <h1 class="note-detail__title">{{ note.title }}</h1>
         <div class="note-detail__meta">
           <span>✍ {{ note.authorName }}</span>
           <span>📅 {{ formatDate(note.createdAt) }}</span>
           <span>👁 {{ note.viewCount }} 次浏览</span>
-          <span>⬇ {{ note.downloadCount }} 次下载</span>
+          <span class="note-detail__download-count"><UiIcon name="file-save" :size="15" /> {{ note.downloadCount }} 次下载</span>
         </div>
       </div>
 
@@ -38,21 +38,21 @@
         <Transition name="fab-item">
           <div v-if="fabOpen" class="fab-items">
             <button class="fab-item" @click="scrollToTop" title="返回顶部">
-              <span class="fab-item__icon">⬆</span>
+              <span class="fab-item__icon"><UiIcon name="panel-top" /></span>
               <span class="fab-item__label">顶部</span>
             </button>
             <button class="fab-item" @click="handleDownload" title="下载PDF">
-              <span class="fab-item__icon">📥</span>
+              <span class="fab-item__icon"><UiIcon name="file-save" /></span>
               <span class="fab-item__label">下载</span>
             </button>
             <button class="fab-item" @click="$router.push('/notes')" title="返回列表">
-              <span class="fab-item__icon">📋</span>
+              <span class="fab-item__icon"><UiIcon name="list" /></span>
               <span class="fab-item__label">列表</span>
             </button>
           </div>
         </Transition>
         <!-- 主按钮 -->
-        <button class="fab-main" @click="fabOpen = !fabOpen" :class="{ 'fab-main--active': fabOpen }">
+        <button class="fab-main" aria-label="笔记操作菜单" :aria-expanded="fabOpen" @click="fabOpen = !fabOpen" :class="{ 'fab-main--active': fabOpen }">
           <span class="fab-main__icon">{{ fabOpen ? '✕' : '☰' }}</span>
         </button>
       </div>
@@ -70,6 +70,7 @@
 </template>
 
 <script setup>
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import request from '@/utils/request'
@@ -149,6 +150,9 @@ onMounted(() => {
   margin-bottom: var(--s5);
 }
 .note-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: 1px solid var(--ink-200);
   padding: 6px 16px;
@@ -178,6 +182,11 @@ onMounted(() => {
   gap: var(--s4);
   font-size: 0.8125rem;
   color: var(--ink-400);
+}
+.note-detail__download-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* Markdown 内容区 */
@@ -381,7 +390,8 @@ onMounted(() => {
   transform: translateX(-4px);
 }
 .fab-item__icon {
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
 }
 .fab-item__label {
   font-weight: 600;
@@ -443,4 +453,9 @@ onMounted(() => {
   .markdown-body :deep(h1) { font-size: 1.5em; }
   .markdown-body :deep(h2) { font-size: 1.3em; }
 }
+</style>
+
+<style scoped>
+.note-detail__body { min-width: 0; overflow-wrap: anywhere; }.markdown-body :deep(table) { display: block; overflow-x: auto; max-width: 100%; }.markdown-body :deep(pre) { max-width: 100%; overflow: auto; }.markdown-body :deep(img) { height: auto; }
+@media (max-width: 480px) { .note-detail__body { padding: 20px 16px; }.markdown-body :deep(pre) { padding: 15px; font-size: 12px; }.markdown-body :deep(th), .markdown-body :deep(td) { padding: 10px; min-width: 110px; }.fab-menu { right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); } }
 </style>

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-704",
+  "problemRevision": 1,
+  "title": "二分查找",
+  "summary": "利用严格递增顺序，每次比较中点并排除半边候选区间。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "数组是一排按位置存放的整数，下标是位置的编号。本题下标从 0 开始，所以第一个数的下标是 0，第六个数的下标是 5。给定一个严格递增数组 `nums` 和目标值 `target`，找到它就返回下标，没有找到返回 `-1`。严格递增意味着后面的数一定更大，而且没有重复值。\n\n完整程序模式按顺序读入 `n`、`n` 个数、`target`，打印一个整数。核心函数模式由平台读入数据并调用 `search`，只需返回结果，不要额外打印。公开样例中的 `9` 位于 `[-1,0,3,5,9,12]` 的第 5 个位置，所以答案是 `4`，不是 `5`。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "逐个比对也能找到目标，但在长度为 n 的数组中可能检查 n 次。本题要求更快：利用有序这一条件，每次只检查候选区间的中间数。\n\n用 `l`、`r` 表示仍可能有答案的最左和最右下标，两个端点都包含在区间内。取中间下标 `m`：如果 `nums[m]` 等于目标，立即返回；如果它小于目标，中间及左边所有数都太小，令 `l=m+1`；如果它大于目标，中间及右边都太大，令 `r=m-1`。每次至少排除中间元素，并大约丢掉一半候选数，这就是二分查找。\n\nC、C++、Java、Python 的实现直接维护这些指针。Rust 使用标准库 `binary_search` 完成同一个有序查找；它返回成功下标或未找到信息，代码用 `match` 转成题目要求的整数。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "使用公开样例 `nums=[-1,0,3,5,9,12]`、`target=9`。表中的边界是本轮比较之前的值：\n\n| 步骤 | l、r | m 与中间值 | 处理 |\n| --- | --- | --- | --- |\n| 初始化 | 0、5 | 尚未比较 | 候选是整排数组 |\n| 第一轮 | 0、5 | m=2，值=3 | 3<9，把 l 改成 3 |\n| 第二轮 | 3、5 | m=4，值=9 | 相等，返回 4 |\n\n另一个公开样例目标为 2：先比较 3，右边界变为 1；再比较 -1，左边界变为 1；比较 0 后左边界变为 2。此时 `l=2>r=1`，区间为空，返回 `-1`。区间为空表示所有可能位置都已排除。",
+      "diagram": {
+        "caption": "公开样例中，先排除下标 0 到 2，再在剩余区间的中点找到 9。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 243\" role=\"img\" aria-label=\"寻找 9：候选区间逐轮收缩\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"243\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">寻找 9：候选区间逐轮收缩</text><text x=\"26.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">阶段</text><text x=\"196.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">候选下标</text><text x=\"366.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">比较值</text><text x=\"536.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">结果</text><rect x=\"20\" y=\"82\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">初始</text><text x=\"196.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">0 到 5</text><text x=\"366.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">—</text><text x=\"536.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">保留全部</text><rect x=\"20\" y=\"128\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">第一轮</text><text x=\"196.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">0 到 5</text><text x=\"366.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">3（下标 2）</text><text x=\"536.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">保留 3 到 5</text><rect x=\"20\" y=\"174\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#e5f2ed\"/><text x=\"26.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">第二轮</text><text x=\"196.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">3 到 5</text><text x=\"366.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">9（下标 4）</text><text x=\"536.0\" y=\"200\" font-size=\"15\" fill=\"#26816b\">找到，返回 4</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读入数组和目标，或者接收平台传给核心函数的参数。不要对已经严格递增的数组重新排序，否则会破坏原来的下标。\n2. 初始化 `l=0`、`r=n-1`。循环条件 `l<=r` 表示即使只剩一个候选，也必须检查。\n3. 计算 `m` 并比较。C、C++、Java 使用 `l+(r-l)/2`，这个写法可以避免一般情况下 `l+r` 相加过大；Python 整数不会溢出，用整数除法 `//`。\n4. 按比较结果返回下标或者缩小区间。更新时必须跨过 `m`，因为它已经确认不是答案。\n5. 循环结束返回 `-1`。完整程序的 `main` 或末尾输入代码负责打印；核心函数模式保留平台要求的 `Solution` 类或函数签名。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "可以一直记住一个事实：如果目标存在，它一定还在闭区间 `[l,r]` 中。最初所有数组元素都在这个区间中，所以事实成立。\n\n中间数小于目标时，严格递增保证从 `l` 到 `m` 的所有数都不可能等于目标，删掉它们不会删掉答案。中间数大于目标时，同理可以删掉 `m` 到 `r`。比较相等时，当前下标就是题目所求。每轮未找到目标都会缩短区间，所以不会无限循环。如果最后 `l>r`，所有位置都已排除，而排除过程从未丢掉可能的答案，目标只能是不存在。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 表示数组长度。单独分析查找，时间为 `O(log n)`，额外空间为 `O(1)`；大 O 描述输入变大时工作量的增长量级。候选长度每次减半，长度为 8 时大约检查 4 次，而不是检查 8 个元素。\n\n完整程序仍需要读入并存放全部 n 个整数，因此端到端时间为 `O(n)`、输入存储为 `O(n)`；不能把读取数组的过程也说成 `O(log n)`。五种语言的查找都不建立另一份数组。Rust 接收 `Vec` 是拥有输入本身，不意味着查找额外复制；Python 标准输入分词和创建整数列表也是输入存储成本。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 答案是从 0 开始的下标；目标在第一个位置时返回 0，不能把 0 当作“没找到”。\n- `l<=r` 与 `m±1` 必须配套。使用 `l=m` 可能在仅剩两个候选时不停重复同一个中点。\n- 目标小于最小值、或者大于最大值，都应让区间逐步变空并返回 `-1`，不要越界访问。\n- 题目保证至少一个元素。长度为 1 时，先比较这一个数，再决定返回 0 或 -1。\n- 不要用值 `nums[m]` 代替下标 `m` 返回，也不要先排序后丢失题目的原始位置。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：数组有序，让一次比较可以安全排除半边；边界表示的是仍可能包含目标的位置。\n\n1. 在 `[2,4,6,8]` 中找 8，依次比较哪些值？提示：中点取较小下标，依次是 4、6、8，答案下标 3。\n2. 在同一数组中找 5，最终返回什么？答案是 -1；可以手写每轮的 l、r，检查最后区间是否为空。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n// 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\nint search(int*nums,int numsSize,int target) {\n    int l=0,r=numsSize-1;\n    // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n    while(l<=r) {\n        int m=l+(r-l)/2;\n        if(nums[m]==target)return m;\n        if(nums[m]<target)l=m+1;\n        else r=m-1;\n    }\n    // 候选耗尽表示目标不存在，统一返回 -1。\n    return -1;\n}\nint main(void) {\n    int n;\n    scanf(\"%d\",&n);\n    int*a=malloc(n*sizeof(int));\n    for(int i=0;i<n;i++)scanf(\"%d\",&a[i]);\n    int target;\n    scanf(\"%d\",&target);\n    printf(\"%d\\n\",search(a,n,target));\n    free(a);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\n#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\nclass Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    public:int search(vector<int>&nums,int target) {\n        int l=0,r=(int)nums.size()-1;\n        // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while(l<=r) {\n            int m=l+(r-l)/2;\n            if(nums[m]==target)return m;\n            if(nums[m]<target)l=m+1;\n            else r=m-1;\n        }\n        // 候选耗尽表示目标不存在，统一返回 -1。\n        return -1;\n    }\n}\n;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    cin>>n;\n    vector<int>a(n);\n    for(auto&v:a)cin>>v;\n    int target;\n    cin>>target;\n    cout<<Solution().search(a,target)<<\"\\n\";\n    return 0;\n}\n",
+      "java": "import java.util.*;\nclass Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    public int search(int[] nums,int target) {\n        int l=0,r=nums.length-1;\n        // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while(l<=r) {\n            int m=l+(r-l)/2;\n            if(nums[m]==target)return m;\n            if(nums[m]<target)l=m+1;\n            else r=m-1;\n        }\n        // 候选耗尽表示目标不存在，统一返回 -1。\n        return -1;\n    }\n}\npublic class Main  {\n    static class Fast  {\n        private final byte[] b=new byte[65536];\n        int p=0,n=0;\n        int read()throws Exception {\n            if(p>=n) {\n                n=System.in.read(b);\n                p=0;\n                if(n<0)return -1;\n            }\n            return b[p++];\n        }\n        String next()throws Exception {\n            StringBuilder s=new StringBuilder();\n            int c;\n            do {\n                c=read();\n            }\n            while(c<=32&&c>=0);\n            while(c>32) {\n                s.append((char)c);\n                c=read();\n            }\n            return s.toString();\n        }\n        int num()throws Exception {\n            return Integer.parseInt(next());\n        }\n    }\n    public static void main(String[]args)throws Exception {\n        Fast f=new Fast();\n        int n=f.num();\n        int[]a=new int[n];\n        for(int i=0;i<n;i++)a[i]=f.num();\n        int target=f.num();\n        System.out.println(new Solution().search(a,target));\n    }\n}\n",
+      "python": "import sys\n\nclass Solution:\n    # 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    def search(self,nums,target):\n        l,r=0,len(nums)-1\n        # 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while l<=r:\n            m=(l+r)//2\n            if nums[m]==target:return m\n            if nums[m]<target:l=m+1\n            else:r=m-1\n        # 候选耗尽表示目标不存在，统一返回 -1。\n        return -1\n\ndata=sys.stdin.buffer.read().split()\nn=int(data[0]);a=list(map(int,data[1:n+1]))\ntarget=int(data[n+1])\nprint(Solution().search(a,target))\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nuse std::collections::HashMap;\nstruct Solution;\nimpl Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    pub fn search(nums:Vec<i32>,target:i32)->i32 {\n        // 有序条件让一次比较排除半边；Rust 用标准库完成二分查找。\n        match nums.binary_search(&target) {\n            // 候选耗尽表示目标不存在，统一返回 -1。\n            Ok(i)=>i as i32,Err(_)=>-1\n        }\n    }\n}\nfn main() {\n    let mut s=String::new();\n    io::stdin().read_to_string(&mut s).unwrap();\n    let mut it=s.split_whitespace();\n    let n:usize=it.next().unwrap().parse().unwrap();\n    let a:Vec<i32>=(0..n).map(|_|it.next().unwrap().parse().unwrap()).collect();\n    let target:i32=it.next().unwrap().parse().unwrap();\n    println!(\"{}\",Solution::search(a,target));\n}\n"
+    },
+    "FUNCTION": {
+      "c": "// 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\nint search(int*nums,int numsSize,int target) {\n    int l=0,r=numsSize-1;\n    // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n    while(l<=r) {\n        int m=l+(r-l)/2;\n        if(nums[m]==target)return m;\n        if(nums[m]<target)l=m+1;\n        else r=m-1;\n    }\n    // 候选耗尽表示目标不存在，统一返回 -1。\n    return -1;\n}\n",
+      "cpp": "class Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    public:int search(vector<int>&nums,int target) {\n        int l=0,r=(int)nums.size()-1;\n        // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while(l<=r) {\n            int m=l+(r-l)/2;\n            if(nums[m]==target)return m;\n            if(nums[m]<target)l=m+1;\n            else r=m-1;\n        }\n        // 候选耗尽表示目标不存在，统一返回 -1。\n        return -1;\n    }\n}\n;\n",
+      "java": "class Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    public int search(int[] nums,int target) {\n        int l=0,r=nums.length-1;\n        // 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while(l<=r) {\n            int m=l+(r-l)/2;\n            if(nums[m]==target)return m;\n            if(nums[m]<target)l=m+1;\n            else r=m-1;\n        }\n        // 候选耗尽表示目标不存在，统一返回 -1。\n        return -1;\n    }\n}\n",
+      "python": "class Solution:\n    # 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    def search(self,nums,target):\n        l,r=0,len(nums)-1\n        # 只检查仍可能包含目标的闭区间，每轮排除已比较的中点。\n        while l<=r:\n            m=(l+r)//2\n            if nums[m]==target:return m\n            if nums[m]<target:l=m+1\n            else:r=m-1\n        # 候选耗尽表示目标不存在，统一返回 -1。\n        return -1\n",
+      "rust": "impl Solution  {\n    // 参数 nums 是严格递增数组；结果要返回从 0 开始的下标。\n    pub fn search(nums:Vec<i32>,target:i32)->i32 {\n        // 有序条件让一次比较排除半边；Rust 用标准库完成二分查找。\n        match nums.binary_search(&target) {\n            // 候选耗尽表示目标不存在，统一返回 -1。\n            Ok(i)=>i as i32,Err(_)=>-1\n        }\n    }\n}\n"
+    }
+  }
+}

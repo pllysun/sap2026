@@ -2,7 +2,7 @@
   <div class="app-release-page" :class="{ 'zen-fade-in': !embedded, embedded }">
     <div v-if="!embedded" class="page-header">
       <h2>App 版本发布</h2>
-      <p>上传新版 APK 并发布，安卓 App 将自动检查更新。APK 走平台对象存储(COS)，不占后端带宽。</p>
+      <p>上传并发布新版本，下载入口与服务器缓存自动跟随当前版本。</p>
     </div>
 
     <el-alert
@@ -34,7 +34,7 @@
               <span class="mono">{{ shortSha(current.sha256) }}</span>
             </el-descriptions-item>
             <el-descriptions-item label="下载地址">
-              <a v-if="current.downloadUrl" :href="current.downloadUrl" target="_blank" class="mono link">{{ current.downloadUrl }}</a>
+              <el-button v-if="current.downloadUrl" size="small" :loading="downloading" @click="downloadCurrent">下载当前版本</el-button>
               <span v-else>-</span>
             </el-descriptions-item>
             <el-descriptions-item label="更新说明">
@@ -96,6 +96,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { getUserInfo, getAppVersion, getCosStatus, publishAppVersion } from '../api'
+import request from '../utils/request'
 
 const { embedded } = defineProps({ embedded: { type: Boolean, default: false } })
 
@@ -103,6 +104,14 @@ const router = useRouter()
 const fileInput = ref(null)
 const apkFile = ref(null)
 const publishing = ref(false)
+const downloading = ref(false)
+async function downloadCurrent() {
+  downloading.value = true
+  try {
+    const result = await request.post('/api/app/download/tickets')
+    const link = document.createElement('a'); link.href = result.data.downloadUrl; link.download = `sap-${current.value.versionCode}.apk`; link.referrerPolicy = 'no-referrer'; document.body.append(link); link.click(); link.remove()
+  } catch {} finally { downloading.value = false }
+}
 const cosConfigured = ref(null)
 const userRoles = ref([])
 const current = ref({ versionCode: 0 })

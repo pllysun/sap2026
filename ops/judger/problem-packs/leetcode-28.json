@@ -1,0 +1,211 @@
+{
+  "slug": "leetcode-28",
+  "title": "找出首次出现的位置",
+  "difficulty": "EASY",
+  "tags": [
+    "字符串"
+  ],
+  "description": "输出 needle 在 haystack 中首次出现的零基位置；不存在输出 -1。空字符串使用 - 表示。",
+  "inputFormat": "两个小写字符串 haystack needle。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "两串长度 0..200。",
+  "sourcePlatform": "LeetCode",
+  "sourceUrl": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+  "sourceId": "28",
+  "sourceNote": "自写教学改编题面；算法任务参考来源链接，输入输出和数据范围以本题为准。测试均为自行生成，未获取外站隐藏官方测试。",
+  "sourceAuthor": "原作者以来源页署名为准；本题面由 SAP OJ 题库整理组改写",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": "EASY",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, i = 0, j = 0, m = 0, n = 0, ok = 0;\n    n = readstr(a);\n    m = readstr(b);\n    ans = (-1);\n    for (i = 0; i < ((n - m) + 1); i += 1) {\n        ok = 1;\n        for (j = 0; j < m; j += 1) {\n            if (a[(i + j)] != b[j]) {\n                ok = 0;\n            }\n        }\n        if ((ok == 1) && (ans == (-1))) {\n            ans = i;\n        }\n    }\n    emit(ans);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, i = 0, j = 0, m = 0, n = 0, ok = 0;\n    n = readstr(a);\n    m = readstr(b);\n    ans = (-1);\n    for (i = 0; i < ((n - m) + 1); i += 1) {\n        ok = 1;\n        for (j = 0; j < m; j += 1) {\n            if (a[(i + j)] != b[j]) {\n                ok = 0;\n            }\n        }\n        if ((ok == 1) && (ans == (-1))) {\n            ans = i;\n        }\n    }\n    emit(ans);\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int ans = 0, i = 0, j = 0, m = 0, n = 0, ok = 0;\n        n = readstr(a);\n        m = readstr(b);\n        ans = (-1);\n        for (i = 0; i < ((n - m) + 1); i += 1) {\n            ok = 1;\n            for (j = 0; j < m; j += 1) {\n                if (a[(i + j)] != b[j]) {\n                    ok = 0;\n                }\n            }\n            if ((ok == 1) && (ans == (-1))) {\n                ans = i;\n            }\n        }\n        emit(ans);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\nans = i = j = m = n = ok = 0\nn = readstr(a)\nm = readstr(b)\nans = -1\nfor i in range(((n - m) + 1)):\n    ok = 1\n    for j in range(m):\n        if a[(i + j)] != b[j]:\n            ok = 0\n    if (ok == 1) and (ans == (-1)):\n        ans = i\nemit(ans)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut ans: i32 = 0;\n    let mut i: i32 = 0;\n    let mut j: i32 = 0;\n    let mut m: i32 = 0;\n    let mut n: i32 = 0;\n    let mut ok: i32 = 0;\n    n = reader.readstr(&mut a);\n    m = reader.readstr(&mut b);\n    ans = (-1);\n    i = 0;\n    while i < ((n - m) + 1) {\n        ok = 1;\n        j = 0;\n        while j < m {\n            if (a[(i + j) as usize] != b[(j) as usize]) {\n                ok = 0;\n            }\n            j += 1;\n        }\n        if ((ok == 1) && (ans == (-1))) {\n            ans = i;\n        }\n        i += 1;\n    }\n    emit(ans);\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "sadbutsad sad\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "abc d\n",
+      "expectedOutput": "-1\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "- -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "abc -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "aaa -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "aaa d\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "abcd ab\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "aaa bca\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "abcd d\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "abcabc ab\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "a a\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "a a\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "abcabc d\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "a -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "aaa d\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "aaa bca\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "a d\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "a -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "abcabc a\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "aaa -\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-21",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-22",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n",
+      "expectedOutput": "-1\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

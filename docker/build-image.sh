@@ -14,6 +14,7 @@
 #   ./docker/build-image.sh --no-push       # 只构建到本地(--load,当前架构)不推送，验证用
 #   ./docker/build-image.sh --prebuilt-context /path/to/context --no-push
 #                                         # 使用已测试的 JAR/网页产物组装镜像，仍强制 amd64 和新版本
+#   --native-prebuilt                      # Linux x86_64 发布主机上使用已验证的预构建产物
 set -euo pipefail
 
 REPO="${IMAGE_REPO:-pllysun/sap}"
@@ -22,13 +23,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # docker/
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"                          # 仓库根 sap2026/
 VERSION_FILE="$SCRIPT_DIR/IMAGE_VERSION"
 
-NEW_VERSION=""; PUSH=1; ALSO_LATEST=0; PREBUILT_CONTEXT=""
+NEW_VERSION=""; PUSH=1; ALSO_LATEST=0; PREBUILT_CONTEXT=""; NATIVE_PREBUILT=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --version) NEW_VERSION="${2:-}"; shift 2 ;;
     --also-latest) ALSO_LATEST=1; shift ;;
     --no-push) PUSH=0; shift ;;
     --prebuilt-context) PREBUILT_CONTEXT="${2:?需要产物目录}"; shift 2 ;;
+    --native-prebuilt) NATIVE_PREBUILT=1; shift ;;
     -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "✗ 未知参数: $1（-h 看用法）"; exit 1 ;;
   esac
@@ -60,7 +62,11 @@ if [ -n "$PREBUILT_CONTEXT" ]; then
     exit 1
   fi
   # 本地 Maven 的增量输出可能残留开发配置；预构建镜像必须先通过归档检查。
-  ARCHIVE_ENTRIES="$(unzip -Z1 "$BUILD_CONTEXT/app.jar")"
+  if command -v unzip >/dev/null 2>&1; then
+    ARCHIVE_ENTRIES="$(unzip -Z1 "$BUILD_CONTEXT/app.jar")"
+  else
+    ARCHIVE_ENTRIES="$(python3 -c 'import sys,zipfile; print("\n".join(zipfile.ZipFile(sys.argv[1]).namelist()))' "$BUILD_CONTEXT/app.jar")"
+  fi
   if grep -Eq '(^|/)(application-(dev|local|prod)\.ya?ml($|\.)|[^/]*\.local\.[^/]+|\._[^/]*)$' <<< "$ARCHIVE_ENTRIES"; then
     echo "✗ JAR 含本地环境配置或元数据，拒绝构建/推送；请使用最新 Maven 排除规则重新打包"
     exit 1
@@ -75,6 +81,24 @@ if [ -n "$PREBUILT_CONTEXT" ]; then
     echo "✗ 镜像版本已存在: ${REPO}:${NEW_VERSION}，请使用新的版本号"
     exit 1
   fi
+fi
+
+# Recovery path for a native x86_64 release host with an already verified parent.
+# Retains the same artifact, architecture and immutable-tag checks above.
+if [ "$NATIVE_PREBUILT" -eq 1 ]; then
+  [ -n "$PREBUILT_CONTEXT" ] && [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || {
+    echo "✗ --native-prebuilt 仅适用于 Linux x86_64 的预构建产物"; exit 1;
+  }
+  NATIVE_TAGS=(-t "${REPO}:${NEW_VERSION}")
+  [ "$ALSO_LATEST" -eq 1 ] && NATIVE_TAGS+=(-t "${REPO}:latest")
+  DOCKER_BUILDKIT=0 docker build --platform "$PLATFORM" "${NATIVE_TAGS[@]}" -f "$DOCKERFILE" "$BUILD_CONTEXT"
+  if [ "$PUSH" -eq 1 ]; then
+    docker push "${REPO}:${NEW_VERSION}"
+    [ "$ALSO_LATEST" -eq 0 ] || docker push "${REPO}:latest"
+  fi
+  echo "$NEW_VERSION" > "$VERSION_FILE"
+  echo "✅ 镜像完成: ${REPO}:${NEW_VERSION} (${PLATFORM}, native prebuilt)"
+  exit 0
 fi
 
 # buildx builder（容器驱动，支持跨架构 + --push）；缺则用 default

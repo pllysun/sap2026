@@ -12,6 +12,7 @@ const routes = [
     component: () => import('../layouts/AdminLayout.vue'),
     redirect: '/dashboard',
     children: [
+      { path: 'oj', name: 'Oj', component: () => import('../views/OjView.vue'), meta: { title: '算法题库' } },
       {
         path: 'dashboard',
         name: 'Dashboard',

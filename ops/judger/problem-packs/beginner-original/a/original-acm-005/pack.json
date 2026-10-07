@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-005",
+  "title": "领取码校验位",
+  "difficulty": "EASY",
+  "tags": [
+    "字符串",
+    "基础数学"
+  ],
+  "description": "活动领取码由一串十进制数字组成，前导零也是领取码的一部分。从左到右给数字的位置编号为1、2、3……：奇数位置的数字乘1，偶数位置的数字乘3，把这些乘积相加得到 S。需要选一个0到9之间的校验位 c，使 S+c 能被10整除。请输出唯一的 c。校验位自身不再按位置乘权重。",
+  "inputFormat": "一行一个只包含字符0到9的字符串，表示领取码。",
+  "outputFormat": "输出一个0到9的整数，表示校验位。",
+  "constraints": "领取码长度为1到100，可以全部为零或包含前导零。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-005",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "1234\n",
+      "expectedOutput": "8\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "007\n",
+      "expectedOutput": "3\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "0\n",
+      "expectedOutput": "0\n",
+      "sample": true
+    },
+    {
+      "name": "one-nine",
+      "input": "9\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "leading-zero",
+      "input": "01\n",
+      "expectedOutput": "7\n",
+      "sample": false
+    },
+    {
+      "name": "all-zero-max",
+      "input": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "all-nine-max",
+      "input": "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "odd-length",
+      "input": "12345\n",
+      "expectedOutput": "3\n",
+      "sample": false
+    },
+    {
+      "name": "alternating-max",
+      "input": "0909090909090909090909090909090909090909090909090909090909090909090909090909090909090909090909090909\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "already-divisible",
+      "input": "13\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "92407276865479623397207353125386273101257951530607945529536292087483173729121029207\n",
+      "expectedOutput": "7\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "613699026899\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "18282117808153434296826967353580303605483525759186260594599187\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "496960803263606089383271267251747686192644004620522940390990317650571029727338544578\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "639475291286219197110650769785647285581558151088773302404118181098855335680608825413\n",
+      "expectedOutput": "2\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "2601750322514996692121910525948858556621035984914819516682999863752\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "9303709726659609861580560796793294551704126059981956476627\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "93403680320\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "90755560606552154026727559884361095550632\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "50774760425986867459444780098075314389953040930140818022075549503026787379780878853451022596232575\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    char digits[101];\n    scanf(\"%100s\", digits);\n    int sum = 0;\n    for (int i = 0; digits[i] != '\\0'; i++) {\n        int weight = i % 2 == 0 ? 1 : 3;\n        sum += (digits[i] - '0') * weight;\n    }\n    printf(\"%d\\n\", (10 - sum % 10) % 10);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    std::string digits;\n    std::cin >> digits;\n    int sum = 0;\n    for (std::size_t i = 0; i < digits.size(); i++) {\n        int weight = i % 2 == 0 ? 1 : 3;\n        sum += (digits[i] - '0') * weight;\n    }\n    std::cout << (10 - sum % 10) % 10 << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        String digits = in.next();\n        int sum = 0;\n        for (int i = 0; i < digits.length(); i++) {\n            int weight = i % 2 == 0 ? 1 : 3;\n            sum += (digits.charAt(i) - '0') * weight;\n        }\n        System.out.println((10 - sum % 10) % 10);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "digits = input().strip()\ntotal = 0\nfor index, digit in enumerate(digits):\n    total += int(digit) * (1 if index % 2 == 0 else 3)\nprint((10 - total % 10) % 10)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let digits = words.next().unwrap();\n    let mut sum: i32 = 0;\n    for (index, digit) in digits.bytes().enumerate() {\n        let weight = if index % 2 == 0 { 1 } else { 3 };\n        sum += (digit - b'0') as i32 * weight;\n    }\n    println!(\"{}\", (10 - sum % 10) % 10);\n}\n"
+    }
+  }
+}

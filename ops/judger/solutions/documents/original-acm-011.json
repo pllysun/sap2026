@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-011",
+  "problemRevision": 1,
+  "title": "连续进步的记录",
+  "summary": "只比较相邻两天，非下降则延长当前连续段，下降则从当前这天重新开始。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入n天的得分，要求最长的一段连续日期，使相邻得分都不下降。相等也算符合，不是要求严格增加。输出天数，不是总分、增幅或最长非下降子序列。\n\n“连续”不能跳过低分日。例如公开样例`3 3 5 2 4 4`中，前段3天和后段3天都合法，但不能把3、3、5和后面的4连成更长答案。n至少为1，每个单独一天本来就是合法的一段。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "用current表示“以当前天结束的最长连续非下降段长度”，best记录历史最大长度。第一天current=best=1。\n\n每到新一天，和前一天比较。如果新值≥前值，接到原连续段后，current加1；否则连续关系中断，但新一天自身仍是一段，所以current重设为1。接着用current更新best。\n\nC/C++/Java只保存前一个分数previous，在读到value后比较并覆盖previous，不用保存整组数据。Python参考代码先保存values数组，再用相邻下标比较；Rust读取全部文本，但按token依次处理。算法规则相同，实际输入存储方式有所区别。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例`[3,3,5,2,4,4]`：\n\n| 日期 / 得分 | 相邻比较 | current | best |\n| --- | --- | --- | --- |\n| 第1天 / 3 | 初始化 | 1 | 1 |\n| 第2天 / 3 | 3≥3，可延长 | 2 | 2 |\n| 第3天 / 5 | 5≥3，可延长 | 3 | 3 |\n| 第4天 / 2 | 2<5，重新开始 | 1 | 3 |\n| 第5天 / 4 | 4≥2，可延长 | 2 | 3 |\n| 第6天 / 4 | 4≥4，可延长 | 3 | 3 |\n\n最终输出3。公开样例只有一天得分9时，后续比较循环不执行，但已初始化的best=1正确。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取n和第一天得分，把current/best设为1。Python直接读取values后做相同初始化。\n2. 从第二天开始处理，零基下标为1，直到n-1。\n3. 若value≥previous，current增加1，否则设为1。Python比较values[index]与values[index-1]。\n4. best取旧值与current的较大者，再把previous改成value。\n5. 输出best。必须先比较再更新previous，否则就会把当前数与自己比较。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "如果新一天不低于前一天，则此前以昨天结尾的非下降段可以接上今天；任何以今天结尾、长度更长的连续段，也必须包含昨天，不能比已知昨天的最长段多出超过一天。因此current加1就是正确的新状态。\n\n如果今天下降，那么任何包含昨天和今天的连续段都违反条件，唯一能以今天结尾的合法连续段从今天开始，长度1。best始终记录每个终点对应的长度最大值，而每个最优段一定有一个终点，最终best正确。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令n为天数，每天读入和比较一次，时间O(n)。current/best/previous等状态只需O(1)额外空间。\n\nC/C++/Java采用逐项读取，不存得分数组，输入缓冲区大小固定，实际额外空间也为O(1)。Python参考实现保存data与values，为O(n)输入空间；Rustread_to_string保存整份输入文本，为O(n)输入空间，遍历token不再建得分数组。大O反映输入项增长造成的变化。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 比较条件是≥，相等得分不能把连续段打断。\n- 下降后current设为1，不是0，因为当前日仍可独立形成合法段。\n- n=1时答案为1，不能要求至少两个元素才算一段。\n- 不能跳过下降日接到之前的段，那会变成非连续的子序列问题。\n- previous必须在比较后更新，且每次都更新，包括下降时。\n- 得分可以为负数，比较大小即可，无需特别清零负值。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "同时维护“当前终点的段”和“历史最佳段”，并用相邻关系判断能否延长。\n\n练习：`[5,5,5]`答案3；`[5,4,3]`答案1。把严格增加条件换成≥，才能符合“非下降”的题意。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint main(void) {\n    int n;\n    // 至少一天，第一天自身构成长度1的合法连续段。\n    scanf(\"%d\", &n);\n    long long previous, value;\n    scanf(\"%lld\", &previous);\n    int current = 1, best = 1;\n    for (int i = 1; i < n; ++i) {\n        scanf(\"%lld\", &value);\n        // 相等也可延长；真正下降时从今天重新开始为长度1。\n        current = value >= previous ? current + 1 : 1;\n        if (current > best) {\n            best = current;\n        }\n        // 比较后再覆盖前一天分数，下一轮才能比较相邻两天。\n        previous = value;\n    }\n    // 输出历史最长段，不是仅输出结尾的current。\n    printf(\"%d\\n\", best);\n    return 0;\n}\n",
+      "cpp": "#include <algorithm>\n#include <iostream>\n#include <string>\n#include <vector>\n\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    // 至少一天，第一天自身构成长度1的合法连续段。\n    cin >> n;\n    long long previous, value;\n    cin >> previous;\n    int current = 1, best = 1;\n    for (int i = 1; i < n; ++i) {\n        cin >> value;\n        // 相等也可延长；真正下降时从今天重新开始为长度1。\n        current = value >= previous ? current + 1 : 1;\n        best = max(best, current);\n        // 比较后再覆盖前一天分数，下一轮才能比较相邻两天。\n        previous = value;\n    }\n    // 输出历史最长段，不是仅输出结尾的current。\n    cout << best << '\\n';\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    static final class FastScanner {\n        private final InputStream input = System.in;\n        private final byte[] buffer = new byte[1 << 16];\n        private int position = 0;\n        private int length = 0;\n\n        private int read() throws IOException {\n            if (position == length) {\n                length = input.read(buffer);\n                position = 0;\n                if (length < 0) {\n                    return -1;\n                }\n            }\n            return buffer[position++];\n        }\n\n        String next() throws IOException {\n            int value;\n            do {\n                value = read();\n            } while (value <= 32 && value != -1);\n            StringBuilder token = new StringBuilder();\n            while (value > 32 && value != -1) {\n                token.append((char) value);\n                value = read();\n            }\n            return token.toString();\n        }\n\n        int nextInt() throws IOException {\n            return Integer.parseInt(next());\n        }\n\n        long nextLong() throws IOException {\n            return Long.parseLong(next());\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        FastScanner scanner = new FastScanner();\n        // 至少一天，第一天自身构成长度1的合法连续段。\n        int n = scanner.nextInt();\n        long previous = scanner.nextLong();\n        int current = 1;\n        int best = 1;\n        for (int i = 1; i < n; i++) {\n            long value = scanner.nextLong();\n            // 相等也可延长；真正下降时从今天重新开始为长度1。\n            current = value >= previous ? current + 1 : 1;\n            best = Math.max(best, current);\n            // 比较后再覆盖前一天分数，下一轮才能比较相邻两天。\n            previous = value;\n        }\n        // 输出历史最长段，不是仅输出结尾的current。\n        System.out.println(best);\n    }\n}\n",
+      "python": "import sys\n\ndata = list(map(int, sys.stdin.buffer.read().split()))\n# 读入n个日期得分，长度至少为1。\nn = data[0]\nvalues = data[1:]\ncurrent = best = 1\n# 从第二天开始比较相邻项；相等符合非下降条件。\nfor index in range(1, n):\n    # 下降时设为1，因为当前这一天仍是一段。\n    current = current + 1 if values[index] >= values[index - 1] else 1\n    best = max(best, current)\n# 最大段可能在中间，输出best而不是最后一个current。\nprint(best)\n",
+      "rust": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut tokens = input.split_whitespace();\n    // 至少一天，第一天自身构成长度1的合法连续段。\n    let n: usize = tokens.next().unwrap().parse().unwrap();\n    let mut previous: i64 = tokens.next().unwrap().parse().unwrap();\n    let mut current = 1usize;\n    let mut best = 1usize;\n    for _ in 1..n {\n        let value: i64 = tokens.next().unwrap().parse().unwrap();\n        // 相等也可延长；真正下降时从今天重新开始为长度1。\n        current = if value >= previous { current + 1 } else { 1 };\n        best = best.max(current);\n        // 比较后再覆盖前一天分数，下一轮才能比较相邻两天。\n        previous = value;\n    }\n    // 输出历史最长段，不是仅输出结尾的current。\n    println!(\"{}\", best);\n}\n"
+    }
+  }
+}

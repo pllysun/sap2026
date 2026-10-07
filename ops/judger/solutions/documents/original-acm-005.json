@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-005",
+  "problemRevision": 1,
+  "title": "领取码校验位",
+  "summary": "按从左到右的1/3交替权重累计数字和，再取补足到下一个10倍数的个位数。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "领取码是一串数字字符，前导零也属于领取码，不能先转成一个整数。题目的位置从1开始：第1、3、5等奇数位置权重1，第2、4、6等偶数位置权重3。每个数字乘权重后相加为S。\n\n需要输出一个0到9的校验位c，使S+c能被10整除。校验位本身不再乘权重，也不用拼回领取码。公开样例007中的两个零依然占位置；虽然它们贡献为零，但会影响后面数字的权重。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "逐字符扫描领取码，把字符转换为数值，再根据位置奇偶乘权重累加。程序下标index/i从0开始，与题目位置相差1，因此偶数下标对应题目的奇数位置，权重应为1。\n\n计算完S，只需看余数r=S%10。若r为0，校验位为0；否则补10-r即可。统一写成 `(10-S%10)%10`，外层取余负责把r=0时暂时得到的10变成0。\n\n最多100个数字，每个最大9、权重最大3，总和不超过2700。使用普通整数即可，但必须按字符串读入来保留前导零。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例1234：\n\n| 题目位置 / 程序下标 | 数字 | 权重 | 本项贡献 / 累计S |\n| --- | --- | --- | --- |\n| 1 / 0 | 1 | 1 | 1 / 1 |\n| 2 / 1 | 2 | 3 | 6 / 7 |\n| 3 / 2 | 3 | 1 | 3 / 10 |\n| 4 / 3 | 4 | 3 | 12 / 22 |\n\nS%10=2，所以c=8，22+8=30是10的倍数。公开样例007得到S=7，c=3；全零的公开样例0得到S=0，c=0。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取数字字符串digits，不做整体整数转换。\n2. sum/total初始为0，依次遍历每个字符。\n3. index或i为偶数时weight=1，否则weight=3。C/C++/Java用字符减`'0'`得到数值；Rust用字节减`b'0'`；Python用int(digit)。\n4. 累加数字×weight，结束后输出 `(10-sum%10)%10`。\n\n字符减`'0'`可行，是因为十个十进制数字在字符编码中连续排列。它不是把字符编码原值直接参与加权。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "循环每次准确加入当前题目位置的加权数字值，所以最后sum就是定义中的S。设S余数r∈[0,9]，公式得到的c也在[0,9]，并满足r+c为0或10，因此S+c能整除10。\n\n0到9恰好覆盖全部十种模10余数，给定r只可能有一个c使余数抵消，因此公式所得不仅可行，也就是题目要求的唯一答案。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令L为领取码长度。扫描每个字符一次，时间O(L)；L翻倍时加权步骤也翻倍。累计和与权重只用固定变量，逻辑额外空间O(1)，不包含输入字符串。各语言保存字符串需要O(L)输入存储，C固定使用101字节缓冲区；不需要额外保存每位乘积。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 从字符串左侧开始编号，不能从右侧套用其他校验码规则。\n- 程序下标0对应题目位置1，权重为1而不是3。\n- 必须保留前导零，即使它们对总和贡献为0，也占位置。\n- S已经能被10整除时校验位应为0，外层%10不能漏掉。\n- 校验位输出一个数字，不再乘权重，也不输出完整领取码。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "先分清题目的一基位置和程序的零基下标，再用余数消除多余情况。\n\n练习：12的S=1+6=7，校验位3；00的S=0，校验位0。手算时可以给每个位置标上权重。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n\nint main(void) {\n    char digits[101];\n    // 按字符串读取领取码，前导零必须保留它的位置。\n    scanf(\"%100s\", digits);\n    int sum = 0;\n    for (int i = 0; digits[i] != '\\0'; i++) {\n        // 程序下标从0开始，偶数下标对应题目奇数位置，乘1。\n        int weight = i % 2 == 0 ? 1 : 3;\n        sum += (digits[i] - '0') * weight;\n    }\n    // 先补足个位余数，再取模，让原本整除10时的校验位为0。\n    printf(\"%d\\n\", (10 - sum % 10) % 10);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    std::string digits;\n    // 按字符串读取领取码，前导零必须保留它的位置。\n    std::cin >> digits;\n    int sum = 0;\n    for (std::size_t i = 0; i < digits.size(); i++) {\n        // 程序下标从0开始，偶数下标对应题目奇数位置，乘1。\n        int weight = i % 2 == 0 ? 1 : 3;\n        sum += (digits[i] - '0') * weight;\n    }\n    // 先补足个位余数，再取模，让原本整除10时的校验位为0。\n    std::cout << (10 - sum % 10) % 10 << '\\n';\n    return 0;\n}\n",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        // 按字符串读取领取码，前导零必须保留它的位置。\n        String digits = in.next();\n        int sum = 0;\n        for (int i = 0; i < digits.length(); i++) {\n            // 程序下标从0开始，偶数下标对应题目奇数位置，乘1。\n            int weight = i % 2 == 0 ? 1 : 3;\n            sum += (digits.charAt(i) - '0') * weight;\n        }\n        // 先补足个位余数，再取模，让原本整除10时的校验位为0。\n        System.out.println((10 - sum % 10) % 10);\n    }\n}\n",
+      "python": "# 字符串保留领取码的前导零，不要整体转为整数。\ndigits = input().strip()\ntotal = 0\n# 零基下标的偶数位乘1、奇数位乘3，与题目一基位置对应。\nfor index, digit in enumerate(digits):\n    total += int(digit) * (1 if index % 2 == 0 else 3)\n# 外层取模把S本已整除10时的结果变成0。\nprint((10 - total % 10) % 10)\n",
+      "rust": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    // 按字符串读取领取码，前导零必须保留它的位置。\n    let digits = words.next().unwrap();\n    let mut sum: i32 = 0;\n    for (index, digit) in digits.bytes().enumerate() {\n        // 程序下标从0开始，偶数下标对应题目奇数位置，乘1。\n        let weight = if index % 2 == 0 { 1 } else { 3 };\n        sum += (digit - b'0') as i32 * weight;\n    }\n    // 先补足个位余数，再取模，让原本整除10时的校验位为0。\n    println!(\"{}\", (10 - sum % 10) % 10);\n}\n"
+    }
+  }
+}

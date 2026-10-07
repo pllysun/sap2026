@@ -9,6 +9,9 @@
   --shadow-xl: 0 24px 64px #234e7b20;
 }
 body { background: var(--bg); }
+.page, .page :is(.card, .form-group, .filter-bar, .profile-identity > div) { min-width: 0; }
+.page :is(.page-title, .page-desc, .error-text, .success-text, .profile-identity h2) { overflow-wrap: anywhere; }
+.profile-identity .avatar-upload { flex-shrink: 0; }
 ::selection { background: #cce6ff; color: #163c67; }
 :is(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid #81b9f4;
@@ -125,6 +128,10 @@ button { color: inherit; }
   .profile-card > .btn { width: 100%; }
   .input, .select { font-size: 16px; }
   .page .note-card { padding: 23px; }
+  .filter-bar { flex-wrap: wrap; gap: 12px; }.filter-bar .form-group { width: 100%; max-width: 100%; }
+  .select { width: 100%; max-width: 100%; }.btn { white-space: normal; }
+  .auth-page { padding-block: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-bottom)); align-items: center; }
+  .auth-card { width: 100%; min-width: 0; }.auth-card__footer { overflow-wrap: anywhere; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

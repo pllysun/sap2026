@@ -1,0 +1,7 @@
+# User frontend update; the backend, admin frontend and judge runtime are inherited.
+ARG BASE_IMAGE=pllysun/sap:1.5.37@sha256:b42d684d87158b638f660c317c72c0ac2150a080eca05a3ac7cf3865b0775258
+FROM ${BASE_IMAGE}
+ARG RELEASE_VERSION=1.5.38
+LABEL org.opencontainers.image.version="${RELEASE_VERSION}"
+RUN rm -rf /app/static/user
+COPY static/user/ /app/static/user/

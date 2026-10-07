@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-009",
+  "problemRevision": 1,
+  "title": "滚动编号",
+  "summary": "每次只保存前两个取余后的编号，计算下一项再平移状态，按零基下标输出第 n 项。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "观测编号从 `x₀` 开始计数。先把 a、b 对 p 取余得到 `x₀/x₁`，然后每个新编号是前两个编号之和再对 p 取余。取余就是保留除以 p 后剩余的数，让编号始终在 0..p−1。\n\n输入 n、a、b、p，输出第 n 个编号。这里 n=0 要返回第一个初值的余数，n=1 要返回第二个初值的余数；不能把 n 错当成“序列总长度”。初值即使比 p 大，也必须先取余。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "直接按定义从前往后算即可，不需要保存全部编号。下一项只依赖最近两个值，更早的结果以后不会再次用到。\n\n参考程序把 a、b 同时当作滚动状态：计算 `next=(a+b)%p` 后，令 a 等于旧 b、b 等于 next，就把状态从 `(xᵢ₋₁,xᵢ)` 推进到 `(xᵢ,xᵢ₊₁)`。Python 用并行赋值，右侧先按旧 a、b 计算，因此不会因覆盖 a 而丢失旧值。\n\n循环从 i=1 开始并在 i<n 时继续，每次生成下一项。结束后若 n=0 取 a，否则 b 是目标项。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 `n=4,a=2,b=3,p=7`。\n\n| 状态阶段 | a 表示 | b 表示 | 计算下一项 |\n| --- | --- | --- | --- |\n| 初始 | `x₀=2` | `x₁=3` | 尚未生成 |\n| i=1 后 | `x₁=3` | `x₂=5` | `(2+3)%7=5` |\n| i=2 后 | `x₂=5` | `x₃=1` | `(3+5)%7=1` |\n| i=3 后 | `x₃=1` | `x₄=6` | `(5+1)%7=6` |\n\n输出 b=6。每次都在本轮求和后立即取余，状态不会变成未限制的大编号。",
+      "diagram": {
+        "caption": "每一行只保留连续两项；到目标下标 4 时输出 b=6。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 280\" role=\"img\" aria-label=\"a=2,b=3,p=7：滚动保存两项\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"280\" rx=\"14\" fill=\"#f4f8fd\"/><text x=\"24\" y=\"32\" font-size=\"18\" fill=\"#23466f\">a=2,b=3,p=7：滚动保存两项</text><text x=\"24\" y=\"79\" font-size=\"15\" fill=\"#3267b1\">初始</text><rect x=\"164\" y=\"52\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"294.5\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">a=x₀=2</text><rect x=\"435.0\" y=\"52\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"565.5\" y=\"78\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">b=x₁=3</text><text x=\"24\" y=\"133\" font-size=\"15\" fill=\"#3267b1\">生成 x₂</text><rect x=\"164\" y=\"106\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"294.5\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">a=x₁=3</text><rect x=\"435.0\" y=\"106\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"565.5\" y=\"132\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">b=x₂=5</text><text x=\"24\" y=\"187\" font-size=\"15\" fill=\"#3267b1\">生成 x₃</text><rect x=\"164\" y=\"160\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"294.5\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">a=x₂=5</text><rect x=\"435.0\" y=\"160\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"565.5\" y=\"186\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">b=x₃=1</text><text x=\"24\" y=\"241\" font-size=\"15\" fill=\"#3267b1\">生成 x₄</text><rect x=\"164\" y=\"214\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#3267b1\" stroke-width=\"2\"/><text x=\"294.5\" y=\"240\" text-anchor=\"middle\" font-size=\"15\" fill=\"#3267b1\">a=x₃=1</text><rect x=\"435.0\" y=\"214\" width=\"261.0\" height=\"40\" rx=\"8\" fill=\"#ffffff\" stroke=\"#26816b\" stroke-width=\"2\"/><text x=\"565.5\" y=\"240\" text-anchor=\"middle\" font-size=\"15\" fill=\"#26816b\">b=x₄=6</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读四个整数。先分别执行 `a%=modulus`、`b%=modulus`，完成初值定义。\n2. 从 1 到 n−1 依次推进，n=0 或 1 时循环自然执行 0 次。\n3. 非 Python 版本用 next 暂存旧 a、b 的和余数，再做 `a=b,b=next`。\n4. Python 的 `a,b=b,(a+b)%modulus` 与上述过程等价。\n5. 输出 `n==0?a:b` 的相应结果，不能一律输出 b。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "初始状态分别是正确的 x₀、x₁。假设某轮开始时 a、b 分别表示连续两项，那么 next 按题面公式得到它们之后的一项，更新后 a、b 仍是正确的连续两项。因此所有迭代都按定义生成序列。\n\n生成次数为 n−1（n>=1），从 x₁ 推进到 xₙ 后，b 就是目标。n=0 不进入迭代并单独返回 a，所以覆盖全部合法下标。每项取余保证结果范围正确。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 n 为目标下标。n>=2 时生成 n−1 项，时间 `O(n)`；n=0、1 是常量时间。大 O 表示目标下标增长时循环次数线性增长。\n\n只保留 a、b、next 等固定变量，五语言算法额外空间 `O(1)`，不创建长度 n 的编号数组。两状态均小于 p，它们之和小于 2p，参考宽整数避免类型混用并支持当前上限。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 编号从 0 开始，x₀ 与 x₁ 是两个不同初始位置。\n- 两初值都要先对 p 取余，n=0/1 的输入也不例外。\n- 更新前要保留旧 a，不能先写 `a=b` 再直接用新 a 计算和。\n- p=1 时所有取余结果为 0，仍应正常输出。\n- 每次求和后立即取余，不能等算完巨大数再取余。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "依赖只有最近两项时，可以把整段历史压缩成两个滚动变量。\n\n练习 n=3、a=5、b=8、p=10，初值为 5、8，后面是 3、1，所以答案 1。再试 n=0、a=123、p=10，答案为 3。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* n 是零基编号下标；先将两个初值分别对正 modulus 取余。 */\n#include <stdio.h>\nint main(void)  {\n    long long n, a, b, modulus;\n    scanf(\"%lld%lld%lld%lld\", &n, &a, &b, &modulus);\n    a %= modulus;\n    b %= modulus;\n    /* next 必须用旧 a、b 求和，再平移为旧 b 和 next，始终只保留两项。 */\n    for (long long i = 1; i < n; i++)  {\n        long long next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    /* n=0 输出第一个初值余数，其余下标输出迭代结束后的 b。 */\n    printf(\"%lld\\n\", n == 0 ? a : b);\n    return 0;\n}\n",
+      "cpp": "/* n 是零基编号下标；先将两个初值分别对正 modulus 取余。 */\n#include <iostream>\n#include <string>\nint main()  {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n    long long n, a, b, modulus;\n    std::cin >> n >> a >> b >> modulus;\n    a %= modulus;\n    b %= modulus;\n    /* next 必须用旧 a、b 求和，再平移为旧 b 和 next，始终只保留两项。 */\n    for (long long i = 1; i < n; i++)  {\n        long long next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    std::\n    /* n=0 输出第一个初值余数，其余下标输出迭代结束后的 b。 */\n    cout << (n == 0 ? a : b) << '\\n';\n    return 0;\n}\n",
+      "java": "/* n 是零基编号下标；先将两个初值分别对正 modulus 取余。 */\nimport java.util.Scanner;\npublic class Main  {\n    public static void main(String[] args)  {\n        Scanner in = new Scanner(System.in);\n        long n = in.nextLong();\n        long a = in.nextLong();\n        long b = in.nextLong();\n        long modulus = in.nextLong();\n        a %= modulus;\n        b %= modulus;\n        /* next 必须用旧 a、b 求和，再平移为旧 b 和 next，始终只保留两项。 */\n        for (long i = 1; i < n; i++)  {\n            long next = (a + b) % modulus;\n            a = b;\n            b = next;\n        }\n        System.out.\n        /* n=0 输出第一个初值余数，其余下标输出迭代结束后的 b。 */\n        println(n == 0 ? a : b);\n    }\n}\n",
+      "python": "# n 是零基编号下标；先将两个初值分别对正 modulus 取余。\nn, a, b, modulus = map(int, input().split())\na %= modulus\nb %= modulus\n# next 必须用旧 a、b 求和，再平移为旧 b 和 next，始终只保留两项。\nfor _ in range(1, n):\n    a, b = b, (a + b) % modulus\n# n=0 输出第一个初值余数，其余下标输出迭代结束后的 b。\nprint(a if n == 0 else b)\n",
+      "rust": "/* n 是零基编号下标；先将两个初值分别对正 modulus 取余。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n    let n: usize = words.next().unwrap().parse().unwrap();\n    let mut a: i64 = words.next().unwrap().parse().unwrap();\n    let mut b: i64 = words.next().unwrap().parse().unwrap();\n    let modulus: i64 = words.next().unwrap().parse().unwrap();\n    a %= modulus;\n    b %= modulus;\n    /* next 必须用旧 a、b 求和，再平移为旧 b 和 next，始终只保留两项。 */\n    for _ in 1..n  {\n        let next = (a + b) % modulus;\n        a = b;\n        b = next;\n    }\n    /* n=0 输出第一个初值余数，其余下标输出迭代结束后的 b。 */\n    println!(\"{}\", if n == 0  {\n        a\n    }\n    else  {\n        b\n    }\n    );\n}\n"
+    }
+  }
+}

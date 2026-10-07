@@ -133,6 +133,12 @@ async function handleRegister() {
 .captcha-img {
   display: block; height: 50px; width: 160px; object-fit: contain;
 }
+@media (max-width: 480px) {
+  .captcha-row { flex-wrap: wrap; }
+  .captcha-input { flex: 1 1 115px; min-width: 115px; }
+  .captcha-refresh { width: 120px; max-width: 100%; }
+  .captcha-img { width: 100%; }
+}
 .auth-logo-wrap {
   display: inline-flex; align-items: center; justify-content: center;
   animation: iconBounce 2s ease-in-out infinite;

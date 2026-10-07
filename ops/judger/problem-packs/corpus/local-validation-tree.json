@@ -1,0 +1,57 @@
+{
+  "environment": "LOCAL_NATIVE_NOT_GO_JUDGE",
+  "elapsedSeconds": 3.93,
+  "requestedLanguages": [
+    "python",
+    "c"
+  ],
+  "missingLanguages": [],
+  "rounds": 3,
+  "packCount": 1,
+  "passed": 2,
+  "failed": 0,
+  "toolVersions": {
+    "python": "Python 3.14.2",
+    "c": "Apple clang version 17.0.0 (clang-1700.6.4.2)"
+  },
+  "results": [
+    {
+      "slug": "leetcode-98",
+      "language": "c",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    },
+    {
+      "slug": "leetcode-98",
+      "language": "python",
+      "status": "PASSED",
+      "modes": [
+        {
+          "mode": "STDIO",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        },
+        {
+          "mode": "FUNCTION",
+          "cases": 33,
+          "rounds": 3,
+          "status": "PASSED"
+        }
+      ]
+    }
+  ]
+}

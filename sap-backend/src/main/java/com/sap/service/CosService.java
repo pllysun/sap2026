@@ -65,6 +65,7 @@ public class CosService {
 
         COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
         ClientConfig config = new ClientConfig(new Region(regionName));
+        config.setHttpProtocol(com.qcloud.cos.http.HttpProtocol.https);
         return new COSClient(cred, config);
     }
 
@@ -194,7 +195,11 @@ public class CosService {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(bytes.length);
             metadata.setContentType("application/vnd.android.package-archive");
-            cosClient.putObject(new PutObjectRequest(bucketName, cosKey, new ByteArrayInputStream(bytes), metadata));
+            var request = new PutObjectRequest(bucketName, cosKey, new ByteArrayInputStream(bytes), metadata);
+            request.setCannedAcl(com.qcloud.cos.model.CannedAccessControlList.Private);
+            metadata.setContentDisposition("attachment");
+            metadata.setCacheControl("private, no-store");
+            cosClient.putObject(request);
 
             String url = publicUrl(cosKey, bucketName, regionName);
             // APK 上传计量：登记到文件对象表（供下载重定向反查大小）并按发布者累计
@@ -278,6 +283,50 @@ public class CosService {
             }
         } catch (Exception ignore) {}
         return url;
+    }
+
+    /** Only a published APK in our configured bucket may enter the protected download pipeline. */
+    public String apkKey(String url) {
+        try {
+            var uri = java.net.URI.create(url);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || !isAllowedPublicHost(uri.getHost()) || uri.getUserInfo() != null || uri.getPort() != -1 || uri.getQuery() != null || uri.getFragment() != null)
+                throw new IllegalArgumentException();
+            String key = uri.getPath().substring(1);
+            if (!key.matches("apk/[A-Za-z0-9_-]+\\.apk")) throw new IllegalArgumentException();
+            return key;
+        } catch (Exception e) { throw new BusinessException(503, "安装包地址配置无效，请联系管理员"); }
+    }
+
+    public void makeApkPrivate(String key) {
+        var client = buildClient();
+        try { client.setObjectAcl(getBucketName(), key, com.qcloud.cos.model.CannedAccessControlList.Private); }
+        finally { client.shutdown(); }
+    }
+
+    /** Streams directly into a private local cache, never buffers an APK in heap. */
+    public void cacheApk(String key, java.nio.file.Path destination) throws java.io.IOException {
+        var connection = (java.net.HttpURLConnection) java.net.URI.create(signedApk(key, 0)).toURL().openConnection();
+        connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(5000); connection.setReadTimeout(30_000);
+        try (var input = connection.getInputStream(); var output = java.nio.file.Files.newOutputStream(destination)) {
+            input.transferTo(output);
+        } finally { connection.disconnect(); }
+    }
+
+    public String signedApk(String key, int versionCode) {
+        var client = buildClient();
+        try {
+            // The configured CDN forwards to COS with a rewritten Host; APK paths must remain uncached.
+            // Sign the fixed object path and response overrides so COS checks the short signature at origin.
+            if (cdnHost() != null) client.getClientConfig().setEndpointBuilder(new com.qcloud.cos.endpoint.UserSpecifiedEndpointBuilder(cdnHost(), cdnHost()));
+            var req = new com.qcloud.cos.model.GeneratePresignedUrlRequest(getBucketName(), key, com.qcloud.cos.http.HttpMethodName.GET);
+            req.setExpiration(new java.util.Date(System.currentTimeMillis() + 30_000));
+            var headers = new com.qcloud.cos.model.ResponseHeaderOverrides();
+            headers.setContentDisposition("attachment; filename=\"sap-" + versionCode + ".apk\"");
+            headers.setContentType("application/vnd.android.package-archive");
+            headers.setCacheControl("private, no-store");
+            req.setResponseHeaders(headers);
+            return client.generatePresignedUrl(req, cdnHost() == null).toString();
+        } finally { client.shutdown(); }
     }
 
     /** 下载重定向端点 SSRF 白名单：COS 默认域名 + 已配置的自定义域名。 */

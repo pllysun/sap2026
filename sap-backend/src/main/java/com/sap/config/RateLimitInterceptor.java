@@ -45,6 +45,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         RateLimitProperties.Rule rule = ruleOf(c);
         String key = "rl:" + c.name().toLowerCase() + ":" + keyOf(request, c);
         double refillPerSec = rule.getRefillPerMinute() / 60.0;
+        // The new download gate enforces its limits even when the older global limiter is in observation mode.
+        if (c == Category.DOWNLOAD && UrlPathHelper.defaultInstance.getPathWithinApplication(request).startsWith("/api/app/download/")) {
+            return limiter.tryAcquireEnforced(key, rule.getCapacity(), refillPerSec) || reject(request, response, key);
+        }
         boolean allowed = limiter.tryAcquire(key, rule.getCapacity(), refillPerSec);
         if (allowed) return true;
 
@@ -70,10 +74,12 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean reject(HttpServletRequest request, HttpServletResponse response, String key) throws Exception {
+        request.setAttribute(com.sap.aspect.OperationLogAspect.CODE,429);
         log.warn("[限流] 拦截 {} {} key={}", request.getMethod(), request.getRequestURI(), key);
         // 沿用本系统约定：业务信号走 HTTP 200 + 响应体 code（与 401/403 一致），
         // 前端 request.js 对 code!==200 既有处理会自动弹出 message，无需前端改动。
         response.setContentType("application/json;charset=UTF-8");
+        if (UrlPathHelper.defaultInstance.getPathWithinApplication(request).startsWith("/api/app/download/")) response.setStatus(429);
         response.getWriter().write("{\"code\":429,\"data\":null,\"message\":\"请求过于频繁，请稍后再试\"}");
         return false;
     }
@@ -94,7 +100,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (uri.equals("/api/auth/register") || uri.equals("/api/auth/app/register") || uri.equals("/api/auth/app/register/email-code")) return Category.REGISTER;
         if (uri.startsWith("/api/jw/")) return Category.JW;
         if (uri.startsWith("/api/note/") && uri.endsWith("/pdf")) return Category.PDF;
-        if (uri.equals("/api/file/download") || uri.equals("/api/file/go")) return Category.DOWNLOAD;
+        if (uri.equals("/api/file/download") || uri.equals("/api/file/go") || uri.equals("/api/app/download/file") || uri.equals("/api/app/download/current") || uri.equals("/api/app/download/tickets")) return Category.DOWNLOAD;
         if (uri.startsWith("/api/")
                 && ("POST".equalsIgnoreCase(m) || "PUT".equalsIgnoreCase(m)
                 || "DELETE".equalsIgnoreCase(m) || "PATCH".equalsIgnoreCase(m))) {

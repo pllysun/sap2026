@@ -1,0 +1,7 @@
+# The base is the verified, credential-free 1.5.5 image assembled FROM scratch.
+# Do not substitute an earlier pre-judger runtime: those are sanitized only by
+# Dockerfile.runtime-repack. This patch adds public frontend assets exclusively.
+FROM pllysun/sap@sha256:ead7ac1e2fd7b6bb471adf491e5f253c4018abf1358f65440ebfad134af43783
+RUN rm -rf /app/static
+COPY static/ /app/static/
+RUN find /app/static -type d -exec chmod 755 {} + && find /app/static -type f -exec chmod 644 {} +

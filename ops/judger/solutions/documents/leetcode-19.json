@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-19",
+  "problemRevision": 1,
+  "title": "删除链表的倒数第 N 个结点",
+  "summary": "把倒数第 k 个位置换成零起点下标 n-k，读取时跳过该项并输出其余数值。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "虽然标题提到链表，本平台这题把链表内容表示为一个数组序列，只要求删除指定位置后输出剩余值，不提供也不要求真实链表节点。链表可以理解成有先后次序的一串数据，本题只用到了它的次序。\n\n输入先给 n、k，再给 n 个结点值，保证 1<=k<=n。倒数第 1 个是最后一项，倒数第 n 个是第一项。完整程序按原顺序输出剩余项；没有核心函数模式。公开 n=1、k=1 样例删除唯一值后，结果是空序列，不要输出 0、-1 或额外空值标记。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "从前数的位置与从后数的位置可以互相转换。数组最后一个下标为 n-1，即倒数第 1 个；往前移动 k-1 步，得到 `(n-1)-(k-1)=n-k`。\n\n因此无需建立链表，也无需在数组中搬移元素。只要循环读入第 i 个数，i 等于 n-k 时略过输出，其余直接输出。这里输出的是删除后的值序列，并没有修改节点指针。五种语言参考实现都是这套按位置过滤的方法。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例 n=5、k=2，序列 `[1,2,3,4,5]`：\n\n| 步骤 | 状态 | 处理 |\n| --- | --- | --- |\n| 总长度 | n=5 | 下标 0,1,2,3,4 |\n| 倒数位置 | k=2 | 待删除下标 n-k=3 |\n| 扫描前段 | 值 1,2,3 | 下标均不等于 3，输出 |\n| 扫描末段 | 值 4,5 | 略过下标 3 的 4，输出 5 |\n\n最后得到 `1 2 3 5`。若 k=5，删除下标 0 的第一项；若 k=1，删除下标 4 的最后一项。三种情况使用相同公式。",
+      "diagram": {
+        "caption": "公开样例删除值 4 的位置；其余值保持原先后次序。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 289\" role=\"img\" aria-label=\"倒数第 2 个：换成正向下标 3\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"289\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">倒数第 2 个：换成正向下标 3</text><text x=\"26.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">阶段</text><text x=\"252.66666666666666\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">位置</text><text x=\"479.3333333333333\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">保留情况</text><rect x=\"20\" y=\"82\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">总长度</text><text x=\"252.66666666666666\" y=\"108\" font-size=\"15\" fill=\"#244366\">n=5</text><text x=\"479.3333333333333\" y=\"108\" font-size=\"15\" fill=\"#244366\">下标 0,1,2,3,4</text><rect x=\"20\" y=\"128\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">倒数位置</text><text x=\"252.66666666666666\" y=\"154\" font-size=\"15\" fill=\"#244366\">k=2</text><text x=\"479.3333333333333\" y=\"154\" font-size=\"15\" fill=\"#244366\">待删除下标 n-k=3</text><rect x=\"20\" y=\"174\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">扫描前段</text><text x=\"252.66666666666666\" y=\"200\" font-size=\"15\" fill=\"#244366\">值 1,2,3</text><text x=\"479.3333333333333\" y=\"200\" font-size=\"15\" fill=\"#244366\">下标均不等于 3，输出</text><rect x=\"20\" y=\"220\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#e5f2ed\"/><text x=\"26.0\" y=\"246\" font-size=\"15\" fill=\"#26816b\">扫描末段</text><text x=\"252.66666666666666\" y=\"246\" font-size=\"15\" fill=\"#26816b\">值 4,5</text><text x=\"479.3333333333333\" y=\"246\" font-size=\"15\" fill=\"#26816b\">略过下标 3 的 4，输出 5</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 按输入顺序读 n 和 k，确保使用的是下标从 0 开始的循环。\n2. 对 i=0 到 n-1，每次读一个值到变量 x。\n3. 判断 i!=n-k。满足时输出 x，否则只读取但不输出，保证后面的输入仍正常消费。\n4. 循环结束即得到剩余序列，不需输出剩余数量 n-1。\n\n原参考代码声明了固定数组 a、b、d、e，但没有将结点值写入这些数组；数据通过变量 x 逐项处理。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "已知倒数第 k 个元素的零起点下标是 n-k，且题目保证这个下标在 0 到 n-1 之间。循环恰好访问所有下标一次，只在目标下标不输出，所以恰好删除一个应删除的元素。\n\n其他下标全部输出，没有遗漏也没有重复；输出顺序和读取顺序相同，因而保留了剩余结点的原有次序。元素值是否相同不影响位置判断，不会误删另一个相等的值。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 是结点值的数量。所有 n 个值都必须读入一次，时间 `O(n)`；大 O 表示 n 越大，读取与判断次数按比例增长。核心处理只保留当前值 x、下标 i、n、k，逻辑额外空间 `O(1)`，也无需保存整个输入数组。\n\n但实际五语言参考框架仍预留四个容量 K=20000 的通用数组，内存为 `O(K)`，动态初始化语言存在 `O(K)` 固定开销。Python、Rust、部分其他语言还一次读取全部文本并分词，占 `O(n)` 输入内存；C 的 scanf 逐项读取没有同样的分词列表。输出缓存的语言也有与输出长度对应的成本。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 下标应为 n-k，不是 n-k+1；后者混淆了一起点位置与零起点下标。\n- 删除按位置，不按数值。重复值只删目标位置那一个。\n- 被删除的一项仍要从输入读取，不能把读取动作也跳过。\n- 输出不包含 n-1 的长度，题目只要剩余值序列。\n- 只含一个结点时输出空序列，不要打印代表失败的 -1。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：已知长度时，倒数位置可以直接转成正向下标；平台的数组协议让逐项过滤就能完成删除。\n\n1. n=4、k=4 时删除哪个下标？0。\n2. `[7,7,8]`、k=2 的结果是什么？`7 8`，只略过中间下标 1 的 7。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0, x = 0;\n    // 本平台用数值序列表示链表，已知长度后可直接换算倒数位置。\n    n = read();\n    k = read();\n    for (i = 0; i < n; i += 1)  {\n        x = read();\n        // 倒数第 k 个的零起点下标是 n-k，只略过这个位置。\n        if (i != (n - k))  {\n            // 其余数值原顺序输出；不要附加长度或空序列标记。\n            emit(x);\n        }\n    }\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, k = 0, n = 0, x = 0;\n    // 本平台用数值序列表示链表，已知长度后可直接换算倒数位置。\n    n = read();\n    k = read();\n    for (i = 0; i < n; i += 1)  {\n        x = read();\n        // 倒数第 k 个的零起点下标是 n-k，只略过这个位置。\n        if (i != (n - k))  {\n            // 其余数值原顺序输出；不要附加长度或空序列标记。\n            emit(x);\n        }\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, k = 0, n = 0, x = 0;\n        // 本平台用数值序列表示链表，已知长度后可直接换算倒数位置。\n        n = read();\n        k = read();\n        for (i = 0; i < n; i += 1)  {\n            x = read();\n            // 倒数第 k 个的零起点下标是 n-k，只略过这个位置。\n            if (i != (n - k))  {\n                // 其余数值原顺序输出；不要附加长度或空序列标记。\n                emit(x);\n            }\n        }\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\n# 其余数值原顺序输出；不要附加长度或空序列标记。\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = k = n = x = 0\n# 本平台用数值序列表示链表，已知长度后可直接换算倒数位置。\nn = read()\nk = read()\nfor i in range(n):\n    x = read()\n    # 倒数第 k 个的零起点下标是 n-k，只略过这个位置。\n    if i != (n - k):\n        emit(x)\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut i: i32 = 0;\n    let mut k: i32 = 0;\n    let mut n: i32 = 0;\n    let mut x: i32 = 0;\n    // 本平台用数值序列表示链表，已知长度后可直接换算倒数位置。\n    n = reader.read();\n    k = reader.read();\n    i = 0;\n    while i < n  {\n        x = reader.read();\n        // 倒数第 k 个的零起点下标是 n-k，只略过这个位置。\n        if (i != (n - k))  {\n            // 其余数值原顺序输出；不要附加长度或空序列标记。\n            emit(x);\n        }\n        i += 1;\n    }\n}\n"
+    }
+  }
+}

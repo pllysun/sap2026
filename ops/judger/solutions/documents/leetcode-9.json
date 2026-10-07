@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-9",
+  "problemRevision": 1,
+  "title": "回文数",
+  "summary": "逐位取出十进制末位，构造反转后的整数，再与原数比较并排除负数。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "回文数的十进制写法从左到右和从右到左相同，例如 121、7、0。负数不是回文，符号也不能反向对称；10 反过来是 01，作为整数是 1，也不等于 10。\n\n完整程序读一个整数 x，回文输出 1，否则输出 0。核心函数同样返回整数 1 或 0，不能自行改成字符串 `true`、`false`。平台范围是 -10^8 到 10^8；零属于非负数，是合法回文。公开样例 x=-1 输出 0，x=0 输出 1。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "不用把数字转成字符串，也能从末尾一位位读取。对正整数 y，`y%10` 得到末位，`y/10` 的整数除法去掉末位。用 r 保存已经反转出来的数，每次先 `r=r*10+y%10`，再去掉 y 的末位。\n\n原数 x 不能被破坏，所以先复制到 y。循环结束后 r 就是反转数字，再检查 `x>=0` 且 `x==r`。参考实现对负数不进入 y>0 循环，最终由非负检查判为 0；对 0 同样不循环，但 r 初始也是 0，最终正确判为 1。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "额外例子 x=121，保留 x 不动，逐步修改 y、r：\n\n| 步骤 | 剩余原位 | 反转结果 | 计算 |\n| --- | --- | --- | --- |\n| 开始 | y=121 | r=0 | 尚未取位 |\n| 取末位 1 | y=12 | r=1 | r=0×10+1 |\n| 取末位 2 | y=1 | r=12 | r=1×10+2 |\n| 取末位 1 | y=0 | r=121 | 与原数相等 |\n\n若 x=10：第一轮取出 0，r 仍为 0；第二轮取出 1，r 变为 1。最终 1!=10，输出 0。反转数字前面的零不保留，这是整数表示的规则。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读入 x，令 y=x、r=0。y 表示尚未处理的高位部分，r 表示已取出的末位按相反顺序组成的数。\n2. 在 y>0 时，先把旧 r 乘 10 腾出一个个位，再加 y%10。随后 y 整数除以 10，删除已经用过的末位。\n3. 设 ok=0，仅在 x 非负且等于 r 时改成 1。\n4. 返回或打印 ok。代码中的通用数组 a、b、d、e 没有参与运算，不能根据这些名字猜测用了数组或字符串反转。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "每处理一位后，r 中的数字恰好是原数已取出末位的反向排列，y 则是原数未处理的前半部分。开始没有取出任何位，r=0、y=x，符合这一描述。把 r 乘 10 再接上当前末位，正好把下一位追加到反转结果末尾；把 y 除以 10 后，这一位不会被重复处理。\n\n正数的位数有限，所以最后 y=0，r 包含全部反转位。非负数是回文当且仅当原数和这个反转数相等；负数被额外条件排除。0 没有进入循环，但原数和初始反转结果同为 0，因此也得到正确答案。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "d 表示正数十进制位数，每轮去掉一位，核心时间 `O(d)`，也可写 `O(log(x+1))`；0 与负数只做固定判断。大 O 表示位数增长时循环次数相应增长。算法只用固定几个整数，逻辑额外空间为 `O(1)`。\n\n本题范围内正数最多九位，反转结果可容纳于 32 位有符号整数。实际参考代码各语言还初始化或预留四个容量 K=20000 的通用数组，内存 `O(K)`；动态清零数组的语言有 `O(K)` 初始化时间。这些数组不是算法必须的数据，也不能把它们说成按位数扩大的空间。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 必须保留 x，不要对 x 连续除以 10 后再拿被清空的它比较。\n- 0 应输出 1，循环一次也不执行并不意味着答案为假。\n- 负数直接不是回文，不能先取绝对值后判定。\n- 10、100 等末尾为零的正数反转后丢掉前导零，所以不是回文。\n- 其他更大数据范围中构造完整反转数可能溢出；这里的安全性来自本题的明确上限。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：取余读出末位，整数除法删除末位，两个操作配合构造反转数字。\n\n1. x=12021 的反转结果是多少？12021，所以返回 1。\n2. x=-121 返回什么？0，负号使它不符合本题的回文定义。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ok = 0, r = 0, x = 0, y = 0;\n    // 保留原整数 x；负数不是回文，0 是回文。\n    x = read();\n    y = x;\n    r = 0;\n    // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n    while (y > 0)  {\n        r = ((r * 10) + (y % 10));\n        y = (y / 10);\n    }\n    ok = 0;\n    if ((x >= 0) && (x == r))  {\n        ok = 1;\n    }\n    // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n    emit(ok);\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ok = 0, r = 0, x = 0, y = 0;\n    // 保留原整数 x；负数不是回文，0 是回文。\n    x = read();\n    y = x;\n    r = 0;\n    // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n    while (y > 0)  {\n        r = ((r * 10) + (y % 10));\n        y = (y / 10);\n    }\n    ok = 0;\n    if ((x >= 0) && (x == r))  {\n        ok = 1;\n    }\n    // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n    emit(ok);\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int ok = 0, r = 0, x = 0, y = 0;\n        // 保留原整数 x；负数不是回文，0 是回文。\n        x = read();\n        y = x;\n        r = 0;\n        // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n        while (y > 0)  {\n            r = ((r * 10) + (y % 10));\n            y = (y / 10);\n        }\n        ok = 0;\n        if ((x >= 0) && (x == r))  {\n            ok = 1;\n        }\n        // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n        emit(ok);\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\nok = r = x = y = 0\n# 保留原整数 x；负数不是回文，0 是回文。\nx = read()\ny = x\nr = 0\n# 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\nwhile y > 0:\n    r = (r * 10) + (y % 10)\n    y = y // 10\nok = 0\nif (x >= 0) and (x == r):\n    ok = 1\n# 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\nemit(ok)\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut ok: i32 = 0;\n    let mut r: i32 = 0;\n    let mut x: i32 = 0;\n    let mut y: i32 = 0;\n    // 保留原整数 x；负数不是回文，0 是回文。\n    x = reader.read();\n    y = x;\n    r = 0;\n    // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n    while (y > 0)  {\n        r = ((r * 10) + (y % 10));\n        y = (y / 10);\n    }\n    ok = 0;\n    if ((x >= 0) && (x == r))  {\n        ok = 1;\n    }\n    // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n    emit(ok);\n}\n"
+    },
+    "FUNCTION": {
+      "c": "// 保留原整数 x；负数不是回文，0 是回文。\nint isPalindrome(int x)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ok = 0, r = 0, y = 0;\n    y = x;\n    r = 0;\n    // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n    while (y > 0)  {\n        r = ((r * 10) + (y % 10));\n        y = (y / 10);\n    }\n    ok = 0;\n    if ((x >= 0) && (x == r))  {\n        ok = 1;\n    }\n    // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n    return ok;\n}\n",
+      "cpp": "class Solution  {\n    public:\n    // 保留原整数 x；负数不是回文，0 是回文。\n    int isPalindrome(int x)  {\n        static int a[20000];\n        static int b[20000];\n        static int d[20000];\n        static int e[20000];\n        int ok = 0, r = 0, y = 0;\n        y = x;\n        r = 0;\n        // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n        while (y > 0)  {\n            r = ((r * 10) + (y % 10));\n            y = (y / 10);\n        }\n        ok = 0;\n        if ((x >= 0) && (x == r))  {\n            ok = 1;\n        }\n        // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n        return ok;\n    }\n}\n;\n",
+      "java": "class Solution  {\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    // 保留原整数 x；负数不是回文，0 是回文。\n    public int isPalindrome(int x)  {\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int ok = 0, r = 0, y = 0;\n        y = x;\n        r = 0;\n        // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n        while (y > 0)  {\n            r = ((r * 10) + (y % 10));\n            y = (y / 10);\n        }\n        ok = 0;\n        if ((x >= 0) && (x == r))  {\n            ok = 1;\n        }\n        // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n        return ok;\n    }\n}\n",
+      "python": "class Solution:\n    # 保留原整数 x；负数不是回文，0 是回文。\n    def isPalindrome(self, x):\n        a = [0] * 20000\n        b = [0] * 20000\n        d = [0] * 20000\n        e = [0] * 20000\n        ok = r = y = 0\n        y = x\n        r = 0\n        # 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n        while y > 0:\n            r = (r * 10) + (y % 10)\n            y = y // 10\n        ok = 0\n        if (x >= 0) and (x == r):\n            ok = 1\n        # 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n        return ok\n",
+      "rust": "impl Solution  {\n    // 保留原整数 x；负数不是回文，0 是回文。\n    pub fn is_palindrome(x: i32) -> i32  {\n        let mut a = vec![0i32;\n        20000];\n        let mut b = vec![0i32;\n        20000];\n        let mut d = vec![0i32;\n        20000];\n        let mut e = vec![0i32;\n        20000];\n        let mut ok: i32 = 0;\n        let mut r: i32 = 0;\n        let mut y: i32 = 0;\n        y = x;\n        r = 0;\n        // 每轮取 y 的个位接到反转结果，再用整数除法移除该位。\n        while (y > 0)  {\n            r = ((r * 10) + (y % 10));\n            y = (y / 10);\n        }\n        ok = 0;\n        if ((x >= 0) && (x == r))  {\n            ok = 1;\n        }\n        // 返回约定的整数 1 或 0，比较时必须使用未被修改的 x。\n        return ok;\n    }\n}\n"
+    }
+  }
+}

@@ -1,12 +1,13 @@
 <template>
   <header class="page-header">
     <div>
-      <span class="page-kicker">{{ label }}</span>
+      <span v-if="label" class="page-kicker">{{ label }}</span>
       <h1 class="page-title">{{ title }}</h1>
       <p v-if="description" class="page-desc">{{ description }}</p>
     </div>
     <div v-if="$slots.default" class="page-header__actions"><slot /></div>
     <div v-else class="page-header__art" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div v-if="$slots.body" class="page-header__body"><slot name="body" /></div>
   </header>
 </template>
 

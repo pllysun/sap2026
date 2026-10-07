@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-14",
+  "problemRevision": 1,
+  "title": "最长公共前缀",
+  "summary": "以第一个字符串为候选前缀，逐个与其他字符串比较并缩短有效长度。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "前缀是从字符串第一个字符开始的一段连续字符。例如 `flower` 的前缀可以是 `f`、`fl`、`flo`，但 `low` 不是前缀。本题要找全部字符串共有的最长前缀，而不是最长公共子串或某一对字符串的前缀。\n\n先输入字符串个数 `m`，再输入 `m` 个小写字符串。平台用单独的 `-` 表示空字符串；答案为空时也必须输出 `-`。这个符号只是输入输出约定，不参与字符比较。例如 `dog racecar` 没有共同的第一个字符，答案就是 `-`。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "任何公共前缀都必须属于第一个字符串，所以不必新建很多候选。把第一个字符串保存在 `a`，用 `n` 记录当前候选前缀长度。起初 `n` 是第一个字符串的长度。\n\n每读到一个新字符串 `b`，候选长度先缩到 `min(n,新字符串长度)`，因为前缀不可能比任一字符串更长。再从下标零开始比较，直到字符不同或到达候选结尾；成功相同的字符数就是新的 `n`。这样不断取交集，候选只会缩短，不会增长。\n\n即使 `n` 已经为零，也仍按输入要求读取剩下字符串。参考代码保存字符的整数编码，比较编码是否相等与比较字符本身是否相等完全一致。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例输入 `flower`、`flow`、`flight`：\n\n| 阶段 | 本次比较 | 比较前的上限 | 相同字符数 / 新 n |\n| --- | --- | --- | --- |\n| 初始化 | `flower` | 6 | 6，候选 `flower` |\n| 第二个字符串 | `flower` 与 `flow` | `min(6,4)=4` | 4，候选 `flow` |\n| 第三个字符串 | `flow` 与 `flight` | `min(4,6)=4` | 前两位 `f,l` 相同，第 2 下标不同；n=2 |\n\n因此输出 `a[0..1]`，也就是 `fl`。注意字符串的第一个字符下标为零，第 2 下标指第三个字符。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. `m=read()` 读取字符串数，`n=readstr(a)` 读取第一个字符串及长度。`readstr` 遇到 `-` 时返回零。\n2. `j` 从 1 到 `m-1`，表示还需处理的其他字符串。每次用 `k` 保存 `b` 的长度。\n3. 将 `n` 缩到 `min(n,k)`，令 `i=0`，逐字符比较 `a[i]` 与 `b[i]`。只有 `i<n` 时才访问字符，避免越界。\n4. 把 `n` 改为最终的 `i`，只保留仍满足全部已处理字符串的长度。`a` 的内容始终不变，不必真的截断它。\n5. 用 `emitstr(a,n)` 输出有效前缀；`n=0` 时输出 `-`。代码里的 `d/e` 是未参与此算法的固定缓冲区，不代表还需要另外两组字符串。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "处理完第一个字符串时，候选当然是它自身的最长前缀。假设处理前的 `a` 前 `n` 个字符是此前所有字符串的最长公共前缀。\n\n加入新字符串后，公共前缀不能超过此前的候选长度，也不能超过新字符串长度。在这个上限内，从第零位开始连续相同的字符可以成为新公共前缀；第一处不同时，任何更长的前缀都会包含这处差异，因此不可能公共。把长度设为 `i` 后，候选正好是已处理所有字符串的最长公共前缀。所有字符串处理完，这个结论就对应最终答案。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令 `S` 是所有输入字符串长度之和，`L` 是最长字符串长度。读取和字符转换要 `O(m+S)` 时间，比较次数不超过各次读取字符串的长度，所以总时间为 `O(m+S)`。把 m 计入才能覆盖全部字符串都为空的情况。\n\n算法只需第一串和当前串，逻辑额外空间为 `O(L)`。展示的五语言参考实现使用固定长度 `K=20000` 的 `a/b/d/e` 缓冲区，实际缓冲区占用为 `O(K)`，不能说代码完全没有数组。Python、Java、Rust 还一次保存全部输入文本或 token，占用 `O(m+S)` 的输入存储。大 O 描述增长趋势，固定缓冲区的常数不会随着题目中字符串数增加而扩大。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 任意一个输入是 `-`，最长公共前缀一定为空，最后输出 `-`。\n- 只有一个字符串时，答案就是整个字符串，不需要进入比较循环。\n- 新字符串比当前候选短时，要先限制比较长度，不能访问它末尾以外的位置。\n- 不要在出现字符差异后继续拼接后面相同的字符，那会变成子序列而不是前缀。\n- `n` 是有效长度，`a` 中后面的旧字符不能一起输出。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "核心观察是“公共前缀属于第一串，而且加入限制只会缩短它”。\n\n练习：`3 / abc ab abd` 输出 `ab`；`2 / - abc` 输出 `-`。尝试列出每读完一个字符串后 `n` 的值。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    // 有效长度为零时按平台约定输出 -，否则输出 a 的前 n 个字符。\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, j = 0, k = 0, m = 0, n = 0;\n    // 先读字符串数；第一个字符串保存在 a，后续只缩短它的有效前缀。\n    m = read();\n    n = readstr(a);\n    for (j = 1; j < m; j += 1) {\n        k = readstr(b);\n        // 公共前缀不能比新字符串更长，先限制比较范围。\n        n = mn(n, k);\n        i = 0;\n        // 从开头连续比较；遇到第一处不同就不能再扩大前缀。\n        while ((i < n) && (a[i] == b[i])) {\n            i = (i + 1);\n        }\n        n = i;\n    }\n    if (n == 0) {\n        emitstr(a, 0);\n    }\n    else {\n        emitstr(a, n);\n    }\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    // 有效长度为零时按平台约定输出 -，否则输出 a 的前 n 个字符。\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, j = 0, k = 0, m = 0, n = 0;\n    // 先读字符串数；第一个字符串保存在 a，后续只缩短它的有效前缀。\n    m = read();\n    n = readstr(a);\n    for (j = 1; j < m; j += 1) {\n        k = readstr(b);\n        // 公共前缀不能比新字符串更长，先限制比较范围。\n        n = mn(n, k);\n        i = 0;\n        // 从开头连续比较；遇到第一处不同就不能再扩大前缀。\n        while ((i < n) && (a[i] == b[i])) {\n            i = (i + 1);\n        }\n        n = i;\n    }\n    if (n == 0) {\n        emitstr(a, 0);\n    }\n    else {\n        emitstr(a, n);\n    }\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        // 有效长度为零时按平台约定输出 -，否则输出 a 的前 n 个字符。\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, j = 0, k = 0, m = 0, n = 0;\n        // 先读字符串数；第一个字符串保存在 a，后续只缩短它的有效前缀。\n        m = read();\n        n = readstr(a);\n        for (j = 1; j < m; j += 1) {\n            k = readstr(b);\n            // 公共前缀不能比新字符串更长，先限制比较范围。\n            n = mn(n, k);\n            i = 0;\n            // 从开头连续比较；遇到第一处不同就不能再扩大前缀。\n            while ((i < n) && (a[i] == b[i])) {\n                i = (i + 1);\n            }\n            n = i;\n        }\n        if (n == 0) {\n            emitstr(a, 0);\n        }\n        else {\n            emitstr(a, n);\n        }\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = j = k = m = n = 0\n# 读取字符串数，readstr 用 - 表示长度为零的空字符串。\nm = read()\nn = readstr(a)\nfor j in range(1, m):\n    k = readstr(b)\n    # 公共前缀不能超过新字符串长度，先缩短上限。\n    n = mn(n, k)\n    i = 0\n    # 只比较从开头连续相同的字符，i 就是新的有效前缀长度。\n    while (i < n) and (a[i] == b[i]):\n        i = i + 1\n    n = i\n# 按平台协议输出 - 或 a 的前 n 个字符。\nif n == 0:\n    emitstr(a, 0)\nelse:\n    emitstr(a, n)\n",
+      "rust": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    // 有效长度为零时按平台约定输出 -，否则输出 a 的前 n 个字符。\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut i: i32 = 0;\n    let mut j: i32 = 0;\n    let mut k: i32 = 0;\n    let mut m: i32 = 0;\n    let mut n: i32 = 0;\n    // 先读字符串数；第一个字符串保存在 a，后续只缩短它的有效前缀。\n    m = reader.read();\n    n = reader.readstr(&mut a);\n    j = 1;\n    while j < m {\n        k = reader.readstr(&mut b);\n        // 公共前缀不能比新字符串更长，先限制比较范围。\n        n = mn(n, k);\n        i = 0;\n        // 从开头连续比较；遇到第一处不同就不能再扩大前缀。\n        while ((i < n) && (a[(i) as usize] == b[(i) as usize])) {\n            i = (i + 1);\n        }\n        n = i;\n        j += 1;\n    }\n    if (n == 0) {\n        emitstr(&a, 0);\n    } else {\n        emitstr(&a, n);\n    }\n}\n"
+    }
+  }
+}

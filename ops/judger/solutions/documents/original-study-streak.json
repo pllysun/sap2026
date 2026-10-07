@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-study-streak",
+  "problemRevision": 1,
+  "title": "学习打卡最长连续段",
+  "summary": "连续遇到 1 时增加当前长度，遇到 0 时清零，同时保留历史最大长度。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入长度 n 和 n 个 0 或 1，按日期顺序表示是否完成学习任务。1 表示完成，0 表示未完成。需要找连续完成最多的一段有多少天，而不是一共完成了多少天。\n\n例如明确的小例子 `[1,1,0,1,1,1]` 中，完成的总天数是 5，最长连续段却是最后的 3 天。n 可以为零，此时没有任何记录，答案为 0；全部为零时答案也为 0。输出仅是最长段的长度，不需要输出开始或结束日期。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "只要记录当前正在延长的连续段，就不需要枚举每一对起止日期。用 cnt 表示“以当前这一天结尾的连续完成天数”，ans 表示此前见过的最大连续天数。\n\n读到 1 时，它接在此前的连续完成段后面，cnt 加一。读到 0 时，连续性被打断，cnt 立刻归零。每处理一天，都用较大的值更新 ans。遇到 0 只影响当前段，不会取消以前已经出现的最佳段，所以不能把 ans 也清零。\n\n参考程序先把全部记录读到 a，再扫描一次；它没有边读边算，也没有构造所有区间。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "用上面的明确例子逐日推演，天数从 1 开始，数组下标从 0 开始：\n\n| 日期 | 记录 | 更新后 cnt | 更新后 ans |\n| --- | --- | --- | --- |\n| 第 1 天 | 1 | 1 | 1 |\n| 第 2 天 | 1 | 2 | 2 |\n| 第 3 天 | 0 | 0 | 2 |\n| 第 4 天 | 1 | 1 | 2 |\n| 第 5 天 | 1 | 2 | 2 |\n| 第 6 天 | 1 | 3 | 3 |\n\n最终输出 3。公开样例 n=0 没有数据，cnt/ans 都保持初值零；公开样例只有一个 0，也会把 cnt 设为零。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读取 n，循环 i=0..n-1 把记录写入 a[i]。\n2. 设置 ans=0、cnt=0，分别表示还没有找到有效连续段、当前段为空。\n3. 再扫描 a：a[i]==1 时 cnt=cnt+1，否则 cnt=0。\n4. 无论当前是 0 还是 1，都执行 ans=max(ans,cnt)。代码里的 mx 就是取较大值的辅助函数。\n5. 扫描结束输出 ans，不输出 cnt。因为最长段不一定在序列末尾。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "处理第一天前，当前连续完成段为空，cnt=0。之后每一天为 1 时，能以这一天结束的最长连续完成段只能由前一天的连续段再接一天，长度增加一；为 0 时，不存在以这一天结束的完成段，长度必须为零。cnt 的含义因此始终准确。\n\nans 每次取此前最大值与当前 cnt 的较大者，所以在处理完任意一天后，都保存所有已处理日期中的最长段。每一段都会在自己的最后一天出现在 cnt 中，最终 ans 不会漏掉任何段。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "令 n 为记录天数。读取一次、扫描一次，两次各 n 个元素，时间为 O(n)；O(n) 表示天数翻倍时主要处理量也大致翻倍。\n\ncnt/ans 本身只需 O(1) 额外空间。参考代码实际先保存 a，并保留固定长度 K=20000 的 a/b/d/e 缓冲区，占用 O(K)；若按所需长度分配输入数组，则存储记录为 O(n)。Python、Java、Rust 的整体分词也额外保存 O(n) 输入项。不能把本页的完整程序描述成完全不保存输入。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- n=0 时输出 0，不能初始化 ans=1，因为不一定有完成记录。\n- 全部为 0 时每次清零 cnt，答案始终为 0。\n- 全部为 1 时 cnt 最终为 n，答案也是 n。\n- 遇到 0 只清零 cnt，不能清零已经找到的 ans。\n- 最长段可能位于开头或中间，最后输出 cnt 会漏掉此前更长的段。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "把“当前段长度”和“历史最好长度”分开，是处理连续区间的一种基本方法。\n\n练习：[1,1,1,0,1] 的答案为 3；[0,1,0,1] 的答案为 1。特别检查末尾段较短时输出是否仍然正确。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, cnt = 0, i = 0, n = 0;\n    // 先读天数和记录；0 天时后面的循环自然不执行。\n    n = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n    }\n    ans = 0;\n    cnt = 0;\n    for (i = 0; i < n; i += 1) {\n        // cnt 只描述以当前日期结尾的连续段；0 会切断这一段。\n        if (a[i] == 1) {\n            cnt = (cnt + 1);\n        }\n        else {\n            cnt = 0;\n        }\n        // 保存历史最大长度，不能在断段时清零 ans。\n        ans = mx(ans, cnt);\n    }\n    // 最长段不一定在末尾，所以输出 ans 而不是 cnt。\n    emit(ans);\n    return 0;\n}\n",
+      "cpp": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int ans = 0, cnt = 0, i = 0, n = 0;\n    // 先读天数和记录；0 天时后面的循环自然不执行。\n    n = read();\n    for (i = 0; i < n; i += 1) {\n        a[i] = read();\n    }\n    ans = 0;\n    cnt = 0;\n    for (i = 0; i < n; i += 1) {\n        // cnt 只描述以当前日期结尾的连续段；0 会切断这一段。\n        if (a[i] == 1) {\n            cnt = (cnt + 1);\n        }\n        else {\n            cnt = 0;\n        }\n        // 保存历史最大长度，不能在断段时清零 ans。\n        ans = mx(ans, cnt);\n    }\n    // 最长段不一定在末尾，所以输出 ans 而不是 cnt。\n    emit(ans);\n    return 0;\n}\n",
+      "java": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n        return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n        System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int ans = 0, cnt = 0, i = 0, n = 0;\n        // 先读天数和记录；0 天时后面的循环自然不执行。\n        n = read();\n        for (i = 0; i < n; i += 1) {\n            a[i] = read();\n        }\n        ans = 0;\n        cnt = 0;\n        for (i = 0; i < n; i += 1) {\n            // cnt 只描述以当前日期结尾的连续段；0 会切断这一段。\n            if (a[i] == 1) {\n                cnt = (cnt + 1);\n            }\n            else {\n                cnt = 0;\n            }\n            // 保存历史最大长度，不能在断段时清零 ans。\n            ans = mx(ans, cnt);\n        }\n        // 最长段不一定在末尾，所以输出 ans 而不是 cnt。\n        emit(ans);\n    }\n}\n",
+      "python": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\nans = cnt = i = n = 0\n# 先读天数和记录；0 天时后面的循环自然不执行。\nn = read()\nfor i in range(n):\n    a[i] = read()\nans = 0\ncnt = 0\nfor i in range(n):\n    # cnt 只描述以当前日期结尾的连续段；0 会切断这一段。\n    if a[i] == 1:\n        cnt = cnt + 1\n    else:\n        cnt = 0\n    # 保存历史最大长度，不能在断段时清零 ans。\n    ans = mx(ans, cnt)\n# 最长段不一定在末尾，所以输出 ans 而不是 cnt。\nemit(ans)\n",
+      "rust": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut ans: i32 = 0;\n    let mut cnt: i32 = 0;\n    let mut i: i32 = 0;\n    let mut n: i32 = 0;\n    // 先读天数和记录；0 天时后面的循环自然不执行。\n    n = reader.read();\n    i = 0;\n    while i < n {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    ans = 0;\n    cnt = 0;\n    i = 0;\n    while i < n {\n        // cnt 只描述以当前日期结尾的连续段；0 会切断这一段。\n        if (a[(i) as usize] == 1) {\n            cnt = (cnt + 1);\n        } else {\n            cnt = 0;\n        }\n        // 保存历史最大长度，不能在断段时清零 ans。\n        ans = mx(ans, cnt);\n        i += 1;\n    }\n    // 最长段不一定在末尾，所以输出 ans 而不是 cnt。\n    emit(ans);\n}\n"
+    }
+  }
+}

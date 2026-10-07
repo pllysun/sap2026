@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-acm-003",
+  "problemRevision": 1,
+  "title": "贴纸等量分装",
+  "summary": "用整数除法求每袋最多能分到的贴纸数，用余数求无法等量分装的剩余数量。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "有 m 张贴纸和 n 个袋子，要让每袋数量一样多，并尽量把贴纸分出去。不能把同一张贴纸切开；袋子可以是空的，多余贴纸留在桌上。\n\n输入一行两个整数，**先袋子数 n，再贴纸数 m**。输出每袋数量与桌上剩余数量，顺序不能反。比如 19 张贴纸装 4 袋，每袋 4 张共用 16 张，还剩 3 张；若再多放一张到每袋，就需要 20 张，数量不足。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "设每袋放 q 张，就共用 n*q 张，所以 q 不能超过 m/n。整数除法直接得到不超过真实商的最大整数，也就是 `q=m/n` 的整数部分。\n\n取余运算 `%` 得到扣除这些整份后剩下的数量 `r=m%n`。商与余数满足 `m=n*q+r`，且 `0<=r<n`。剩余数小于袋数，意味着不能再给每袋一起增加 1 张。这道题不需要逐张分配或循环减法，两个运算就够。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例输入 `4 19`。\n\n| 步骤 | 含义 | 计算或结果 |\n| --- | --- | --- |\n| 1 | 读入袋子数和总贴纸数 | `n=4,m=19` |\n| 2 | 每袋尽量取整份 | `q=19/4` 的整数部分为 4 |\n| 3 | 计算剩余并输出 | `r=19%4=3`，输出 `4 3` |\n\n公开第二个样例 `n=5,m=3`，商为 0，余数为 3。每袋空着正好满足数量相等，不能只给三个袋子各一张。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 n、m，n 至少为 1，除数不会为 0。\n2. 计算 m 除以 n 的整数商。C/C++/Java/Rust 的整数除法用于当前非负值；Python 明确写 `//`。\n3. 用同样的顺序计算 `m%n`。\n4. 按“商 余数”的顺序输出，空格分隔，不加入袋子名称或解释文字。\n5. m 可达一万亿，C/C++ 使用 `long long`，Java 使用 `long`，Rust 使用 64 位整数；不要改成 32 位。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "整数商 q 使 `n*q<=m`，因此贴纸总数够给每袋 q 张。若每袋再放一张，需要 `n*(q+1)>m`，一定超过库存，所以 q 是能达到的最大等量数量。\n\n余数 r 正好等于总贴纸减去已分配数量，且小于 n，无论增加哪个袋子都会破坏相等，除非所有袋子一起增加，而那又不够。因此输出商和余数同时满足等量、尽量分装与剩余计数要求。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "这里没有数组长度 n 的遍历：n 是袋子数，但程序不逐袋处理。读入后做固定次数整数除法、取余和输出，时间 `O(1)`、额外空间 `O(1)`。大 O 中的 1 表示操作次数不随袋子数量增加而增加。\n\n当前题目范围可用机器的 64 位整数存储，按固定宽度运算分析。Python 整数自动扩展，但此范围下也只需少量数位，不建立与袋数相关的数据结构。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 输入顺序 n、m，与运算顺序 m/n 不同，写反会得到完全不同结果。\n- m<n 时每袋为 0，这是允许情况，不要强行每袋至少 1 张。\n- m=0 时商、余数都为 0。\n- n=1 时每袋得到全部 m，剩余必为 0。\n- Python `/` 会返回小数，题目需要整数商，必须用 `//`。\n- m 大于 32 位上限，需要保留宽整数类型。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "整数除法把总量拆成最大等份与剩余：`总量=份数×每份+剩余`。\n\n练习 6 个袋子装 25 张，答案 `4 1`。再试 3 个袋子装 12 张，答案 `4 0`，正好分完。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 先读袋子数 n，再读贴纸总数 m；总量可达 10^12。 */\n#include <stdio.h>\nint main(void)  {\n    long long n, m;\n    scanf(\"%lld%lld\", &n, &m);\n    /* 整数除法 m/n 得到最大等份，不逐张或逐袋模拟。 */\n    /* 按商、余数顺序输出，m<n 时每袋 0 张也是合法答案。 */\n    printf(\"%lld %lld\\n\", m / n, m % n);\n    return 0;\n}\n",
+      "cpp": "/* 先读袋子数 n，再读贴纸总数 m；总量可达 10^12。 */\n#include <iostream>\n#include <string>\n/* 整数除法 m/n 得到最大等份，不逐张或逐袋模拟。 */\nint main()  {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n    long long n, m;\n    std::cin >> n >> m;\n    std::\n    /* 按商、余数顺序输出，m<n 时每袋 0 张也是合法答案。 */\n    cout << m / n << ' ' << m % n << '\\n';\n    return 0;\n}\n",
+      "java": "/* 先读袋子数 n，再读贴纸总数 m；总量可达 10^12。 */\nimport java.util.Scanner;\npublic class Main  {\n    /* 整数除法 m/n 得到最大等份，不逐张或逐袋模拟。 */\n    public static void main(String[] args)  {\n        Scanner in = new Scanner(System.in);\n        long n = in.nextLong();\n        long m = in.nextLong();\n        System.out.\n        /* 按商、余数顺序输出，m<n 时每袋 0 张也是合法答案。 */\n        println(m / n + \" \" + m % n);\n    }\n}\n",
+      "python": "# 先读袋子数 n，再读贴纸总数 m；总量可达 10^12。\nn, m = map(int, input().split())\n# 整数除法 m/n 得到最大等份，不逐张或逐袋模拟。\n# 按商、余数顺序输出，m<n 时每袋 0 张也是合法答案。\nprint(m // n, m % n)\n",
+      "rust": "/* 先读袋子数 n，再读贴纸总数 m；总量可达 10^12。 */\nuse std::io:: {\n    self, Read\n}\n;\n/* 整数除法 m/n 得到最大等份，不逐张或逐袋模拟。 */\nfn main()  {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n    let n: i64 = words.next().unwrap().parse().unwrap();\n    let m: i64 = words.next().unwrap().parse().unwrap();\n    /* 按商、余数顺序输出，m<n 时每袋 0 张也是合法答案。 */\n    println!(\"{} {}\", m / n, m % n);\n}\n"
+    }
+  }
+}

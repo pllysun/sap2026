@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+import { createActivityScale } from '../../../shared/activityIntensity.mjs'
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { getLogStats } from '../api'
 import request from '../utils/request'
@@ -161,7 +162,7 @@ const loadCalendarHeatmap = async () => {
 const renderCalendar = (data) => {
   if (!calendarChart.value) return
   calendarInstance ||= echarts.init(calendarChart.value)
-
+  const intensity = createActivityScale(data.map(day => day[1]))
 
   calendarInstance.setOption({
     tooltip: {
@@ -171,11 +172,13 @@ const renderCalendar = (data) => {
     },
     visualMap: {
       min: 0,
-      max: Math.max(...data.map(d => d[1]), 1),
+      max: 4,
+      dimension: 2,
       calculable: false,
       orient: 'horizontal',
       left: 'center',
       bottom: 0,
+      text: ['多', '少'],
       inRange: {
         color: ['#eef0f7', '#c8dbfc', '#9dbffb', '#6ba1f8', '#3B82F6']
       },
@@ -200,7 +203,7 @@ const renderCalendar = (data) => {
     series: [{
       type: 'heatmap',
       coordinateSystem: 'calendar',
-      data: data
+      data: data.map(day => [day[0], day[1], intensity(day[1])])
     }]
   })
 }

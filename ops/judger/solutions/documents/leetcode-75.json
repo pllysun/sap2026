@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-75",
+  "problemRevision": 1,
+  "title": "颜色分类",
+  "summary": "分别数出 0、1、2 的出现次数，再按数字从小到大输出相应次数。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "数组里只可能有 0、1、2，分别代表三种颜色。要输出非降序排列，即所有 0 在前，然后是所有 1，最后是所有 2；同一种颜色出现几次就保留几次。\n\n平台只支持完整程序：读长度 n，再读 n 个数字，输出排列后的值序列。`n=0` 时结果为空。这份参考实现用计数排序，不是“荷兰国旗”三个指针原地交换；题目标签或原题记忆不能替代本平台程序的实际行为。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "普通排序会反复比较值，但这里值域只有三个候选。可以准备三个计数格子 `b[0]/b[1]/b[2]`，读到一个值 x，就把 `b[x]` 增加 1。\n\n数字 x 同时也是计数格子的下标，这叫按值索引。数完之后，从 x=0 到 x=2，分别输出 `b[x]` 次。这样自动有序，不需要交换元素。参考代码先把输入存到 a，再遍历 a 计数，所以不能误说它一边读一边立刻输出。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "额外小例子 `[2,0,1,2,0]`。\n\n| 扫描到的值 | 0 的次数 | 1 的次数 | 2 的次数 |\n| --- | --- | --- | --- |\n| 2 | 0 | 0 | 1 |\n| 0 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n| 2 | 1 | 1 | 2 |\n| 0 | 2 | 1 | 2 |\n\n按值从小到大输出：0 输出两次，1 输出一次，2 输出两次，最终 `0 0 1 2 2`。原顺序不保留，但每种颜色数量不变。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读 n，把数字存到 `a[0..n−1]`。初始化计数数组为 0；参考程序的固定数组初始值已清零。\n2. 遍历每个 `a[i]`，执行 `b[a[i]]+=1`。\n3. 外循环 x 从 0 到 2，代表当前准备输出的颜色数字。\n4. 内循环输出 x 共 `b[x]` 次。这里 i 重新作为输出次数的计数器，不是原数组下标。\n5. 所有计数为 0 时自然不输出，空数组也能正确处理。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "计数过程中，每处理一个输入值，就只将对应颜色计数加一，所以处理全部输入后，三个计数恰好等于三种颜色真实出现次数。\n\n输出阶段对每种颜色输出恰好计数次，因而结果与输入有相同的元素及重复次数。颜色按 0、1、2 的次序输出，任意后面的值都不会小于前面的值，保证非降序。数量正确与顺序正确共同证明答案符合要求。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "设 n 为数组长度。计数扫描 n 次；输出虽有两层循环，但三个计数之和正好是 n，总共也只输出 n 次。因此时间 `O(n)`，不能仅见两层循环就认定 `O(n²)`。大 O 表示主工作量随元素数线性增长。\n\n逻辑上的计数只要三个整数，额外空间 `O(1)`；输入 a 占 `O(n)`。五语言实际使用固定容量 20000 的 b 等生成缓冲，只有前三项参与颜色计数。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 计数必须初始为 0，否则未出现的颜色也可能被输出。\n- 少某一种颜色完全合法，计数为 0 就输出 0 次。\n- 不要去重，重复颜色决定输出数量。\n- b 的下标来自数字值，题目保证它只会是 0、1、2；不要把此代码直接用于任意负数排序。\n- n=0 时不应访问首元素或人为补一个 0。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "当候选值种类很少时，数次数往往比比较排序更直接。\n\n练习 `[1,1,1]`：计数是 0、3、0，结果保持三个 1。再试 `[2,0,2,0]`，计数是 2、0、2，结果 `0 0 2 2`。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "/* 输入只含 0、1、2，颜色出现次数需要全部保留。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, n = 0, x = 0;\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    for (i = 0; i < n; i += 1)  {\n        /* b[value] 记录该颜色数量，不交换原数组中的元素。 */\n        b[a[i]] = (b[a[i]] + 1);\n    }\n    for (x = 0; x < 3; x += 1)  {\n        for (i = 0; i < b[x]; i += 1)  {\n            /* 按 0、1、2 输出各自的计数次，所以数量与输入一致且自然有序。 */\n            emit(x);\n        }\n    }\n    return 0;\n}\n",
+      "cpp": "/* 输入只含 0、1、2，颜色出现次数需要全部保留。 */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b)  {\n    return a < b ? a : b;\n}\nint mx(int a, int b)  {\n    return a > b ? a : b;\n}\nint read(void)  {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a)  {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x)  {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n)  {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void)  {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int i = 0, n = 0, x = 0;\n    n = read();\n    for (i = 0; i < n; i += 1)  {\n        a[i] = read();\n    }\n    for (i = 0; i < n; i += 1)  {\n        /* b[value] 记录该颜色数量，不交换原数组中的元素。 */\n        b[a[i]] = (b[a[i]] + 1);\n    }\n    for (x = 0; x < 3; x += 1)  {\n        for (i = 0; i < b[x]; i += 1)  {\n            /* 按 0、1、2 输出各自的计数次，所以数量与输入一致且自然有序。 */\n            emit(x);\n        }\n    }\n    return 0;\n}\n",
+      "java": "/* 输入只含 0、1、2，颜色出现次数需要全部保留。 */\nimport java.io.*;\nimport java.util.*;\nclass Main  {\n    static String[] tokens;\n    static int cursor;\n    static int read()  {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a)  {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\")) return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b)  {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b)  {\n        return Math.max(a, b);\n    }\n    static void emit(int x)  {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n)  {\n        if (n == 0) System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception  {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int i = 0, n = 0, x = 0;\n        n = read();\n        for (i = 0; i < n; i += 1)  {\n            a[i] = read();\n        }\n        for (i = 0; i < n; i += 1)  {\n            /* b[value] 记录该颜色数量，不交换原数组中的元素。 */\n            b[a[i]] = (b[a[i]] + 1);\n        }\n        for (x = 0; x < 3; x += 1)  {\n            for (i = 0; i < b[x]; i += 1)  {\n                /* 按 0、1、2 输出各自的计数次，所以数量与输入一致且自然有序。 */\n                emit(x);\n            }\n        }\n    }\n}\n",
+      "python": "# 输入只含 0、1、2，颜色出现次数需要全部保留。\nimport sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ni = n = x = 0\nn = read()\nfor i in range(n):\n    a[i] = read()\nfor i in range(n):\n    # b[value] 记录该颜色数量，不交换原数组中的元素。\n    b[a[i]] = b[a[i]] + 1\nfor x in range(3):\n    for i in range(b[x]):\n        # 按 0、1、2 输出各自的计数次，所以数量与输入一致且自然有序。\n        emit(x)\n",
+      "rust": "/* 输入只含 0、1、2，颜色出现次数需要全部保留。 */\nuse std::io:: {\n    self, Read\n}\n;\nfn mn(a: i32, b: i32) -> i32  {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32  {\n    a.max(b)\n}\nfn emit(x: i32)  {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32)  {\n    if n == 0  {\n        print!(\"-\");\n    }\n    for i in 0..n  {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader  {\n    t: Vec<String>, p: usize,\n}\nimpl Reader  {\n    fn new() -> Self  {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self  {\n            t: s.split_whitespace().map(String::from).collect(), p: 0,\n        }\n    }\n    fn read(&mut self) -> i32  {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32  {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\"  {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate()  {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main()  {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32;\n    20000];\n    let mut b = vec![0i32;\n    20000];\n    let mut d = vec![0i32;\n    20000];\n    let mut e = vec![0i32;\n    20000];\n    let mut i: i32 = 0;\n    let mut n: i32 = 0;\n    let mut x: i32 = 0;\n    n = reader.read();\n    i = 0;\n    /* b[value] 记录该颜色数量，不交换原数组中的元素。 */\n    while i < n  {\n        a[(i) as usize] = reader.read();\n        i += 1;\n    }\n    i = 0;\n    while i < n  {\n        b[(a[(i) as usize]) as usize] = (b[(a[(i) as usize]) as usize] + 1);\n        i += 1;\n    }\n    x = 0;\n    while x < 3  {\n        i = 0;\n        while i < b[(x) as usize]  {\n            /* 按 0、1、2 输出各自的计数次，所以数量与输入一致且自然有序。 */\n            emit(x);\n            i += 1;\n        }\n        x += 1;\n    }\n}\n"
+    }
+  }
+}

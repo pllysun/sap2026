@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "leetcode-53",
+  "problemRevision": 1,
+  "title": "最大子数组和",
+  "summary": "维护当前结尾的最大段和与历史最大和，用一次扫描比较继续原段或重新开始。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "子数组是原数组中一段连续的位置，不能跳过中间元素；本题还要求这一段非空。我们要比较所有连续段的元素和，输出最大的那个和，既不输出具体段，也不输出长度。\n\n例如 `[4,-1,2,1]` 整段的和是 6，即使中间有负数也可能值得保留。`[4,2,1]` 跳过了 -1，因此不是同一原数组的子数组。若所有数都为负，仍要选至少一个数，答案是其中最大的负数。\n\n完整程序模式读入 n 和 n 个整数，输出一个整数。核心函数模式接收 `nums` 并返回最大和，平台负责输入输出。n 至少为 1，参考实现因此可以使用 `nums[0]` 初始化。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "最直接的办法是列举起点和终点，逐段求和。很多段共享相同的尾部，可以利用前一位置的结果，而不必重复计算。\n\n设 `cur` 表示“必须在当前元素结束”的最佳非空子数组和，`best` 表示截至当前看过的所有段的最大和。处理新元素 x 时只有两种有意义的选择：从 x 重新开始，得到 x；把 x 接在前一位置的最佳尾段后，得到 `cur+x`。取更大者成为新的 cur，再用它更新 best。这种把大问题拆成较小状态并保存结果的方法叫动态规划，这里只需保存两个数字。\n\n如果前一个 cur 为负，携带它只会降低当前段的和，因此从 x 重新开始。C 代码直接根据 `cur>0` 判断，其余语言用 `max(x,cur+x)`，含义相同。前段为 0 时，两种选择和相等，选哪一种都不影响最大和。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "公开样例为 `[-2,1,-3,4,-1,2,1,-5,4]`：\n\n| 下标、当前值 | 新的 cur | 新的 best | 理由 |\n| --- | --- | --- | --- |\n| 0：-2 | -2 | -2 | 至少选择第一个元素 |\n| 1：1 | 1 | 1 | 原尾段为负，重新开始 |\n| 2：-3 | -2 | 1 | 接在 1 后比只选 -3 更好 |\n| 3：4 | 4 | 4 | 丢弃负的前段 |\n| 4：-1 | 3 | 4 | 保留从 4 开始的段 |\n| 5：2 | 5 | 5 | 把 2 接到尾段 |\n| 6：1 | 6 | 6 | 最佳段是 4,-1,2,1 |\n| 7：-5 | 1 | 6 | 当前尾段变差，历史最好不丢 |\n| 8：4 | 5 | 6 | 当前尾段为 5，最终仍输出 6 |\n\ncur 与 best 不能混为一谈：下标 7 处 cur 下降到 1，但此前找到的最大和 6 仍然有效。",
+      "diagram": {
+        "caption": "截取公开样例的关键连续步骤；cur 可以下降，best 仍保留此前的 6。",
+        "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 335\" role=\"img\" aria-label=\"最大子数组和：只保存两个状态\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"335\" rx=\"16\" fill=\"#f5f8fd\"/><text x=\"28\" y=\"32\" font-size=\"18\" fill=\"#244366\">最大子数组和：只保存两个状态</text><text x=\"26.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">当前元素</text><text x=\"196.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">新的 cur</text><text x=\"366.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">新的 best</text><text x=\"536.0\" y=\"68\" font-size=\"15\" fill=\"#3267b1\">当前最佳尾段</text><rect x=\"20\" y=\"82\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">4</text><text x=\"196.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">4</text><text x=\"366.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">4</text><text x=\"536.0\" y=\"108\" font-size=\"15\" fill=\"#244366\">[4]</text><rect x=\"20\" y=\"128\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">-1</text><text x=\"196.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">3</text><text x=\"366.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">4</text><text x=\"536.0\" y=\"154\" font-size=\"15\" fill=\"#244366\">[4,-1]</text><rect x=\"20\" y=\"174\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">2</text><text x=\"196.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">5</text><text x=\"366.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">5</text><text x=\"536.0\" y=\"200\" font-size=\"15\" fill=\"#244366\">[4,-1,2]</text><rect x=\"20\" y=\"220\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#ffffff\"/><text x=\"26.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">1</text><text x=\"196.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">6</text><text x=\"366.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">6</text><text x=\"536.0\" y=\"246\" font-size=\"15\" fill=\"#244366\">[4,-1,2,1]</text><rect x=\"20\" y=\"266\" width=\"680\" height=\"40\" rx=\"6\" fill=\"#e5f2ed\"/><text x=\"26.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">-5</text><text x=\"196.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">1</text><text x=\"366.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">6</text><text x=\"536.0\" y=\"292\" font-size=\"15\" fill=\"#26816b\">[4,-1,2,1,-5]</text></svg>"
+      }
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 读入数组，或接收核心函数参数。把 cur 和 best 都设为第一个元素，保证任何时刻选的都是非空段。\n2. 从下标 1 开始处理余下元素。先求新的 cur，再求新的 best；两个状态的更新顺序不能颠倒。\n3. `cur=max(x,cur+x)` 中右侧的 cur 是上一轮状态。C 的三目表达式只是这条公式的等价写法。\n4. best 只在新段更好时增大，不因当前尾段变差而清零。遍历完成返回 best，由完整程序打印。\n\nPython 的 `nums[1:]` 创建切片；Rust 的 `&nums[1..]` 是借用现有元素。它们都从第二个元素开始，但内存成本不同。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "先看 cur 的含义。一个在当前下标结束的非空连续段，要么只包含当前元素，要么还包含前一个位置。后一种情况下，前面的部分一定也是在前一个位置结束的连续段；用这些段中最大的和来接上当前元素，不会比用较差前段更差。因此从两种选择中取最大值，就恰好得到当前结尾的最优和。\n\n第一个元素时 cur 已经正确，按照上述理由一轮轮更新，cur 在每个位置都正确。每个非空子数组都有唯一的结束位置，best 又记录所有已处理位置的 cur 的最大值，所以遍历所有结束位置后，best 覆盖了全部合法子数组，得到所求最大和。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "n 表示数组长度。五种语言都扫描一次，时间为 `O(n)`，即 n 翻倍时核心比较次数大约也翻倍。C、C++、Java、Rust 的动态规划部分只用固定几个变量，额外空间为 `O(1)`。Python 参考实现为了遍历写了 `nums[1:]`，会复制 n-1 个元素引用，实际额外空间是 `O(n)`，不能把这份实现直接说成常数空间。\n\n完整程序保存输入数组本身需要 `O(n)` 空间，分词等读取过程还可能有同阶成本，这是与两个动态规划状态分开的部分。题目最大总和不会超过 `100000×10000=10^9`，参考实现中的 32 位有符号结果在此范围内足够，Python 整数也能直接处理。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 全部为负时不能返回 0。比如 `[-5,-2,-7]` 应输出 -2；把 best 初始化成 0 会偷偷允许空段。\n- 只有一个元素时不进入后续循环，直接返回该元素，负数和 0 也一样。\n- 出现负数不代表一定重新开始。公开样例中的 -1 属于最佳段，要比较“带上前段”与“重新开始”的总和。\n- 当前 cur 变小不能覆盖历史 best。它们分别回答“必须当前结束”与“可以任意结束”两个问题。\n- 只处理原顺序的连续段，不能排序，也不能把所有正数简单相加。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "关键观察：决定当前最佳尾段时，之前只需要一个最佳尾段和；另存历史最大值即可得到最终答案。\n\n1. 手算 `[3,-4,5,-1]` 的 cur：3、-1、5、4；答案是 5。\n2. 手算 `[-3,-1,-2]`。答案 -1，这个例子可以检查自己是否错误地允许空段。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n// 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\nint maxSubArray(int*nums,int numsSize) {\n    int cur=nums[0],best=cur;\n    for(int i=1;i<numsSize;i++) {\n        // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n        cur=cur>0?cur+nums[i]:nums[i];\n        if(cur>best)best=cur;\n    }\n    // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n    return best;\n}\nint main(void) {\n    int n;\n    scanf(\"%d\",&n);\n    int*a=malloc(n*sizeof(int));\n    for(int i=0;i<n;i++)scanf(\"%d\",&a[i]);\n    printf(\"%d\\n\",maxSubArray(a,n));\n    free(a);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\n#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\nclass Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    public:int maxSubArray(vector<int>&nums) {\n        int cur=nums[0],best=cur;\n        for(int i=1;i<(int)nums.size();i++) {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=max(nums[i],cur+nums[i]);\n            best=max(best,cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best;\n    }\n}\n;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    cin>>n;\n    vector<int>a(n);\n    for(auto&v:a)cin>>v;\n    cout<<Solution().maxSubArray(a)<<\"\\n\";\n    return 0;\n}\n",
+      "java": "import java.util.*;\nclass Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    public int maxSubArray(int[] nums) {\n        int cur=nums[0],best=cur;\n        for(int i=1;i<nums.length;i++) {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=Math.max(nums[i],cur+nums[i]);\n            best=Math.max(best,cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best;\n    }\n}\npublic class Main  {\n    static class Fast  {\n        private final byte[] b=new byte[65536];\n        int p=0,n=0;\n        int read()throws Exception {\n            if(p>=n) {\n                n=System.in.read(b);\n                p=0;\n                if(n<0)return -1;\n            }\n            return b[p++];\n        }\n        String next()throws Exception {\n            StringBuilder s=new StringBuilder();\n            int c;\n            do {\n                c=read();\n            }\n            while(c<=32&&c>=0);\n            while(c>32) {\n                s.append((char)c);\n                c=read();\n            }\n            return s.toString();\n        }\n        int num()throws Exception {\n            return Integer.parseInt(next());\n        }\n    }\n    public static void main(String[]args)throws Exception {\n        Fast f=new Fast();\n        int n=f.num();\n        int[]a=new int[n];\n        for(int i=0;i<n;i++)a[i]=f.num();\n        System.out.println(new Solution().maxSubArray(a));\n    }\n}\n",
+      "python": "import sys\n\nclass Solution:\n    # 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    def maxSubArray(self,nums):\n        cur=best=nums[0]\n        for x in nums[1:]:\n            # cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=max(x,cur+x)\n            best=max(best,cur)\n        # best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best\n\ndata=sys.stdin.buffer.read().split()\nn=int(data[0]);a=list(map(int,data[1:n+1]))\nprint(Solution().maxSubArray(a))\n",
+      "rust": "use std::io:: {\n    self, Read\n}\n;\nuse std::collections::HashMap;\nstruct Solution;\nimpl Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    pub fn max_sub_array(nums:Vec<i32>)->i32 {\n        let mut cur=nums[0];\n        let mut best=cur;\n        for &x in &nums[1..] {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=x.max(cur+x);\n            best=best.max(cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        best\n    }\n}\nfn main() {\n    let mut s=String::new();\n    io::stdin().read_to_string(&mut s).unwrap();\n    let mut it=s.split_whitespace();\n    let n:usize=it.next().unwrap().parse().unwrap();\n    let a:Vec<i32>=(0..n).map(|_|it.next().unwrap().parse().unwrap()).collect();\n    println!(\"{}\",Solution::max_sub_array(a));\n}\n"
+    },
+    "FUNCTION": {
+      "c": "// 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\nint maxSubArray(int*nums,int numsSize) {\n    int cur=nums[0],best=cur;\n    for(int i=1;i<numsSize;i++) {\n        // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n        cur=cur>0?cur+nums[i]:nums[i];\n        if(cur>best)best=cur;\n    }\n    // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n    return best;\n}\n",
+      "cpp": "class Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    public:int maxSubArray(vector<int>&nums) {\n        int cur=nums[0],best=cur;\n        for(int i=1;i<(int)nums.size();i++) {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=max(nums[i],cur+nums[i]);\n            best=max(best,cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best;\n    }\n}\n;\n",
+      "java": "class Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    public int maxSubArray(int[] nums) {\n        int cur=nums[0],best=cur;\n        for(int i=1;i<nums.length;i++) {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=Math.max(nums[i],cur+nums[i]);\n            best=Math.max(best,cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best;\n    }\n}\n",
+      "python": "class Solution:\n    # 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    def maxSubArray(self,nums):\n        cur=best=nums[0]\n        for x in nums[1:]:\n            # cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=max(x,cur+x)\n            best=max(best,cur)\n        # best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        return best\n",
+      "rust": "impl Solution  {\n    // 参数是非空数组，必须选一段连续且至少含一个元素的子数组。\n    pub fn max_sub_array(nums:Vec<i32>)->i32 {\n        let mut cur=nums[0];\n        let mut best=cur;\n        for &x in &nums[1..] {\n            // cur 表示当前结尾的最佳段和；起点也允许是当前元素。\n            cur=x.max(cur+x);\n            best=best.max(cur);\n        }\n        // best 保存所有结束位置中的最大和，不能被较差的当前段覆盖。\n        best\n    }\n}\n"
+    }
+  }
+}

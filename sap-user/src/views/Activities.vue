@@ -16,7 +16,7 @@
         v-if="activities.length > 0"
         class="act-featured anim-in"
         role="button" tabindex="0" :aria-label="'查看活动：' + activities[0].title"
-        @keydown.enter="openDetail(activities[0])" @keydown.space.prevent="openDetail(activities[0])"
+        @keydown.enter.prevent="openDetail(activities[0])" @keydown.space.prevent="openDetail(activities[0])"
         @click="openDetail(activities[0])"
       >
         <div class="act-featured__img-wrap">
@@ -48,7 +48,7 @@
           v-for="(act, idx) in activities.slice(1)" :key="act.id"
           class="act-card anim-in"
           role="button" tabindex="0" :aria-label="'查看活动：' + act.title"
-          @keydown.enter="openDetail(act)" @keydown.space.prevent="openDetail(act)"
+          @keydown.enter.prevent="openDetail(act)" @keydown.space.prevent="openDetail(act)"
           :style="{ animationDelay: ((idx + 1) * 0.06) + 's' }"
           @click="openDetail(act)"
         >
@@ -87,19 +87,19 @@
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="detailAct" class="act-modal-overlay" @click.self="detailAct = null">
-          <div class="act-modal">
-            <button class="act-modal__close" @click="detailAct = null">✕</button>
+          <div ref="activityDialog" class="act-modal" role="dialog" aria-modal="true" aria-labelledby="activity-detail-title" tabindex="-1">
+            <button class="act-modal__close" aria-label="关闭活动详情" @click="detailAct = null">✕</button>
 
             <!-- Image Carousel -->
             <div class="act-modal__carousel" v-if="detailAct.images && detailAct.images.length">
               <div class="act-modal__carousel-track" :style="{ transform: `translateX(-${carouselIdx * 100}%)` }">
                 <div v-for="(img, i) in detailAct.images" :key="i" class="act-modal__slide">
-                  <img :src="img.imageUrl" alt="" @click="previewImg = img.imageUrl" />
+                  <img :src="img.imageUrl" :alt="`${detailAct.title} · 照片 ${i + 1}`" role="button" tabindex="0" @click="previewImg = img.imageUrl" @keydown.enter.prevent="previewImg = img.imageUrl" />
                 </div>
               </div>
               <template v-if="detailAct.images.length > 1">
-                <button class="act-modal__nav act-modal__nav--prev" @click="carouselIdx = Math.max(0, carouselIdx - 1)" :disabled="carouselIdx === 0">‹</button>
-                <button class="act-modal__nav act-modal__nav--next" @click="carouselIdx = Math.min(detailAct.images.length - 1, carouselIdx + 1)" :disabled="carouselIdx === detailAct.images.length - 1">›</button>
+                <button class="act-modal__nav act-modal__nav--prev" aria-label="上一张活动照片" @click="carouselIdx = Math.max(0, carouselIdx - 1)" :disabled="carouselIdx === 0"><UiIcon name="chevron-left" :size="22" /></button>
+                <button class="act-modal__nav act-modal__nav--next" aria-label="下一张活动照片" @click="carouselIdx = Math.min(detailAct.images.length - 1, carouselIdx + 1)" :disabled="carouselIdx === detailAct.images.length - 1"><UiIcon name="chevron-right" :size="22" /></button>
                 <div class="act-modal__dots">
                   <span v-for="(_, i) in detailAct.images" :key="i" class="act-modal__dot" :class="{ active: i === carouselIdx }" @click="carouselIdx = i"></span>
                 </div>
@@ -113,7 +113,7 @@
             <!-- Detail Content -->
             <div class="act-modal__body">
               <div class="flex-between mb-2">
-                <h2 class="act-modal__title">{{ detailAct.title }}</h2>
+                <h2 id="activity-detail-title" class="act-modal__title">{{ detailAct.title }}</h2>
                 <span class="badge badge--primary">{{ detailAct.grade }}</span>
               </div>
               <div class="act-modal__info">
@@ -141,23 +141,29 @@
 
     <!-- Full Image Preview -->
     <Teleport to="body">
-      <div v-if="previewImg" class="act-preview-overlay" @click="previewImg = null">
-        <img :src="previewImg" class="act-preview-img" />
+      <div v-if="previewImg" ref="imageDialog" class="act-preview-overlay" role="dialog" aria-modal="true" aria-label="活动照片预览" tabindex="-1" @click.self="previewImg = null">
+        <button class="preview-close" aria-label="关闭照片预览" @click="previewImg = null">×</button>
+        <img :src="previewImg" class="act-preview-img" alt="活动照片大图" />
       </div>
     </Teleport>
   </div>
 </template>
 
 <script setup>
+import UiIcon from '@/components/UiIcon.vue'
 import PageHeader from '@/components/PageHeader.vue'
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import request from '@/utils/request'
+import { useDialog } from '@/utils/useDialog'
 
 const activities = ref([])
 const initialLoading = ref(true)
 const loadingMore = ref(false)
 const previewImg = ref(null)
 const detailAct = ref(null)
+const activityDialog = ref(null), imageDialog = ref(null)
+useDialog(computed(() => !!detailAct.value), activityDialog, () => { detailAct.value = null })
+useDialog(computed(() => !!previewImg.value), imageDialog, () => { previewImg.value = null })
 const carouselIdx = ref(0)
 const loadMoreRef = ref(null)
 
@@ -659,4 +665,9 @@ function formatTime(t) { return t ? new Date(t).toLocaleDateString('zh-CN') : ''
   .act-cards { grid-template-columns: 1fr; }
   .act-card__img-wrap { aspect-ratio: 16 / 9; }
 }
+</style>
+
+<style scoped>
+.act-modal-overlay { padding: 24px; }.act-modal { max-height: calc(100dvh - 48px); overscroll-behavior: contain; border: 1px solid var(--border-blue); border-radius: 18px; }.act-modal__title, .act-modal__content { overflow-wrap: anywhere; }.act-modal__title { padding-right: 22px; }.preview-close { position: absolute; right: max(18px, env(safe-area-inset-right)); top: max(18px, env(safe-area-inset-top)); width: 44px; height: 44px; font-size: 28px; border-radius: 50%; color: #fff; background: #ffffff26; z-index: 2; }.act-preview-img { object-fit: contain; max-height: calc(100dvh - 110px); }
+@media (max-width: 600px) { .act-modal-overlay { padding: 12px; }.act-modal { margin: 0; max-height: calc(100dvh - 24px); }.act-modal__body { padding: 20px; }.act-modal__title { font-size: 20px; }.act-modal__carousel { height: auto; aspect-ratio: 4/3; }.act-modal__slide img { height: 100%; object-fit: contain; }.act-modal__info { flex-wrap: wrap; }.act-modal__thumbs { padding-bottom: 6px; } }
 </style>

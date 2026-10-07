@@ -1,0 +1,188 @@
+{
+  "slug": "original-acm-007",
+  "title": "网格边框灯",
+  "difficulty": "EASY",
+  "tags": [
+    "条件判断",
+    "基础数学"
+  ],
+  "description": "一个矩形灯板有 r 行、c 列，每个格子一盏灯。只点亮最外侧的边框：第一行、最后一行、第一列、最后一列的灯。同一盏灯即使属于多条边也只能计数一次。当只有一行或一列时，该行或该列的所有灯都属于边框。请计算亮灯总数。",
+  "inputFormat": "一行两个整数 r、c。",
+  "outputFormat": "输出一个整数，表示亮灯总数。",
+  "constraints": "1 ≤ r,c ≤ 10^9。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "https://csuftsap.top/oj",
+  "sourceId": "ORIGINAL-ACM-007",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\n\nint main(void) {\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    // 读取输入并输出结果。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n\n        // 读取输入并输出结果。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # 读取输入并输出结果。\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n\n    // 读取输入并输出结果。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "3 4\n",
+      "expectedOutput": "10\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "1 5\n",
+      "expectedOutput": "5\n",
+      "sample": true
+    },
+    {
+      "name": "sample-3",
+      "input": "2 2\n",
+      "expectedOutput": "4\n",
+      "sample": true
+    },
+    {
+      "name": "one-cell",
+      "input": "1 1\n",
+      "expectedOutput": "1\n",
+      "sample": false
+    },
+    {
+      "name": "single-column",
+      "input": "5 1\n",
+      "expectedOutput": "5\n",
+      "sample": false
+    },
+    {
+      "name": "two-rows",
+      "input": "2 100\n",
+      "expectedOutput": "200\n",
+      "sample": false
+    },
+    {
+      "name": "two-columns",
+      "input": "100 2\n",
+      "expectedOutput": "200\n",
+      "sample": false
+    },
+    {
+      "name": "small-square",
+      "input": "3 3\n",
+      "expectedOutput": "8\n",
+      "sample": false
+    },
+    {
+      "name": "max-square",
+      "input": "1000000000 1000000000\n",
+      "expectedOutput": "3999999996\n",
+      "sample": false
+    },
+    {
+      "name": "max-single-row",
+      "input": "1 1000000000\n",
+      "expectedOutput": "1000000000\n",
+      "sample": false
+    },
+    {
+      "name": "random-01",
+      "input": "264581249 364387168\n",
+      "expectedOutput": "1257936830\n",
+      "sample": false
+    },
+    {
+      "name": "random-02",
+      "input": "834401101 559063465\n",
+      "expectedOutput": "2786929128\n",
+      "sample": false
+    },
+    {
+      "name": "random-03",
+      "input": "546832358 687224780\n",
+      "expectedOutput": "2468114272\n",
+      "sample": false
+    },
+    {
+      "name": "random-04",
+      "input": "646688905 589112609\n",
+      "expectedOutput": "2471603024\n",
+      "sample": false
+    },
+    {
+      "name": "random-05",
+      "input": "410838071 68169926\n",
+      "expectedOutput": "958015990\n",
+      "sample": false
+    },
+    {
+      "name": "random-06",
+      "input": "622021588 989675661\n",
+      "expectedOutput": "3223394494\n",
+      "sample": false
+    },
+    {
+      "name": "random-07",
+      "input": "765445938 288499456\n",
+      "expectedOutput": "2107890784\n",
+      "sample": false
+    },
+    {
+      "name": "random-08",
+      "input": "649519832 388118292\n",
+      "expectedOutput": "2075276244\n",
+      "sample": false
+    },
+    {
+      "name": "random-09",
+      "input": "873333984 491137533\n",
+      "expectedOutput": "2728943030\n",
+      "sample": false
+    },
+    {
+      "name": "random-10",
+      "input": "5959328 825764364\n",
+      "expectedOutput": "1663447380\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n\nint main(void) {\n    long long rows, columns;\n    scanf(\"%lld%lld\", &rows, &columns);\n    long long answer;\n    if (rows == 1 || columns == 1) {\n        answer = rows * columns;\n    } else {\n        answer = 2 * rows + 2 * columns - 4;\n    }\n    printf(\"%lld\\n\", answer);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\n#include <string>\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr);\n\n    long long rows, columns;\n    std::cin >> rows >> columns;\n    long long answer;\n    if (rows == 1 || columns == 1) {\n        answer = rows * columns;\n    } else {\n        answer = 2 * rows + 2 * columns - 4;\n    }\n    std::cout << answer << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n\n        long rows = in.nextLong();\n        long columns = in.nextLong();\n        long answer = rows == 1 || columns == 1 ? rows * columns : 2 * rows + 2 * columns - 4;\n        System.out.println(answer);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "rows, columns = map(int, input().split())\nanswer = rows * columns if rows == 1 or columns == 1 else 2 * rows + 2 * columns - 4\nprint(answer)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut words = input.split_whitespace();\n\n    let rows: i64 = words.next().unwrap().parse().unwrap();\n    let columns: i64 = words.next().unwrap().parse().unwrap();\n    let answer = if rows == 1 || columns == 1 {\n        rows * columns\n    } else {\n        2 * rows + 2 * columns - 4\n    };\n    println!(\"{}\", answer);\n}\n"
+    }
+  }
+}

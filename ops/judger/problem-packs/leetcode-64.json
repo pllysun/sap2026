@@ -1,0 +1,200 @@
+{
+  "slug": "leetcode-64",
+  "title": "最小路径和",
+  "difficulty": "MEDIUM",
+  "tags": [
+    "动态规划",
+    "矩阵"
+  ],
+  "description": "非负权值网格中，从左上角到右下角，只能向右或向下，求路径上所有格子的最小权值和。",
+  "inputFormat": "r c，随后 r 行，每行 c 个权值。",
+  "outputFormat": "输出答案；多元素结果按题目规定顺序以空格分隔。",
+  "constraints": "1 <= r,c <= 20；权值 0..1000。",
+  "sourcePlatform": "LeetCode",
+  "sourceUrl": "https://leetcode.com/problems/minimum-path-sum/",
+  "sourceId": "64",
+  "sourceNote": "自写教学改编题面；算法任务参考来源链接，输入输出和数据范围以本题为准。测试均为自行生成，未获取外站隐藏官方测试。",
+  "sourceAuthor": "原作者以来源页署名为准；本题面由 SAP OJ 题库整理组改写",
+  "sourceRetrievedAt": "2026-10-01",
+  "statementAdapted": true,
+  "sourceDifficulty": "MEDIUM",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nusing namespace std;\nint main() {\n    // Read input, solve, and print the result.\n    return 0;\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "java": {
+      "starterStdio": "import java.io.*;\nimport java.util.*;\nclass Main {\n    public static void main(String[] args) throws Exception {\n        // Read input, solve, and print the result.\n    }\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "python": {
+      "starterStdio": "import sys\n\n\ndef main():\n    # Read input, solve, and print the result.\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n",
+      "starterFunction": null,
+      "functionDriver": null
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    // Read input, solve, and print the result.\n}\n",
+      "starterFunction": null,
+      "functionDriver": null
+    }
+  },
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cols = 0, i = 0, j = 0, rows = 0, x = 0;\n    rows = read();\n    cols = read();\n    for (i = 0; i < rows; i += 1) {\n        for (j = 0; j < cols; j += 1) {\n            x = read();\n            if ((i == 0) && (j == 0)) {\n                a[j] = x;\n            } else {\n                if (i == 0) {\n                    a[j] = (a[(j - 1)] + x);\n                } else {\n                    if (j == 0) {\n                        a[j] = (a[j] + x);\n                    } else {\n                        a[j] = (mn(a[j], a[(j - 1)]) + x);\n                    }\n                }\n            }\n        }\n    }\n    emit(a[(cols - 1)]);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint mn(int a, int b) {\n    return a < b ? a : b;\n}\nint mx(int a, int b) {\n    return a > b ? a : b;\n}\nint read(void) {\n    int x = 0;\n    if (scanf(\"%d\", &x) != 1) return 0;\n    return x;\n}\nint readstr(int* a) {\n    char s[20001];\n    if (scanf(\"%20000s\", s) != 1) return 0;\n    if (strcmp(s, \"-\") == 0) return 0;\n    int n = (int)strlen(s);\n    for (int i = 0; i < n; i++) a[i] = (unsigned char)s[i];\n    return n;\n}\nvoid emit(int x) {\n    printf(\"%d \", x);\n}\nvoid emitstr(int* a, int n) {\n    if (n == 0) putchar('-');\n    for (int i = 0; i < n; i++) putchar(a[i]);\n    putchar(' ');\n}\nint main(void) {\n    static int a[20000];\n    static int b[20000];\n    static int d[20000];\n    static int e[20000];\n    int cols = 0, i = 0, j = 0, rows = 0, x = 0;\n    rows = read();\n    cols = read();\n    for (i = 0; i < rows; i += 1) {\n        for (j = 0; j < cols; j += 1) {\n            x = read();\n            if ((i == 0) && (j == 0)) {\n                a[j] = x;\n            } else {\n                if (i == 0) {\n                    a[j] = (a[(j - 1)] + x);\n                } else {\n                    if (j == 0) {\n                        a[j] = (a[j] + x);\n                    } else {\n                        a[j] = (mn(a[j], a[(j - 1)]) + x);\n                    }\n                }\n            }\n        }\n    }\n    emit(a[(cols - 1)]);\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.io.*;\nimport java.util.*;\nclass Main {\n    static String[] tokens;\n    static int cursor;\n    static int read() {\n        return Integer.parseInt(tokens[cursor++]);\n    }\n    static int readstr(int[] a) {\n        String s = tokens[cursor++];\n        if (s.equals(\"-\"))\n            return 0;\n        for (int i = 0; i < s.length(); i++) a[i] = s.charAt(i);\n        return s.length();\n    }\n    static int mn(int a, int b) {\n        return Math.min(a, b);\n    }\n    static int mx(int a, int b) {\n        return Math.max(a, b);\n    }\n    static void emit(int x) {\n        System.out.print(x + \" \");\n    }\n    static void emitstr(int[] a, int n) {\n        if (n == 0)\n            System.out.print(\"-\");\n        for (int i = 0; i < n; i++) System.out.print((char) a[i]);\n        System.out.print(\" \");\n    }\n    public static void main(String[] args) throws Exception {\n        tokens = new String(System.in.readAllBytes()).trim().split(\"\\\\s+\");\n        int[] a = new int[20000];\n        int[] b = new int[20000];\n        int[] d = new int[20000];\n        int[] e = new int[20000];\n        int cols = 0, i = 0, j = 0, rows = 0, x = 0;\n        rows = read();\n        cols = read();\n        for (i = 0; i < rows; i += 1) {\n            for (j = 0; j < cols; j += 1) {\n                x = read();\n                if ((i == 0) && (j == 0)) {\n                    a[j] = x;\n                } else {\n                    if (i == 0) {\n                        a[j] = (a[(j - 1)] + x);\n                    } else {\n                        if (j == 0) {\n                            a[j] = (a[j] + x);\n                        } else {\n                            a[j] = (mn(a[j], a[(j - 1)]) + x);\n                        }\n                    }\n                }\n            }\n        }\n        emit(a[(cols - 1)]);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n\n_tokens = iter(sys.stdin.read().split())\n\n\ndef read():\n    return int(next(_tokens))\n\n\ndef readstr(a):\n    s = next(_tokens)\n    if s == \"-\":\n        return 0\n    for i, c in enumerate(s):\n        a[i] = ord(c)\n    return len(s)\n\n\ndef emit(x):\n    print(x, end=\" \")\n\n\ndef emitstr(a, n):\n    print(\"\".join(chr(x) for x in a[:n]) if n else \"-\", end=\" \")\n\n\ndef mn(a, b):\n    return min(a, b)\n\n\ndef mx(a, b):\n    return max(a, b)\n\n\na = [0] * 20000\nb = [0] * 20000\nd = [0] * 20000\ne = [0] * 20000\ncols = i = j = rows = x = 0\nrows = read()\ncols = read()\nfor i in range(rows):\n    for j in range(cols):\n        x = read()\n        if (i == 0) and (j == 0):\n            a[j] = x\n        else:\n            if i == 0:\n                a[j] = a[(j - 1)] + x\n            else:\n                if j == 0:\n                    a[j] = a[j] + x\n                else:\n                    a[j] = mn(a[j], a[(j - 1)]) + x\nemit(a[(cols - 1)])\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn mn(a: i32, b: i32) -> i32 {\n    a.min(b)\n}\nfn mx(a: i32, b: i32) -> i32 {\n    a.max(b)\n}\nfn emit(x: i32) {\n    print!(\"{} \", x);\n}\nfn emitstr(a: &Vec<i32>, n: i32) {\n    if n == 0 {\n        print!(\"-\");\n    }\n    for i in 0..n {\n        print!(\"{}\", a[i as usize] as u8 as char);\n    }\n    print!(\" \");\n}\nstruct Reader {\n    t: Vec<String>,\n    p: usize,\n}\nimpl Reader {\n    fn new() -> Self {\n        let mut s = String::new();\n        io::stdin().read_to_string(&mut s).unwrap();\n        Self {\n            t: s.split_whitespace().map(String::from).collect(),\n            p: 0,\n        }\n    }\n    fn read(&mut self) -> i32 {\n        let x = self.t[self.p].parse().unwrap();\n        self.p += 1;\n        x\n    }\n    fn readstr(&mut self, a: &mut Vec<i32>) -> i32 {\n        let s = &self.t[self.p];\n        self.p += 1;\n        if s == \"-\" {\n            return 0;\n        }\n        for (i, c) in s.bytes().enumerate() {\n            a[i] = c as i32;\n        }\n        s.len() as i32\n    }\n}\nfn main() {\n    let mut reader = Reader::new();\n    let mut a = vec![0i32; 20000];\n    let mut b = vec![0i32; 20000];\n    let mut d = vec![0i32; 20000];\n    let mut e = vec![0i32; 20000];\n    let mut cols: i32 = 0;\n    let mut i: i32 = 0;\n    let mut j: i32 = 0;\n    let mut rows: i32 = 0;\n    let mut x: i32 = 0;\n    rows = reader.read();\n    cols = reader.read();\n    i = 0;\n    while i < rows {\n        j = 0;\n        while j < cols {\n            x = reader.read();\n            if ((i == 0) && (j == 0)) {\n                a[(j) as usize] = x;\n            } else {\n                if (i == 0) {\n                    a[(j) as usize] = (a[(j - 1) as usize] + x);\n                } else {\n                    if (j == 0) {\n                        a[(j) as usize] = (a[(j) as usize] + x);\n                    } else {\n                        a[(j) as usize] = (mn(a[(j) as usize], a[(j - 1) as usize]) + x);\n                    }\n                }\n            }\n            j += 1;\n        }\n        i += 1;\n    }\n    emit(a[(cols - 1) as usize]);\n}\n"
+    }
+  },
+  "cases": [
+    {
+      "name": "sample-1",
+      "input": "1 1\n29\n",
+      "expectedOutput": "29\n",
+      "sample": true
+    },
+    {
+      "name": "sample-2",
+      "input": "1 20\n814 383 10 940 818 137 941 417 535 771 943 892 259 644 840 134 455 216 387 482\n",
+      "expectedOutput": "11018\n",
+      "sample": true
+    },
+    {
+      "name": "boundary-random-3",
+      "input": "20 1\n683 8 219 199 584 662 262 514 460 430 39 334 94 705 742 1 306 989 676 45\n",
+      "expectedOutput": "7952\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-4",
+      "input": "20 20\n225 511 464 61 352 782 417 431 325 125 975 191 28 361 17 647 317 612 395 325 855 184 810 936 929 343 355 124 948 472 289 777 324 566 840 481 924 494 902 719 673 229 715 627 988 976 299 531 25 317 128 55 368 491 522 776 345 464 30 41 487 936 473 795 508 949 927 686 874 653 533 301 807 241 485 380 585 362 871 926 473 368 445 438 681 492 785 980 715 413 773 104 23 157 971 547 454 266 900 314 626 836 465 518 510 930 385 531 291 272 438 894 696 50 553 18 690 573 940 864 154 835 897 147 925 440 626 90 588 373 695 909 137 221 403 641 321 431 822 559 172 829 639 271 941 889 40 685 522 259 610 402 118 288 517 681 275 722 84 381 759 630 702 31 177 37 474 646 193 780 9 809 170 617 148 672 689 260 890 190 642 66 711 2 223 962 471 367 149 138 278 127 982 204 696 336 625 950 316 247 333 433 761 682 734 139 628 71 658 329 613 535 819 124 916 868 959 331 203 445 677 282 235 325 844 836 664 932 963 577 753 456 908 377 967 133 981 954 869 685 486 805 344 7 521 255 104 810 364 683 551 773 522 809 392 593 568 38 623 684 747 421 890 668 843 467 729 21 249 243 505 983 252 9 887 161 38 67 300 573 993 934 962 978 169 382 786 254 535 661 319 906 191 388 980 998 566 406 384 325 315 664 509 181 832 141 350 844 953 351 327 662 699 995 858 550 960 141 831 769 916 477 718 800 790 223 977 251 961 859 437 478 68 640 133 261 643 251 87 494 515 944 185 265 807 668 274 204 264 325 17 988 1000 935 87 666 886 90 350 277 36 861 561 107 979 372 927 597 369 234 727 779 594 363 746 459 19 343 695 841 711 512 879 710 358 792 941 97 672 107 672 91 875 485 419 552 908 457 367 795\n",
+      "expectedOutput": "11548\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-5",
+      "input": "4 6\n743 841 699 378 751 947 849 827 306 533 652 193 707 528 201 613 360 765 971 446 39 113 668 265\n",
+      "expectedOutput": "3875\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-6",
+      "input": "4 2\n166 682 504 160 63 792 850 664\n",
+      "expectedOutput": "2189\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-7",
+      "input": "3 1\n186 630 306\n",
+      "expectedOutput": "1122\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-8",
+      "input": "5 4\n83 52 798 409 658 281 82 588 355 234 695 603 417 406 507 815 833 457 431 931\n",
+      "expectedOutput": "2875\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-9",
+      "input": "1 5\n637 546 959 240 925\n",
+      "expectedOutput": "3307\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-10",
+      "input": "1 4\n855 643 683 27\n",
+      "expectedOutput": "2208\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-11",
+      "input": "1 2\n427 719\n",
+      "expectedOutput": "1146\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-12",
+      "input": "2 4\n954 367 377 83 431 543 480 895\n",
+      "expectedOutput": "2676\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-13",
+      "input": "3 3\n517 998 747 736 70 715 781 807 47\n",
+      "expectedOutput": "2085\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-14",
+      "input": "5 5\n800 580 381 652 604 73 481 426 271 798 824 910 850 546 440 440 447 921 221 437 807 320 444 135 239\n",
+      "expectedOutput": "3192\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-15",
+      "input": "3 6\n746 349 821 803 782 780 3 710 889 247 12 253 481 490 774 204 777 889\n",
+      "expectedOutput": "3749\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-16",
+      "input": "5 3\n363 138 713 319 879 482 665 643 700 537 454 383 212 480 788\n",
+      "expectedOutput": "3364\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-17",
+      "input": "5 2\n753 201 511 932 376 395 13 957 712 850\n",
+      "expectedOutput": "3215\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-18",
+      "input": "4 3\n302 939 977 885 174 169 504 134 872 278 75 203\n",
+      "expectedOutput": "1773\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-19",
+      "input": "6 1\n222 801 727 317 352 572\n",
+      "expectedOutput": "2991\n",
+      "sample": false
+    },
+    {
+      "name": "boundary-random-20",
+      "input": "1 5\n758 393 147 862 567\n",
+      "expectedOutput": "2727\n",
+      "sample": false
+    }
+  ],
+  "testProvenance": {
+    "kind": "SELF_GENERATED",
+    "seed": 20261001,
+    "generator": "corpus/build_corpus.py",
+    "officialHiddenTests": false,
+    "oracle": "Independent Python high-level/exhaustive oracle; small random cases plus hand-picked boundaries. Max-size cases use independent formulation where exhaustive enumeration is infeasible.",
+    "licensing": "Self-written educational adaptation; source links do not grant permission to republish original full statements."
+  }
+}

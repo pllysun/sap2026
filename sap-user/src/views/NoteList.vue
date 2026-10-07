@@ -43,7 +43,7 @@
           <span class="note-card__stat">📝 {{ formatWordCount(note.wordCount) }}</span>
           <span class="note-card__stat">⏱ {{ note.readMinutes }} 分钟</span>
           <span class="note-card__stat">👁 {{ note.viewCount }}</span>
-          <span class="note-card__stat">⬇ {{ note.downloadCount }}</span>
+          <span class="note-card__stat" :aria-label="`${note.downloadCount} 次下载`"><UiIcon name="file-save" :size="14" /> {{ note.downloadCount }}</span>
         </div>
 
         <!-- 游客遮罩 -->
@@ -55,19 +55,20 @@
 
     <!-- 分页 -->
     <div class="note-paging" v-if="totalPages > 1">
-      <button class="pagination__btn" :disabled="page <= 1" @click="page--; loadNotes()">‹</button>
+      <button class="pagination__btn" aria-label="上一页笔记" :disabled="page <= 1" @click="page--; loadNotes()"><UiIcon name="chevron-left" /></button>
       <button
         v-for="p in displayPages" :key="p"
         class="pagination__btn" :class="{ active: p === page }"
         @click="page = p; loadNotes()"
       >{{ p }}</button>
-      <button class="pagination__btn" :disabled="page >= totalPages" @click="page++; loadNotes()">›</button>
+      <button class="pagination__btn" aria-label="下一页笔记" :disabled="page >= totalPages" @click="page++; loadNotes()"><UiIcon name="chevron-right" /></button>
     </div>
   </div>
 </template>
 
 <script setup>
 import PageHeader from '@/components/PageHeader.vue'
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'

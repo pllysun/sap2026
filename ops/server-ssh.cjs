@@ -27,9 +27,21 @@ if (!key || !fs.existsSync(key)) {
   fs.writeFileSync(key, pem[0] + '\n', { mode: 0o600, flag: 'wx' })
 }
 const cleanup = () => { if (temporary) fs.rmSync(temporary, { recursive: true, force: true }) }
+const forwardIndex = process.argv.indexOf('--forward')
+const forward = forwardIndex < 0 ? null : process.argv[forwardIndex + 1]
+const reverseIndex = process.argv.indexOf('--reverse')
+const reverse = reverseIndex < 0 ? null : process.argv[reverseIndex + 1]
+if (forward && !/^\d{1,5}:127\.0\.0\.1:\d{1,5}$/.test(forward)) {
+  cleanup(); throw new Error('Forward must be LOCAL_PORT:127.0.0.1:REMOTE_PORT')
+}
+if (reverse && !/^\d{1,5}:127\.0\.0\.1:\d{1,5}$/.test(reverse)) {
+  cleanup(); throw new Error('Reverse must be REMOTE_PORT:127.0.0.1:LOCAL_PORT')
+}
 const child = spawn('ssh', ['-i', key, '-p', env.SAP_SERVER_PORT || '22',
   '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
   '-o', 'ConnectTimeout=15', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4',
+  ...(forward ? ['-o', 'ExitOnForwardFailure=yes', '-L', '127.0.0.1:' + forward] : []),
+  ...(reverse ? ['-o', 'ExitOnForwardFailure=yes', '-R', '127.0.0.1:' + reverse] : []),
   `${env.SAP_SERVER_USER}@${env.SAP_SERVER_HOST}`, command], { stdio: 'inherit' })
 child.on('error', error => { cleanup(); console.error(error.message); process.exitCode = 1 })
 child.on('exit', code => { cleanup(); process.exitCode = code ?? 1 })
