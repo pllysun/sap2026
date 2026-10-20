@@ -1,0 +1,233 @@
+{
+  "version": "1.1.1",
+  "date": "2026-10-14",
+  "platform": "linux/amd64",
+  "images": [
+    {
+      "image": "pllysun/lume:1.1.1",
+      "digest": "sha256:2dbf37ad61f063fa928c03ba1f5cc8a6d91683fb8e6317f9c0187ec59817aeb9",
+      "configDigest": "sha256:eeb6a23ef021fffec72579be7f793591a62087628f83bf99691f1c96a0e7e6ad",
+      "anonymousPullVerified": true,
+      "public": true,
+      "latestMatches": true,
+      "overviewPublished": true,
+      "compressedBytes": 1095896069
+    },
+    {
+      "image": "pllysun/lume-server:1.1.1",
+      "digest": "sha256:4072e8a23c73fe1d59bdcd23484e83f506e7620bd2fa58b9a1b7ce7db4dcda6c",
+      "configDigest": "sha256:0d95e3ddb606d0ae3c303710c862d29097720d1b6b5373c3321c16c6a4c738f1",
+      "anonymousPullVerified": true,
+      "public": true,
+      "latestMatches": true,
+      "overviewPublished": true,
+      "compressedBytes": 167916085
+    },
+    {
+      "image": "pllysun/lume-worker:1.1.1",
+      "digest": "sha256:4e4e3374779e347ff510eaed01147fed57050df08d7b32bcbf2353cf45e74c75",
+      "configDigest": "sha256:4575550beae43abab2ac83e3d062076f45e1224c5da777178e3b68d0a154862e",
+      "anonymousPullVerified": true,
+      "public": true,
+      "latestMatches": true,
+      "overviewPublished": true,
+      "compressedBytes": 972814547
+    }
+  ],
+  "changes": [
+    "登录与浏览器标题去除算法文案",
+    "题面四字段净化 Markdown 和代码高亮",
+    "核心函数五语言默认标准库",
+    "Python 预处理产物缓存与 future 兼容",
+    "CLI 精确 slug 分页查找"
+  ],
+  "tests": {
+    "backend": 135,
+    "userFrontend": 68,
+    "adminFrontend": 2,
+    "pythonTools": 7,
+    "nativeReferenceExecutions": 2415,
+    "nativeChecks": 26,
+    "browserChecks": 19,
+    "markdownPreviewChecks": 4,
+    "sapReadOnlyOnlineChecks": 5,
+    "sapBackend": 1000
+  },
+  "singleContainer": true,
+  "externalMysqlRequired": true,
+  "redisDependency": false,
+  "preinstalledProblems": false,
+  "sourceBuildIndependent": true,
+  "restartPersistence": {
+    "passed": true,
+    "mysqlSettingsAndProblemsPersisted": true,
+    "mysqlSessionPersisted": true,
+    "s3ArchivesPersisted": true,
+    "judgeHealthy": true
+  },
+  "nativeChecks": [
+    {
+      "check": "首次启动题库为空，五语言启用，没有预置题目",
+      "passed": true
+    },
+    {
+      "check": "合并版五语言标准输入输出三轮验证",
+      "passed": true,
+      "id": "1",
+      "status": "AC",
+      "passedCases": 615,
+      "totalCases": 615
+    },
+    {
+      "check": "用户权限、题面与题解隔离",
+      "passed": true
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "c",
+      "kind": "run",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "c",
+      "kind": "submit",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "cpp",
+      "kind": "run",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "cpp",
+      "kind": "submit",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "java",
+      "kind": "run",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "java",
+      "kind": "submit",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "python",
+      "kind": "run",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "python",
+      "kind": "submit",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "rust",
+      "kind": "run",
+      "status": "AC"
+    },
+    {
+      "check": "五语言用户运行",
+      "passed": true,
+      "language": "rust",
+      "kind": "submit",
+      "status": "AC"
+    },
+    {
+      "check": "三种错误实现被真实隐藏测试拒绝",
+      "passed": true
+    },
+    {
+      "check": "SSE 实时编译执行过程",
+      "passed": true,
+      "events": 8
+    },
+    {
+      "check": "RustFS 私有题包归档、完整下载与鉴权",
+      "passed": true,
+      "bytes": 8036
+    },
+    {
+      "check": "管理端业务设置即时生效",
+      "passed": true
+    },
+    {
+      "check": "五语言函数模式三轮验证",
+      "passed": true,
+      "id": "17",
+      "status": "AC",
+      "passedCases": 900,
+      "totalCases": 900
+    },
+    {
+      "check": "五语言无引包核心函数、三轮验证与 Python 类型标注",
+      "passed": true,
+      "id": "18",
+      "status": "AC",
+      "passedCases": 900,
+      "totalCases": 900
+    },
+    {
+      "check": "无引包核心函数实际提交",
+      "passed": true,
+      "language": "c",
+      "status": "AC"
+    },
+    {
+      "check": "无引包核心函数实际提交",
+      "passed": true,
+      "language": "cpp",
+      "status": "AC"
+    },
+    {
+      "check": "无引包核心函数实际提交",
+      "passed": true,
+      "language": "java",
+      "status": "AC"
+    },
+    {
+      "check": "无引包核心函数实际提交",
+      "passed": true,
+      "language": "python",
+      "status": "AC"
+    },
+    {
+      "check": "无引包核心函数实际提交",
+      "passed": true,
+      "language": "rust",
+      "status": "AC"
+    },
+    {
+      "check": "未来导入与既有显式引包兼容",
+      "passed": true,
+      "language": "python",
+      "status": "AC"
+    },
+    {
+      "check": "未来导入与既有显式引包兼容",
+      "passed": true,
+      "language": "rust",
+      "status": "AC"
+    }
+  ],
+  "sapSynchronizedVersion": "1.5.50"
+}

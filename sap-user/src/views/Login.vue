@@ -10,7 +10,7 @@
         <div class="auth-logo-wrap">
           <img src="/logo.png" alt="CSUFTSAP Logo" class="auth-logo" />
         </div>
-        <h1 class="auth-card__title mt-1">CSUFTSAP</h1>
+        <h1 class="auth-card__title mt-1">登录软件协会</h1>
         <p class="auth-card__subtitle">中南林业科技大学软件协会</p>
       </div>
 
@@ -18,12 +18,12 @@
 
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label class="form-label">学号</label>
-          <input v-model="form.studentId" type="text" class="input" placeholder="请输入学号" required />
+          <label for="login-studentId" class="form-label">学号</label>
+          <input autocomplete="username" id="login-studentId" v-model="form.studentId" type="text" class="input" placeholder="请输入学号" required />
         </div>
         <div class="form-group">
-          <label class="form-label">密码</label>
-          <input v-model="form.password" type="password" class="input" placeholder="请输入密码" required />
+          <label for="login-password" class="form-label">密码</label>
+          <input autocomplete="current-password" id="login-password" v-model="form.password" type="password" class="input" placeholder="请输入密码" required />
         </div>
         <button type="submit" class="btn btn--primary btn--full btn--pill" :disabled="loading">
           {{ loading ? '登录中…' : '立即登录' }}

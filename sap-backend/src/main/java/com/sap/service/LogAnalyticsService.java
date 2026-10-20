@@ -19,6 +19,7 @@ import java.security.MessageDigest;
 public class LogAnalyticsService {
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
+    @org.springframework.beans.factory.annotation.Autowired private ApiLogExclusionService exclusions;
     public LogAnalyticsService(JdbcTemplate jdbc, PlatformTransactionManager manager) {
         this.jdbc = jdbc;
         this.tx = new TransactionTemplate(manager);
@@ -39,7 +40,7 @@ public class LogAnalyticsService {
                 first_time DATETIME NOT NULL, last_time DATETIME NOT NULL
             )
             """);
-        // 独立新表，仅持久保存汇总；旧 log_stats（热力图）始终保留。
+        // 独立归档表保留全部历史；可过滤的热力图读取 sys_log_daily_endpoint，旧 log_stats 留作历史基线。
         ensureIndex("idx_log_archive_bucket", "bucket_time");
         ensureIndex("idx_log_archive_user", "user_id,bucket_time");
         ensureIndex("idx_log_archive_endpoint", "endpoint,bucket_time");
@@ -163,6 +164,8 @@ public class LogAnalyticsService {
         if (userId!=null) {where.append(" AND user_id=?");args.add(userId);}
         if (endpoint!=null && !endpoint.isBlank()) {where.append(" AND endpoint=?");args.add(endpoint);}
         if (method!=null && !method.isBlank()) {where.append(" AND http_method=?");args.add(method);}
+        var exclusion=exclusions.sql("endpoint","http_method");
+        where.append(exclusion.text());args.addAll(exclusion.args());
         String filtered=" FROM ("+base+") logs"+where;
         String query;
         if (dimension.equals("detail")) query="SELECT *"+filtered;

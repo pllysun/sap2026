@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "problemSlug": "original-sum-demo",
+  "problemRevision": 1,
+  "title": "两个整数的和",
+  "summary": "读取两个整数，用加法计算它们的和，并按约定格式输出。",
+  "sections": [
+    {
+      "key": "understand",
+      "title": "读懂题目",
+      "markdown": "输入给出两个整数 `a` 和 `b`，任务是输出它们的和。整数包括正整数、负整数和零，例如 `-3` 也属于合法输入。输入中的空格和换行是分隔信息的方式，不属于需要计算的内容。输出只需要一个整数，不要附加“答案是”等说明文字。例如输入 `3 5` 时，两个数相加得到 `8`，因此输出 `8`。"
+    },
+    {
+      "key": "approach",
+      "title": "解法思路",
+      "markdown": "先读取输入中的第一个整数，再读取第二个整数，将它们保存到两个变量中。变量可以理解为带名字的存储位置，后面的计算通过名字访问其中的值。随后使用加法运算符 `+` 计算两者的和，保存为 `sum`，最后输出。无论输入是正数、负数还是零，步骤都相同，所以不需要分情况讨论，也不需要循环遍历。"
+    },
+    {
+      "key": "walkthrough",
+      "title": "样例推演",
+      "markdown": "以输入 `3 5` 为例，按顺序执行下面三步：\n\n| 步骤 | 操作 | 当前结果 |\n| --- | --- | --- |\n| 1 | 读取两个整数 | `a = 3`，`b = 5` |\n| 2 | 计算 `a + b` | `sum = 8` |\n| 3 | 输出 `sum` | 标准输出为 `8` |\n\n如果输入 `-7 4`，第二步得到 `-3`，其他步骤不发生变化。"
+    },
+    {
+      "key": "steps",
+      "title": "实现步骤",
+      "markdown": "1. 从标准输入读取两个整数。C 使用 `scanf`，C++ 使用 `cin`，Java 使用 `Scanner`，Python 读取后按空白切分，Rust 通过 `split_whitespace` 获得各个数。\n2. 将两个输入值保存到 `a` 和 `b`。C/C++ 选用 `long long`，Java 选用 `long`，Rust 选用 `i64`，让输入和答案都处于类型范围内。\n3. 计算 `a + b`，把结果保存在答案变量中。\n4. 输出答案并换行；所有调试信息都应在提交前移除。"
+    },
+    {
+      "key": "correctness",
+      "title": "为什么正确",
+      "markdown": "第一步把题目给出的两个整数准确读入，因此 `a` 和 `b` 分别代表需要参与运算的两个值。第二步使用整数加法求出这两个值的和，与题目要求的运算完全一致。最后输出保存的结果，没有修改它，也没有增加无关信息。因此程序输出的整数正是题目所要求的答案。"
+    },
+    {
+      "key": "complexity",
+      "title": "复杂度",
+      "markdown": "题目始终只有两个整数，输入值的个数不会随数据规模增长。程序执行固定次数的读入、加法和输出，算法的时间复杂度为 `O(1)`，额外空间复杂度为 `O(1)`。这里的大 O 用来说明运算量随输入规模如何变化，而不是某台计算机的具体耗时。Python 和 Rust 的示例会暂存输入文本；在这道题固定格式和固定数值范围下，输入长度有界。"
+    },
+    {
+      "key": "pitfalls",
+      "title": "边界与常见错误",
+      "markdown": "- 只输出结果，不要输出交互式提示，例如“请输入两个数”。判题机会自动把输入交给程序。\n- 不要将数字当成字符串拼接。输入 `3 5` 的答案是 `8`，不是 `35`。\n- 输入允许负数和零，不能用只适用于正数的读取或判断方式。\n- 类型范围需要覆盖输入和答案。使用这里的 64 位整数类型，可以避免以后扩大输入范围时出现溢出。\n- Java 完整程序的公开类名必须为 `Main`，这与平台编译入口相匹配。"
+    },
+    {
+      "key": "review",
+      "title": "复盘练习",
+      "markdown": "这道题的核心流程是读取输入、计算结果、按约定输出。掌握它以后，可以尝试将中间的加法换成其他合法运算，但仍要注意输出格式和数值范围。\n\n1. 输入 `0 -9` 应输出什么？答案是 `-9`。\n2. 输入 `1000000000 1000000000` 应输出什么？答案是 `2000000000`。先手算，再比较程序输出。"
+    }
+  ],
+  "codes": {
+    "STDIO": {
+      "c": "#include <stdio.h>\nint main(void) {\n    // 使用 long long，统一承载读入的整数及其和。\n    long long a, b;\n    if (scanf(\"%lld %lld\", &a, &b) != 2) return 0;\n    // 两个有符号整数直接相加，负数和零无需特殊判断。\n    long long sum = a + b;\n    // 输出整数并换行，不附加说明文字。\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n",
+      "cpp": "#include <iostream>\nint main() {\n    // 用 long long 读取整数，预留足够的取值范围。\n    long long a, b;\n    if (!(std::cin >> a >> b)) return 0;\n    // 加法对正数、负数和零都遵循同一条规则。\n    long long sum = a + b;\n    // 按题目协议只输出答案和一个换行。\n    std::cout << sum << '\\n';\n    return 0;\n}\n",
+      "java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        // Scanner 按空白分隔读取输入，换行和空格都可作为分隔符。\n        Scanner input = new Scanner(System.in);\n        long a = input.nextLong();\n        long b = input.nextLong();\n        // long 可承载输入值及它们的和，避免类型范围造成误判。\n        long sum = a + b;\n        // 标准输出中只放答案，println 自动追加换行。\n        System.out.println(sum);\n    }\n}\n",
+      "python": "import sys\n# 按空白切分标准输入，所以末尾换行不会影响读取。\nvalues = sys.stdin.buffer.read().split()\na, b = map(int, values)\n# Python 整数支持负数；这里直接计算两个整数的和。\nsum_value = a + b\n# print 自动换行，不输出提示信息。\nprint(sum_value)\n",
+      "rust": "use std::io::{self, Read};\nfn main() {\n    // 一次读取输入，并按空白获取两个整数。\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut values = input.split_whitespace();\n    let a: i64 = values.next().unwrap().parse().unwrap();\n    let b: i64 = values.next().unwrap().parse().unwrap();\n    // i64 保留正负号和足够的取值范围。\n    let sum = a + b;\n    // 只输出结果，println! 自动追加换行。\n    println!(\"{}\", sum);\n}\n"
+    }
+  }
+}

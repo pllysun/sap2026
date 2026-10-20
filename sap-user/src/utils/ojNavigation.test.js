@@ -21,3 +21,9 @@ test('malformed query arrays, invalid modes, and page numbers produce usable fil
   assert.equal(readCatalogQuery({ page: 'NaN' }).page, 1)
   assert.equal(readCatalogQuery({ page: '3.5' }).page, 3)
 })
+
+test('learning routes survive a workspace round trip without accepting arbitrary destinations',()=>{
+  assert.equal(catalogReturn('/oj/learning?tab=plan&node=math_basic&token=private'),'/oj/learning?tab=plan&node=math_basic')
+  assert.equal(catalogReturn('/oj/learning?tab=evil&node=https://elsewhere.invalid'),'/oj/learning')
+  for(const path of ['/oj/learning/evil','/oj/learning\\evil','//oj/learning'])assert.equal(catalogReturn(path),'/oj')
+})

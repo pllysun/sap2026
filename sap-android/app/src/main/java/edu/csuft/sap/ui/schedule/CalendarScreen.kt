@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edu.csuft.sap.data.schedule.*
+import edu.csuft.sap.ui.common.ScrollSheet
 import edu.csuft.sap.ui.icons.AppIcons
 import java.time.LocalDate
 import java.time.YearMonth
@@ -31,6 +32,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun CalendarScreen(modifier: Modifier = Modifier, vm: ScheduleViewModel = viewModel()) {
     val state by vm.state.collectAsState()
+    ScheduleUsageEffect(state)
     CalendarContent(state, modifier)
 }
 
@@ -203,8 +205,7 @@ internal fun CalendarContent(state: ScheduleViewModel.UiState, modifier: Modifie
 private fun CalendarCourseDetails(group: CourseGroup, date: LocalDate, onDismiss: () -> Unit) {
     val course = group.first
     val colors = MaterialTheme.colorScheme
-    ModalBottomSheet(onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ScrollSheet(onDismissRequest = onDismiss) {
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 560.dp).navigationBarsPadding(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {

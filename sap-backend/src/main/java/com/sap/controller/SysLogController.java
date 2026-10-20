@@ -16,6 +16,18 @@ public class SysLogController {
     private SysLogService sysLogService;
 
     @Autowired private com.sap.service.LogAnalyticsService analytics;
+    @Autowired private com.sap.service.ApiLogExclusionService exclusions;
+
+    @GetMapping("/exclusions")
+    @SaCheckRole(value={"0","1","2"},mode=SaMode.OR)
+    public Result<?> exclusions(){return Result.ok(java.util.Map.of("rules",exclusions.rules(),"canEdit",cn.dev33.satoken.stp.StpUtil.hasRole("0")||cn.dev33.satoken.stp.StpUtil.hasRole("1")));}
+
+    @PutMapping("/exclusions")
+    @OperationLog("更新接口日志过滤规则")
+    @SaCheckRole(value={"0","1"},mode=SaMode.OR)
+    public Result<?> saveExclusions(@RequestBody java.util.List<com.sap.service.ApiLogExclusionService.Rule> rules) {
+        return Result.ok(exclusions.replace(rules));
+    }
 
     @GetMapping("/explore")
     @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)

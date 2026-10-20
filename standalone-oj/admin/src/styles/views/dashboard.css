@@ -1,0 +1,136 @@
+/* DashboardView 样式 */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+/* 历届成员图表 */
+.chart-card {
+  margin-bottom: 28px;
+}
+
+.grade-chart {
+  width: 100%;
+  height: 300px;
+}
+
+.chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.stat-card {
+  background: var(--zen-card);
+  border: 1px solid var(--zen-border-light);
+  border-radius: var(--zen-radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: var(--zen-transition);
+  cursor: default;
+}
+.stat-card:hover {
+  box-shadow: var(--zen-shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--zen-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.section-title {
+  font-family: var(--zen-font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--zen-text);
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--zen-border-light);
+}
+
+.finance-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.fin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fin-label {
+  font-size: 14px;
+  color: var(--zen-text-secondary);
+}
+.fin-value {
+  font-family: var(--zen-font-serif);
+  font-size: 18px;
+  font-weight: 500;
+}
+.fin-value.income { color: var(--zen-success); }
+.fin-value.expense { color: var(--zen-danger); }
+.fin-value.balance { color: var(--zen-accent); }
+.fin-divider {
+  height: 1px;
+  background: var(--zen-border-light);
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--zen-border-light);
+  border-radius: var(--zen-radius-md);
+  text-decoration: none;
+  color: var(--zen-text-secondary);
+  font-size: 13px;
+  transition: var(--zen-transition);
+  letter-spacing: 1px;
+}
+.action-btn:hover {
+  border-color: var(--zen-accent);
+  color: var(--zen-accent);
+  background: var(--zen-accent-bg);
+}
+
+/* 年份切换 */
+.dashboard .scope-switcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--zen-bg-warm, #faf9f7);
+  border-radius: 10px;
+  border: 1px solid var(--zen-border-light, #eee);
+}
+.dashboard .scope-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--zen-text, #2d2a24);
+}

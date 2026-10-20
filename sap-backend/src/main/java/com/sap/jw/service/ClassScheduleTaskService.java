@@ -96,10 +96,10 @@ public class ClassScheduleTaskService {
         try { worker.execute(() -> {
             try {
                 var session = auth.continueWithMfa(entry.cas, code.trim());
-                sessions.cache(task.credentialOwner, entry.account, session);
                 pending.remove(challengeId);
                 synchronized (this) { task.challengeId = null; }
-                collect(task, null);
+                schedules.pullWithSession(task.actorId, entry.account, task.term, "MANUAL", null, task.batchId, session);
+                complete(task);
             } catch (Exception error) {
                 synchronized (this) {
                     if (pending.get(challengeId) != null) {

@@ -19,7 +19,7 @@
             </option>
           </select>
         </div>
-        <button class="btn btn--primary btn--sm btn--pill" @click="onSelect">🔄 刷新</button>
+        <button class="btn btn--primary btn--sm btn--pill" @click="onSelect"><UiIcon name="refresh" :size="18" /> 刷新</button>
       </div>
 
       <!-- Current Activity Card -->
@@ -32,7 +32,7 @@
           </div>
         </div>
 
-        <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">⏱ 成绩时间线</div>
+        <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><UiIcon name="clock" :size="18" /> 成绩时间线</div>
 
         <div v-if="current.scores.length > 0">
           <div v-for="(s, idx) in current.scores" :key="idx"
@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import request from '@/utils/request'
 

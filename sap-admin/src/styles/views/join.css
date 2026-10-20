@@ -48,6 +48,18 @@
   min-width: 160px;
 }
 
+.join-page .join-control-description { color: var(--zen-text-muted); font-size: 12px; margin-top: 6px; max-width: 320px; line-height: 1.8; }
+.join-page .join-readiness { border-top: 1px solid var(--zen-border, #e5e7eb); margin-top: 18px; padding-top: 16px; font-size: 12px; line-height: 1.9; color: var(--zen-text-secondary); }
+.join-page .join-readiness__summary, .join-page .join-manager-heading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.join-page .join-readiness__summary strong { display: inline-flex; align-items: center; gap: 5px; color: var(--zen-text); }
+.join-page .join-readiness ul { margin: 10px 0; padding-left: 18px; color: #9b6e2b; }
+.join-page .join-readiness p { margin-top: 8px; }
+.join-page .join-manager-heading { justify-content: space-between; margin-bottom: 14px; }
+.join-page .join-review-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px dashed var(--zen-border, #e5e7eb); }
+.join-page .review-card-row > span:last-child { min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.join-approval-confirm { font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.join-approval-confirm__notice { color: #92703c; margin-bottom: 10px; }
+
 /* 负责人双列卡片 */
 .join-page .managers-layout {
   display: flex;

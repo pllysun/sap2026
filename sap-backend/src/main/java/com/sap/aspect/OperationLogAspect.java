@@ -1,14 +1,10 @@
 package com.sap.aspect;
 
 import com.sap.annotation.OperationLog;
-import com.sap.config.ApiRequestPolicy;
-import com.sap.entity.LogStats;
 import com.sap.entity.SysLog;
 import com.sap.entity.User;
-import com.sap.mapper.LogStatsMapper;
 import com.sap.mapper.SysLogMapper;
 import com.sap.mapper.UserMapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.dev33.satoken.stp.StpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -20,7 +16,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Objects;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Aspect
@@ -31,14 +26,16 @@ public class OperationLogAspect {
     @Autowired
     private SysLogMapper sysLogMapper;
     @Autowired
-    private LogStatsMapper logStatsMapper;
+    private com.sap.service.LogDailyStatsService dailyStats;
+    @Autowired
+    private com.sap.service.ApiLogExclusionService exclusions;
     @Autowired
     private UserMapper userMapper;
 
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs
-                && ApiRequestPolicy.isHealthCheck(attrs.getRequest())) return point.proceed();
+                && exclusions.excludes(attrs.getRequest())) return point.proceed();
         long start = System.currentTimeMillis();
         Long actor = null;
         try { if (StpUtil.isLogin()) actor = StpUtil.getLoginIdAsLong(); } catch (Exception ignored) { }
@@ -72,7 +69,7 @@ public class OperationLogAspect {
         saveRequest(attrs.getRequest(),annotation,duration,failure instanceof com.sap.common.BusinessException e ? e.getCode() : failure != null ? 500 : result instanceof com.sap.common.Result<?> r ? r.getCode() : 200,actor);
     }
     private void saveRequest(HttpServletRequest request,OperationLog annotation,long duration,int code,Long actor) {
-        if(ApiRequestPolicy.isHealthCheck(request))return;
+        if(exclusions.excludes(request))return;
         if(Boolean.TRUE.equals(request.getAttribute(LOGGED)))return;
 
         String httpMethod = request.getMethod();
@@ -112,29 +109,7 @@ public class OperationLogAspect {
         sysLogMapper.insert(log);
         request.setAttribute(LOGGED,true);
 
-        // 更新统计表
-        updateStats(operationType, httpMethod);
-    }
-
-    private void updateStats(String operationType, String httpMethod) {
-        LocalDate today = LocalDate.now();
-        LogStats existing = logStatsMapper.selectOne(
-                new LambdaQueryWrapper<LogStats>()
-                        .eq(LogStats::getStatDate, today)
-                        .eq(LogStats::getOperationType, operationType)
-                        .eq(LogStats::getHttpMethod, httpMethod)
-                        .orderByAsc(LogStats::getId).last("LIMIT 1")
-        );
-        if (existing != null) {
-            logStatsMapper.increment(existing.getId());
-        } else {
-            LogStats stats = new LogStats();
-            stats.setStatDate(today);
-            stats.setOperationType(operationType);
-            stats.setHttpMethod(httpMethod);
-            stats.setCount(1);
-            logStatsMapper.insert(stats);
-        }
+        dailyStats.record(log);
     }
 
     private String resolveOperationType(String httpMethod) {
@@ -147,20 +122,6 @@ public class OperationLogAspect {
     }
 
     private String getIpAddr(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // 多级代理取第一个
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
+        return com.sap.util.IpUtil.clientIp(request);
     }
 }

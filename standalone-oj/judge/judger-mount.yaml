@@ -1,0 +1,38 @@
+workDir: /w
+uid: 1000
+gid: 1000
+proc: true
+procrw: false
+mount:
+  - {type: bind, source: /opt/judger/rootfs/usr, target: /usr, readonly: true}
+  - {type: bind, source: /opt/judger/rootfs/opt, target: /opt, readonly: true}
+  - {type: bind, source: /opt/judger/rootfs/etc/ld.so.cache, target: /etc/ld.so.cache, readonly: true}
+  - {type: bind, source: /opt/judger/rootfs/etc/alternatives, target: /etc/alternatives, readonly: true}
+  - {type: bind, source: /dev/null, target: /dev/null}
+  - {type: bind, source: /dev/zero, target: /dev/zero}
+  - {type: bind, source: /dev/full, target: /dev/full}
+  - {type: bind, source: /dev/random, target: /dev/random}
+  - {type: bind, source: /dev/urandom, target: /dev/urandom}
+  - {type: tmpfs, target: /w, data: "size=64m,nr_inodes=8k"}
+  - {type: tmpfs, target: /tmp, data: "size=64m,nr_inodes=8k"}
+symLink:
+  - {linkPath: /bin, target: /usr/bin}
+  - {linkPath: /sbin, target: /usr/sbin}
+  - {linkPath: /lib, target: /usr/lib}
+  - {linkPath: /lib64, target: /usr/lib64}
+  - {linkPath: /dev/fd, target: /proc/self/fd}
+  - {linkPath: /dev/stdin, target: /proc/self/fd/0}
+  - {linkPath: /dev/stdout, target: /proc/self/fd/1}
+  - {linkPath: /dev/stderr, target: /proc/self/fd/2}
+maskPath:
+  - /sys/firmware
+  - /sys/devices/virtual/powercap
+  - /proc/acpi
+  - /proc/asound
+  - /proc/kcore
+  - /proc/keys
+  - /proc/latency_stats
+  - /proc/timer_list
+  - /proc/timer_stats
+  - /proc/sched_debug
+  - /proc/scsi

@@ -136,3 +136,10 @@
   .app-first-screen .floating-one { left: -3px; top: 55px; }
   .app-first-screen .floating-two { right: -3px; bottom: 45px; }
 }
+
+/* This scene already scales as a whole; keep its child controls on the same design canvas. */
+.app-first-screen .app-back, .app-first-screen .app-page-brand { font-size: 12px; }
+.app-first-screen .app-hero-copy :deep(.app-download-copy strong) { font-size: 13px; }
+.app-first-screen .app-hero-copy :deep(.app-download-copy span),
+.app-first-screen .app-hero-copy :deep(.app-download-button),
+.app-first-screen .app-hero-copy :deep(.app-download-error) { font-size: 12px; }

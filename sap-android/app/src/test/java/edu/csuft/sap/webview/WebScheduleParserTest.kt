@@ -7,6 +7,32 @@ import org.junit.Test
 
 /** WebScheduleParser 端上解析逻辑单测（用真实格式的强智课表页 HTML 片段）。 */
 class WebScheduleParserTest {
+    @Test fun longCoursesMergedCellsAndRealSchoolParityRemainIndependent() {
+        val html=javaClass.getResourceAsStream("/jw/schedule-long-and-parity.html")!!.bufferedReader().use { it.readText() }
+        val courses=WebScheduleParser.parse(html)!!.courses
+        assertEquals(6,courses.size)
+        val lab=courses.first { it.name=="连续实验课" }
+        assertEquals(6,lab.day);assertEquals("6-7周",lab.weeksRaw)
+        assertEquals((1..8).toList(),lab.nodes)
+        assertEquals(7,courses.first { it.name=="周日课程" }.day)
+        assertEquals(listOf(5,6,7),courses.first { it.name=="三节实验课" }.nodes)
+        assertEquals(6,courses.first { it.name=="晚间课程" }.day)
+        assertEquals(listOf(9,10),courses.first { it.name=="晚间课程" }.nodes)
+        assertEquals(listOf(1,3,5,7),edu.csuft.sap.data.schedule.WeekUtil.parseWeeks(courses.first { it.name=="单周课程" }.weeksRaw))
+        assertEquals(listOf(2,4,6,8),edu.csuft.sap.data.schedule.WeekUtil.parseWeeks(courses.first { it.name=="双周课程" }.weeksRaw))
+    }
+
+    @Test fun modernTimeRetainsOddEvenWeeksThroughImport() {
+        for (weeks in listOf("1-16周（单周）","2-16(双周)","单周1-16周","1-8、10-16周[双]")) {
+            val html="""<table class="qz-weeklyTable"><tr><td class="qz-weeklyTable-label"><div class="index-title">第1,2节</div></td><td><div class="courselists-item">
+                <div class="qz-hasCourse-title">单双周测试课</div><p class="qz-hasCourse-detaillists">老师:老师;时间:$weeks[1-2节];地点:测试教室</p>
+                </div></td></tr></table>"""
+            val result=WebScheduleParser.parse(html)
+            assertNotNull(result);assertEquals(weeks,result!!.courses.single().weeksRaw)
+            val parsed=edu.csuft.sap.data.schedule.WeekUtil.parseWeeks(result.courses.single().weeksRaw)
+            assertTrue(parsed.isNotEmpty());assertTrue(parsed.all { it%2 == if(weeks.contains("单")) 1 else 0 })
+        }
+    }
 
     private val html = """
         <html><body>

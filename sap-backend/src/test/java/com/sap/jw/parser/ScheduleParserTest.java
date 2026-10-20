@@ -6,6 +6,44 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ScheduleParserTest {
+    @Test void preservesActualPeriodsAndWeekdaysAcrossMergedCells() throws Exception {
+        String html;
+        try(var input=getClass().getResourceAsStream("/jw/schedule-long-and-parity.html")) {
+            assertNotNull(input);html=new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+        }
+        var courses=new ScheduleParser().parse(html).getCourses();
+        assertEquals(6,courses.size());
+        var lab=courses.stream().filter(c->c.getName().equals("连续实验课")).findFirst().orElseThrow();
+        assertEquals(6,lab.getDay());assertEquals("6-7周",lab.getWeeks());
+        assertEquals(java.util.stream.IntStream.rangeClosed(1,8).boxed().toList(),lab.getNodes());
+        assertEquals("第1-8节",lab.getSection());assertEquals(1,lab.getSectionIndex());
+        assertEquals(7,courses.stream().filter(c->c.getName().equals("周日课程")).findFirst().orElseThrow().getDay());
+        assertEquals(java.util.List.of(5,6,7),courses.stream().filter(c->c.getName().equals("三节实验课")).findFirst().orElseThrow().getNodes());
+        var evening=courses.stream().filter(c->c.getName().equals("晚间课程")).findFirst().orElseThrow();
+        assertEquals(6,evening.getDay());assertEquals(java.util.List.of(9,10),evening.getNodes());
+        assertEquals("1-8单周",courses.get(0).getWeeks());assertEquals("1-8双周",courses.get(1).getWeeks());
+    }
+
+    @Test void parsesActualSectionListsInJsonAndLegacyTimeFields() {
+        var parser=new ScheduleParser();
+        var json=parser.parse("[{\"kcmc\":\"实验\",\"skxq\":6,\"jcdm\":\"1-8\",\"zc\":\"6-7周\"}]");
+        assertEquals(java.util.stream.IntStream.rangeClosed(1,8).boxed().toList(),json.getCourses().get(0).getNodes());
+        var old=parser.parse("<table id='kbtable'><tr><th>第1节</th><td><div class='kbcontent'>实验<br><font title='周次'>6-7周[1-8节]</font></div></td></tr></table>");
+        assertEquals("6-7周",old.getCourses().get(0).getWeeks());
+        assertEquals(java.util.stream.IntStream.rangeClosed(1,8).boxed().toList(),old.getCourses().get(0).getNodes());
+        var defaultRow=parser.parse("<table id='kbtable'><tr><th>第1节</th><td><div class='kbcontent'>旧课<br><font title='周次'>1-8周</font></div></td></tr></table>");
+        assertEquals(java.util.List.of(1,2),defaultRow.getCourses().get(0).getNodes());
+    }
+
+    @Test void modernTimeFieldRetainsOddEvenWeekMarkers() {
+        for(String weeks:java.util.List.of("1-16周（单周）","2-16(双周)","单周1-16周","1-8、10-16周[双]")) {
+            String html="<table class='qz-weeklyTable'><tr><td class='qz-weeklyTable-label'><div class='index-title'>第1,2节</div></td><td><div class='courselists-item'>"
+                    +"<div class='qz-hasCourse-title'>单双周测试课</div><p class='qz-hasCourse-detaillists'>老师:老师;时间:"
+                    +weeks+"[1-2节];地点:测试教室</p></div></td></tr></table>";
+            var result=new ScheduleParser().parse(html);
+            assertEquals(1,result.getCourses().size());assertEquals(weeks,result.getCourses().get(0).getWeeks());
+        }
+    }
 
     @Test
     void supportsAndParsesLegacyKbtable() {

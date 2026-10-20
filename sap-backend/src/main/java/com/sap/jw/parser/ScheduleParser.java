@@ -1,6 +1,7 @@
 package com.sap.jw.parser;
 
 import com.sap.jw.vo.CourseVO;
+import com.sap.jw.util.CourseSections;
 import com.sap.jw.vo.RemarkVO;
 import com.sap.jw.vo.ScheduleVO;
 import com.sap.jw.vo.TermVO;
@@ -87,6 +88,7 @@ public class ScheduleParser {
         }
         vo.setWeekdays(weekdays);
 
+        Map<Element, Integer> columns = tableColumns(table);
         int sectionIndex = 0;
         for (Element row : table.select("tr")) {
             Element th = row.selectFirst("th");
@@ -96,7 +98,7 @@ public class ScheduleParser {
             }
             // 新版把表头也渲染成 td；不要把“周一/周二…”这一行当成第 1 节。
             if (isWeekdayHeaderRow(row)) continue;
-            Elements dayCells = row.select("td");
+            Elements dayCells = new Elements(row.children().stream().filter(e -> e.tagName().equals("td")).toList());
             if (dayCells.isEmpty()) continue; // 表头行
             sectionIndex++;
             boolean modernLabelCell = !dayCells.isEmpty()
@@ -107,11 +109,11 @@ public class ScheduleParser {
 
             // 新版 qz-weeklyTable 的第一格是节次标签，后面才是周一至周日；
             // 旧版表格则以 th 作为节次，不要改变旧版的索引。
-            int dayOffset = modernLabelCell ? 1 : 0;
+            int labelOffset = modernLabelCell || th != null ? 1 : 0;
             int courseSectionIndex = modernLabelCell ? parseSectionIndex(section) : sectionIndex;
-            for (int i = dayOffset; i < dayCells.size() && i < dayOffset + 7; i++) {
-                Element td = dayCells.get(i);
-                int day = i - dayOffset + 1;
+            for (Element td : dayCells) {
+                int day = columns.getOrDefault(td, -1) - labelOffset + 1;
+                if (day < 1 || day > 7) continue;
                 Elements blocks = new Elements();
                 for (Element candidate : td.select("div, [data-kbcontent]")) {
                     if (candidate.hasAttr("data-kbcontent") || hasClassContaining(candidate, "kbcontent")) {
@@ -129,9 +131,11 @@ public class ScheduleParser {
                         if (c == null || c.getName() == null || c.getName().isBlank()) continue;
                         c.setDay(day);
                         c.setDayName(day <= weekdays.size() ? weekdays.get(day - 1) : "");
-                        c.setSection(section);
+                        if (c.getSection() == null) c.setSection(section);
+                        if (c.getNodes() == null || c.getNodes().isEmpty())
+                            c.setNodes(CourseSections.fromRow(section, courseSectionIndex));
                         // 新版页面包含“午休”等非节次行，不能用物理行号作为大节索引。
-                        c.setSectionIndex(courseSectionIndex > 0 ? courseSectionIndex : sectionIndex);
+                        c.setSectionIndex(c.getNodes().isEmpty() ? Math.max(1, courseSectionIndex) : (c.getNodes().get(0) + 1) / 2);
                         vo.getCourses().add(c);
                     }
                     continue;
@@ -147,8 +151,10 @@ public class ScheduleParser {
                         if (c == null || c.getName() == null || c.getName().isBlank()) continue;
                         c.setDay(day);
                         c.setDayName(day <= weekdays.size() ? weekdays.get(day - 1) : "");
-                        c.setSection(section);
-                        c.setSectionIndex(sectionIndex);
+                        if (c.getSection() == null) c.setSection(section);
+                        if (c.getNodes() == null || c.getNodes().isEmpty())
+                            c.setNodes(CourseSections.fromRow(section, courseSectionIndex));
+                        c.setSectionIndex(c.getNodes().isEmpty() ? Math.max(1, courseSectionIndex) : (c.getNodes().get(0) + 1) / 2);
                         vo.getCourses().add(c);
                     }
                 }
@@ -177,13 +183,66 @@ public class ScheduleParser {
         String details = clean(item.select(".qz-hasCourse-detaillists, .course-detail, [class*=detail]").text());
         if (details.isBlank()) details = clean(item.text());
         c.setTeacher(labeled(details, "教师", "老师", "任课教师"));
-        c.setWeeks(labeled(details, "周次", "上课周次"));
+        // “时间”字段会包含单双周及节次，不能只截取“1-16周”而丢掉后缀。
+        String time = labeled(details, "周次", "上课周次", "时间", "上课时间");
+        c.setWeeks(courseWeeks(time));
+        setTimeSections(c, time);
         c.setRoom(labeled(details, "地点", "教室", "上课地点"));
         if (c.getWeeks() == null || c.getWeeks().isBlank()) {
-            Matcher weeks = Pattern.compile("\\d+(?:[\\-,，、]\\d+)*周").matcher(details);
+            Matcher weeks = Pattern.compile("(?:[（(\\[]?[单双]周?[）)\\]]?\\s*)?\\d+(?:[\\-－—–~～至,，、]\\d+)*\\s*(?:周\\s*(?:[（(\\[]?[单双]周?[）)\\]]?)?|[（(\\[][单双]?周?[）)\\]])").matcher(details);
             if (weeks.find()) c.setWeeks(weeks.group());
         }
         return c;
+    }
+
+    /** 时间字段中的小节优先于课程块所在行，不能把 [1-8节] 缩为第一行的 [1-2节]。 */
+    private static void setTimeSections(CourseVO course, String time) {
+        if (time == null) return;
+        Matcher matcher = Pattern.compile("[\\[【（(]([^\\]】）)]*节)[\\]】）)]").matcher(time);
+        if (matcher.find()) {
+            var nodes = CourseSections.parse(matcher.group(1));
+            if (!nodes.isEmpty()) {
+                course.setNodes(nodes);
+                course.setSection(matcher.group(1).startsWith("第") ? matcher.group(1) : "第" + matcher.group(1));
+            }
+        }
+    }
+
+    /** 按真实表格列处理 rowspan/colspan，长课下方的周日课程不能向周六错位。 */
+    private static Map<Element, Integer> tableColumns(Element table) {
+        Map<Element, Integer> columns = new java.util.IdentityHashMap<>();
+        int[] occupiedUntil = new int[32];
+        int rowIndex = 0;
+        for (Element row : table.select("tr")) {
+            int column = 0;
+            for (Element cell : row.children()) {
+                if (!cell.tagName().equals("td") && !cell.tagName().equals("th")) continue;
+                int width = span(cell, "colspan"), height = span(cell, "rowspan");
+                while (column < 32) {
+                    boolean free = column + width <= 32;
+                    for (int c = column; free && c < column + width; c++) free = occupiedUntil[c] <= rowIndex;
+                    if (free) break;
+                    column++;
+                }
+                if (column + width > 32) break;
+                columns.put(cell, column);
+                for (int c = column; c < column + width; c++) occupiedUntil[c] = rowIndex + height;
+                column += width;
+            }
+            rowIndex++;
+        }
+        return columns;
+    }
+
+    private static int span(Element cell, String attribute) {
+        try { return Math.max(1, Math.min(32, Integer.parseInt(cell.attr(attribute)))); }
+        catch (NumberFormatException ignored) { return 1; }
+    }
+
+    private static String courseWeeks(String value) {
+        if(value==null) return null;
+        // 旧/新版节次常写在 [1-2节]、(第1,2节) 中；周次括号必须保留。
+        return value.replaceAll("[\\[【（(][^\\]】）)]*节[^\\]】）)]*[\\]】）)]", "").trim();
     }
 
     /** 从新版明细文本提取“标签：值”，兼容空格、换行和英文冒号。 */
@@ -274,7 +333,8 @@ public class ScheduleParser {
             c.setDayName(c.getDay() >= 1 && c.getDay() <= 7 ? DEFAULT_WEEKDAYS.get(c.getDay() - 1) : day);
             String section = textValue(map, "jcdm", "jcs", "sksj", "jc", "节次", "上课节次", "section");
             c.setSection(section);
-            c.setSectionIndex(parseSectionIndex(section));
+            c.setNodes(CourseSections.parse(section));
+            c.setSectionIndex(c.getNodes().isEmpty() ? parseSectionIndex(section) : (c.getNodes().get(0) + 1) / 2);
             if (c.getDay() < 1 || c.getSectionIndex() < 1) continue;
             vo.getCourses().add(c);
         }
@@ -332,7 +392,9 @@ public class ScheduleParser {
 
         Document f = Jsoup.parseBodyFragment(seg);
         c.setTeacher(textOf(firstFont(f, "老师", "教师")));
-        c.setWeeks(textOf(firstFont(f, "周次")));
+        String time = textOf(firstFont(f, "周次"));
+        c.setWeeks(courseWeeks(time));
+        setTimeSections(c, time);
         c.setRoom(textOf(firstFont(f, "教室", "地点")));
         return c;
     }

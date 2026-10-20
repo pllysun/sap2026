@@ -9,29 +9,37 @@ object WeekUtil {
 
     private val ISO: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
-    /** 解析教务周次串，如 "1-8,10-11(周)" / "1-16(单)" / "2-16(双)" → 周次列表。 */
+    private const val MAX_WEEK = 60
+    private fun normalizedWeeks(raw: String): String = java.text.Normalizer.normalize(raw, java.text.Normalizer.Form.NFKC)
+        .replace(Regex("[\\[【(][^\\]】)]*节[^\\]】)]*[\\]】)]"), "")
+        .replace(Regex("[—–~至到]"), "-").replace(Regex("\\s+"), "")
+
+    /** 空周次才表示每周；有内容但无法识别时不能误当作每周上课。 */
+    fun isUnrestricted(raw: String?): Boolean = raw.isNullOrBlank() || normalizedWeeks(raw) in setOf("每周", "全周", "全部周")
+
+    /** 兼容全角括号、单双周前后缀、顿号、分段单双周和附带节次的教务格式。 */
     fun parseWeeks(raw: String?): List<Int> {
-        if (raw.isNullOrBlank()) return emptyList()
-        val parity = when {
-            raw.contains("单") -> 1
-            raw.contains("双") -> 0
-            else -> -1
-        }
-        val body = raw.substringBefore('(').replace("周", "").trim()
+        if (raw.isNullOrBlank() || raw.length > 4096) return emptyList()
+        val text = normalizedWeeks(raw)
+        val parities = text.filter { it == '单' || it == '双' }.toSet()
+        val parts = text.split(',', '、', ';', '；')
+        // 列表整体的前/后缀适用于所有裸数字分段；带“周”的完整分段各自保留限定。
+        val prefix = text.takeWhile { !it.isDigit() }.any { it == '单' || it == '双' }
+        val suffix = parts.last().any { it == '单' || it == '双' }
+            && parts.dropLast(1).none { it.any { ch -> ch in "周单双()[]【】" } }
+        val sharedParity = parities.singleOrNull().takeIf { prefix || suffix }
         val result = sortedSetOf<Int>()
-        for (part in body.split(',', '，')) {
-            val p = part.trim()
-            if (p.isEmpty()) continue
-            val range = p.split('-', '~')
-            try {
-                if (range.size == 2) {
-                    val a = range[0].trim().toInt()
-                    val b = range[1].trim().toInt()
-                    for (w in a..b) if (parity == -1 || w % 2 == parity) result.add(w)
-                } else {
-                    result.add(p.toInt())
-                }
-            } catch (_: NumberFormatException) { /* 忽略无法解析的片段 */ }
+        for (part in parts) {
+            val parity = part.filter { it == '单' || it == '双' }.toSet().singleOrNull() ?: sharedParity
+            val body = part.replace(Regex("[第周单双数逢()\\[\\]【】]"), "")
+            val range = if (body.isEmpty() && parity != null) 1..MAX_WEEK else {
+                if (!Regex("\\d{1,2}(?:-\\d{1,2})?").matches(body)) continue
+                val bounds = body.split('-').map { it.toInt() }
+                val a = bounds.first(); val b = bounds.last()
+                if (a !in 1..MAX_WEEK || b !in a..MAX_WEEK) continue
+                a..b
+            }
+            result += range.filter { parity == null || it % 2 == if (parity == '单') 1 else 0 }
         }
         return result.toList()
     }

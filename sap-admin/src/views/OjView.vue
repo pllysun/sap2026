@@ -17,7 +17,7 @@
       </el-tab-pane>
       <el-tab-pane label="题单管理" name="sets"><template #label><OjIcon name="file" :size="16" /> 题单管理</template><OjProblemSets v-if="activeTab==='sets'" @edit-problem="edit" /></el-tab-pane>
       <el-tab-pane label="统一管理" name="settings"><template #label><OjIcon name="settings" :size="16" /> 统一管理</template>
-        <OjNodeManager v-if="activeTab==='settings'" />
+        <OjNodeManager v-if="activeTab==='settings' && canManageNodes" />
         <div class="oj-section-heading"><div><h3>语言与运行配置</h3><p>统一管理可用语言及每次运行的资源限制。</p></div><OjActionButton @click="loadSettings" icon="refresh">刷新状态</OjActionButton></div>
         <div class="oj-admin-toolbar oj-health-strip"><el-tag :type="health.available?'success':'danger'">判题服务{{ health.available?'正常':'不可用' }}</el-tag><span>{{ settings.filter(l=>l.enabled).length }} / {{ settings.length }} 种语言已启用 · 等待任务 {{ health.queued || 0 }}</span></div>
         <el-alert type="warning" :closable="false" title="保存新的语言启用状态或资源限制后，题目需要按新配置验证才能继续展示。运行版本由镜像固定。" />
@@ -92,6 +92,7 @@ import OjProblemSets from '@/components/OjProblemSets.vue'
 import { ojStatuses,languageNames,modeNames,kindNames,eventNames,formatOjDate } from '@/utils/ojDictionaries'
 import OjCodeEditor from '@/components/OjCodeEditor.vue'
 import { formatOjCode, formatOjPack } from '@/utils/ojFormatter'
+const canManageNodes = ref(false)
 const levels = { EASY:'简单', MEDIUM:'中等', HARD:'困难' }, states = { DRAFT:'草稿', PUBLISHED:'已发布', CONTEST_ONLY:'仅管理端可见', DISABLED:'已禁用' }
 const activeTab=ref('problems'), rows=ref([]), page=ref(1), total=ref(0), keyword=ref(''), difficulty=ref(''), loading=ref(false), settings=ref([]), health=ref({})
 const editorOpen=ref(false), editorTab=ref('content'), editingId=ref(null), revision=ref(null), pack=ref(blankPack()), tagsText=ref(''), profileLanguage=ref('cpp'), casePage=ref(1), saving=ref(false), fileInput=ref(null), caseInput=ref(null)
@@ -155,7 +156,7 @@ async function readFile(file){if(!file)return null;if(file.size>4_000_000)throw 
 async function importPack(event){try{const value=await readFile(event.target.files[0]);if(!value)return;create();pack.value=normalize(value.pack||value);tagsText.value=pack.value.tags.join(', ');templateMode.value=pack.value.defaultMode;formatTemplates();ElMessage.success('已载入题目包，请检查后保存')}catch(e){ElMessage.error(e.message||'JSON 格式无效')}finally{event.target.value=''}}
 async function importCases(event){try{const value=await readFile(event.target.files[0]);if(!value)return;const tests=Array.isArray(value)?value:value.cases;if(!Array.isArray(tests)||tests.length>500||tests.some(t=>typeof t.input!=='string'||typeof t.expectedOutput!=='string'))throw new Error('测试集须为用例数组，包含 name、input、expectedOutput、sample');pack.value.cases=tests.map((t,i)=>({...t,name:t.name||`用例 ${i+1}`,sample:!!t.sample}));casePage.value=1;ElMessage.success('已载入测试集，请保存题目')}catch(e){ElMessage.error(e.message)}finally{event.target.value=''}}
 function exportCases(){const url=URL.createObjectURL(new Blob([JSON.stringify(pack.value.cases,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`${pack.value.slug||'problem'}-cases.json`;a.click();URL.revokeObjectURL(url)}
-onMounted(()=>{load();loadSettings()});onBeforeUnmount(()=>{disposed=true;++codeGeneration;clearInterval(monitorTimer);clearInterval(runTimer);timers.forEach(clearTimeout)})
+onMounted(()=>{load();loadSettings();request.get('/api/auth/info').then(r=>{canManageNodes.value=(r.data.roles || []).some(v=>Number(v)===0 || Number(v)===1)}).catch(()=>{})});onBeforeUnmount(()=>{disposed=true;++codeGeneration;clearInterval(monitorTimer);clearInterval(runTimer);timers.forEach(clearTimeout)})
 </script>
 <style scoped>
 .oj-admin .page-header p{color:#8493a7;font-size:13px}.oj-admin-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.oj-admin-toolbar>.el-input{width:260px}.oj-admin-toolbar>.el-select{width:150px}.oj-admin-toolbar>span,.oj-admin-note{font-size:12px;color:#8290a3}.oj-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.oj-admin-form .el-select{width:100%}.oj-validation-row{border-top:1px solid #e8edf5;padding:16px 0}.oj-validation-row span{float:right;font-size:12px;color:#8795a8}.oj-validation-row pre{white-space:pre-wrap;max-height:350px;overflow:auto;font-size:12px}.el-pagination{margin-top:20px}.oj-code-field :deep(textarea){font-family:ui-monospace,monospace;font-size:12px}.oj-admin :deep(.el-dialog__body){max-height:70vh;overflow:auto}@media(max-width:700px){.oj-form-grid{grid-template-columns:1fr}.oj-admin-toolbar>.el-input{width:100%}.oj-validation-row span{float:none;display:block}}

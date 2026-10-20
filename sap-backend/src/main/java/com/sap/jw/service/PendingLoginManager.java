@@ -33,8 +33,9 @@ public class PendingLoginManager {
 
     private final ConcurrentHashMap<String, Entry> map = new ConcurrentHashMap<>();
 
-    public String put(Long userId, String account, String rawPassword, PendingCas cas) {
+    public synchronized String put(Long userId, String account, String rawPassword, PendingCas cas) {
         purge();
+        if (map.size() >= 2000) throw new com.sap.common.BusinessException(429, "学校登录验证较忙，请稍后重试");
         String id = UUID.randomUUID().toString().replace("-", "");
         map.put(id, new Entry(userId, account, rawPassword, cas, System.currentTimeMillis() + TTL_MS));
         return id;
@@ -55,7 +56,8 @@ public class PendingLoginManager {
         map.remove(id);
     }
 
-    private void purge() {
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 60000)
+    public void purge() {
         long now = System.currentTimeMillis();
         map.entrySet().removeIf(en -> en.getValue().expiresAt < now);
     }

@@ -149,6 +149,7 @@ data class CourseDto(
     val teacher: String? = null,
     val weeks: String? = null,
     val room: String? = null,
+    val nodes: List<Int>? = null,
 )
 
 data class GradeDto(

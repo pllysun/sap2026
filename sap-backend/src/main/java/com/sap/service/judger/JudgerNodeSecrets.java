@@ -19,10 +19,14 @@ public class JudgerNodeSecrets {
             if (!Files.exists(path)) {
                 Files.createDirectories(path.toAbsolutePath().getParent());
                 byte[] bytes=new byte[32];new SecureRandom().nextBytes(bytes);
-                Files.writeString(path,HexFormat.of().formatHex(bytes),StandardOpenOption.CREATE_NEW);
-                Files.setPosixFilePermissions(path,PosixFilePermissions.fromString("rw-------"));
+                try (var channel=Files.newByteChannel(path, java.util.Set.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE),
+                        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))) {
+                    channel.write(java.nio.ByteBuffer.wrap(HexFormat.of().formatHex(bytes).getBytes(java.nio.charset.StandardCharsets.US_ASCII)));
+                }
             }
-            return Files.readString(path).strip();
+            String value=Files.readString(path).strip();
+            if (!value.matches("[0-9a-fA-F]{64}")) throw new IllegalStateException("节点密钥格式错误");
+            return value;
         } catch(Exception e) { throw new BusinessException(503,"节点密钥存储不可用"); }
     }
     public String encrypt(String token) { return AesUtil.encrypt(key(),token); }

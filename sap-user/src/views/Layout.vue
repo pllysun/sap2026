@@ -46,12 +46,12 @@
             <button class="drawer-close" aria-label="关闭导航菜单" @click="drawerOpen = false">×</button>
           </div>
           <div class="mobile-drawer__nav">
-            <router-link to="/home" class="mobile-drawer__link" :class="{ active: $route.path === '/home' }" @click="drawerOpen = false">🏠 首页</router-link>
-            <router-link to="/study" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/study') }" @click="drawerOpen = false">📚 学习小组</router-link>
-            <router-link to="/activities" class="mobile-drawer__link" :class="{ active: $route.path === '/activities' }" @click="drawerOpen = false">🎉 软协活动</router-link>
-            <router-link to="/oj" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/oj') }" @click="drawerOpen = false">💻 算法题库</router-link>
-            <router-link to="/notes" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/notes') }" @click="drawerOpen = false">📝 软协笔记</router-link>
-            <router-link to="/message-board" class="mobile-drawer__link" :class="{ active: $route.path === '/message-board' }" @click="drawerOpen = false">💬 留言板</router-link>
+            <router-link to="/home" class="mobile-drawer__link" :class="{ active: $route.path === '/home' }" @click="drawerOpen = false"><UiIcon name="panel-top" :size="17" /> 首页</router-link>
+            <router-link to="/study" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/study') }" @click="drawerOpen = false"><UiIcon name="users" :size="17" /> 学习小组</router-link>
+            <router-link to="/activities" class="mobile-drawer__link" :class="{ active: $route.path === '/activities' }" @click="drawerOpen = false"><UiIcon name="calendar" :size="17" /> 软协活动</router-link>
+            <router-link to="/oj" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/oj') }" @click="drawerOpen = false"><UiIcon name="code" :size="17" /> 算法题库</router-link>
+            <router-link to="/notes" class="mobile-drawer__link" :class="{ active: $route.path.startsWith('/notes') }" @click="drawerOpen = false"><UiIcon name="book-open" :size="17" /> 软协笔记</router-link>
+            <router-link to="/message-board" class="mobile-drawer__link" :class="{ active: $route.path === '/message-board' }" @click="drawerOpen = false"><UiIcon name="message-square" :size="17" /> 留言板</router-link>
           </div>
           <div class="mobile-drawer__user">
             <UserAvatar :src="userStore.user?.avatar" :name="userName" :size="36" />
@@ -60,8 +60,8 @@
             </div>
           </div>
           <div class="mobile-drawer__actions">
-            <router-link to="/profile" class="mobile-drawer__action" @click="drawerOpen = false">👤 个人信息</router-link>
-            <button class="mobile-drawer__action mobile-drawer__action--danger" @click="() => { handleLogout(); drawerOpen = false }">🚪 退出登录</button>
+            <router-link to="/profile" class="mobile-drawer__action" @click="drawerOpen = false"><UiIcon name="users" :size="17" /> 个人信息</router-link>
+            <button class="mobile-drawer__action mobile-drawer__action--danger" @click="() => { handleLogout(); drawerOpen = false }"><UiIcon name="log-out" :size="17" /> 退出登录</button>
           </div>
         </div>
       </template>
@@ -156,15 +156,15 @@ const vClickOutside = {
 </script>
 
 <style scoped>
-.nav--association{background:#f8fafbed;backdrop-filter:blur(18px);box-shadow:none;border-bottom:1px solid #dde3e9;padding-inline:clamp(20px,5vw,180px);gap:24px}
-.nav--association .nav__name{color:#222f3c;font-size:17px;letter-spacing:2px;line-height:1.3}.nav__name small{display:block;font-size:9px;letter-spacing:1.5px;color:#5d7791;font-weight:400;margin-top:4px}
-.nav--association .nav__links-wrap{position:static;transform:none;background:none;gap:5px;padding:0;margin-left:auto;margin-right:auto}.nav--association .nav__link{font-size:13px;color:#536b83;padding:9px 17px;border-radius:6px}.nav--association .nav__link:hover{color:#24384b;background:#e8edf2}.nav--association .nav__link.active{color:#24384b;background:#dfe7ee;box-shadow:none}.nav--association .nav__username{color:#394959;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav__user-toggle{display:flex;align-items:center;gap:9px}.nav__chevron{color:#577089;font-size:14px}.nav--association .nav__user:hover{background:#e8edf2}.nav--association .nav__hamburger span{background:#354453}.nav--association :is(a,button):focus-visible{outline:2px solid #39638d;outline-offset:3px}.drawer-close{margin-left:auto;font-size:27px;padding:0 7px;color:#51687f}
+.nav--association{height:var(--nav-height);background:#ffffffed;backdrop-filter:blur(18px);box-shadow:none;border-bottom:1px solid #dde3e9;padding-inline:clamp(20px,5vw,180px);gap:24px}
+.nav--association .nav__name{color:#222f3c;font-size:1.0625rem;letter-spacing:2px;line-height:1.3}.nav__name small{display:block;font-size:.6875rem;letter-spacing:1.5px;color:#5d7791;font-weight:400;margin-top:4px}
+.nav--association .nav__links-wrap{position:static;transform:none;background:none;gap:5px;padding:0;margin-left:auto;margin-right:auto}.nav--association .nav__link{font-size:.875rem;color:#536b83;padding:9px 17px;border-radius:6px}.nav--association .nav__link:hover{color:#24384b;background:#e8edf2}.nav--association .nav__link.active{color:#344da5;background:#edf0fc;box-shadow:inset 0 -2px #5268be}.nav--association .nav__username{color:#394959;font-size:.8125rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav__user-toggle{display:flex;align-items:center;gap:9px}.nav__chevron{color:#577089;font-size:0.875rem}.nav--association .nav__user:hover{background:#e8edf2}.nav--association .nav__hamburger span{background:#354453}.nav--association :is(a,button):focus-visible{outline:2px solid #39638d;outline-offset:3px}.drawer-close{margin-left:auto;font-size:1.6875rem;padding:0 7px;color:#51687f}
 .main-content {
   flex: 1;
-  padding-top: 72px;
+  padding-top: var(--nav-height);
 }
 @media (max-width: 768px) {
-  .main-content { padding-top: 56px; }
+  .main-content { padding-top: var(--nav-height); }
 }
 .nav__logo {
   width: 32px;
@@ -186,7 +186,7 @@ const vClickOutside = {
   color:var(--ink-500);
   padding:45px 30px;
 }
-.footer__motto{font-size:16px;letter-spacing:2px;color:var(--ink-700);margin-bottom:17px}
+.footer__motto{font-size:1rem;letter-spacing:2px;color:var(--ink-700);margin-bottom:17px}
 .footer .footer__copyright{color:var(--ink-500)}
 .footer a{color:var(--primary)}
 .footer__text {
@@ -256,12 +256,12 @@ const vClickOutside = {
   border-radius: 8px;
 }
 .qr-float__popup span {
-  font-size: 12px;
-  color: #333;
+  font-size: 0.75rem;
+  color: #333333;
   font-weight: 600;
 }
 .qr-float__label {
-  font-size: 10px;
+  font-size: 0.75rem;
   color: var(--ink-500);
   max-width: 100px;
   text-align: center;
@@ -271,7 +271,7 @@ const vClickOutside = {
 }
 
 @media (max-width: 768px) {
-  .nav--association{padding-inline:12px;gap:10px}.nav--association .nav__links-wrap{display:none}.nav--association .nav__name{font-size:14px}.nav__name small{font-size:8px}.nav--association .nav__brand{margin-right:auto;gap:8px}.nav--association .nav__user{padding-inline:3px}.nav--association .nav__username{display:none}.footer__motto{font-size:12px;letter-spacing:1px}.footer__copyright{font-size:10px}
+  .nav--association{padding-inline:12px;gap:10px}.nav--association .nav__links-wrap{display:none}.nav--association .nav__name{font-size:0.875rem}.nav__name small{font-size:0.75rem}.nav--association .nav__brand{margin-right:auto;gap:8px}.nav--association .nav__user{padding-inline:3px}.nav--association .nav__username{display:none}.footer__motto{font-size:.8125rem;letter-spacing:1px}.footer__copyright{font-size:0.75rem}
   .nav__logo {
     width: 28px;
     height: 28px;
@@ -285,6 +285,6 @@ const vClickOutside = {
   }
 }
 .footer__text { min-width: 0; overflow-wrap: anywhere; }.qr-float__thumb { cursor: pointer; }.mobile-drawer { max-width: calc(100vw - 32px); overflow-y: auto; overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom); }.mobile-drawer__action { text-align: left; }
-.contact-overlay { position: fixed; inset: 0; z-index: 1500; display: grid; place-items: center; padding: 20px; background: #17345066; backdrop-filter: blur(5px); }.contact-dialog { width: min(380px, 100%); padding: 30px; position: relative; background: #fff; border: 1px solid var(--border-blue); border-radius: 20px; text-align: center; max-height: calc(100dvh - 40px); overflow: auto; }.contact-dialog h2 { font-size: 20px; padding: 10px 15px 20px; overflow-wrap: anywhere; }.contact-dialog img { width: 100%; height: auto; object-fit: contain; }.contact-dialog p { font-size: 12px; color: var(--ink-500); margin-top: 17px; }.contact-dialog__close { position: absolute; top: 9px; right: 11px; width: 34px; height: 34px; font-size: 23px; color: var(--ink-500); }
+.contact-overlay { position: fixed; inset: 0; z-index: 1500; display: grid; place-items: center; padding: 20px; background: #17345066; backdrop-filter: blur(5px); }.contact-dialog { width: min(380px, 100%); padding: 30px; position: relative; background: #fff; border: 1px solid var(--border-blue); border-radius: 20px; text-align: center; max-height: calc(100dvh - 40px); overflow: auto; }.contact-dialog h2 { font-size: 1.25rem; padding: 10px 15px 20px; overflow-wrap: anywhere; }.contact-dialog img { width: 100%; height: auto; object-fit: contain; }.contact-dialog p { font-size: 0.75rem; color: var(--ink-500); margin-top: 17px; }.contact-dialog__close { position: absolute; top: 9px; right: 11px; width: 34px; height: 34px; font-size: 1.4375rem; color: var(--ink-500); }
 @media (hover: none) { .qr-float__popup { display: none; } }
 </style>

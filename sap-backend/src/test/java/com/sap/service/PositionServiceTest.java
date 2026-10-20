@@ -47,6 +47,7 @@ class PositionServiceTest extends BaseUnitTest {
     @Test
     void addPosition_forcesIsSystemZeroAndInserts() {
         Position p = pos(0, "自定义", 1); // isSystem will be overwritten
+        p.setRoleCode(3);
         service.addPosition(p);
         assertEquals(0, p.getIsSystem());
         verify(positionMapper).insert(p);

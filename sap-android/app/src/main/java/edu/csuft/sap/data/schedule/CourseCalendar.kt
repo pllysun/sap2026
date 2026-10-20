@@ -8,7 +8,7 @@ fun coursesOnDate(courses: List<DisplayCourse>, settings: ScheduleSettings, date
     if (WeekUtil.parseDate(settings.semesterStartDate) == null) return null
     val week = WeekUtil.currentWeek(settings.semesterStartDate, date) ?: return emptyList()
     if (week > settings.totalWeeks.coerceAtLeast(1)) return emptyList()
-    return courses.filter { it.day == date.dayOfWeek.value && (it.weeks.isEmpty() || week in it.weeks) }
+    return courses.filter { it.day == date.dayOfWeek.value && it.occursInWeek(week) }
         .sortedWith(compareBy({ it.startNode }, { it.endNode }, { it.name }))
 }
 

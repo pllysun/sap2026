@@ -28,11 +28,27 @@ public class MailStore {
         }
         db.execute("CREATE TABLE IF NOT EXISTS sys_mail_binding (event_key VARCHAR(64) PRIMARY KEY, template_id BIGINT, defaults_json TEXT, updated_by BIGINT, updated_at BIGINT NOT NULL)");
         String payload = "id VARCHAR(64) PRIMARY KEY, event_key VARCHAR(64) NOT NULL, recipient VARCHAR(254) NOT NULL, user_id BIGINT, subject VARCHAR(255) NOT NULL, payload MEDIUMTEXT NOT NULL, expires_at BIGINT, created_at BIGINT NOT NULL, attempts INT NOT NULL DEFAULT 0";
-        db.execute("CREATE TABLE IF NOT EXISTS sys_mail_queue (" + payload + ", state VARCHAR(20) NOT NULL DEFAULT 'PENDING', owner VARCHAR(64), INDEX idx_mail_queue_order(state,created_at))");
+        db.execute("CREATE TABLE IF NOT EXISTS sys_mail_queue (" + payload + ", state VARCHAR(20) NOT NULL DEFAULT 'PENDING', owner VARCHAR(64), lease_until BIGINT NOT NULL DEFAULT 0, INDEX idx_mail_queue_order(state,created_at))");
         db.execute("CREATE TABLE IF NOT EXISTS sys_mail_failed (" + payload + ", status VARCHAR(20) NOT NULL, reason VARCHAR(500), failed_at BIGINT NOT NULL, updated_by BIGINT, INDEX idx_mail_failed_time(failed_at))");
         db.execute("CREATE TABLE IF NOT EXISTS sys_mail_log (id BIGINT AUTO_INCREMENT PRIMARY KEY, message_id VARCHAR(64), event_key VARCHAR(64), recipient VARCHAR(254), subject VARCHAR(255), status VARCHAR(32) NOT NULL, detail VARCHAR(500), actor_id BIGINT, created_at BIGINT NOT NULL, INDEX idx_mail_log_time(created_at))");
         db.execute("CREATE TABLE IF NOT EXISTS sys_mail_dedup (event_id VARCHAR(180) PRIMARY KEY, message_id VARCHAR(64) NOT NULL, created_at BIGINT NOT NULL)");
         db.execute((org.springframework.jdbc.core.ConnectionCallback<Void>) connection -> {
+            boolean leaseColumn=false;
+            try(var columns=connection.getMetaData().getColumns(connection.getCatalog(),null,"sys_mail_queue",null)) {
+                while(columns.next()) if("lease_until".equalsIgnoreCase(columns.getString("COLUMN_NAME"))) leaseColumn=true;
+            }
+            if(!leaseColumn) {
+                try(var statement=connection.createStatement()) { statement.execute("ALTER TABLE sys_mail_queue ADD COLUMN lease_until BIGINT NOT NULL DEFAULT 0"); }
+                catch(java.sql.SQLException e) { if(e.getErrorCode()!=1060)throw e; }
+            }
+            boolean leaseIndex=false;
+            try(var indexes=connection.getMetaData().getIndexInfo(connection.getCatalog(),null,"sys_mail_queue",false,false)) {
+                while(indexes.next()) if("idx_mail_queue_lease".equalsIgnoreCase(indexes.getString("INDEX_NAME"))) leaseIndex=true;
+            }
+            if(!leaseIndex) {
+                try(var statement=connection.createStatement()) { statement.execute("CREATE INDEX idx_mail_queue_lease ON sys_mail_queue(state,lease_until)"); }
+                catch(java.sql.SQLException e) { if(e.getErrorCode()!=1061)throw e; }
+            }
             boolean contextColumn=false;
             try(var columns=connection.getMetaData().getColumns(connection.getCatalog(),null,"sys_mail_log",null)) {
                 while(columns.next()) if("context_json".equalsIgnoreCase(columns.getString("COLUMN_NAME"))) contextColumn=true;
@@ -115,6 +131,7 @@ public class MailStore {
                 }
             }
             row.put("context",context);
+            row.put("deliveryPolicy",MailHook.deliveryPolicy(String.valueOf(row.get("event_key"))));
         }
         return rows;
     }

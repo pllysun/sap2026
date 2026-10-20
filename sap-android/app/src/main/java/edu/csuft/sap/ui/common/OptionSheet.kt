@@ -5,7 +5,7 @@ import edu.csuft.sap.ui.icons.AppIcons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -16,9 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,14 +44,15 @@ fun <T> OptionSheet(
     subLabel: (T) -> String? = { null },
     badge: (T) -> String? = { null },
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    ScrollSheet(onDismissRequest = onDismiss) {
         Text(
             title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
         )
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().heightIn(max = 460.dp).padding(horizontal = 12.dp, vertical = 4.dp),
+            // 留白放到列表内部，边缘和底部也能开始滚动，不会误拖外层面板。
+            modifier = Modifier.fillMaxWidth().heightIn(max = 474.dp),
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 18.dp),
         ) {
             itemsIndexed(options) { _, opt ->
                 OptionRow(
@@ -65,7 +64,6 @@ fun <T> OptionSheet(
                 )
             }
         }
-        Spacer(Modifier.padding(bottom = 14.dp))
     }
 }
 

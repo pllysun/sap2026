@@ -157,14 +157,12 @@ public class JwProperties {
      */
     @jakarta.annotation.PostConstruct
     public void validateAesKey() {
-        if (!DEFAULT_AES_KEY.equals(aesKey)) return;
         java.util.List<String> profiles = java.util.Arrays.asList(env.getActiveProfiles());
-        boolean prodLike = profiles.contains("prod") || profiles.contains("docker");
-        if (prodLike) {
-            throw new IllegalStateException("[安全] jw.aes-key 仍为默认占位值且当前为生产/容器环境" + profiles
-                    + "：请通过环境变量 JW_AES_KEY 注入 32 字节强随机密钥后再启动，否则存库教务密码加密形同明文。");
-        }
-        org.slf4j.LoggerFactory.getLogger(JwProperties.class)
-                .warn("[安全] jw.aes-key 仍为默认占位值(仅 dev 放行)。生产务必用环境变量 JW_AES_KEY 覆盖！");
+        boolean insecure = aesKey == null || aesKey.isBlank() || aesKey.length() < 32 || DEFAULT_AES_KEY.equals(aesKey)
+                || aesKey.matches("(.)\\1+");
+        if (!insecure) return;
+        boolean development = !profiles.isEmpty() && profiles.stream().allMatch(p -> java.util.Set.of("dev", "local", "test").contains(p));
+        if (!development) throw new IllegalStateException("[安全] 请通过 JW_AES_KEY 配置至少 32 字符的强随机密钥；默认值或弱密钥不能用于运行服务");
+        org.slf4j.LoggerFactory.getLogger(JwProperties.class).warn("[安全] 开发配置使用了弱 AES 密钥，禁止用于生产环境");
     }
 }

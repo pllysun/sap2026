@@ -35,22 +35,37 @@ public class UserService {
 
     public Page<User> listUsers(int current, int size, String keyword) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like(User::getName, keyword)
-                    .or().like(User::getStudentId, keyword)
-                    .or().like(User::getNickname, keyword));
+        if (keyword != null && !keyword.isBlank()) {
+            String term = keyword.trim();
+            wrapper.and(w -> w.like(User::getName, term)
+                    .or().like(User::getStudentId, term)
+                    .or().like(User::getQq, term)
+                    .or().like(User::getNickname, term));
         }
-        wrapper.orderByDesc(User::getCreatedAt);
-        return userMapper.selectPage(new Page<>(current, size), wrapper);
+        wrapper.orderByDesc(User::getCreatedAt).orderByDesc(User::getId);
+        return userMapper.selectPage(new Page<>(Math.max(1, current), Math.max(1, Math.min(size, 200))), wrapper);
     }
 
     public User getUserById(Long id) {
         return userMapper.selectById(id);
     }
 
+    @Transactional
     public void updateUser(Long id, User user) {
         User existing = userMapper.selectById(id);
         if (existing == null) throw new BusinessException("用户不存在");
+        List<String> callerRoles = StpUtil.getRoleList();
+        boolean leader = callerRoles.contains("0") || callerRoles.contains("1");
+        if (!leader && userRoleMapper.selectRoleCodesByUserId(id).stream().anyMatch(r -> r <= 1)) {
+            throw new BusinessException(403, "无权修改高权限账号");
+        }
+        if (user.getStatus() != null && user.getStatus() != 0 && user.getStatus() != 1) {
+            throw new BusinessException(400, "账号状态无效");
+        }
+        if (!leader && id.equals(StpUtil.getLoginIdAsLong()) && Integer.valueOf(0).equals(user.getStatus())) {
+            throw new BusinessException(403, "不能禁用自己的账号");
+        }
+        boolean recoveryChanged = !java.util.Objects.equals(existing.getQq(), user.getQq());
         existing.setNickname(user.getNickname());
         existing.setGender(user.getGender());
         existing.setQq(user.getQq());
@@ -58,12 +73,14 @@ public class UserService {
         existing.setStatus(user.getStatus());
         userMapper.updateById(existing);
         cacheService.updateUser(existing);
-        if (!Integer.valueOf(1).equals(existing.getStatus())) StpUtil.kickout(id);
+        if (recoveryChanged || !Integer.valueOf(1).equals(existing.getStatus())) revokeAfterCommit(id);
     }
 
     @Transactional
     public void updateUserRole(Long userId, List<Integer> roleCodes) {
         if (roleCodes == null) roleCodes = List.of();
+        if (roleCodes.stream().anyMatch(code -> code == null || code < 0 || code > 4))
+            throw new BusinessException(400, "角色必须在 0–4 之间");
         // 去重，避免触发 uk_user_role 唯一约束
         List<Integer> codes = roleCodes.stream().distinct().collect(Collectors.toList());
 
@@ -116,6 +133,16 @@ public class UserService {
         user.setPassword(PasswordUtil.encode(newPassword));
         userMapper.updateById(user);
         cacheService.updateUser(user);
+        revokeAfterCommit(user.getId());
+    }
+
+    private void revokeAfterCommit(Long id) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() { StpUtil.kickout(id); }
+                    });
+        } else StpUtil.kickout(id);
     }
 
     public List<Integer> getUserRoles(Long userId) {

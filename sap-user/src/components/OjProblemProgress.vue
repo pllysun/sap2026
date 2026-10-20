@@ -19,12 +19,12 @@ const description=computed(()=>state.value==='AC'?'已通过':state.value==='WRO
 </script>
 <style scoped>
 .oj-problem-progress{position:relative;font-weight:600;transition:color .2s,background .2s,border-color .2s;box-sizing:border-box;flex:none}
-.oj-progress-symbol{display:grid;place-items:center;width:36px;height:36px;border:1px solid #dce6f0;border-radius:50%;color:#a1b1c2;background:#f8fafc}
+.oj-progress-symbol{display:grid;place-items:center;width:36px;height:36px;border:1px solid #dce6f0;border-radius:50%;color:#6b7681;background:#f8fafc}
 .oj-progress-glyph{width:22px;height:22px}.oj-progress-glyph path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .oj-problem-progress.oj-progress-ac{color:#20815e;background:#eaf8ef;border-color:#b9e2cb}
 .oj-problem-progress.oj-progress-wrong{color:#c54855;background:#fff0f2;border-color:#f1c5cb}
-.oj-problem-progress.oj-progress-issue{color:#a87212;background:#fff8e6;border-color:#ebd59b}
-.oj-problem-progress.oj-progress-pending{color:#327abc;background:#edf6ff;border-color:#c5ddf4}
+.oj-problem-progress.oj-progress-issue{color:#9d6a10;background:#fff8e6;border-color:#ebd59b}
+.oj-problem-progress.oj-progress-pending{color:#3076b6;background:#edf6ff;border-color:#c5ddf4}
 .oj-progress-mark{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;background:currentColor;border:2px solid #fff;border-radius:50%;box-sizing:content-box}
 .oj-progress-mark:empty{display:none}.oj-progress-mark path{fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
 .oj-progress-dot{position:absolute;right:-2px;bottom:-2px;width:8px;height:8px;background:currentColor;border:2px solid #fff;border-radius:50%;animation:oj-progress-pulse 1.4s ease-in-out infinite}

@@ -217,7 +217,9 @@ data class DisplayCourse(
     val isThisWeek: Boolean = true,
     val customColor: Long? = null, // 自建课自定义颜色(ARGB)；非空时优先
     val sourceId: String? = null, // 导入底本的稳定标识；编辑时用于替换而不是复制
-)
+) {
+    fun occursInWeek(week: Int): Boolean = week > 0 && (week in weeks || (weeks.isEmpty() && WeekUtil.isUnrestricted(weeksLabel)))
+}
 
 /** 课表类型：教务学期课表（可重拉刷新） / 自定义课表（另存为，冻结、不被重拉覆盖）。 */
 enum class ProfileKind { TERM, CUSTOM }
@@ -231,6 +233,7 @@ data class CachedCourse(
     val sectionIndex: Int,
     val weeksRaw: String? = null,
     val colorIndex: Int = 0,
+    val nodes: List<Int>? = null,
 )
 
 /**

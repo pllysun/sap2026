@@ -241,6 +241,15 @@ object AppIcons {
         autoMirror = true)
     }
 
+    /** 重设密码 */
+    val Key: ImageVector by lazy {
+        build("Key",
+        strokes = listOf(
+            "M14.5 4.5A5 5 0 1 1 13 13L5 21H2V18L10 10A5 5 0 0 1 14.5 4.5Z",
+            "M16 8H16.1M5.5 17.5L7.5 19.5"
+        ))
+    }
+
     /** 密码 */
     val Lock: ImageVector by lazy {
         build("Lock",
@@ -392,6 +401,7 @@ object AppIcons {
         "进入" to ChevronRight,
         "返回" to Back,
         "继续" to ArrowRight,
+        "重设密码" to Key,
         "密码" to Lock,
         "显示密码" to Visibility,
         "隐藏密码" to VisibilityOff,

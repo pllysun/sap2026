@@ -7,10 +7,21 @@ import edu.csuft.sap.data.remote.Outcome
 import edu.csuft.sap.data.remote.dto.ApiResult
 import edu.csuft.sap.data.repository.RegistrationResult
 import edu.csuft.sap.data.repository.parseRegistrationResult
+import edu.csuft.sap.data.repository.parseRegistrationPolicy
+import edu.csuft.sap.data.repository.RegistrationPolicy
+import edu.csuft.sap.data.remote.dto.RegistrationPolicyDto
 import org.junit.Assert.*
 import org.junit.Test
 
 class RegistrationResponseTest {
+    @Test fun registrationPolicyFailsClosedForMissingOrContradictoryFields() {
+        for (raw in listOf("{}","{\"joinEnabled\":true}","{\"joinEnabled\":true,\"emailVerificationRequired\":true,\"captchaRequired\":true}")) {
+            val data=Gson().fromJson(raw,RegistrationPolicyDto::class.java)
+            assertTrue(raw,parseRegistrationPolicy(data) is Outcome.Error)
+        }
+        assertEquals(Outcome.Success(RegistrationPolicy(false)),parseRegistrationPolicy(RegistrationPolicyDto(true,false,true)))
+        assertEquals(Outcome.Success(RegistrationPolicy(true)),parseRegistrationPolicy(RegistrationPolicyDto(false,true,true)))
+    }
     @Test fun decodesBothActualWebResponseShapes() {
         assertEquals(Outcome.Success(RegistrationResult.CAPTCHA_REQUIRED), parse("""{"captchaRequired":true}"""))
         assertEquals(Outcome.Success(RegistrationResult.REGISTERED), parse("\"注册成功\""))

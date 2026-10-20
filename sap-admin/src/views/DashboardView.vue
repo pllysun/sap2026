@@ -1,213 +1,98 @@
 <template>
-  <div class="dashboard zen-fade-in">
-    <div class="page-header">
-      <h2>首页</h2>
-      <p>总览社团运行脉络</p>
+  <div ref="root" class="dashboard operations-dashboard zen-fade-in">
+    <header class="dashboard-banner">
+      <div class="banner-copy"><span class="dashboard-eyebrow">软件协会 · 管理工作台</span><h2>把社团的近况，看得更清楚</h2><p>账号增长、入会进度与服务运行，汇聚在这里。</p></div>
+      <div class="banner-controls"><span>{{ updatedAt ? `更新于 ${updatedAt}` : '正在获取最新数据' }}</span><el-button :loading="loading" @click="refresh"><el-icon><Refresh /></el-icon>刷新概览</el-button></div>
+    </header>
+    <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon class="dashboard-error" />
+    <div class="dashboard-kpis">
+      <router-link v-for="card in cards" :key="card.label" :to="card.to" class="dashboard-kpi" :style="{'--kpi-color':card.color,'--kpi-tint':card.tint}">
+        <div class="kpi-top"><span class="kpi-symbol"><el-icon><component :is="card.icon" /></el-icon></span><span>{{ card.label }}</span><el-icon class="kpi-arrow"><ArrowRight /></el-icon></div>
+        <strong>{{ format(card.value) }}</strong><p>{{ card.note }}</p>
+      </router-link>
     </div>
 
-    <!-- 年份切换 -->
-    <div class="scope-switcher">
-      <span class="scope-label">{{ isAll ? '全部数据' : currentGrade + ' 届数据' }}</span>
-      <el-switch v-model="isAll" active-text="全部" inactive-text="本届" @change="onScopeChange" />
-    </div>
+    <section class="dashboard-analysis-grid">
+      <div class="zen-card overview-panel registration-panel"><div class="panel-heading"><div><h3>新朋友，正在加入</h3><p>近 14 天注册趋势 · 现有平台账号</p></div><span class="metric-pill">近 7 天 +{{ format(data.users?.recent) }}</span></div><div ref="registrationChart" class="registration-chart" role="img" aria-label="近14天每日注册人数趋势" /></div>
+      <div class="zen-card overview-panel gender-panel"><div class="panel-heading"><div><h3>用户性别分布</h3><p>全平台注册用户，含游客与成员</p></div></div><div class="gender-body"><div ref="genderChart" class="gender-chart" role="img" aria-label="平台用户男女及未填写性别人数分布" /><div class="gender-legend"><div v-for="item in genders" :key="item.label"><i :style="{background:item.color}" /><span>{{ item.label }}</span><b>{{ format(item.value) }}</b><small>{{ percent(item.value) }}%</small></div></div></div></div>
+    </section>
 
-    <!-- 统计卡片 -->
-    <div class="stat-grid">
-      <div class="stat-card" v-for="item in statCards" :key="item.label">
-        <div class="stat-icon-wrap" :style="{ background: item.bgColor }">
-          <el-icon :size="22" :color="item.color"><component :is="item.icon" /></el-icon>
-        </div>
-        <div class="stat-info">
-          <div class="stat-number">{{ item.value }}</div>
-          <div class="stat-label">{{ item.label }}</div>
-        </div>
+    <section class="dashboard-main-grid">
+      <div class="zen-card overview-panel recent-users"><div class="panel-heading"><div><h3>最近注册</h3><p>按注册时间排序 · 点击姓名查看关联资料</p></div><router-link to="/member?tab=users" class="panel-link">全部用户 <el-icon><ArrowRight /></el-icon></router-link></div>
+        <el-table :data="data.recentUsers||[]" row-key="id" size="small" empty-text="暂无注册用户">
+          <el-table-column label="姓名" min-width="110"><template #default="{row}"><button class="person-link" @click="openProfile(row.id)"><span>{{ row.name?.slice(0,1) }}</span>{{ row.name }}</button></template></el-table-column>
+          <el-table-column prop="studentId" label="学号 / 账号" min-width="120" />
+          <el-table-column prop="qq" label="QQ 号" min-width="125" />
+          <el-table-column label="注册时间" min-width="150"><template #default="{row}">{{ date(row.createdAt) }}</template></el-table-column>
+        </el-table>
       </div>
-    </div>
-
-    <!-- 历届成员统计图 -->
-    <div class="zen-card chart-card">
-      <h3 class="section-title">历届成员</h3>
-      <div v-show="gradeStatsLoaded" ref="chartRef" class="grade-chart"></div>
-      <div v-if="!gradeStatsLoaded && gradeStatsLoading" class="chart-placeholder">
-        <span style="opacity: 0.3; font-size: 32px">📊</span>
-        <p style="color: var(--zen-text-muted); margin-top: 8px; font-size: 13px">加载中...</p>
+      <div class="zen-card overview-panel pending-panel"><div class="panel-heading"><div><h3>需要留意</h3><p>从待办直达对应管理页面</p></div><span class="status-pill" :class="{'is-open':data.join?.enabled}">{{ data.join?.enabled?'招新进行中':'入会通道关闭' }}</span></div>
+        <router-link v-for="item in pending" :key="item.label" :to="item.to" class="pending-item"><span class="pending-icon" :style="{color:item.color}"><el-icon><component :is="item.icon" /></el-icon></span><div><b>{{ item.label }}</b><p>{{ item.note }}</p></div><strong>{{ format(item.value) }}</strong><el-icon><ArrowRight /></el-icon></router-link>
+        <p class="dashboard-footnote">邮件显示 SMTP 处理状态，不等同于最终送达。</p>
       </div>
-      <el-empty v-if="!gradeStatsLoading && !gradeStatsLoaded" description="暂无历届数据" :image-size="80" />
-    </div>
+    </section>
 
-    <!-- 财务概览 + 快捷操作 -->
-    <div class="section-grid">
-      <div class="zen-card">
-        <h3 class="section-title">财务概览</h3>
-        <div class="finance-summary">
-          <div class="fin-item">
-            <span class="fin-label">总收入</span>
-            <span class="fin-value income">¥{{ financeStats.totalIncome || '0.00' }}</span>
-          </div>
-          <div class="fin-item">
-            <span class="fin-label">总支出</span>
-            <span class="fin-value expense">¥{{ financeStats.totalExpense || '0.00' }}</span>
-          </div>
-          <div class="fin-divider"></div>
-          <div class="fin-item">
-            <span class="fin-label">
-              结余
-              <el-tooltip v-if="isAll" content="累计口径（含历届）：为所有年级收支直接相加，非单届结算" placement="top">
-                <span style="color: var(--zen-text-muted); font-size: 12px; cursor: help;">（累计口径）</span>
-              </el-tooltip>
-            </span>
-            <span class="fin-value balance">¥{{ financeStats.balance || '0.00' }}</span>
-          </div>
-        </div>
-      </div>
+    <section class="service-grid">
+      <router-link to="/log" class="service-card service-logs"><div class="service-heading"><el-icon><Document /></el-icon><h3>日志与接口</h3><el-icon class="service-arrow"><ArrowRight /></el-icon></div><strong>{{ format(data.logs?.requests) }}<small>今日调用</small></strong><div class="service-facts"><span>活跃账号 <b>{{ format(data.logs?.users) }}</b></span><span>失败请求 <b>{{ format(data.logs?.failures) }}</b></span></div><p>已按接口过滤规则排除后台探测与心跳。</p></router-link>
+      <router-link v-if="data.leader" to="/email" class="service-card service-mail"><div class="service-heading"><el-icon><Message /></el-icon><h3>邮件投递</h3><span class="small-state">{{ data.mail?.enabled?'发送开启':'发送暂停' }}</span><el-icon class="service-arrow"><ArrowRight /></el-icon></div><strong>{{ format(data.mail?.queue) }}<small>等待 / 发送中</small></strong><div class="service-facts"><span>验证码 <b>{{ codeCount }}</b></span><span>普通通知 <b>{{ noticeCount }}</b></span></div><p>验证码优先发送，注册与入会通知排队。</p></router-link>
+      <router-link v-if="data.leader" to="/analytics" class="service-card service-traffic"><div class="service-heading"><el-icon><DataAnalysis /></el-icon><h3>流量概况</h3><el-icon class="service-arrow"><ArrowRight /></el-icon></div><strong>{{ bytes(data.traffic?.downloadBytes) }}<small>近 7 天下载</small></strong><div class="service-facts"><span>上传 <b>{{ bytes(data.traffic?.uploadBytes) }}</b></span><span>请求 <b>{{ format(data.traffic?.totalRequests) }}</b></span></div><p>文件流量为平台登记估算，不代表服务器总带宽。</p></router-link>
+      <router-link to="/schedule-app" class="service-card service-schedule"><div class="service-heading"><el-icon><Calendar /></el-icon><h3>软协课表</h3><el-icon class="service-arrow"><ArrowRight /></el-icon></div><strong>{{ format(data.schedule?.activeUsers) }}<small>近 7 天使用账号</small></strong><div class="service-facts"><span>成功同步 <b>{{ format(data.schedule?.syncUsers) }}</b></span><span>待处理反馈 <b>{{ format(data.schedule?.openFeedback) }}</b></span></div><p>使用按前台展示去重，同步按成功事件去重。</p></router-link>
+    </section>
 
-      <div class="zen-card">
-        <h3 class="section-title">快捷操作</h3>
-        <div class="quick-actions">
-          <router-link to="/member" class="action-btn">
-            <el-icon><User /></el-icon>
-            <span>成员管理</span>
-          </router-link>
-          <router-link to="/activity" class="action-btn">
-            <el-icon><Calendar /></el-icon>
-            <span>活动管理</span>
-          </router-link>
-          <router-link to="/finance" class="action-btn">
-            <el-icon><Wallet /></el-icon>
-            <span>财务管理</span>
-          </router-link>
-          <router-link to="/study" class="action-btn">
-            <el-icon><Reading /></el-icon>
-            <span>学习小组</span>
-          </router-link>
-        </div>
-      </div>
-    </div>
+    <section class="dashboard-bottom-grid">
+      <div class="zen-card overview-panel archive-panel"><div class="panel-heading"><div><h3>历届成员档案</h3><p>同届按人去重；一人可出现在多届，各届不能直接相加</p></div><router-link to="/member" class="panel-link">查看档案 <el-icon><ArrowRight /></el-icon></router-link></div><div ref="gradeChart" class="grade-history-chart" role="img" aria-label="历届任职档案成员人数" /></div>
+      <div class="zen-card overview-panel scope-panel"><div class="panel-heading"><div><h3>{{ isAll?'历届汇总':`${currentGrade||'本'}届概况` }}</h3><p>任职与活动、财务按届统计</p></div><el-switch v-model="isAll" active-text="全部" inactive-text="本届" :disabled="scopeLoading" @change="loadScope" /></div><div class="scope-metrics"><div><b>{{ format(scope.userCount) }}</b><span>建档成员</span></div><div><b>{{ format(scope.activityCount) }}</b><span>社团活动</span></div><div><b>{{ format(scope.studyActivityCount) }}</b><span>学习活动</span></div></div><div class="finance-lines"><div><span>收入</span><b class="income">¥{{ money(scope.financeStats?.totalIncome) }}</b></div><div><span>支出</span><b>¥{{ money(scope.financeStats?.totalExpense) }}</b></div><div><span>结余{{ isAll?'（历届累计）':'' }}</span><b class="balance">¥{{ money(scope.financeStats?.balance) }}</b></div></div></div>
+    </section>
+    <section class="zen-card overview-panel module-panel"><div class="panel-heading"><div><h3>常用管理</h3><p>日常事务，一步到达</p></div></div><div class="dashboard-shortcuts"><router-link v-for="link in shortcuts" :key="link.label" :to="link.to"><el-icon><component :is="link.icon" /></el-icon><span>{{ link.label }}</span><el-icon><ArrowRight /></el-icon></router-link></div></section>
+    <MemberProfileDialog v-model="profileOpen" :user-id="profileId" />
   </div>
 </template>
-
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { getDashboardStats, getGradeStats } from '../api'
+import { ref,computed,onMounted,onBeforeUnmount,nextTick } from 'vue'
+import { User,UserFilled,TrendCharts,Document,Message,DataAnalysis,Calendar,Refresh,ArrowRight,Reading,Wallet,Setting,Connection } from '@element-plus/icons-vue'
+import request from '../utils/request'
+import { getDashboardStats,getGradeStats } from '../api'
+import MemberProfileDialog from '../components/MemberProfileDialog.vue'
 import * as echarts from 'echarts'
-
-const isAll = ref(false)
-const currentGrade = ref('')
-
-const statCards = ref([
-  { label: '社团成员', value: '0', icon: 'User', color: '#3B82F6', bgColor: 'rgba(59,130,246,0.08)' },
-  { label: '社团活动', value: '0', icon: 'Calendar', color: '#14B8A6', bgColor: 'rgba(20,184,166,0.08)' },
-  { label: '学习活动', value: '0', icon: 'Reading', color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.08)' },
-  { label: '财务账单', value: '0', icon: 'Wallet', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.08)' }
+const root=ref(null),data=ref({}),scope=ref({}),isAll=ref(false),currentGrade=ref(''),loading=ref(false),scopeLoading=ref(false),error=ref(''),updatedAt=ref('')
+const profileOpen=ref(false),profileId=ref(null),registrationChart=ref(null),genderChart=ref(null),gradeChart=ref(null)
+let charts=[],observer,alive=true,scopeRevision=0
+const format=value=>value==null?'—':Number(value).toLocaleString('zh-CN')
+const date=value=>value?String(value).replace('T',' ').slice(0,19):'未记录'
+const money=value=>Number(value||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const bytes=value=>{if(value==null)return '—';const n=Number(value);if(n<1024)return `${n} B`;const unit=Math.min(3,Math.floor(Math.log(n)/Math.log(1024)));return `${(n/1024**unit).toFixed(1)} ${['B','KiB','MiB','GiB'][unit]}`}
+const percent=value=>Number(data.value.users?.total)?(Number(value||0)/Number(data.value.users.total)*100).toFixed(1):'0.0'
+const openProfile=id=>{profileId.value=id;profileOpen.value=true}
+const cards=computed(()=>[
+  {label:'平台账号',value:data.value.users?.total,note:'全部注册用户，包含游客',icon:User,to:'/member?tab=users',color:'#3b61bc',tint:'#edf2ff'},
+  {label:'社团成员账号',value:data.value.memberAccounts,note:'成员及以上权限，按账号去重',icon:UserFilled,to:'/member',color:'#0e8a80',tint:'#e9f6f3'},
+  {label:'今日新注册',value:data.value.users?.today,note:`近 7 天新增 ${format(data.value.users?.recent)} 个账号`,icon:TrendCharts,to:'/member?tab=users',color:'#8063bb',tint:'#f2eefb'},
+  {label:'近 7 天课表使用',value:data.value.schedule?.activeUsers,note:'按实际打开课表的账号去重',icon:Calendar,to:'/schedule-app',color:'#aa752d',tint:'#fbf4e8'}
 ])
-
-const financeStats = reactive({
-  totalIncome: '0.00',
-  totalExpense: '0.00',
-  balance: '0.00'
-})
-
-const chartRef = ref(null)
-const gradeStatsLoaded = ref(false)
-const gradeStatsLoading = ref(true)
-let chartInstance = null
-
-const loadStats = async (grade) => {
-  try {
-    const res = await getDashboardStats(grade || undefined)
-    const d = res.data
-    if (d.currentGrade && d.currentGrade !== 'all') currentGrade.value = String(d.currentGrade)
-    statCards.value[0].value = String(d.userCount ?? 0)
-    statCards.value[1].value = String(d.activityCount ?? 0)
-    statCards.value[2].value = String(d.studyActivityCount ?? 0)
-    if (d.financeStats) {
-      statCards.value[3].value = String(d.financeStats.count ?? 0)
-      financeStats.totalIncome = String(d.financeStats.totalIncome ?? '0.00')
-      financeStats.totalExpense = String(d.financeStats.totalExpense ?? '0.00')
-      financeStats.balance = String(d.financeStats.balance ?? '0.00')
-    }
-  } catch (e) {}
+const genders=computed(()=>[{label:'男',value:Number(data.value.users?.male||0),color:'#5687d3'},{label:'女',value:Number(data.value.users?.female||0),color:'#a18bd0'},{label:'未填写',value:Number(data.value.users?.unknown||0),color:'#ced6e4'}])
+const joinCount=status=>data.value.join?.states?.filter(row=>Number(row.status)===status).reduce((sum,row)=>sum+Number(row.total),0)??0
+const pending=computed(()=>[
+  {label:'入会待审核',value:data.value.join?joinCount(1):null,note:`${joinCount(0)} 待提交 · ${joinCount(3)} 待补充`,icon:UserFilled,to:'/join',color:'#4c73bf'},
+  ...(data.value.leader?[{label:'邮件待处理',value:data.value.mail?.failed,note:'检查失败、超时或结果未知的邮件',icon:Message,to:'/email',color:'#b78138'}]:[]),
+  {label:'课表问题反馈',value:data.value.schedule?.openFeedback,note:'尚未关闭的问题与建议',icon:Calendar,to:'/schedule-app?tab=issues',color:'#7d67b4'}
+])
+const codeCount=computed(()=>format(Number(data.value.mail?.verification?.pending||0)+Number(data.value.mail?.verification?.sending||0)))
+const noticeCount=computed(()=>format(Number(data.value.mail?.notifications?.pending||0)+Number(data.value.mail?.notifications?.sending||0)))
+const shortcuts=computed(()=>[
+  {label:'用户管理',to:'/member?tab=users',icon:User},{label:'入会管理',to:'/join',icon:UserFilled},{label:'社团活动',to:'/activity',icon:Calendar},{label:'学习小组',to:'/study',icon:Reading},{label:'软协笔记',to:'/note',icon:Document},{label:'财务管理',to:'/finance',icon:Wallet},{label:'日志管理',to:'/log',icon:Connection},
+  ...(data.value.leader?[{label:'邮件管理',to:'/email',icon:Message},{label:'流量统计',to:'/analytics',icon:DataAnalysis}]:[]),{label:'软协课表',to:'/schedule-app',icon:Calendar},{label:'系统设置',to:'/settings',icon:Setting}
+])
+function chart(el){if(!el)return null;let c=echarts.getInstanceByDom(el);if(!c){c=echarts.init(el);charts.push(c)}return c}
+function renderUsers(){
+  chart(registrationChart.value)?.setOption({color:['#5d7ac9'],tooltip:{trigger:'axis'},grid:{left:38,right:15,top:20,bottom:25},xAxis:{type:'category',data:(data.value.registrationTrend||[]).map(day=>day.date.slice(5)),axisLine:{lineStyle:{color:'#e6eaf2'}},axisTick:{show:false},axisLabel:{color:'#8d98ad',fontSize:10}},yAxis:{type:'value',minInterval:1,splitLine:{lineStyle:{color:'#eef1f6',type:'dashed'}},axisLabel:{fontSize:10,color:'#8d98ad'}},series:[{type:'bar',barMaxWidth:24,data:(data.value.registrationTrend||[]).map(day=>Number(day.count)),itemStyle:{borderRadius:[4,4,0,0],color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#6d89d8'},{offset:1,color:'#c1cef0'}])}}]})
+  chart(genderChart.value)?.setOption({color:genders.value.map(item=>item.color),tooltip:{trigger:'item'},graphic:{type:'text',left:'center',top:'42%',style:{text:format(data.value.users?.total)+'\n平台账号',fill:'#55617a',fontSize:12,lineHeight:23,textAlign:'center'}},series:[{type:'pie',radius:['68%','87%'],center:['50%','50%'],label:{show:false},emphasis:{scaleSize:3},data:genders.value.map(item=>({name:item.label,value:item.value})),itemStyle:{borderColor:'#fff',borderWidth:3}}]})
 }
-
-const onScopeChange = () => {
-  loadStats(isAll.value ? 'all' : undefined)
-}
-
-const initChart = (data) => {
-  if (!chartRef.value) return
-  chartInstance = echarts.init(chartRef.value)
-  const grades = data.map(d => d.grade + '届')
-  const counts = data.map(d => d.count)
-  chartInstance.setOption({
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(255,255,255,0.96)',
-      borderColor: '#dfe2ee', borderWidth: 1,
-      textStyle: { color: '#2d3142', fontSize: 13 },
-      formatter: (params) => {
-        const p = params[0]
-        return `<div style="font-weight:600;margin-bottom:4px">${p.name}</div>
-                <span style="color:#3B82F6">● </span>成员 <b>${p.value}</b> 人`
-      }
-    },
-    grid: { top: 20, right: 20, bottom: 30, left: 50 },
-    xAxis: {
-      type: 'category', data: grades,
-      axisLine: { lineStyle: { color: '#dfe2ee' } },
-      axisTick: { show: false },
-      axisLabel: { color: '#9298b0', fontSize: 12, fontFamily: 'Noto Sans SC, sans-serif' }
-    },
-    yAxis: {
-      type: 'value', minInterval: 1,
-      splitLine: { lineStyle: { color: '#eef0f7', type: 'dashed' } },
-      axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: '#9298b0', fontSize: 12 }
-    },
-    series: [{
-      type: 'bar', data: counts, barWidth: '45%',
-      itemStyle: {
-        borderRadius: [6, 6, 0, 0],
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#14B8A6' }, { offset: 1, color: '#3B82F6' }
-        ])
-      },
-      emphasis: {
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#2DD4BF' }, { offset: 1, color: '#3B82F6' }
-          ])
-        }
-      },
-      label: { show: true, position: 'top', color: '#3B82F6', fontSize: 13, fontWeight: 600, formatter: '{c}人' }
-    }],
-    animationDuration: 800, animationEasing: 'cubicOut'
-  })
-}
-
-const handleResize = () => chartInstance?.resize()
-
-onMounted(async () => {
-  loadStats()
-  try {
-    const res = await getGradeStats()
-    const data = res.data || []
-    if (data.length > 0) {
-      gradeStatsLoaded.value = true
-      await nextTick()
-      initChart(data)
-      window.addEventListener('resize', handleResize)
-    }
-  } catch (e) {
-  } finally {
-    // 无论成功失败都结束 loading，空数据时显示 el-empty 而非永远「加载中」
-    gradeStatsLoading.value = false
-  }
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-  chartInstance?.dispose()
-})
+function renderGrades(rows){chart(gradeChart.value)?.setOption({color:['#6585c7'],tooltip:{trigger:'axis'},grid:{left:36,right:16,top:25,bottom:24},xAxis:{type:'category',data:rows.map(row=>`${row.grade}届`),axisTick:{show:false},axisLine:{lineStyle:{color:'#e6eaf2'}},axisLabel:{color:'#8893a7',fontSize:11}},yAxis:{type:'value',minInterval:1,splitLine:{lineStyle:{color:'#eef1f6',type:'dashed'}},axisLabel:{color:'#8893a7',fontSize:10}},series:[{type:'bar',data:rows.map(row=>Number(row.count)),barMaxWidth:36,label:{show:true,position:'top',fontSize:11,color:'#657caa'},itemStyle:{borderRadius:[4,4,0,0]}}]})}
+async function loadScope(){const rev=++scopeRevision;scopeLoading.value=true;try{const {data:result}=await getDashboardStats(isAll.value?'all':undefined);if(!alive||rev!==scopeRevision)return;scope.value=result;if(result.currentGrade!=='all')currentGrade.value=result.currentGrade}catch(e){error.value='部分届别数据加载失败，可刷新重试'}finally{if(rev===scopeRevision)scopeLoading.value=false}}
+async function refresh(){if(loading.value)return;loading.value=true;error.value='';const results=await Promise.allSettled([request.get('/api/dashboard/insights'),getGradeStats(),loadScope()]);if(!alive)return;try{if(results[0].status==='fulfilled'){data.value=results[0].value.data;updatedAt.value=new Date().toLocaleTimeString('zh-CN',{hour12:false});await nextTick();renderUsers()}else error.value='平台概览暂时加载失败，请刷新重试';if(results[1].status==='fulfilled'){await nextTick();renderGrades(results[1].value.data||[])}else error.value='部分图表加载失败，请刷新重试'}finally{loading.value=false}}
+onMounted(async()=>{await refresh();if(!alive)return;observer=new ResizeObserver(()=>charts.forEach(c=>c.resize()));if(root.value)observer.observe(root.value)})
+onBeforeUnmount(()=>{alive=false;scopeRevision++;observer?.disconnect();charts.forEach(c=>c.dispose());charts=[]})
 </script>
-
-
+<style scoped>
+.operations-dashboard{max-width:1620px;margin:0 auto;padding-bottom:20px}.dashboard-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:26px 30px;background:linear-gradient(110deg,#eaf0fc,#f3f4fc 66%,#eaf5f5);border:1px solid #dfe6f4;border-radius:16px;margin-bottom:20px}.dashboard-eyebrow{font-size:11px;letter-spacing:1.5px;color:#7186b3}.dashboard-banner h2{font-size:23px;letter-spacing:.5px;margin:10px 0;color:#2c3d60;font-weight:650}.dashboard-banner p{font-size:12px;color:#8290a7;margin:0}.banner-controls{display:flex;align-items:center;gap:16px;flex:none}.banner-controls>span{font-size:11px;color:#8b98ad}.banner-controls .el-icon{margin-right:7px}.dashboard-error{margin-bottom:16px}.dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px}.dashboard-kpi{display:block;border:1px solid var(--zen-border-light);border-radius:13px;background:var(--zen-card);padding:18px 22px;text-decoration:none;transition:border-color .2s,box-shadow .2s}.dashboard-kpi:hover{border-color:var(--kpi-color);box-shadow:0 4px 18px #354e8a09}.kpi-top{display:flex;align-items:center;gap:10px;font-size:12px;color:#7d899c}.kpi-symbol{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--kpi-tint);color:var(--kpi-color);font-size:17px}.kpi-arrow{margin-left:auto;color:#a8b4c8;font-size:12px}.dashboard-kpi>strong{display:block;font-size:29px;line-height:1.4;letter-spacing:-.5px;margin:9px 0 5px;color:#334766;font-weight:650}.dashboard-kpi p{font-size:11px;color:#929db0;margin:0}.dashboard-analysis-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}.operations-dashboard .overview-panel{padding:21px 24px;min-width:0}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.panel-heading h3{font-size:15px;font-weight:600;margin:0 0 7px;color:#3d4a63;letter-spacing:.3px}.panel-heading p{font-size:11px;margin:0;color:#9aa3b4;line-height:1.6}.metric-pill,.status-pill{padding:5px 9px;white-space:nowrap;background:#f1f4fc;color:#7386b6;border-radius:6px;font-size:10px}.registration-chart{height:160px;width:100%}.gender-body{display:flex;align-items:center;justify-content:center;gap:24px;min-height:160px}.gender-chart{width:145px;height:145px;flex:none}.gender-legend{min-width:170px}.gender-legend>div{display:flex;align-items:center;gap:8px;font-size:11px;color:#7d889d;margin:16px 0}.gender-legend i{width:7px;height:7px;border-radius:3px}.gender-legend b{margin-left:auto;font-weight:600;color:#52627f;min-width:35px;text-align:right}.gender-legend small{width:44px;text-align:right;color:#9ba6b8;font-size:10px}.dashboard-main-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:20px;margin-bottom:20px}.panel-link{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#6b85b5;font-size:11px;white-space:nowrap}.person-link{display:flex;align-items:center;gap:8px;border:0;background:none;color:#405477;font:inherit;cursor:pointer;padding:3px 0;font-size:12px}.person-link>span{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#f0f4fc;color:#7493bf;font-size:11px}.recent-users :deep(.el-table){font-size:11px}.recent-users :deep(.el-table .cell){line-height:26px}.recent-users :deep(.el-table__cell){padding:6px 0}.pending-item{display:flex;align-items:center;gap:11px;text-decoration:none;padding:18px 0;border-bottom:1px solid #f0f2f7;color:#7a899f}.pending-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:#f4f6fb;font-size:17px;flex:none}.pending-item b{font-size:12px;font-weight:500;color:#52627b}.pending-item p{margin:6px 0 0;font-size:10px;color:#a0a9b9;line-height:1.5}.pending-item>strong{margin-left:auto;font-size:23px;color:#526681;font-weight:550}.pending-item>.el-icon{font-size:11px;color:#b4bdcc}.is-open{background:#edf6f1;color:#4f927a}.dashboard-footnote{font-size:10px;color:#a1aabb;margin:16px 0 0;line-height:1.6}.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px}.service-card{display:block;min-width:0;padding:20px 22px;border-radius:13px;border:1px solid #e0e8f2;background:#f5f8fc;text-decoration:none;color:#617797}.service-mail{background:#f9f7fd;border-color:#e9e3f2}.service-traffic{background:#f1f8f7;border-color:#dfece8}.service-schedule{background:#faf8f3;border-color:#ece7db}.service-heading{display:flex;gap:8px;align-items:center}.service-heading h3{font-size:12px;font-weight:600;margin:0}.service-heading>.el-icon{font-size:15px}.service-heading .service-arrow{margin-left:auto;font-size:11px}.service-card>strong{font-size:25px;color:#4d6484;font-weight:600;display:block;margin:17px 0 14px;line-height:1.4}.service-card small{font-size:10px;font-weight:400;margin-left:7px;color:#8b9aad}.service-facts{display:flex;flex-wrap:wrap;gap:8px 15px;font-size:10px;color:#8a99aa}.service-facts b{font-weight:500;color:#71849c;margin-left:3px}.service-card>p{font-size:10px;color:#9ba7b6;margin:15px 0 0;line-height:1.6}.small-state{font-size:9px;color:#a294b2;margin-left:auto}.dashboard-bottom-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}.grade-history-chart{height:190px;width:100%}.scope-panel .el-switch{flex:none;font-size:10px}.scope-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:23px 0 20px}.scope-metrics>div{border-right:1px solid #edf0f6}.scope-metrics>div:last-child{border:0}.scope-metrics b{display:block;color:#60799d;font-size:22px;line-height:1.5;font-weight:550}.scope-metrics span{font-size:10px;color:#9ca5b5}.finance-lines{display:flex;flex-direction:column;gap:12px}.finance-lines>div{display:flex;justify-content:space-between;font-size:11px;color:#94a0b2}.finance-lines b{font-weight:500;color:#687c9a}.finance-lines b.income{color:#569481}.finance-lines b.balance{color:#5d7fbb}.dashboard-shortcuts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.dashboard-shortcuts a{display:flex;align-items:center;gap:8px;text-decoration:none;padding:12px 10px;font-size:11px;color:#73829b;border:1px solid #edf0f7;border-radius:8px;transition:background .2s}.dashboard-shortcuts a:hover{background:#f3f6fc}.dashboard-shortcuts a>.el-icon:last-child{margin-left:auto;font-size:10px;color:#abb6c9}.dashboard-shortcuts a>.el-icon:first-child{color:#7591bf;font-size:15px}.person-link:focus-visible,.dashboard-kpi:focus-visible,.service-card:focus-visible{outline:2px solid var(--el-color-primary);outline-offset:3px}@media(max-width:1200px){.gender-body{gap:10px}.gender-chart{width:120px;height:130px}.gender-legend{min-width:145px}.dashboard-main-grid{grid-template-columns:1.6fr 1fr}.dashboard-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr))}.banner-controls{flex-direction:column;align-items:flex-end;gap:10px}.dashboard-kpi{padding:16px}}@media(max-width:900px){.dashboard-analysis-grid,.dashboard-main-grid,.dashboard-bottom-grid{grid-template-columns:1fr}.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-banner{padding:22px}.dashboard-banner h2{font-size:20px}.banner-controls>span{display:none}}@media(max-width:540px){.gender-chart{width:100px;height:120px}.gender-body{gap:8px;flex-wrap:wrap}.gender-legend{min-width:140px}.dashboard-banner{align-items:flex-start;padding:18px;gap:10px}.dashboard-banner h2{font-size:17px;line-height:1.6}.dashboard-banner p{font-size:10px}.dashboard-eyebrow{font-size:9px}.banner-controls .el-button{padding:8px}.dashboard-kpis{gap:10px}.dashboard-kpi{padding:13px}.kpi-top{font-size:10px;gap:6px}.kpi-symbol{width:25px;height:25px}.dashboard-kpi>strong{font-size:25px}.dashboard-kpi p{font-size:9px;line-height:1.6}.operations-dashboard .overview-panel{padding:18px 16px}.dashboard-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.scope-panel .panel-heading{flex-wrap:wrap}}
+</style>

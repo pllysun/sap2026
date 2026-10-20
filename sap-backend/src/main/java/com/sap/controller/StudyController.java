@@ -52,6 +52,7 @@ public class StudyController {
     @GetMapping("/activity/{id}/detail")
     @OperationLog("查询学习活动详情")
     public Result<?> getActivityDetail(@PathVariable Long id) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         return Result.ok(studyService.getActivityDetail(id));
     }
 
@@ -76,6 +77,7 @@ public class StudyController {
     @OperationLog("查询周期详情")
     public Result<?> getCycleDetail(@RequestParam Long activityId,
                                      @RequestParam Integer week) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         return Result.ok(studyService.getCycleDetail(activityId, week));
     }
 
@@ -83,6 +85,7 @@ public class StudyController {
     @GetMapping("/leader/list")
     @OperationLog("查询负责人列表")
     public Result<?> listLeaders(@RequestParam Long activityId) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         return Result.ok(studyService.listLeaders(activityId));
     }
 
@@ -115,6 +118,7 @@ public class StudyController {
     @OperationLog("查询学习小组成员")
     public Result<?> listMembers(@RequestParam Long activityId,
                                   @RequestParam(required = false) Integer week) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         return Result.ok(studyService.getCycleDetail(activityId, week));
     }
 
@@ -222,6 +226,7 @@ public class StudyController {
     @DeleteMapping("/homework/my")
     @OperationLog("删除我的作业提交")
     public Result<?> deleteMySubmission(@RequestParam Long activityId, @RequestParam Integer week) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         Long userId = StpUtil.getLoginIdAsLong();
         studyService.deleteMySubmission(activityId, week, userId);
         return Result.ok("删除成功");
@@ -253,6 +258,7 @@ public class StudyController {
     @OperationLog("查询评分总览")
     public Result<?> scoreOverview(@RequestParam Long activityId,
                                     @RequestParam(required = false) Integer week) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         return Result.ok(studyService.scoreOverview(activityId, week));
     }
 

@@ -1,23 +1,31 @@
 <template>
-  <div class="page">
+  <div class="page notes-page">
     <PageHeader title="软协笔记" label="KNOWLEDGE LIBRARY / 知识共享" description="把经验写下来，让下一次探索更进一步。" />
 
     <div v-if="initialLoading" class="loading"><div class="loading__spinner"></div></div>
 
-    <div v-else-if="notes.length === 0" class="empty">
-      <div style="font-size:3rem; margin-bottom: var(--s3); opacity:0.4;">📝</div>
+    <div v-else-if="loadError" class="empty" role="alert">
+      <div class="empty-icon"><UiIcon name="warning" :size="24" /></div>
+      <p>{{ loadError }}</p><button class="btn btn--secondary mt-3" @click="loadNotes">重新加载</button>
+    </div>
+    <div v-else-if="notes.length === 0 && !keyword" class="empty">
+      <div class="empty-icon"><UiIcon name="edit" :size="24" /></div>
       <div class="empty__text">暂无笔记</div>
     </div>
 
     <!-- 搜索栏 -->
-    <div v-if="!initialLoading && notes.length > 0 || keyword" class="note-search">
+    <div v-if="!initialLoading && (notes.length > 0 || keyword)" class="note-search">
       <div class="note-search__input-wrap">
-        <span class="note-search__icon">🔍</span>
+        <span class="note-search__icon"><UiIcon name="search" :size="18" /></span>
         <input v-model="keyword" class="note-search__input" aria-label="搜索笔记" placeholder="搜索笔记标题…"
           @keyup.enter="doSearch" />
-        <button v-if="keyword" class="note-search__clear" @click="keyword = ''; doSearch()">✕</button>
+        <button v-if="keyword" class="note-search__clear" aria-label="清空笔记搜索" @click="keyword = ''; doSearch()"><UiIcon name="close" :size="18" /></button>
       </div>
+      <button class="btn btn--primary" :disabled="searching" @click="doSearch">{{ searching ? '搜索中…' : '搜索笔记' }}</button>
+      <span class="note-search__count">{{ total }} 篇笔记</span>
     </div>
+
+    <div v-if="!initialLoading && !searching && !loadError && !notes.length && keyword" class="empty"><div class="empty-icon"><UiIcon name="search" :size="24" /></div><p>没有找到相关笔记</p><button class="btn btn--secondary mt-3" @click="keyword = ''; doSearch()">查看全部笔记</button></div>
 
     <!-- 笔记卡片列表 -->
     <div class="note-grid" v-if="notes.length">
@@ -31,24 +39,25 @@
         @click="goDetail(note)"
       >
         <div class="note-card__header">
-          <div class="note-card__icon">📄</div>
+          <div class="note-card__icon"><UiIcon name="file-plus" :size="18" /></div>
           <div class="note-card__meta">
             <span class="note-card__author">{{ note.authorName }}</span>
             <span class="note-card__date">{{ formatDate(note.createdAt) }}</span>
           </div>
         </div>
         <h3 class="note-card__title">{{ note.title }}</h3>
-        <p class="note-card__desc">{{ note.description || '暂无简介' }}</p>
+        <p class="note-card__desc" v-if="note.description">{{ note.description }}</p>
+        <span v-if="isGuest" class="note-card__access"><UiIcon name="lock" :size="14" /> 成为正式成员后可阅读</span>
         <div class="note-card__footer">
-          <span class="note-card__stat">📝 {{ formatWordCount(note.wordCount) }}</span>
-          <span class="note-card__stat">⏱ {{ note.readMinutes }} 分钟</span>
-          <span class="note-card__stat">👁 {{ note.viewCount }}</span>
+          <span class="note-card__stat"><UiIcon name="edit" :size="18" /> {{ formatWordCount(note.wordCount) }}</span>
+          <span class="note-card__stat"><UiIcon name="clock" :size="18" /> {{ note.readMinutes }} 分钟</span>
+          <span class="note-card__stat"><UiIcon name="eye" :size="18" /> {{ note.viewCount }}</span>
           <span class="note-card__stat" :aria-label="`${note.downloadCount} 次下载`"><UiIcon name="file-save" :size="14" /> {{ note.downloadCount }}</span>
         </div>
 
         <!-- 游客遮罩 -->
         <div v-if="isGuest" class="note-card__guest-mask">
-          <span class="note-card__guest-text">🔒 成为正式成员后可查看</span>
+          <span class="note-card__guest-text"><UiIcon name="lock" :size="18" /> 成为正式成员后可查看</span>
         </div>
       </div>
     </div>
@@ -82,6 +91,9 @@ const total = ref(0)
 const pageSize = 12
 const keyword = ref('')
 const initialLoading = ref(true)
+const searching = ref(false)
+const loadError = ref('')
+let loadGeneration = 0
 
 const isGuest = computed(() => {
   const roles = userStore.roles || []
@@ -96,13 +108,18 @@ const displayPages = computed(() => {
 })
 
 const loadNotes = async () => {
+  const generation = ++loadGeneration
+  searching.value = true
+  loadError.value = ''
   try {
     const params = { current: page.value, size: pageSize }
     if (keyword.value) params.keyword = keyword.value
     const res = await request.get('/api/note/list', { params })
+    if (generation !== loadGeneration) return
     notes.value = res.data?.records || []
     total.value = res.data?.total || 0
-  } catch (e) {}
+  } catch (e) { if (generation === loadGeneration) loadError.value = e.message || '笔记暂时无法加载，请重试。' }
+  finally { if (generation === loadGeneration) searching.value = false }
 }
 
 const doSearch = () => {
@@ -317,4 +334,22 @@ onMounted(async () => {
   .note-grid { grid-template-columns: 1fr; gap: var(--s3); }
   .note-card { padding: var(--s4); min-height: 200px; }
 }
+</style>
+
+<style scoped>
+.notes-page .note-search { align-items: center; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.notes-page .note-search__input-wrap { max-width: 36rem; flex: 1; min-width: 12rem; }
+.notes-page .note-search__input { min-height: 2.75rem; font-size: .875rem; border-color: #cbd3e1; }
+.note-search__count { color: var(--ink-500); font-size: .8125rem; margin-left: auto; }
+.notes-page .note-grid { gap: 1.25rem; }
+.notes-page .note-card { min-height: 15rem; padding: 1.75rem; border-radius: 1rem; }
+.notes-page .note-card__icon { width: 2.5rem; height: 2.5rem; color: #5864a0; background: #f0eff9; }
+.note-card__header { gap: .75rem; margin-bottom: 1rem; }
+.note-card__title { font-size: 1.25rem; line-height: 1.55; letter-spacing: -.02em; }
+.note-card__desc { font-size: .9375rem; color: var(--ink-600); margin-bottom: 1.25rem; }
+.notes-page .note-card__footer { margin-top: auto; padding-top: 1rem; }
+.note-card__stat :deep(svg) { width: .875rem; height: .875rem; }
+.note-card__access { display: flex; gap: .375rem; align-items: center; font-size: .75rem; color: var(--ink-500); padding-bottom: .75rem; }
+.note-card--guest .note-card__guest-mask { display: none; }
+@media(max-width: 600px) { .notes-page .note-card { padding: 1.25rem; }.note-card__title { font-size: 1.125rem; }.note-search__count { width: 100%; }.note-search__input-wrap { min-width: 0; } }
 </style>

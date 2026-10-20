@@ -30,6 +30,7 @@ class RegistrationFlowTest {
     private MockMvc mvc;
     private CaptchaService captcha;
     private AuthService auth;
+    private com.sap.service.AppRegistrationService emailRegistration;
     private long now;
     private final ObjectMapper json = new ObjectMapper();
 
@@ -49,7 +50,14 @@ class RegistrationFlowTest {
         captcha = new CaptchaService(settings);
         ReflectionTestUtils.setField(captcha, "clock", (LongSupplier) () -> now);
         auth = mock(AuthService.class);
+        emailRegistration = mock(com.sap.service.AppRegistrationService.class);
+        doAnswer(i -> {
+            com.sap.dto.AppRegisterDTO dto=i.getArgument(0);
+            if(dto.getEmailRequestId()==null) throw new com.sap.common.BusinessException(400,"请先验证邮箱");
+            return null;
+        }).when(emailRegistration).register(any(),any());
         AuthController authController = new AuthController();
+        ReflectionTestUtils.setField(authController, "emailRegistration", emailRegistration);
         ReflectionTestUtils.setField(authController, "authService", auth);
         ReflectionTestUtils.setField(authController, "captchaService", captcha);
         ReflectionTestUtils.setField(authController, "registrationProtection",
@@ -80,38 +88,28 @@ class RegistrationFlowTest {
     }
 
     @Test
-    void challengeThenRegisterReplayAndRapidSecondAccount() throws Exception {
-        Map<String, Object> form = form();
-        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
-                .andExpect(jsonPath("$.data.captchaRequired").value(true));
-        verifyNoInteractions(auth);
-
-        solve(form);
-        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
-                .andExpect(jsonPath("$.code").value(200)).andExpect(jsonPath("$.data").value("注册成功"));
+    void emailCodeIsRequiredEvenWithSolvedImage() throws Exception {
+        var form = form(); solve(form);
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
                 .andExpect(jsonPath("$.code").value(400));
-
-        solve(form);
-        form.put("studentId", "20260002");
-        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
-                .andExpect(jsonPath("$.code").value(429));
-        verify(auth, times(1)).register(any());
-
-        now += 10_000;
-        solve(form);
+        verifyNoInteractions(auth);
+        verify(emailRegistration).register(any(),eq("127.0.0.1"));
+        form.put("emailRequestId", java.util.UUID.randomUUID().toString());
+        form.put("emailCode", "123456"); now += 10000;
         mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
                 .andExpect(jsonPath("$.code").value(200));
-        verify(auth, times(2)).register(any());
+        verify(emailRegistration,times(2)).register(any(), eq("127.0.0.1"));
+        verifyNoInteractions(auth);
     }
 
     @Test
-    void captchaCannotBeTransferredToAnotherSource() throws Exception {
-        Map<String, Object> form = form();
-        solve(form);
-        mvc.perform(post("/api/auth/register").with(r -> { r.setRemoteAddr("192.0.2.2"); return r; })
-                        .header("X-Real-IP", "127.0.0.1").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
-                .andExpect(jsonPath("$.code").value(400));
+    void emailSendUsesSameProtectedServiceAndTrustedSourceIp() throws Exception {
+        when(emailRegistration.request(any(),any(),any(),any(),any(),any())).thenReturn(Map.of("requestId", "sent"));
+        var form = form(); solve(form);
+        mvc.perform(post("/api/auth/register/email-code").with(r -> { r.setRemoteAddr("192.0.2.2"); return r; }).header("X-Forwarded-For", "198.51.100.1")
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(form)))
+                .andExpect(jsonPath("$.data.requestId").value("sent"));
+        verify(emailRegistration).request(eq("20260001"),eq("测试用户"),eq("123456"),any(),any(),eq("192.0.2.2"));
         verifyNoInteractions(auth);
     }
 
@@ -121,7 +119,7 @@ class RegistrationFlowTest {
             mvc.perform(post("/api/auth/register").with(r -> { r.setRemoteAddr("192.0.2.9"); return r; })
                             .header("X-Real-IP", "198.51.100." + i).contentType(MediaType.APPLICATION_JSON)
                             .content(json.writeValueAsString(form())))
-                    .andExpect(jsonPath("$.code").value(i < 20 ? 200 : 429));
+                    .andExpect(jsonPath("$.code").value(i < 20 ? 400 : 429));
         }
         verifyNoInteractions(auth);
     }

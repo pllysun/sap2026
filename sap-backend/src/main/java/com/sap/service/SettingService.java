@@ -111,6 +111,24 @@ public class SettingService {
         return setting != null ? setting.getSettingValue() : null;
     }
 
+    /** 通用 HTTP 读取只公开明确列出的业务设置；内部服务仍使用 getValue。 */
+    public static void requireReadableKey(String key) {
+        if (key == null || !java.util.Set.of("current_grade", "membership_fee", "join_enabled",
+                "footer_address", "footer_qq", "footer_email", "footer_copyright",
+                "qr_qq_group_url", "qr_qq_group_name", "qr_qq_account_url", "qr_qq_account_name",
+                "join_qq_group_url", "join_qq_group_name", "join_group_link").contains(key)) {
+            throw new com.sap.common.BusinessException(403, "无权通过该接口读取敏感配置");
+        }
+    }
+
+    public String getReadableValue(String key) {
+        requireReadableKey(key);
+        Setting row = settingMapper.selectOne(new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, key));
+        // 检查实际命中行，防止 MySQL 不区分大小写、重音或尾空格的排序规则绕过。
+        if (row != null) requireReadableKey(row.getSettingKey());
+        return row == null ? null : row.getSettingValue();
+    }
+
     public void updateSetting(Setting setting) {
         requireGenericSetting(setting.getSettingKey());
         Setting existing = settingMapper.selectOne(

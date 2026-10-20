@@ -24,7 +24,7 @@ import java.util.*;
 public class PasswordRecoveryService {
     public static final int COOLDOWN_SECONDS = 180;
     public static final long TTL = 15 * 60_000L;
-    public static final String REQUEST_NOTICE = "如账号存在且注册 QQ 有效，验证码将发送到该 QQ 邮箱。邮件按队列发送，请耐心等待并检查垃圾箱；QQ 填错、收不到邮件或密码仍不正确，请联系管理员。";
+    public static final String REQUEST_NOTICE = "如账号存在且注册 QQ 有效，验证码将发送到该 QQ 邮箱。邮件将立即发送，请同时检查垃圾箱；QQ 填错、收不到邮件或密码仍不正确，请联系管理员。";
     private static final String INVALID = "验证码无效、已过期或尝试次数过多，请重新申请；QQ 邮箱不正确或仍无法找回，请联系管理员";
     private final MailStore store;
     private final UserMapper users;
@@ -65,9 +65,6 @@ public class PasswordRecoveryService {
             if(!Boolean.TRUE.equals(template.get("enabled"))) throw new IllegalStateException();
             MailQueue.validateContract(MailHook.PASSWORD_CODE,template);
         } catch(RuntimeException e) { throw new BusinessException(503,"找回密码邮件暂不可用，请联系管理员"); }
-        // 不插队或绕过 65 秒间隔；积压时拒绝新申请，避免验证码尚未发出就已过期。
-        if(store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue",Long.class)>=5)
-            throw new BusinessException(429,"邮件队列较忙，请几分钟后再试，或联系管理员");
     }
     public Map<String,Object> request(String account,String captchaId,String answer,String ip) {
         if(account==null || !account.trim().matches("[A-Za-z0-9_-]{1,20}")) throw new BusinessException(400,"请输入正确的注册账号（学号）");

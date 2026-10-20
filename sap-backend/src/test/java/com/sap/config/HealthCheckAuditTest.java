@@ -19,24 +19,27 @@ import static org.mockito.Mockito.*;
 
 class HealthCheckAuditTest extends com.sap.BaseUnitTest {
     private final SysLogMapper logs = mock(SysLogMapper.class);
-    private final LogStatsMapper counts = mock(LogStatsMapper.class);
+    private final com.sap.service.LogDailyStatsService counts = mock(com.sap.service.LogDailyStatsService.class);
+    private final com.sap.service.ApiLogExclusionService exclusions=new com.sap.service.ApiLogExclusionService(null,mock(org.springframework.transaction.PlatformTransactionManager.class));
     private final UserMapper users = mock(UserMapper.class);
     private final TrafficService traffic = mock(TrafficService.class);
 
     private OperationLogAspect aspect() {
         var aspect = new OperationLogAspect();
         ReflectionTestUtils.setField(aspect, "sysLogMapper", logs);
-        ReflectionTestUtils.setField(aspect, "logStatsMapper", counts);
+        ReflectionTestUtils.setField(aspect, "dailyStats", counts);
         ReflectionTestUtils.setField(aspect, "userMapper", users);
+        ReflectionTestUtils.setField(aspect,"exclusions",exclusions);
         return aspect;
     }
     private ApiStatInterceptor statistics() {
         var interceptor = new ApiStatInterceptor();
         ReflectionTestUtils.setField(interceptor, "trafficService", traffic);
+        ReflectionTestUtils.setField(interceptor,"exclusions",exclusions);
         return interceptor;
     }
 
-    @ParameterizedTest @ValueSource(strings = {"/api/ping", "/sap/api/ping"})
+    @ParameterizedTest @ValueSource(strings = {"/api/ping", "/sap/api/ping", "/api/oj-nodes/23/heartbeat", "/api/oj-nodes/node-a/heartbeat"})
     void probesBypassAllAuditAndCountEntriesButStillExecute(String path) throws Throwable {
         var request = new MockHttpServletRequest("GET", path);
         if (path.startsWith("/sap/")) request.setContextPath("/sap");
@@ -50,7 +53,7 @@ class HealthCheckAuditTest extends com.sap.BaseUnitTest {
         when(point.proceed()).thenReturn(result);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         try {
-            new ApiAuditFilter(audit).doFilter(request, response, (req, res) -> {
+            new ApiAuditFilter(audit,exclusions).doFilter(request, response, (req, res) -> {
                 try { assertSame(result, audit.unannotated(point)); }
                 catch (Throwable error) { throw new RuntimeException(error); }
             });
@@ -88,7 +91,7 @@ class HealthCheckAuditTest extends com.sap.BaseUnitTest {
             statistics().afterCompletion(request, response, null, null);
         } finally { RequestContextHolder.resetRequestAttributes(); }
         verify(logs, times(1)).insert(any(SysLog.class));
-        verify(counts, times(1)).insert(any(com.sap.entity.LogStats.class));
+        verify(counts, times(1)).record(any(SysLog.class));
         verify(traffic, times(1)).recordApiRequest(path, "GET");
     }
 

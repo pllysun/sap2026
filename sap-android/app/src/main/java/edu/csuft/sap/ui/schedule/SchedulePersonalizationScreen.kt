@@ -80,6 +80,7 @@ import edu.csuft.sap.data.schedule.ScheduleAppearanceLimits
 import edu.csuft.sap.data.schedule.ScheduleBackgroundStore
 import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.displayPeriodCount
 import edu.csuft.sap.data.schedule.withDefaultPersonalization
 import edu.csuft.sap.ui.icons.AppIcons
 import java.io.File
@@ -384,6 +385,7 @@ private fun SchedulePreview(
         pageCount = { totalWeeks },
     )
     val allCourses = sourceCourses.ifEmpty { previewCourses }
+    val periodCount = remember(settings.dailyPeriods, allCourses) { settings.displayPeriodCount(allCourses) }
     val days = remember(settings.showWeekend, settings.weekStartSunday) {
         when {
             !settings.showWeekend -> (1..5).toList()
@@ -411,7 +413,7 @@ private fun SchedulePreview(
                 val week = page + 1
                 val weekCourses = remember(allCourses, week, settings.showNonWeek) {
                     allCourses.mapNotNull { course ->
-                        val thisWeek = course.weeks.isEmpty() || week in course.weeks
+                        val thisWeek = course.occursInWeek(week)
                         when {
                             thisWeek -> course.copy(isThisWeek = true)
                             settings.showNonWeek -> course.copy(isThisWeek = false)
@@ -429,7 +431,7 @@ private fun SchedulePreview(
                         ScheduleGrid(
                             days = days,
                             courses = weekCourses,
-                            periodCount = settings.dailyPeriods,
+                            periodCount = periodCount,
                             showNowLine = false,
                             settings = settings,
                             weekDates = WeekUtil.datesOfWeek(settings.semesterStartDate, week),

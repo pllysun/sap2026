@@ -197,6 +197,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { getBills, addBill, updateBill, deleteBill, getBillStats, getSettingValue } from '../api'
+import { downloadFile } from '../utils/downloadFile'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const gradeFilter = ref('')
@@ -345,9 +346,9 @@ const handleDelete = async (id) => {
   } catch (e) {}
 }
 
-const handleExport = () => {
-  const token = localStorage.getItem('sap-token')
-  window.open(`/api/bill/export?grade=${gradeFilter.value}&sap-token=${token}`)
+const handleExport = async () => {
+  try { await downloadFile(`/api/bill/export?grade=${encodeURIComponent(gradeFilter.value || '')}`, '财务账单.xlsx') }
+  catch (e) { ElMessage.error(e.message) }
 }
 </script>
 

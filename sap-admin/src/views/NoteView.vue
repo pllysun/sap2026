@@ -155,6 +155,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getNoteList, addNote, uploadNote, updateNote, deleteNote, getNoteDetail, getNoteStats } from '../api'
+import { downloadFile } from '../utils/downloadFile'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -182,12 +183,12 @@ const statsData = ref(null)
 
 const previewHtml = computed(() => {
   if (!form.content) return ''
-  try { return DOMPurify.sanitize(marked(form.content)) } catch { return '' }
+  try { return DOMPurify.sanitize(marked(form.content), { FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'textarea'], FORBID_ATTR: ['style'] }) } catch { return '' }
 })
 
 const previewNoteHtml = computed(() => {
   if (!previewNote.content) return ''
-  try { return DOMPurify.sanitize(marked(previewNote.content)) } catch { return '' }
+  try { return DOMPurify.sanitize(marked(previewNote.content), { FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'textarea'], FORBID_ATTR: ['style'] }) } catch { return '' }
 })
 
 const formatTime = (t) => {
@@ -305,10 +306,9 @@ const handleDelete = async (id) => {
 /**
  * 下载 PDF：通过新窗口打开后端 PDF 下载接口
  */
-const handleDownloadPdf = (row) => {
-  const token = localStorage.getItem('sap-token') || ''
-  const url = `/api/note/${row.id}/pdf?sap-token=${encodeURIComponent(token)}`
-  window.open(url, '_blank')
+const handleDownloadPdf = async (row) => {
+  try { await downloadFile(`/api/note/${row.id}/pdf`, `${row.title || '笔记'}.pdf`) }
+  catch (e) { ElMessage.error(e.message); return }
   // 刷新列表以更新下载计数
   setTimeout(() => loadNotes(), 2000)
 }

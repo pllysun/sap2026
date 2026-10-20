@@ -42,6 +42,33 @@ public class JwHttpSession {
     private final int timeoutSeconds;
     private final long createdAt = System.currentTimeMillis();
     private volatile Route route;
+    private volatile JwOrigins jwOrigins;
+    private final java.util.Set<String> trustedOrigins = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** 仅由服务端配置与固定路由调用，不接受客户端输入。 */
+    public void trustConfiguredOrigin(String value) {
+        if (value != null && !value.isBlank()) trustedOrigins.add(origin(URI.create(value)));
+    }
+
+    /** MFA 地址来自学校 CAS 的 HTTPS 响应，限定为既有源或学校 HTTPS 域名。 */
+    public void trustSchoolAttestationOrigin(String value) {
+        URI uri = URI.create(value);
+        String target = origin(uri);
+        if (trustedOrigins.contains(target)) return;
+        String host = uri.getHost().toLowerCase(java.util.Locale.ROOT);
+        if (!"https".equalsIgnoreCase(uri.getScheme()) || effectivePort(uri) != 443 || !host.endsWith(".csuft.edu.cn"))
+            throw new com.sap.common.BusinessException(502, "学校二次验证地址不受信任");
+        trustedOrigins.add(target);
+    }
+
+    private String origin(URI uri) {
+        if (uri.getHost() == null || uri.getUserInfo() != null || !("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())))
+            throw new com.sap.common.BusinessException(502, "学校响应包含无效跳转地址");
+        return uri.getScheme().toLowerCase(java.util.Locale.ROOT) + "://" + uri.getHost().toLowerCase(java.util.Locale.ROOT) + ":" + effectivePort(uri);
+    }
+
+    /** 同一配置教务源站的 HTTP/HTTPS 地址对；不接受任意 WebVPN 子域。 */
+    private record JwOrigins(String httpDirect, String httpsDirect, String httpProxy, String httpsProxy) {}
 
     public JwHttpSession(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
@@ -171,7 +198,11 @@ public class JwHttpSession {
 
     public void configureRoute(Route route) {
         if (route == null) throw new IllegalArgumentException("route 不能为空");
+        this.jwOrigins = configuredJwOrigins(route);
         this.route = route;
+        for (String value : new String[]{route.casBase(), route.jwglBase(), route.qualityBase(), route.webvpnBase(),
+                route.directCasBase(), route.directJwglBase(), route.directQualityBase()}) trustConfiguredOrigin(value);
+        if (jwOrigins != null) for (String value : new String[]{jwOrigins.httpDirect(), jwOrigins.httpsDirect(), jwOrigins.httpProxy(), jwOrigins.httpsProxy()}) trustConfiguredOrigin(value);
     }
 
     public Route getRoute() {
@@ -211,7 +242,7 @@ public class JwHttpSession {
      * WebVPN 校内服务会识别来源门户；调用方不得传入用户提供的 Header。
      */
     public HttpResponse<byte[]> getFollow(String url, int maxHops, Map<String, String> headers) throws Exception {
-        String current = url;
+        String current = rewriteWebvpnRedirect(URI.create(url)).toString();
         HttpResponse<byte[]> resp = null;
         for (int i = 0; i < maxHops; i++) {
             resp = http.send(builder(current, headers).GET().build(),
@@ -233,14 +264,64 @@ public class JwHttpSession {
      * 代理化，Java 客户端则会误连校内 HTTP 地址并得到 502。这里只改写当前路由中
      * 明确配置的三个源站，路径、查询参数（含一次性票据）和片段均原样保留。
      */
-    private URI rewriteWebvpnRedirect(URI redirect) {
+    URI rewriteWebvpnRedirect(URI redirect) {
         Route value = route;
         if (value == null || !value.webvpn() || redirect == null || redirect.getHost() == null) return redirect;
+        JwOrigins origins = jwOrigins;
+        if (origins != null) {
+            boolean secureTarget = sameNetworkOrigin(redirect, URI.create(origins.httpsDirect()))
+                    || sameNetworkOrigin(redirect, URI.create(origins.httpsProxy()));
+            if (secureTarget && !sameNetworkOrigin(URI.create(value.jwglBase()), URI.create(origins.httpsProxy()))) {
+                // 学校把 HTTP/80 教务升级到 HTTPS/443 后，代理主机也随之改变。先把本次
+                // 门户票据及教务 Cookie 复制到这个明确的同源升级主机，再发下一跳请求。
+                mirrorPortalCookiesToHost(value.webvpnBase(), origins.httpsProxy());
+                mirrorPortalCookiesToHost(value.jwglBase(), origins.httpsProxy());
+                value = new Route(value.webvpn(), value.casBase(), value.casLoginUrl(), origins.httpsProxy(),
+                        value.qualityBase(), value.webvpnBase(), value.externalId(), value.callbackUrl(),
+                        value.directCasBase(), origins.httpsDirect(), value.directQualityBase());
+                route = value;
+            }
+            // CAS 仍可能按旧 HTTP service 回跳。会话已升级后保持在 HTTPS 代理内，
+            // 同时让后续课表、成绩和缓存会话使用实际的教务地址。
+            for (String origin : new String[]{origins.httpDirect(), origins.httpsDirect(),
+                    origins.httpProxy(), origins.httpsProxy()}) {
+                if (sameNetworkOrigin(redirect, URI.create(origin))) {
+                    return replaceConfiguredOrigin(redirect, origin, value.jwglBase());
+                }
+            }
+        }
         URI rewritten = replaceConfiguredOrigin(redirect, value.directCasBase(), value.casBase());
         if (!rewritten.equals(redirect)) return rewritten;
         rewritten = replaceConfiguredOrigin(redirect, value.directJwglBase(), value.jwglBase());
         if (!rewritten.equals(redirect)) return rewritten;
         return replaceConfiguredOrigin(redirect, value.directQualityBase(), value.qualityBase());
+    }
+
+    private static JwOrigins configuredJwOrigins(Route value) {
+        if (!value.webvpn()) return null;
+        try {
+            URI direct = URI.create(value.directJwglBase());
+            URI proxy = URI.create(value.jwglBase());
+            URI portal = URI.create(value.webvpnBase());
+            if (direct.getHost() == null || portal.getHost() == null || proxy.getHost() == null
+                    || !"https".equalsIgnoreCase(proxy.getScheme())
+                    || !"https".equalsIgnoreCase(portal.getScheme())
+                    || !("http".equalsIgnoreCase(direct.getScheme()) && effectivePort(direct) == 80
+                        || "https".equalsIgnoreCase(direct.getScheme()) && effectivePort(direct) == 443)) return null;
+            String host = direct.getHost().toLowerCase(java.util.Locale.ROOT);
+            if (!host.matches("[a-z0-9.-]+")) return null;
+            String suffix = host.replace('.', '-') + "-";
+            String gateway = "." + portal.getHost();
+            String httpProxy = new URI("https", null, "http-" + suffix + "80" + gateway,
+                    proxy.getPort(), null, null, null).toString();
+            String httpsProxy = new URI("https", null, "https-" + suffix + "443" + gateway,
+                    proxy.getPort(), null, null, null).toString();
+            if (!sameNetworkOrigin(proxy, URI.create(httpProxy))
+                    && !sameNetworkOrigin(proxy, URI.create(httpsProxy))) return null;
+            return new JwOrigins("http://" + host, "https://" + host, httpProxy, httpsProxy);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static URI replaceConfiguredOrigin(URI redirect, String directBase, String proxyBase) {
@@ -249,8 +330,11 @@ public class JwHttpSession {
         URI proxy = URI.create(proxyBase);
         if (!sameNetworkOrigin(redirect, direct)) return redirect;
         try {
-            return new URI(proxy.getScheme(), null, proxy.getHost(), proxy.getPort(),
-                    redirect.getPath(), redirect.getQuery(), redirect.getFragment());
+            String origin = new URI(proxy.getScheme(), null, proxy.getHost(), proxy.getPort(),
+                    null, null, null).toString();
+            return URI.create(origin + (redirect.getRawPath() == null ? "" : redirect.getRawPath())
+                    + (redirect.getRawQuery() == null ? "" : "?" + redirect.getRawQuery())
+                    + (redirect.getRawFragment() == null ? "" : "#" + redirect.getRawFragment()));
         } catch (Exception ignored) {
             return redirect;
         }
@@ -326,7 +410,14 @@ public class JwHttpSession {
     }
 
     private HttpRequest.Builder builder(String url) {
-        return HttpRequest.newBuilder(URI.create(url))
+        URI uri = URI.create(url);
+        String target = origin(uri);
+        synchronized (trustedOrigins) {
+            // 兼容没有路由的单源抓取器；首个配置源站确定后，每次重定向都复验。
+            if (trustedOrigins.isEmpty() && route == null) trustedOrigins.add(target);
+            if (!trustedOrigins.contains(target)) throw new com.sap.common.BusinessException(502, "已阻止学校页面跳转到未配置的源站");
+        }
+        return HttpRequest.newBuilder(uri)
                 .header("User-Agent", UA)
                 .timeout(Duration.ofSeconds(timeoutSeconds));
     }

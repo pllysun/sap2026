@@ -34,7 +34,7 @@
 | **SSL_EMAIL** | Let's Encrypt 联系邮箱 | `docker/.env` |
 | **腾讯云 COS** | secretId/secretKey/bucket/region | 启动后在 **管理端「系统设置→对象存储」** 填，存 DB（不走环境变量） |
 | **安卓 keystore** | `sap-android/keystore.properties` + `*.jks`，正式签名 | 本地文件，已 gitignore，**务必备份** |
-| 默认管理员 | 首启自动建 `admin/admin123` | **上线后立即改密** |
+| 初始管理员 | 首启仅按私有 `app.bootstrap.admin-student-id` / `app.bootstrap.admin-password` 配置创建 | 不提供固定默认密码；线上凭据仅保存在 Git 忽略的本地运维文件中 |
 
 > `JW_AES_KEY` 一旦设定不要再换：换了所有已绑定教务凭据无法解密，需用户重新绑定。
 > 生成：`openssl rand -base64 24 | cut -c1-32`
@@ -62,7 +62,7 @@ docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build
 docker run -d --name sap-app --restart unless-stopped \
   -p 80:80 -p 443:443 \
   -e DOMAIN=csuftsap.top -e SSL_EMAIL=admin@csuftsap.top \
-  -e MYSQL_URL="jdbc:mysql://<host>:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=UTF-8" \
+  -e MYSQL_URL="jdbc:mysql://<host>:3306/sap?serverTimezone=Asia/Shanghai&sslMode=VERIFY_IDENTITY&useUnicode=true&characterEncoding=UTF-8" \
   -e MYSQL_USER=sap -e MYSQL_PASSWORD='<强密码>' \
   -e JW_AES_KEY='<32字节生产密钥>' \
   -e JAVA_OPTS='-Xms256m -Xmx512m' \
@@ -185,7 +185,7 @@ cd sap-android
 
 ## 5. 首次上线后
 
-1. 访问 `https://csuftsap.top/admin/`（注意尾斜杠），用 `admin/admin123` 登录 → **立即改密**。
+1. 访问 `https://csuftsap.top/admin/`（注意尾斜杠），使用私有引导配置创建的管理员账号登录。既有线上账号的密码不会在部署或重启时被覆盖。
 2. 「系统设置 → 对象存储」填腾讯云 COS（否则文件上传 / App 发版不可用）。
 3. 冒烟：用户端 `/`、管理端 `/admin/`、`/api/` 正常；触发一次教务绑定确认 OCR 边车连通（验证码自动识别生效）。
 

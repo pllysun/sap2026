@@ -126,6 +126,7 @@ public class NoteController {
     @PostMapping("/{id}/download")
     @OperationLog("下载笔记")
     public Result<?> download(@PathVariable Long id) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         Long userId = StpUtil.getLoginIdAsLong();
         noteService.recordDownload(id, userId);
         return Result.ok("下载已记录");
@@ -137,6 +138,7 @@ public class NoteController {
     @GetMapping("/{id}/pdf")
     @OperationLog("下载笔记PDF")
     public void downloadPdf(@PathVariable Long id, HttpServletResponse response) {
+        StpUtil.checkRoleOr("0", "1", "2", "3");
         Long userId = StpUtil.getLoginIdAsLong();
 
         Note note = noteMapper.selectById(id);

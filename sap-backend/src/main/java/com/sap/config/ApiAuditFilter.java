@@ -14,9 +14,10 @@ import java.io.IOException;
 @Component @RequiredArgsConstructor @Order(Ordered.HIGHEST_PRECEDENCE+20)
 public class ApiAuditFilter extends OncePerRequestFilter {
     private final OperationLogAspect audit;
+    private final com.sap.service.ApiLogExclusionService exclusions;
     @Override protected boolean shouldNotFilter(HttpServletRequest request) {
         String path=request.getRequestURI();
-        return !path.startsWith("/api/")||path.startsWith("/api/file/uploads/")||ApiRequestPolicy.isHealthCheck(request)||"OPTIONS".equals(request.getMethod());
+        return !path.startsWith("/api/")||path.startsWith("/api/file/uploads/")||exclusions.excludes(request)||"OPTIONS".equals(request.getMethod());
     }
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         long start=System.nanoTime();

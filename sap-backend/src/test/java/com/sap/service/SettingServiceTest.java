@@ -144,6 +144,19 @@ class SettingServiceTest extends BaseUnitTest {
     // ===================== updateSetting =====================
 
     @Test
+    void genericHttpReadsRejectSecretsAndCollationAliases() {
+        for (String key : List.of("cos_secret_key", "COS_SECRET_KEY", "cos_secret_key ",
+                "cós_secret_key", "email_smtp_password", "email_smtp_username", "app_download_url")) {
+            assertThrows(com.sap.common.BusinessException.class, () -> service.getReadableValue(key));
+        }
+        verifyNoInteractions(settingMapper);
+        when(settingMapper.selectOne(any())).thenReturn(setting("cos_secret_key", "secret", ""));
+        assertThrows(com.sap.common.BusinessException.class, () -> service.getReadableValue("footer_qq"));
+        when(settingMapper.selectOne(any())).thenReturn(setting("current_grade", "2026", ""));
+        assertEquals("2026", service.getReadableValue("current_grade"));
+    }
+
+    @Test
     void updateSetting_existing_updatesValueAndDescription() {
         Setting existing = setting("k", "old", "oldDesc");
         when(settingMapper.selectOne(any())).thenReturn(existing);

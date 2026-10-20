@@ -25,12 +25,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,7 +37,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.ensureActive
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +55,7 @@ import edu.csuft.sap.data.account.MemberState
 import edu.csuft.sap.ui.common.ModeOptionRow
 import edu.csuft.sap.ui.common.ModePickerHeader
 import edu.csuft.sap.ui.common.pressFade
+import edu.csuft.sap.ui.common.ScrollSheet
 import edu.csuft.sap.ui.icons.AppIcons
 import edu.csuft.sap.ui.icons.ChevronIcon
 import edu.csuft.sap.ui.icons.IconBadge
@@ -93,7 +91,6 @@ fun AppSettingsScreen(
             onModePickerOpened()
         }
     }
-    val modeSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var selectingMode by remember { mutableStateOf(false) }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -164,7 +161,7 @@ fun AppSettingsScreen(
         }
     }
     if (showModes) {
-        ModalBottomSheet(onDismissRequest = { showModes = false }, sheetState = modeSheet) {
+        ScrollSheet(onDismissRequest = { showModes = false }) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).selectableGroup().padding(bottom = 24.dp)) {
                 ModePickerHeader(showModeInfo) { showModeInfo = !showModeInfo }
                 MemberState.availableModes.forEach { item ->
@@ -174,11 +171,6 @@ fun AppSettingsScreen(
                             val owner = edu.csuft.sap.data.account.CurrentAccount.key
                             scope.launch {
                                 try {
-                                    try { modeSheet.hide() }
-                                    catch (e: kotlinx.coroutines.CancellationException) {
-                                        // 拖动手势可取消动画，但不应吞掉已点击的模式；离开页面则仍取消。
-                                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                    }
                                     showModes = false
                                     androidx.compose.runtime.withFrameNanos { }
                                     if (owner == edu.csuft.sap.data.account.CurrentAccount.key && item != mode) onSelectMode(item)
@@ -194,9 +186,14 @@ fun AppSettingsScreen(
 
 /**
  * 隐私协议。
- * [offline]=true 时展示离线版本（完全不联网、不收集任何信息），优先级最高。
+ * [offline]=true 时展示离线版本（不联网，已登录用户的使用记录在本地暂存），优先级最高。
  * 按会员身份选择协议；登录前显式使用游客协议。
  */
+@Composable
+private fun UsagePrivacyNote() {
+    Para("课表使用统计：按登录账号汇总查看日期、课表模式与成功导入或同步记录；离线查看暂存在本机，恢复网络后补报。统计不上传课程内容、教务密码、位置或设备标识，同一账号在同一天内去重。")
+}
+
 @Composable
 fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, member: Boolean = MemberState.hasFullAppFeatures, offline: Boolean = false) {
     if (offline) { OfflinePrivacyScreen(modifier, onBack); return }
@@ -212,6 +209,7 @@ fun PrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit, member: Boo
                 "3. 意见反馈：用户主动提交反馈时，会保存反馈内容、所选图片附件及 App 版本。只有点击上传图片后才会打开系统图片选择器，并仅获得你所选图片的读取权限；不会读取其他照片或收集设备唯一标识。\n" +
                 "4. 课表背景：只有你主动点击选择图片时才会打开系统照片选择器，仅处理选中的图片并在裁剪后保存到本机 App 私有目录，不会上传服务器。")
             Section("二、信息如何使用与存储")
+            UsagePrivacyNote()
             Para("· 你的教务密码经 AES 加密后存储在本应用后端服务器，仅用于自动登录学校教务系统抓取你本人的教务数据，不会明文保存、不会用于其他用途、不会提供给任何第三方。\n" +
                 "· 登录凭证及课表/成绩/考试/评教等数据会缓存在你的设备本地（加密存储），以便离线查看并减少对教务系统的请求。\n" +
                 "· 反馈标题、正文、所选图片附件与讨论会在 Issue 中心共享展示。\n" +
@@ -242,6 +240,7 @@ fun GuestPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 "· 班级课表：无需教务账号密码，选择、下载并在本机缓存公共班级课表，可离线查看。\n" +
                 "· 两种模式均不授权服务器保存教务密码，不自动采集个人成绩。")
             Section("三、App 功能与数据")
+            UsagePrivacyNote()
             Para("App 会处理账号资料及功能所需的访问、下载和操作日志。你主动提交的反馈及附件会保存并在 Issue 中心展示；课表背景仅在本机处理。仅在你主动选择图片时读取所选图片。找回 App 密码时，验证码发送到账号登记的 QQ 邮箱。")
             Section("四、管理自己的数据")
             Para("你可以退出登录清除本机登录凭证，在 Web 导入中通过「换账号」清除网页登录状态，并删除本地课表。账号资料有误或需要协助处理数据时，请联系软件协会管理员。")
@@ -256,7 +255,7 @@ fun WebPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("隐私协议", onBack)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
-            Para("软协课表（以下简称「本应用」）非常重视你的隐私。Web 模式下本应用仅在你的设备本地处理数据。本协议说明 Web 模式收集哪些信息、如何使用与存储，以及你拥有的权利。")
+            Para("软协课表（以下简称「本应用」）非常重视你的隐私。Web 课表内容仅在本机处理；平台账号、使用统计及主动提交的反馈按下述说明处理。")
             Section("一、我们收集的信息")
             Para("1. 平台账号（如已登录）：用于校验身份。\n" +
                 "2. Web 模式不收集、不存储你的学校教务账号与密码。你在应用内置的统一身份认证网页中自行登录，本应用不读取、不上传你的账号密码。\n" +
@@ -268,6 +267,7 @@ fun WebPrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 "· 课表背景的裁剪副本仅保存在 App 私有目录。")
             Section("三、数据范围")
             Para("Web 模式仅抓取并展示你的课表，不抓取成绩、考试安排等其它教务数据（这与教务模式不同）。")
+            UsagePrivacyNote()
             Section("四、你的权利")
             Para("· 你可随时在导入页点「换账号」清除网页登录态，或退出登录以清除本地登录态与网页缓存。\n" +
                 "· 本地保存的课表可随时删除。")
@@ -284,13 +284,13 @@ fun OfflinePrivacyScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         SettingsTopBar("隐私协议", onBack)
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp)) {
-            Para("软协课表（以下简称「本应用」）非常重视你的隐私。当前为离线模式：本应用未连接任何服务器，不收集、不上传、不存储你的任何个人信息。")
-            Section("一、我们不收集任何信息")
-            Para("离线模式下，本应用不收集你的平台账号、学校教务账号与密码、设备标识、位置等任何个人信息，也不会发起任何网络请求或数据上传。")
+            Para("软协课表（以下简称「本应用」）非常重视你的隐私。当前为离线模式，本应用不会发起网络请求或上传数据。")
+            Section("一、离线使用")
+            Para("离线模式不获取新的教务数据，不读取设备标识或位置。已有登录账号查看课表时，仅在本机暂存使用日期与模式，恢复网络并验证同一账号后补报；未登录时不记录。")
             Section("二、数据如何处理")
             Para("· 本应用仅在你的设备本地读取此前已缓存的课表数据用于离线展示。\n" +
                 "· 你主动选择并裁剪的课表背景仅保存在 App 私有目录。\n" +
-                "· 所有数据均保存在你的设备本地，不会离开你的设备。")
+                "· 课表内容与背景图保留在本机；使用统计按上述范围在联网后补报。")
             Section("三、数据范围")
             Para("离线模式支持切换本地 Web 课表和已下载的班级课表，包括已缓存学期及开学日期，不抓取或下载新数据。本机会记住你选择的班级；恢复联网后按云控和账号权限提供在线功能。")
             Section("四、你的权利")

@@ -19,6 +19,7 @@ const routes = [
     redirect: '/home',
     children: [
       { path: 'oj', name: 'OjProblems', component: () => import('@/views/oj/ProblemList.vue') },
+      { path: 'oj/learning', name: 'OjLearning', component: () => import('@/views/oj/LearningHub.vue') },
       { path: 'oj/sets/:setId', name: 'OjProblemSet', component: () => import('@/views/oj/SetDetail.vue') },
       { path: 'oj/sets/:setId/items/:itemId', name: 'OjSetWorkspace', component: () => import('@/views/oj/SetWorkspace.vue') },
       { path: 'oj/:id', name: 'OjWorkspace', component: () => import('@/views/oj/OjWorkspace.vue') },

@@ -25,6 +25,19 @@ class MailQueueTest {
     @AfterEach void stop(){queue.stop();}
     long count(String table){return db.queryForObject("SELECT COUNT(*) FROM "+table,Long.class);}
     String enqueue(){return queue.enqueueTest("user@example.com","Test","<p>private content</p>",1L);}
+    void awaitDelivery() {
+        long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
+        while(count("sys_mail_queue")>0 && System.nanoTime()<end) {
+            try {Thread.sleep(10);}catch(InterruptedException e){Thread.currentThread().interrupt();fail(e);}
+        }
+        assertEquals(0,count("sys_mail_queue"));
+    }
+    @Test void verificationCodesCannotLeakThroughHtmlAttributes() {
+        String variables="{{name}} {{account}} {{email}} {{code}} {{expiresInMinutes}}";
+        assertDoesNotThrow(()->MailQueue.validateContract(MailHook.APP_REGISTRATION_CODE,Map.of("subject","验证","htmlContent",variables)));
+        for(String html:List.of("<img src='https://example.test/?code={{code}}'>", "<a href='https://example.test/{{ code }}'>打开</a>", "<style>x{background:url(https://example.test/{{code}})}</style>"))
+            assertThrows(com.sap.common.BusinessException.class,()->MailQueue.validateContract(MailHook.APP_REGISTRATION_CODE,Map.of("subject","验证","htmlContent",variables+html)));
+    }
     @Test void downloadAlertIsDeduplicatedPersistentAndUsesAuditedQueue() {
         String first = queue.enqueueDownloadAlert("operator@example.com", "2026-10-04:epoch", "2026-10-04", 21, 20);
         assertEquals(first, queue.enqueueDownloadAlert("operator@example.com", "2026-10-04:epoch", "2026-10-04", 22, 20));
@@ -39,7 +52,6 @@ class MailQueueTest {
         assertEquals(2, count("sys_mail_queue"));
         assertEquals(2, count("sys_mail_log"));
     }
-    void clearGap(){db.update("UPDATE sys_mail_worker SET next_at=0 WHERE id=1");}
     Map<String,Object> businessContext() {
         var user=new com.sap.entity.User();user.setId(10L);user.setName("触发时姓名");user.setStudentId("20260001");
         var admin=new com.sap.entity.User();admin.setId(20L);admin.setName("回复管理员");admin.setStudentId("20200020");
@@ -68,7 +80,7 @@ class MailQueueTest {
         var job=queue.claim();queue.finish(job,"FAILED","网络失败");
         var failed=(List<Map<String,Object>>)queue.page("failed",1,20).get("records");
         assertEquals("20260001",((Map<?,?>)((Map<?,?>)failed.get(0).get("context")).get("recipient")).get("account"));
-        queue.failedAction(List.of(id),"retry",30L);clearGap();queue.finish(queue.claim(),"SUCCESS",null);
+        queue.failedAction(List.of(id),"retry",30L);queue.finish(queue.claim(),"SUCCESS",null);
         var rows=(List<Map<String,Object>>)queue.page("messages",1,20).get("records");
         var saved=(Map<?,?>)rows.get(0).get("context");
         assertEquals("触发时姓名",((Map<?,?>)saved.get("recipient")).get("name"));
@@ -107,7 +119,7 @@ class MailQueueTest {
     }
     @Test void messageListUsesLatestEventAndKeepsIndependentSystemEvents() {
         String first=enqueue();queue.finish(queue.claim(),"SUCCESS",null);
-        String second=enqueue();clearGap();queue.finish(queue.claim(),"FAILED","failure");
+        String second=enqueue();queue.finish(queue.claim(),"FAILED","failure");
         store.audit(null,"ACCOUNT_REGISTERED",null,null,"SKIPPED","disabled",1L);
         store.audit(null,"ACCOUNT_REGISTERED",null,null,"SKIPPED","disabled",2L);
         var page=queue.page("messages",1,20);
@@ -156,11 +168,14 @@ class MailQueueTest {
         assertNull(db.queryForMap("SELECT template_id FROM sys_mail_binding WHERE event_key='MEMBER_JOINED'").get("template_id"));
         assertEquals(1, count("sys_mail_log"));
     }
-    @Test void successDeletesQueueAndPersistsCooldown() {
-        enqueue();enqueue();var job=queue.claim();assertNotNull(job);assertNull(queue.claim());queue.finish(job,"SUCCESS",null);
-        assertEquals(1,count("sys_mail_queue"));assertEquals(0,count("sys_mail_failed"));assertNull(queue.claim());
-        assertTrue(db.queryForObject("SELECT next_at FROM sys_mail_worker",Long.class)>=System.currentTimeMillis()+64000);
-        clearGap();assertNotNull(queue.claim());
+    @Test void messagesCanSendTogetherAndFinishOutOfOrderWithoutCooldown() {
+        enqueue();enqueue();
+        db.update("UPDATE sys_mail_worker SET next_at=? WHERE id=1",System.currentTimeMillis()+65000);
+        var first=queue.claim();var second=queue.claim();
+        assertNotNull(first);assertNotNull(second);assertNotEquals(first.get("id"),second.get("id"));assertNull(queue.claim());
+        queue.finish(second,"SUCCESS",null);queue.finish(first,"SUCCESS",null);
+        assertEquals(0,count("sys_mail_queue"));assertEquals(0,count("sys_mail_failed"));
+        enqueue();assertNotNull(queue.claim());
     }
     @Test void failureRetryIgnoreDeleteAreAtomicAndAudited() {
         String id=enqueue();queue.finish(queue.claim(),"FAILED","simulated failure");
@@ -169,18 +184,18 @@ class MailQueueTest {
         queue.failedAction(List.of(id),"ignore",4L);assertEquals("IGNORED",db.queryForObject("SELECT status FROM sys_mail_failed",String.class));
         queue.failedAction(List.of(id),"retry",4L);queue.failedAction(List.of(id),"retry",4L);
         assertEquals(1,count("sys_mail_queue"));assertEquals(0,count("sys_mail_failed"));
-        clearGap();queue.finish(queue.claim(),"FAILED","again");assertEquals(2,db.queryForObject("SELECT attempts FROM sys_mail_failed",Integer.class));
+        queue.finish(queue.claim(),"FAILED","again");assertEquals(2,db.queryForObject("SELECT attempts FROM sys_mail_failed",Integer.class));
         queue.failedAction(List.of(id),"delete",4L);assertEquals(0,count("sys_mail_failed"));assertTrue(count("sys_mail_log")>=7);
     }
     @Test void expiredLeaseIsUnknownNotAutomaticallyResent() {
-        enqueue();queue.claim();db.update("UPDATE sys_mail_worker SET lease_until=0");assertNull(queue.claim());
+        enqueue();queue.claim();db.update("UPDATE sys_mail_queue SET lease_until=0");assertNull(queue.claim());
         assertEquals(0,count("sys_mail_queue"));assertEquals("UNKNOWN",db.queryForObject("SELECT status FROM sys_mail_failed",String.class));
         verify(smtp,never()).deliver(anyString(),anyString(),anyString());
     }
-    @Test void concurrentWorkersClaimExactlyOne() throws Exception {
+    @Test void concurrentWorkersClaimDifferentMessagesExactlyOnce() throws Exception {
         enqueue();enqueue();var pool=Executors.newFixedThreadPool(2);
         try {var futures=pool.invokeAll(List.<Callable<Map<String,Object>>>of(()->queue.claim(),()->queue.claim()));
-            int claimed=0;for(var f:futures)if(f.get()!=null)claimed++;assertEquals(1,claimed);
+            Set<Object> claimed=new HashSet<>();for(var f:futures)if(f.get()!=null)assertTrue(claimed.add(f.get().get("id")));assertEquals(2,claimed.size());
         } finally {pool.shutdownNow();}
     }
     @Test void payloadEncryptedAndListsContainNoHtml() {
@@ -211,7 +226,7 @@ class MailQueueTest {
         assertThrows(com.sap.common.BusinessException.class,()->queue.failedAction(List.of(id),"retry",1L));assertEquals(1,count("sys_mail_failed"));
     }
     @Test void expiredMailNeverReachesSmtp() {
-        enqueue();db.update("UPDATE sys_mail_queue SET expires_at=1");queue.stop();ReflectionTestUtils.invokeMethod(queue,"work");
+        enqueue();db.update("UPDATE sys_mail_queue SET expires_at=1");ReflectionTestUtils.invokeMethod(queue,"work");awaitDelivery();
         verify(smtp,never()).deliver(anyString(),anyString(),anyString());assertEquals("EXPIRED",db.queryForObject("SELECT status FROM sys_mail_failed",String.class));
     }
     @Test void appRegistrationQueueEncryptsCodeAndCannotExposeOrRetryFailedCode() {
@@ -232,13 +247,13 @@ class MailQueueTest {
         assertThrows(com.sap.common.BusinessException.class,()->MailQueue.validateContract(MailHook.APP_REGISTRATION_CODE,
                 Map.of("subject","{{code}}","htmlContent",template.get("htmlContent"))));
     }
-    @Test void workerDecryptsAndDoesNotSendDuringCooldown() {
-        enqueue();enqueue();queue.stop();ReflectionTestUtils.invokeMethod(queue,"work");ReflectionTestUtils.invokeMethod(queue,"work");
-        verify(smtp,times(1)).deliver("user@example.com","Test","<p>private content</p>");assertEquals(1,count("sys_mail_queue"));
+    @Test void workerDecryptsAndSendsAllWithoutCooldown() {
+        enqueue();enqueue();ReflectionTestUtils.invokeMethod(queue,"work");awaitDelivery();ReflectionTestUtils.invokeMethod(queue,"work");
+        verify(smtp,times(2)).deliver("user@example.com","Test","<p>private content</p>");assertEquals(0,count("sys_mail_queue"));
     }
     @Test void workerTransfersSmtpFailureWithoutSensitiveExceptionText() {
         enqueue();doThrow(new RuntimeException("password=secret code=123456")).when(smtp).deliver(anyString(),anyString(),anyString());
-        queue.stop();ReflectionTestUtils.invokeMethod(queue,"work");assertEquals(0,count("sys_mail_queue"));assertEquals(1,count("sys_mail_failed"));
+        ReflectionTestUtils.invokeMethod(queue,"work");awaitDelivery();assertEquals(0,count("sys_mail_queue"));assertEquals(1,count("sys_mail_failed"));
         assertFalse(queue.page("logs",1,100).toString().contains("secret"));assertFalse(queue.page("failed",1,100).toString().contains("123456"));
     }
     @Test void contractsRejectUnknownVariablesAndCodesInSubject() {

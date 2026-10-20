@@ -331,11 +331,7 @@ public class CosService {
 
     /** 下载重定向端点 SSRF 白名单：COS 默认域名 + 已配置的自定义域名。 */
     public boolean isAllowedPublicHost(String host) {
-        if (host == null) return false;
-        String h = host.toLowerCase();
-        if (h.endsWith(".myqcloud.com")) return true;
-        String cdn = cdnHost();
-        return cdn != null && h.equals(cdn.toLowerCase());
+        return isOwnedPublicHost(host);
     }
 
     /** 反馈附件只允许引用当前系统自己的 Bucket 或 CDN，不能由客户端注入其他公网图片。 */

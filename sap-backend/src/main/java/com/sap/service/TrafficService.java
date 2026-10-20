@@ -32,6 +32,8 @@ public class TrafficService {
     private ApiRequestStatMapper apiRequestStatMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private ApiLogExclusionService exclusions;
 
     /** 单用户每日上传字节配额（默认 500MB），防 COS 盗刷。可用 file.upload.daily-quota-bytes 覆盖。 */
     @org.springframework.beans.factory.annotation.Value("${file.upload.daily-quota-bytes:524288000}")
@@ -139,6 +141,7 @@ public class TrafficService {
 
     /** 接口请求计数：当前用户对该接口 +1。 */
     public void recordApiRequest(String endpoint, String httpMethod) {
+        if (exclusions.excludes(endpoint,httpMethod)) return;
         try {
             Object[] cu = currentUser();
             apiRequestStatMapper.upsert(LocalDate.now(), (Long) cu[0], (String) cu[1], endpoint, httpMethod);

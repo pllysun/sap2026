@@ -18,42 +18,42 @@
           <div v-if="uploadingAvatar" class="t-caption mt-1">上传中…</div>
         </div>
 
-        <div class="divider"></div>
+        <h3 class="profile-section-title">账号资料<small>注册时填写的信息</small></h3>
 
         <!-- Read-only -->
         <div class="form-group">
-          <label class="form-label">学号</label>
-          <input :value="userStore.user.studentId" class="input" disabled style="opacity:0.5;" />
+          <label for="profile-studentId" class="form-label">学号</label>
+          <input id="profile-studentId" :value="userStore.user.studentId" class="input" disabled />
         </div>
 
         <div class="form-group">
-          <label class="form-label">姓名</label>
-          <input :value="userStore.user.name" class="input" disabled style="opacity:0.5;" />
+          <label for="profile-name" class="form-label">姓名</label>
+          <input id="profile-name" :value="userStore.user.name" class="input" disabled />
         </div>
 
-        <div class="divider"></div>
+        <h3 class="profile-section-title">个人资料<small>网名与头像会展示给协会伙伴</small></h3>
 
         <!-- Editable -->
         <div class="form-group">
-          <label class="form-label">网名</label>
-          <input v-model="form.nickname" class="input" placeholder="输入网名" />
+          <label for="profile-nickname" class="form-label">网名</label>
+          <input id="profile-nickname" v-model="form.nickname" class="input" placeholder="输入网名" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">性别</label>
-          <select v-model="form.gender" class="select">
+          <label for="profile-gender" class="form-label">性别</label>
+          <select id="profile-gender" v-model="form.gender" class="select">
             <option :value="1">男</option>
             <option :value="0">女</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">QQ号</label>
-          <input :value="userStore.user.qq" class="input" disabled style="opacity:0.5;" />
+          <label for="profile-qq" class="form-label">QQ号</label>
+          <input id="profile-qq" :value="userStore.user.qq" class="input" disabled />
         </div>
 
         <button class="btn btn--primary btn--full" @click="saveProfile" :disabled="saving">
-          {{ saving ? '保存中…' : '保存' }}
+          {{ saving ? '保存中…' : '保存个人资料' }}
         </button>
 
         <div v-if="saveError" class="error-text text-center mt-2">{{ saveError }}</div>

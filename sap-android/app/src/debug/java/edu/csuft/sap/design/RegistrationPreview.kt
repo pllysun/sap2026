@@ -22,6 +22,7 @@ internal fun RegistrationPreview(screen: String) {
     val sample = RegistrationForm("20260001", "sample123", "示例同学", 0, "12345678")
     var state by remember {
         mutableStateOf(RegistrationViewModel.UiState(
+            policyLoaded = true,
             form = if (screen == "register") RegistrationForm() else sample,
             loading = screen == "register-loading",
             emailRequestId = if (screen == "register-email" || screen == "register-loading") "preview-email" else null,

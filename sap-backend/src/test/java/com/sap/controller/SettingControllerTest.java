@@ -33,7 +33,7 @@ class SettingControllerTest {
 
     @Test
     void getValue_normalKey_returnsValue() {
-        when(settingService.getValue("footer_qq")).thenReturn("12345");
+        when(settingService.getReadableValue("footer_qq")).thenReturn("12345");
 
         Result<?> result = controller.getValue("footer_qq");
 

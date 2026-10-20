@@ -51,12 +51,24 @@ interface ApiService {
     @GET("api/ping")
     suspend fun ping(): ApiResult<String>
 
+    @POST("api/app/schedule/usage")
+    suspend fun scheduleUsage(@Body report: edu.csuft.sap.data.remote.dto.ScheduleUsageReport): ApiResult<Any>
+
+    @POST("api/auth/password-recovery/send")
+    suspend fun recoverySend(@Body request: edu.csuft.sap.data.remote.dto.RecoverySendRequest): ApiResult<edu.csuft.sap.data.remote.dto.RecoverySendData>
+
+    @POST("api/auth/password-recovery/reset")
+    suspend fun recoveryReset(@Body request: edu.csuft.sap.data.remote.dto.RecoveryResetRequest): ApiResult<Any>
+
     @POST("api/auth/app/login")
     suspend fun appLogin(@Body body: LoginRequest): ApiResult<LoginData>
 
     // data 在注册成功时是字符串，要求验证码时是对象，不能按固定对象反序列化。
     @POST("api/auth/app/register")
     suspend fun register(@Body body: edu.csuft.sap.data.remote.dto.RegisterRequest): ApiResult<com.google.gson.JsonElement>
+
+    @GET("api/auth/register/policy")
+    suspend fun registrationPolicy(): ApiResult<edu.csuft.sap.data.remote.dto.RegistrationPolicyDto>
 
     @POST("api/auth/app/register/email-code")
     suspend fun registrationEmailCode(@Body body: edu.csuft.sap.data.remote.dto.RegisterEmailRequest): ApiResult<edu.csuft.sap.data.remote.dto.RegistrationEmailData>

@@ -13,8 +13,7 @@ function toLogin() {
   if (redirecting) return
   redirecting = true
   try {
-    wx.removeStorageSync(STORAGE.TOKEN)
-    wx.removeStorageSync(STORAGE.MEMBER)
+    require('./store').clearAuth()
   } catch (e) {}
   wx.reLaunch({
     url: '/pages/login/login',
@@ -36,9 +35,10 @@ function friendly(errMsg) {
  */
 function request(options) {
   const { url, method = 'GET', data, header = {}, timeout } = options
+  if (typeof url !== 'string' || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url)) return Promise.reject(new Error('仅允许请求本站接口'))
   const token = getToken()
   if (token) header['sap-token'] = token
-  const full = /^https?:\/\//.test(url) ? url : BASE_URL.replace(/\/$/, '') + '/' + url.replace(/^\//, '')
+  const full = BASE_URL.replace(/\/$/, '') + '/' + url.replace(/^\//, '')
 
   return new Promise((resolve, reject) => {
     wx.request({

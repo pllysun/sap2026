@@ -23,6 +23,10 @@ class RegistrationViewModel(
         val form: RegistrationForm = RegistrationForm(),
         val fieldErrors: Map<RegistrationField, String> = emptyMap(),
         val validationAttempt: Int = 0,
+        val policyLoading: Boolean = false,
+        val policyLoaded: Boolean = false,
+        val policyError: String? = null,
+        val emailVerificationRequired: Boolean = true,
         val loading: Boolean = false,
         val emailLoading: Boolean = false,
         val emailRequestId: String? = null,
@@ -35,14 +39,36 @@ class RegistrationViewModel(
         val captchaError: String? = null,
         val registeredStudentId: String? = null,
     ) {
-        val busy get() = loading || emailLoading || captchaLoading
-        val canSubmit get() = !busy && registeredStudentId == null
-        val canSendEmail get() = !busy && registeredStudentId == null && cooldownSeconds == 0 && (!captchaRequired || captcha != null)
+        val busy get() = policyLoading || loading || emailLoading || captchaLoading
+        val canSubmit get() = policyLoaded && !busy && registeredStudentId == null
+        val canSendEmail get() = policyLoaded && emailVerificationRequired && !busy && registeredStudentId == null && cooldownSeconds == 0 && (!captchaRequired || captcha != null)
     }
 
     private val _state = MutableStateFlow(UiState())
     val state = _state.asStateFlow()
     private var cooldownJob: Job? = null
+
+    // ViewModel 只在点击登录页的“注册”后创建，不在登录页轮询开关。
+    init { loadPolicy() }
+
+    fun loadPolicy() {
+        val current = _state.value
+        if (current.busy || current.registeredStudentId != null) return
+        _state.value = current.copy(policyLoading = true, policyLoaded = false, policyError = null)
+        viewModelScope.launch {
+            when (val result = repository.policy()) {
+                is Outcome.Success -> {
+                    val emailRequired = result.data.emailVerificationRequired
+                    _state.value = _state.value.copy(policyLoading = false, policyLoaded = true,
+                        emailVerificationRequired = emailRequired, captchaRequired = !emailRequired,
+                        captcha = null, captchaError = null, emailRequestId = null, emailNotice = null,
+                        form = _state.value.form.copy(captchaCode = "", emailCode = ""), fieldErrors = emptyMap())
+                    if (!emailRequired) refreshCaptcha()
+                }
+                is Outcome.Error -> _state.value = _state.value.copy(policyLoading = false, policyError = result.message)
+            }
+        }
+    }
 
     fun edit(field: RegistrationField, value: String) {
         val current = _state.value
@@ -111,14 +137,17 @@ class RegistrationViewModel(
     fun submit() {
         val current = _state.value
         if (!current.canSubmit) return
-        val errors = current.form.validate(captchaRequired = false, emailRequired = true).toMutableMap()
-        if (current.emailRequestId == null) errors[RegistrationField.EMAIL_CODE] = "请先获取 QQ 邮箱验证码"
+        val emailRequired = current.emailVerificationRequired
+        val errors = current.form.validate(captchaRequired = !emailRequired, emailRequired = emailRequired).toMutableMap()
+        if (emailRequired && current.emailRequestId == null) errors[RegistrationField.EMAIL_CODE] = "请先获取 QQ 邮箱验证码"
+        if (!emailRequired && current.captcha == null) errors[RegistrationField.CAPTCHA] = "请先加载图形验证码"
         if (errors.isNotEmpty()) {
             _state.value = current.copy(fieldErrors = errors, validationAttempt = current.validationAttempt + 1,
                 error = "请检查标红的填写项")
             return
         }
-        val request = current.form.toRequest(null, current.emailRequestId)
+        val request = current.form.toRequest(if (emailRequired) null else current.captcha?.id,
+            if (emailRequired) current.emailRequestId else null)
         // 同步锁住提交，连点按钮或键盘完成均只发起一次请求。
         _state.value = current.copy(loading = true, fieldErrors = emptyMap(), error = null)
         viewModelScope.launch {
@@ -130,12 +159,15 @@ class RegistrationViewModel(
                         _state.value = UiState(registeredStudentId = request.studentId)
                     }
                     RegistrationResult.CAPTCHA_REQUIRED -> {
-                        _state.value = _state.value.copy(loading = false, error = "请重新获取 QQ 邮箱验证码")
+                        _state.value = _state.value.copy(loading = false, error = "注册方式已更新，请重新验证")
+                        loadPolicy()
                     }
                 }
                 is Outcome.Error -> {
                     _state.value = _state.value.copy(loading = false, error = result.message)
                     _state.value = _state.value.copy(form = _state.value.form.copy(emailCode = ""))
+                    if (result.code == 409) loadPolicy()
+                    else if (!emailRequired) refreshCaptcha()
                 }
             }
         }

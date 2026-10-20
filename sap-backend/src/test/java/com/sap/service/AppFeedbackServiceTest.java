@@ -442,7 +442,8 @@ class AppFeedbackServiceTest {
 
     @Test
     void summaryCombinesUsageIssuesAndPublishedVersion() {
-        when(statsService.scheduleUsers(30)).thenReturn(42L);
+        when(statsService.scheduleUsage(30)).thenReturn(new ScheduleUsageService.Summary(
+                30, 42, 31, java.time.LocalDate.now(), List.of(), List.of()));
         when(issueMapper.selectCount(any())).thenReturn(3L, 2L, 1L, 1L, 2L, 1L);
         AppVersionVO version = new AppVersionVO();
         version.setVersionCode(36);
@@ -452,6 +453,7 @@ class AppFeedbackServiceTest {
         AppFeedbackSummaryVO result = service.summary(30);
 
         assertEquals(42L, result.getScheduleUsers());
+        assertEquals(31L, result.getScheduleUsage().syncUsers());
         assertEquals(3L, result.getOpenIssues());
         assertEquals(2L, result.getClosedIssues());
         assertEquals(5L, result.getTotalIssues());

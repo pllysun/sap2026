@@ -39,7 +39,7 @@ request.interceptors.response.use(
       }
       // 非 401 失败：统一记录日志便于排查
       console.error('[request] 业务失败:', res.code, res.message, response.config?.url)
-      return Promise.reject(new Error(res.message || '请求失败'))
+      return Promise.reject(Object.assign(new Error(res.message || '请求失败'), { code: res.code }))
     }
     return res
   },

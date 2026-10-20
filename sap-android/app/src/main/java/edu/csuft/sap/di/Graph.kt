@@ -43,6 +43,8 @@ object Graph {
         private set
     lateinit var registrationRepository: edu.csuft.sap.data.repository.RegistrationRepository
         private set
+    lateinit var passwordRecoveryRepository: edu.csuft.sap.data.repository.PasswordRecoveryRepository
+        private set
     lateinit var jwRepository: JwRepository
         private set
     lateinit var classScheduleRepository: ClassScheduleRepository
@@ -61,6 +63,8 @@ object Graph {
         private set
     lateinit var classScheduleSync: edu.csuft.sap.data.schedule.ClassScheduleSync
         private set
+    lateinit var scheduleUsage: edu.csuft.sap.data.schedule.ScheduleUsageReporter
+        private set
     lateinit var jwCacheStore: JwCacheStore
         private set
     lateinit var updateRepository: UpdateRepository
@@ -76,12 +80,15 @@ object Graph {
         CurrentAccount.load(context.applicationContext)
         edu.csuft.sap.data.account.PrivacyConsents.load(context.applicationContext)
         tokenStore = TokenStore(context.applicationContext)
+        scheduleUsage = edu.csuft.sap.data.schedule.ScheduleUsageReporter(context.applicationContext, tokenStore, appScope)
         userStore = UserStore(context.applicationContext)
         val api = ApiClient.create(BuildConfig.BASE_URL, { tokenStore.token })
         probeApi = ApiClient.create(BuildConfig.BASE_URL, { tokenStore.token },
             connectTimeoutSec = 3, readTimeoutSec = 3)
         authRepository = AuthRepository(api, tokenStore, userStore)
         registrationRepository = edu.csuft.sap.data.repository.RegistrationRepository(api)
+        passwordRecoveryRepository = edu.csuft.sap.data.repository.PasswordRecoveryRepository(
+            ApiClient.create(BuildConfig.BASE_URL, { null }), context.applicationContext)
         jwRepository = JwRepository(api)
         classScheduleRepository = ClassScheduleRepository(api, context)
         academicCalendarRepository = edu.csuft.sap.data.repository.AcademicCalendarRepository(context, probeApi)

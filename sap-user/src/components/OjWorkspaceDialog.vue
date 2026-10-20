@@ -62,11 +62,11 @@ onBeforeUnmount(() => { element.value?.close(); unlock() })
 .oj-workspace-dialog[open]{display:flex;flex-direction:column;animation:oj-dialog-enter .2s ease-out}
 .oj-workspace-dialog::backdrop{background:#15365555;backdrop-filter:blur(5px)}
 .oj-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 22px;background:linear-gradient(120deg,#f0f7ff,#fff);border-bottom:1px solid #e6edf5;flex:none}
-.oj-dialog-heading{display:flex;align-items:center;gap:10px;min-width:0}.oj-dialog-heading>div{min-width:0}.oj-dialog-symbol{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:8px;background:#e7f1fd;color:#397cc1;border:1px solid #dceafa}
-.oj-dialog-heading h2{font-size:15px;line-height:1.4;margin:0;color:#294c70}.oj-dialog-heading p{font-size:11px;line-height:1.5;color:#7c93ac;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.oj-dialog-close{display:grid;place-items:center;width:28px;height:28px;flex:none;border:1px solid #e2eaf4;border-radius:7px;background:#fff;color:#7f94ab;cursor:pointer}.oj-dialog-close:hover{background:#edf5fd;color:#367dbb}.oj-dialog-close:focus-visible{outline:2px solid #6ca8e3;outline-offset:3px}
+.oj-dialog-heading{display:flex;align-items:center;gap:10px;min-width:0}.oj-dialog-heading>div{min-width:0}.oj-dialog-symbol{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:8px;background:#e7f1fd;color:#3574b5;border:1px solid #dceafa}
+.oj-dialog-heading h2{font-size:0.9375rem;line-height:1.4;margin:0;color:#294c70}.oj-dialog-heading p{font-size:0.75rem;line-height:1.5;color:#617488;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oj-dialog-close{display:grid;place-items:center;width:28px;height:28px;flex:none;border:1px solid #e2eaf4;border-radius:7px;background:#fff;color:#637587;cursor:pointer}.oj-dialog-close:hover{background:#edf5fd;color:#3479b5}.oj-dialog-close:focus-visible{outline:2px solid #6ca8e3;outline-offset:3px}
 .oj-dialog-body{padding:18px 22px;min-height:0;flex:1;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#c9d9ea transparent}
 @keyframes oj-dialog-enter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
-@media(max-width:600px){.oj-workspace-dialog{width:calc(100vw - 20px);height:calc(100dvh - 28px);border-radius:12px}.oj-dialog-header{padding:12px 14px;gap:10px}.oj-dialog-heading h2{font-size:14px}.oj-dialog-body{padding:15px 14px}}
+@media(max-width:600px){.oj-workspace-dialog{width:calc(100vw - 20px);height:calc(100dvh - 28px);border-radius:12px}.oj-dialog-header{padding:12px 14px;gap:10px}.oj-dialog-heading h2{font-size:0.875rem}.oj-dialog-body{padding:15px 14px}}
 @media(prefers-reduced-motion:reduce){.oj-workspace-dialog[open]{animation:none}}
 </style>

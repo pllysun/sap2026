@@ -1,0 +1,68 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: none
+  tomcat:
+    max-http-form-post-size: 8MB
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/oj;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+sa-token:
+  token-name: sap-token
+  timeout: 86400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  is-log: false
+  is-read-cookie: false
+  is-read-body: false
+app:
+  bootstrap:
+    admin-account: ${OJ_ADMIN_ACCOUNT:}
+    admin-password: ${OJ_ADMIN_PASSWORD:}
+
+judger:
+  enabled: ${JUDGER_ENABLED:false}
+  builtin-enabled: ${JUDGER_BUILTIN_ENABLED:true}
+  agent-endpoint: ${JUDGER_AGENT_ENDPOINT:http://judge:5051}
+  token-file: ${JUDGER_TOKEN_FILE:/run/secrets/judger-token}
+  node-key-file: ${JUDGER_NODE_KEY_FILE:./data/judger-node.key}
+  runtime-id: go-judge-e9d70a0-gcc15.3-jdk27-python3.14.7-rust1.98.1-v1
+
+logging:
+  level:
+    org.hibernate: WARN
+    io.sapoj: INFO
+storage:
+  s3:
+    enabled: ${S3_ENABLED:false}
+    endpoint: ${S3_ENDPOINT:http://rustfs:9000}
+    region: ${S3_REGION:us-east-1}
+    bucket: ${S3_BUCKET:sap-oj-private}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
+    path-style: ${S3_PATH_STYLE:true}
+    create-bucket: ${S3_CREATE_BUCKET:false}

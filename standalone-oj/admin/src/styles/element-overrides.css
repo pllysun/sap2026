@@ -1,0 +1,247 @@
+/* ============================================
+ * Fresh Gradient 设计系统 - Element Plus 主题覆盖
+ * 唯一的 Element Plus 样式覆盖来源
+ * 主色：用户端蓝 #3B82F6；主按钮采用青绿→蓝渐变
+ * ============================================ */
+
+/* -- Element 主题色变量 -- */
+:root {
+  --el-color-primary: #3B82F6;
+  --el-color-primary-light-3: #6ba1f8;
+  --el-color-primary-light-5: #9dbffb;
+  --el-color-primary-light-7: #c8dbfc;
+  --el-color-primary-light-8: #dce9fd;
+  --el-color-primary-light-9: #eff5fe;
+  --el-color-primary-dark-2: #2563eb;
+
+  --el-color-success: #22c55e;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-error: #ef4444;
+  --el-color-info: #6e7591;
+
+  --el-border-radius-base: var(--zen-radius-md);
+  --el-font-family: var(--font);
+}
+
+/* -- Primary 按钮：渐变背景 -- */
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+  background-color: #3B82F6 !important;
+  background-image: var(--gradient-btn) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-gradient) !important;
+  transition: var(--zen-transition) !important;
+}
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):hover,
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):focus {
+  background-image: var(--gradient-btn) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 24px rgba(20, 184, 166, 0.28), 0 4px 14px rgba(59, 130, 246, 0.2) !important;
+  transform: translateY(-1px);
+}
+html body .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):active {
+  transform: translateY(0) scale(0.99);
+}
+html body .el-button--primary.is-disabled,
+html body .el-button--primary.is-disabled:hover {
+  background-image: none !important;
+  background-color: #9dbffb !important;
+  border-color: #9dbffb !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  transform: none;
+}
+html body .el-button--primary.is-loading {
+  box-shadow: none !important;
+  transform: none;
+}
+
+/* -- 主按钮的 text / link / plain 变体保持纯色蓝 -- */
+.el-button--primary.is-text,
+.el-button--primary.is-link {
+  color: var(--primary) !important;
+}
+
+/* -- Default 按钮 -- */
+html body .el-button.el-button--default,
+html body button.el-button--default {
+  background-color: #ffffff !important;
+  border-color: var(--ink-200) !important;
+  color: var(--ink-700) !important;
+}
+html body .el-button.el-button--default:hover,
+html body .el-button.el-button--default:focus,
+html body button.el-button--default:hover {
+  background-color: var(--ink-50) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* -- 其他语义按钮 -- */
+.el-button--danger:not(.is-plain):not(.is-text):not(.is-link) { color: #fff !important; }
+.el-button--danger.is-plain { color: #b42318 !important; }
+.el-button--danger.is-plain:not(.is-disabled):hover,
+.el-button--danger.is-plain:not(.is-disabled):focus { color: #fff !important; }
+.el-button--danger.is-plain.is-disabled,
+.el-button--danger.is-plain.is-disabled:hover { color: #976b6b !important; background: #fff5f5 !important; border-color: #eadada !important; }
+.el-button--danger.is-text { color: var(--el-color-danger) !important; }
+.el-button--success:not(.is-text):not(.is-link) { color: #fff !important; }
+
+/* -- 菜单 -- */
+.el-menu {
+  border-right: none !important;
+  background-color: transparent !important;
+}
+.el-menu-item, .el-sub-menu__title {
+  font-family: var(--font) !important;
+  letter-spacing: 0.3px;
+}
+.el-menu-item.is-active {
+  color: var(--zen-accent) !important;
+  background-color: var(--zen-accent-bg) !important;
+  border-right: 2px solid var(--zen-accent) !important;
+}
+.el-menu-item:hover {
+  background-color: var(--zen-accent-bg) !important;
+  color: var(--zen-accent) !important;
+}
+
+/* -- 卡片 -- */
+.el-card {
+  border: 1px solid var(--zen-border-light) !important;
+  border-radius: var(--zen-radius-lg) !important;
+  box-shadow: var(--zen-shadow-sm) !important;
+  transition: var(--zen-transition) !important;
+}
+.el-card:hover {
+  box-shadow: var(--zen-shadow-md) !important;
+  transform: translateY(-1px);
+}
+
+/* -- 表格 -- */
+.el-table {
+  --el-table-border-color: var(--zen-border-light) !important;
+  --el-table-header-bg-color: var(--zen-bg-warm) !important;
+  --el-table-row-hover-bg-color: var(--zen-accent-bg) !important;
+}
+.el-table th {
+  font-weight: 600 !important;
+  color: var(--zen-text-secondary) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.3px;
+}
+
+/* -- 弹窗 -- */
+html body .el-overlay:not(.email-modal):not(.email-confirm) {
+  z-index: 2000 !important;
+}
+.el-overlay-dialog {
+  overflow: auto !important;
+}
+html body .el-dialog {
+  border-radius: var(--zen-radius-xl) !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+html body .el-dialog__body {
+  overflow: visible !important;
+  max-height: none !important;
+  color: var(--zen-text) !important;
+  padding: 20px !important;
+}
+
+/* 邮件管理的编辑/预览内容可能较长，弹窗必须在视口内布局，
+ * 挂载到 body 脱离页面动画的 transform，只滚动内容区。
+ * 保留 Element Plus 的动态层级，确保从编辑器打开的预览在上层。 */
+html body .email-modal .el-overlay-dialog {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  overflow: hidden !important;
+}
+html body .el-dialog.email-dialog {
+  max-width: 100%;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: auto !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+html body .el-dialog.email-dialog .el-dialog__header {
+  flex: 0 0 auto;
+}
+html body .el-dialog.email-dialog .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 1 auto;
+}
+html body .el-dialog.email-dialog .el-dialog__footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--zen-border-light);
+  background: var(--zen-card);
+}
+.el-dialog__header {
+  border-bottom: 1px solid var(--zen-border-light);
+  padding-bottom: 16px !important;
+}
+.el-dialog__title {
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
+  color: var(--zen-text) !important;
+}
+
+/* -- 表单 -- */
+.el-form-item__label {
+  color: var(--zen-text-secondary) !important;
+}
+
+/* -- 输入框 -- */
+.el-input__wrapper {
+  border-radius: var(--zen-radius-md) !important;
+  box-shadow: 0 0 0 1px var(--zen-border) inset !important;
+}
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--zen-accent-light) inset !important;
+}
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--zen-accent) inset, 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+.el-select .el-select__wrapper {
+  box-shadow: 0 0 0 1px var(--zen-border) inset !important;
+  border-radius: var(--zen-radius-md) !important;
+}
+.el-select .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--zen-accent) inset, 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* -- 分页 -- */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--zen-card) !important;
+  --el-pagination-hover-color: var(--zen-accent) !important;
+}
+.el-pager li.is-active {
+  color: var(--zen-accent) !important;
+}
+.el-pagination.is-background .el-pager li.is-active {
+  background: var(--el-color-primary) !important;
+  color: #fff !important;
+}
+
+/* -- 其他组件 -- */
+.el-tag { border-radius: var(--zen-radius-sm) !important; }
+.el-tabs__item.is-active { color: var(--zen-accent) !important; }
+.el-tabs__active-bar { background-color: var(--zen-accent) !important; }
+.el-breadcrumb { font-size: 13px !important; }
+.el-switch.is-checked .el-switch__core { background-color: var(--zen-accent) !important; border-color: var(--zen-accent) !important; }
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background-color: var(--zen-accent) !important;
+  border-color: var(--zen-accent) !important;
+  box-shadow: -1px 0 0 0 var(--zen-accent) !important;
+}
+.el-radio__input.is-checked .el-radio__inner { background-color: var(--zen-accent) !important; border-color: var(--zen-accent) !important; }
+.el-radio__input.is-checked + .el-radio__label { color: var(--zen-accent) !important; }

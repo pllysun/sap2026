@@ -11,7 +11,7 @@
           <option v-for="a in activityList" :key="a.id" :value="a.id">第{{ a.seqNum }}次 {{ a.title || '' }}</option>
         </select>
       </div>
-      <button class="btn btn--primary btn--sm btn--pill" @click="loadRanking">🔍 查询</button>
+      <button class="btn btn--primary btn--sm btn--pill" @click="loadRanking"><UiIcon name="search" :size="18" /> 查询</button>
     </div>
 
     <div v-if="loading" class="loading"><div class="loading__spinner"></div></div>

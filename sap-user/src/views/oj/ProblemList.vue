@@ -1,11 +1,19 @@
 <template>
   <div class="page oj-list oj-studio">
-    <PageHeader title="算法题库" label="" />
-    <div class="oj-library-tabs" role="tablist" aria-label="题库视图">
+    <PageHeader title="算法题库" label="" description="把想法写成代码，从一道题开始。"><AlgorithmSketch /></PageHeader>
+    <div class="oj-library-navigation">
+      <div class="oj-library-tabs" role="tablist" aria-label="题库视图">
       <button role="tab" :aria-selected="tab==='problems'" :class="{active:tab==='problems'}" @click="chooseTab('problems')"><UiIcon name="code" :size="16" />全部题目 <small v-if="libraryTotal!==null">{{ libraryTotal }}</small></button>
       <button role="tab" :aria-selected="tab==='sets'" :class="{active:tab==='sets'}" @click="chooseTab('sets')"><UiIcon name="layers" :size="16" />题单</button>
       <button role="tab" :aria-selected="tab==='ranking'" :class="{active:tab==='ranking'}" @click="chooseTab('ranking')"><UiIcon name="chart" :size="16" />提交记录</button>
+      </div>
+      <router-link class="oj-learning-entry" to="/oj/learning"><UiIcon name="route" :size="15" />学习路径<UiIcon name="chevron-right" :size="12" /></router-link>
     </div>
+    <section v-show="tab==='problems'" class="oj-start-guide" aria-label="开始算法学习">
+      <div class="oj-start-copy"><XiaoRuan mood="coding" :size="76" /><div><span>小软的算法练习室</span><h2>每一个想法，都值得运行一次。</h2><p>读懂题目、动手尝试，再用题解理解方法。</p></div></div>
+      <router-link to="/oj/learning" class="oj-start-path"><span class="oj-start-icon"><UiIcon name="route" :size="18" /></span><span><strong>从基础开始</strong><small>找到适合自己的学习路径</small></span><UiIcon name="chevron-right" :size="13" /></router-link>
+      <router-link v-if="nextProblem" :to="problemLink(nextProblem.id)" class="oj-start-practice"><span class="oj-start-icon"><UiIcon name="code" :size="18" /></span><span><strong>{{ nextProblem.progress?.state==='AC'?'回顾一题':'练习这一题' }}</strong><small>{{ nextProblem.title }}</small></span><UiIcon name="chevron-right" :size="13" /></router-link>
+    </section>
     <div v-show="tab==='problems'" class="oj-discovery">
       <aside class="oj-filter-rail" aria-label="题目筛选">
         <div class="oj-filter-title"><span><UiIcon name="filter" :size="16" />筛选题目</span><button :disabled="!hasFilters" @click="resetFilters">重置</button></div>
@@ -48,6 +56,8 @@ import PageHeader from '@/components/PageHeader.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import OjSelect from '@/components/OjSelect.vue'
 import OjProblemProgress from '@/components/OjProblemProgress.vue'
+import XiaoRuan from '@/components/XiaoRuan.vue'
+import AlgorithmSketch from '@/components/AlgorithmSketch.vue'
 import request from '@/utils/request'
 import {useUserStore} from '@/stores/user'
 import {readCatalogQuery,catalogQuery} from '@/utils/ojNavigation'
@@ -71,6 +81,7 @@ let generation=0,disposed=false,progressTimer,searchTimer,listRequest,filterRequ
 const cancelled=e=>e.code==='ERR_CANCELED'||e.name==='CanceledError'
 const state=()=>({keyword:keyword.value,difficulty:difficulty.value,tag:tag.value,source:source.value,mode:mode.value,page:page.value})
 const pageAccepted=computed(()=>rows.value.filter(p=>p.progress?.state==='AC').length)
+const nextProblem=computed(()=>rows.value.find(p=>p.progress?.state!=='AC')||rows.value[0])
 const activeFilters=computed(()=>{const applied=readCatalogQuery(route.query);return [{key:'keyword',label:applied.keyword},{key:'difficulty',label:levels[applied.difficulty]},{key:'tag',label:applied.tag},{key:'source',label:applied.source},{key:'mode',label:applied.mode==='FUNCTION'?'核心函数':applied.mode==='STDIO'?'完整程序':''}].filter(f=>f.label)})
 function removeFilter(key){({keyword,difficulty,tag,source,mode})[key].value='';search()}
 function problemLink(id){return {path:'/oj/'+id,query:{from:router.resolve({path:'/oj',query:catalogQuery(readCatalogQuery(route.query))}).href}}}

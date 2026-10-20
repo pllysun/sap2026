@@ -16,10 +16,11 @@ import static org.mockito.Mockito.*;
 class AppRegistrationServiceTest {
     JdbcTemplate db; MailStore store; EmailBusinessHooks hooks; EmailService email;
     CaptchaService captcha; AuthService auth; RegistrationProtectionService protection;
+    SettingService settings;
     Registration service; String sentCode;
     class Registration extends AppRegistrationService {
         long clock=System.currentTimeMillis();
-        Registration() { super(store,hooks,email,captcha,auth,protection); }
+        Registration() { super(store,hooks,email,captcha,auth,protection,settings); }
         @Override long now() { return clock; }
     }
     @BeforeEach void setup() {
@@ -27,6 +28,7 @@ class AppRegistrationServiceTest {
         db=new JdbcTemplate(ds);store=new MailStore(db,new DataSourceTransactionManager(ds));store.init();
         hooks=mock(EmailBusinessHooks.class);email=mock(EmailService.class);captcha=mock(CaptchaService.class);
         auth=mock(AuthService.class);protection=mock(RegistrationProtectionService.class);
+        settings=mock(SettingService.class);
         when(protection.acquire(any(),any())).thenReturn(mock(RegistrationProtectionService.Permit.class));
         when(captcha.verify(any(),any(),any())).thenReturn(true);
         when(email.sendingEnabled()).thenReturn(true);
@@ -39,6 +41,50 @@ class AppRegistrationServiceTest {
     long count() {return db.queryForObject("SELECT COUNT(*) FROM sys_app_registration_code",Long.class);}
     AppRegisterDTO dto(String id,String code) {
         var dto=new AppRegisterDTO();dto.setStudentId("20260001");dto.setPassword("test-password");dto.setName("测试同学");dto.setGender(0);dto.setQq("123456789");dto.setEmailRequestId(id);dto.setEmailCode(code);return dto;
+    }
+    @Test void joinSwitchControlsPolicyAndDirectCaptchaRegistrationWithoutSmtp() {
+        assertEquals(Map.of("joinEnabled",false,"emailVerificationRequired",true,"captchaRequired",true),service.policy());
+        when(settings.getValue("join_enabled")).thenReturn("true");
+        assertEquals(false,service.policy().get("emailVerificationRequired"));
+        when(email.sendingEnabled()).thenReturn(false);
+        var form=dto(null,null);
+        assertEquals(400,assertThrows(BusinessException.class,()->service.register(form,"ip")).getCode());
+        verifyNoInteractions(protection);verify(auth,never()).register(any());
+        form.setCaptchaId("graphic-id");form.setCaptchaCode("ABCD");
+        when(captcha.verify("graphic-id","ABCD","ip")).thenReturn(false);
+        assertThrows(BusinessException.class,()->service.register(form,"ip"));verifyNoInteractions(protection);
+        when(captcha.verify("graphic-id","ABCD","ip")).thenReturn(true);
+        service.register(form,"ip");verify(auth).register(form);verify(protection).acquire("ip","123456789");
+        verifyNoInteractions(email,hooks);assertEquals(0,count());
+    }
+    @Test void closingJoinBetweenPageLoadAndSubmitRequiresEmailWithoutConsumingCaptchaOrQuota() {
+        when(settings.getValue("join_enabled")).thenReturn("true");service.policy();
+        when(settings.getValue("join_enabled")).thenReturn("false");
+        var form=dto(null,null);form.setCaptchaId("graphic-id");form.setCaptchaCode("ABCD");
+        assertEquals(409,assertThrows(BusinessException.class,()->service.register(form,"ip")).getCode());
+        verifyNoInteractions(captcha,protection);verify(auth,never()).register(any());
+    }
+    @Test void oldAppsCanStillRedeemVerifiedEmailWhileJoinIsOpen() {
+        String id=(String)request().get("requestId");
+        when(settings.getValue("join_enabled")).thenReturn("true");
+        var form=dto(id,sentCode);service.register(form,"ip");verify(auth).register(form);
+        assertEquals(1,db.queryForObject("SELECT consumed FROM sys_app_registration_code",Integer.class));
+    }
+    @Test void duplicateAccountNeverConsumesRegistrationQuotaOrEmailChallenge() {
+        var requested=request();String id=(String)requested.get("requestId");
+        doThrow(new BusinessException(400,"该学号已注册，请直接使用该学号登录")).when(auth).requireUnregistered("20260001");
+        var error=assertThrows(BusinessException.class,()->service.register(dto(id,sentCode),"ip"));
+        assertEquals(400,error.getCode());assertTrue(error.getMessage().contains("登录"));
+        verify(protection,never()).acquire(any(),any());verify(auth,never()).register(any());
+        assertEquals(0,db.queryForObject("SELECT attempts FROM sys_app_registration_code WHERE id=?",Integer.class,id));
+        assertEquals(0,db.queryForObject("SELECT consumed FROM sys_app_registration_code WHERE id=?",Integer.class,id));
+        assertThrows(BusinessException.class,this::request);assertEquals(1,count());
+        verify(hooks,times(1)).appRegistrationCode(any(),any(),any(),any(),any(),any());
+    }
+    @Test void duplicateAccountWinsOverStaleOrMissingEmailCodeAndExhaustedQuota() {
+        doThrow(new BusinessException(400,"该学号已注册，请直接登录")).when(auth).requireUnregistered("20260001");
+        var error=assertThrows(BusinessException.class,()->service.register(dto(null,null),"ip"));
+        assertTrue(error.getMessage().contains("登录"));verifyNoInteractions(protection);assertEquals(0,count());
     }
     @Test void requiresCaptchaBeforeSendingAndRejectsWrongImageWithoutMail() {
         assertEquals(Map.of("captchaRequired",true),service.request("20260001","测试同学","123456789",null,null,"ip"));
@@ -55,11 +101,11 @@ class AppRegistrationServiceTest {
         var wrong=dto(id,sentCode);wrong.setQq("987654321");
         assertThrows(BusinessException.class,()->service.register(wrong,"ip"));
         wrong.setQq("123456789");wrong.setStudentId("20260002");
-        assertThrows(BusinessException.class,()->service.register(wrong,"ip"));verifyNoInteractions(auth);
+        assertThrows(BusinessException.class,()->service.register(wrong,"ip"));verify(auth,never()).register(any());
     }
     @Test void requiresEmailCodeEvenWhenAllOtherFieldsAreValid() {
-        assertThrows(BusinessException.class,()->service.register(dto(null,null),"ip"));verifyNoInteractions(auth);
-        assertThrows(BusinessException.class,()->service.register(dto(UUID.randomUUID().toString(),"123456"),"ip"));verifyNoInteractions(auth);
+        assertThrows(BusinessException.class,()->service.register(dto(null,null),"ip"));verify(auth,never()).register(any());
+        assertThrows(BusinessException.class,()->service.register(dto(UUID.randomUUID().toString(),"123456"),"ip"));verify(auth,never()).register(any());
     }
     @Test void successCreatesAccountOnceAndConsumesCode() {
         String id=(String)request().get("requestId");var dto=dto(id,sentCode);
@@ -73,11 +119,11 @@ class AppRegistrationServiceTest {
         String wrong=correct.equals("000000")?"111111":"000000";
         for(int i=0;i<5;i++)assertThrows(BusinessException.class,()->service.register(dto(id,wrong),"ip"));
         assertEquals(5,db.queryForObject("SELECT attempts FROM sys_app_registration_code",Integer.class));
-        assertThrows(BusinessException.class,()->service.register(dto(id,correct),"ip"));verifyNoInteractions(auth);
+        assertThrows(BusinessException.class,()->service.register(dto(id,correct),"ip"));verify(auth,never()).register(any());
     }
     @Test void expiredCodeCannotCreateAccount() {
         String id=(String)request().get("requestId");service.clock+=AppRegistrationService.TTL;
-        assertThrows(BusinessException.class,()->service.register(dto(id,sentCode),"ip"));verifyNoInteractions(auth);
+        assertThrows(BusinessException.class,()->service.register(dto(id,sentCode),"ip"));verify(auth,never()).register(any());
     }
     @Test void failedAccountCreationRollsBackConsumption() {
         String id=(String)request().get("requestId");
@@ -120,10 +166,10 @@ class AppRegistrationServiceTest {
             var x=pool.submit(redeem);var y=pool.submit(redeem);assertNotEquals(x.get(),y.get());verify(auth,times(1)).register(any());
         } finally {pool.shutdownNow();}
     }
-    @Test void backlogRejectsNewMailAndCleanupKeepsRecentQuota() {
+    @Test void backlogDoesNotRejectNewMailAndCleanupKeepsRecentQuota() {
         request();service.clock+=180_000;
         for(int i=0;i<5;i++)db.update("INSERT INTO sys_mail_queue(id,event_key,recipient,subject,payload,created_at) VALUES(?,'TEST','test@example.com','test','encrypted',0)","q"+i);
-        assertEquals(429,assertThrows(BusinessException.class,this::request).getCode());assertEquals(1,count());
-        service.cleanup();assertEquals(1,count());service.clock+=3*86_400_000L;service.cleanup();assertEquals(0,count());
+        assertNotNull(request().get("requestId"));assertEquals(2,count());
+        service.cleanup();assertEquals(2,count());service.clock+=3*86_400_000L;service.cleanup();assertEquals(0,count());
     }
 }

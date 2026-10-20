@@ -19,7 +19,8 @@
         <section v-for="group in groups" :key="group.key" class="registration-settings__group">
           <div class="registration-settings__group-heading">
             <h4>{{ group.title }}</h4>
-            <el-switch v-model="config[group.key].enabled" :aria-label="group.title + '开关'" />
+            <el-tag v-if="group.key === 'captcha'" type="info" effect="plain">注册时必需</el-tag>
+            <el-switch v-else v-model="config[group.key].enabled" :aria-label="group.title + '开关'" />
           </div>
           <p class="registration-settings__hint">{{ group.description }}</p>
           <div class="registration-settings__fields">
@@ -48,7 +49,7 @@
 
       <div class="registration-settings__notice">
         <p>注册额度统计通过验证码后的提交，失败提交也占额度；保存配置会保留已有计数。校园网共用出口 IP 时，请根据招新规模调整 IP 额度。</p>
-        <p>验证码开关只影响注册。图片参数和获取频率同时适用于密码找回；其他实例最多 5 秒同步配置。</p>
+        <p>Web 与 App 注册都必须验证 QQ 邮箱，发送邮件前必须完成图形验证；无法通过免验证次数或旧开关跳过。图片参数和获取频率同时适用于密码找回；其他实例最多 5 秒同步配置。</p>
       </div>
       <div class="registration-settings__actions">
         <el-button type="primary" native-type="submit" :loading="saving" :disabled="!changed || loading">保存注册防护配置</el-button>
@@ -77,9 +78,7 @@ const changed = computed(() => config.value && JSON.stringify(config.value) !== 
 
 // 这里只定义输入范围与展示文案，实际参数及推荐值全部来自后端数据库配置接口。
 const groups = [
-  { key: 'captcha', title: '注册验证码', description: '开启后根据免验证额度要求图形验证；验证码绑定来源 IP 且只能使用一次。', fields: [
-    { key: 'freeLimit', label: '同 IP 免验证次数', min: 0, max: 1000, unit: '次', hint: '0 表示每次注册都需验证' },
-    { key: 'freeWindowHours', label: '免验证计数窗口', min: 1, max: 168, unit: '小时' },
+  { key: 'captcha', title: '图形验证码参数', description: '发送注册邮件前固定校验图形验证码，绑定来源 IP 且只能使用一次。邮箱验证码 15 分钟有效，3 分钟后可重发。', fields: [
     { key: 'length', label: '验证码位数', min: 4, max: 6, unit: '位', shared: true },
     { key: 'ttlSeconds', label: '验证码有效期', min: 30, max: 600, unit: '秒', shared: true },
     { key: 'minSolveSeconds', label: '最短作答时间', min: 0, max: 30, unit: '秒', hint: '过快提交会被拒绝', shared: true },

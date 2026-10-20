@@ -7,8 +7,10 @@ import lombok.Data;
 @Data
 public class JwBindDTO {
     @NotBlank(message = "学校账号不能为空")
+    @jakarta.validation.constraints.Size(max = 64)
     private String account;
 
     @NotBlank(message = "学校密码不能为空")
+    @jakarta.validation.constraints.Size(max = 256)
     private String password;
 }

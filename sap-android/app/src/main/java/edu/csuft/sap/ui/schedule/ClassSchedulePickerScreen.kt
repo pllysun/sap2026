@@ -415,4 +415,5 @@ private fun edu.csuft.sap.data.remote.dto.CourseDto.toCached() = CachedCourse(
     sectionIndex = sectionIndex.coerceAtLeast(1),
     weeksRaw = weeks,
     colorIndex = edu.csuft.sap.ui.theme.colorIndexOf(name),
+    nodes = nodes,
 )

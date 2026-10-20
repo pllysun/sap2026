@@ -36,7 +36,8 @@ import static org.mockito.Mockito.*;
 class OperationLogAspectTest extends BaseUnitTest {
 
     @Mock SysLogMapper sysLogMapper;
-    @Mock LogStatsMapper logStatsMapper;
+    @Mock com.sap.service.LogDailyStatsService dailyStats;
+    @Mock com.sap.service.ApiLogExclusionService exclusions;
     @Mock UserMapper userMapper;
 
     @InjectMocks OperationLogAspect aspect;
@@ -74,14 +75,13 @@ class OperationLogAspectTest extends BaseUnitTest {
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             stp.when(StpUtil::isLogin).thenReturn(false);
-            when(logStatsMapper.selectOne(any())).thenReturn(null);
 
             Object result = aspect.around(pjp, annotation());
 
             assertEquals("ok", result);
             verify(sysLogMapper).insert(any());
             // 当天无统计记录 -> 新插入
-            verify(logStatsMapper).insert(any(LogStats.class));
+            verify(dailyStats).record(any(SysLog.class));
         }
     }
 
@@ -100,15 +100,13 @@ class OperationLogAspectTest extends BaseUnitTest {
             stp.when(StpUtil::isLogin).thenReturn(true);
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
             when(userMapper.selectById(7L)).thenReturn(user);
-            when(logStatsMapper.selectOne(any())).thenReturn(existing);
 
             Object result = aspect.around(pjp, annotation());
 
             assertEquals(42, result);
             verify(sysLogMapper).insert(any());
             // 已有统计 -> 计数 +1 并更新
-            verify(logStatsMapper).increment(existing.getId());
-            verify(logStatsMapper, never()).insert(any());
+            verify(dailyStats).record(any(SysLog.class));
         }
     }
 
@@ -126,7 +124,6 @@ class OperationLogAspectTest extends BaseUnitTest {
             stp.when(StpUtil::isLogin).thenReturn(true);
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(9L);
             when(userMapper.selectById(9L)).thenReturn(user);
-            when(logStatsMapper.selectOne(any())).thenReturn(null);
 
             aspect.around(pjp, annotation());
 
@@ -157,7 +154,6 @@ class OperationLogAspectTest extends BaseUnitTest {
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             stp.when(StpUtil::isLogin).thenReturn(false);
             // saveLog 内部抛异常应被 catch 吞掉，不影响返回
-            when(logStatsMapper.selectOne(any())).thenReturn(null);
             doThrow(new RuntimeException("db down")).when(sysLogMapper).insert(any());
 
             Object result = aspect.around(pjp, annotation());

@@ -45,6 +45,7 @@ public class FileController {
     @OperationLog("上传文件")
     public Result<?> upload(@RequestParam("file") MultipartFile file) {
         appAccessService.requireBasicAccess(StpUtil.getLoginIdAsLong());
+        requireGuestImage(file);
         Map<String, String> result = cosService.upload(file);
         return Result.ok(result);
     }
@@ -59,10 +60,28 @@ public class FileController {
         List<Map<String, String>> results = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
+                requireGuestImage(file);
                 results.add(cosService.upload(file));
             }
         }
         return Result.ok(results);
+    }
+
+    /** 游客仍可维护头像和反馈截图；文档等大文件仅允许正式成员上传。 */
+    private void requireGuestImage(MultipartFile file) {
+        if (StpUtil.getRoleList().stream().anyMatch(r -> java.util.Set.of("0", "1", "2", "3").contains(r))) return;
+        String name = java.util.Objects.toString(file.getOriginalFilename(), "").toLowerCase(java.util.Locale.ROOT);
+        if (file.getSize() > 2L * 1024 * 1024 || !name.matches(".*\\.(?:jpg|jpeg|png|gif|webp)$"))
+            throw new com.sap.common.BusinessException(403, "游客仅可上传 2 MB 以内的头像或反馈图片");
+        try (var input = file.getInputStream()) {
+            byte[] bytes = input.readNBytes(12);
+            boolean valid = bytes.length >= 12 && (
+                    ((name.endsWith(".jpg") || name.endsWith(".jpeg")) && (bytes[0]&255)==255 && (bytes[1]&255)==216 && (bytes[2]&255)==255)
+                    || (name.endsWith(".png") && java.util.Arrays.equals(java.util.Arrays.copyOf(bytes,8), new byte[]{-119,80,78,71,13,10,26,10}))
+                    || (name.endsWith(".gif") && new String(bytes,0,6,java.nio.charset.StandardCharsets.US_ASCII).matches("GIF8[79]a"))
+                    || (name.endsWith(".webp") && new String(bytes,0,4,java.nio.charset.StandardCharsets.US_ASCII).equals("RIFF") && new String(bytes,8,4,java.nio.charset.StandardCharsets.US_ASCII).equals("WEBP")));
+            if (!valid) throw new com.sap.common.BusinessException(400, "图片内容与文件类型不一致");
+        } catch (java.io.IOException e) { throw new com.sap.common.BusinessException(400, "图片读取失败"); }
     }
 
     /**
@@ -88,7 +107,7 @@ public class FileController {
         }
         String scheme = uri.getScheme();
         String host = uri.getHost();
-        boolean schemeOk = "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
+        boolean schemeOk = "https".equalsIgnoreCase(scheme) && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443);
         // 收紧白名单：仅本系统已配置的 COS/CDN 主机，而非泛 .myqcloud.com（防打到他人桶）
         boolean hostOk = host != null && cosService.isAllowedPublicHost(host);
         if (!schemeOk || !hostOk) {
@@ -120,8 +139,10 @@ public class FileController {
             try (java.io.InputStream in = conn.getInputStream();
                  java.io.OutputStream out = response.getOutputStream()) {
                 byte[] buf = new byte[8192];
-                int len;
+                int len; long transferred = 0;
                 while ((len = in.read(buf)) != -1) {
+                    transferred += len;
+                    if (transferred > PROXY_MAX_BYTES) throw new java.io.IOException("代理下载超过 30 MB 限额");
                     out.write(buf, 0, len);
                 }
             }
@@ -154,7 +175,7 @@ public class FileController {
         // SSRF 防护：仅允许跳转到本系统对象存储(腾讯云 COS 默认域名)或已配置的自定义下载域名(CDN)
         String scheme = uri.getScheme();
         String host = uri.getHost();
-        boolean schemeOk = "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
+        boolean schemeOk = "https".equalsIgnoreCase(scheme) && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443);
         boolean hostOk = cosService.isAllowedPublicHost(host);
         if (!schemeOk || !hostOk) {
             response.setStatus(403);
@@ -176,6 +197,24 @@ public class FileController {
         } catch (Exception e) {
             response.setStatus(500);
         }
+    }
+
+    /** 浏览器使用请求头鉴权获取经校验的文件位置，随后由对象存储传输文件。 */
+    @PostMapping("/download-link")
+    public Result<?> downloadLink(@RequestBody Map<String, String> body) {
+        String url = body.get("url");
+        if (url == null || url.length() > 4096 || appDownloads.isLegacyDownload(url))
+            throw new com.sap.common.BusinessException(403, "该文件请通过专用下载入口获取");
+        java.net.URI uri;
+        try { uri = java.net.URI.create(url); }
+        catch (IllegalArgumentException e) { throw new com.sap.common.BusinessException(400, "下载地址无效"); }
+        if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null || (uri.getPort() != -1 && uri.getPort() != 443)
+                || !cosService.isAllowedPublicHost(uri.getHost()))
+            throw new com.sap.common.BusinessException(403, "下载地址不属于本站对象存储");
+        long size = trafficService.sizeOf(url);
+        if (size < 0) size = headContentLength(uri);
+        trafficService.recordDownload(Math.max(0, size));
+        return Result.ok(Map.of("url", url));
     }
 
     /** HEAD 请求取 COS 对象 Content-Length；失败返回 -1。仅在上传登记表未命中时兜底调用。 */

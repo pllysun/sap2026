@@ -97,8 +97,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (uri.equals("/api/auth/login") || uri.equals("/api/auth/admin/login") || uri.equals("/api/auth/app/login")) {
             return Category.LOGIN;
         }
-        if (uri.equals("/api/auth/register") || uri.equals("/api/auth/app/register") || uri.equals("/api/auth/app/register/email-code")) return Category.REGISTER;
+        if (uri.equals("/api/auth/register") || uri.equals("/api/auth/register/email-code") || uri.equals("/api/auth/app/register") || uri.equals("/api/auth/app/register/email-code")) return Category.REGISTER;
         if (uri.startsWith("/api/jw/")) return Category.JW;
+        if (uri.equals("/api/file/download-link")) return Category.DOWNLOAD;
         if (uri.startsWith("/api/note/") && uri.endsWith("/pdf")) return Category.PDF;
         if (uri.equals("/api/file/download") || uri.equals("/api/file/go") || uri.equals("/api/app/download/file") || uri.equals("/api/app/download/current") || uri.equals("/api/app/download/tickets")) return Category.DOWNLOAD;
         if (uri.startsWith("/api/")

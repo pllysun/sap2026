@@ -7,6 +7,7 @@ import edu.csuft.sap.data.schedule.ProfileKind
 import edu.csuft.sap.data.schedule.ScheduleRoot
 import edu.csuft.sap.data.schedule.ScheduleStore
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.nodeRanges
 import edu.csuft.sap.data.schedule.visibleBase
 import edu.csuft.sap.ui.theme.colorIndexOf
 import java.time.LocalDate
@@ -22,7 +23,10 @@ data class WidgetCourse(
     val teacher: String,
     val weeks: List<Int>,
     val colorIndex: Int,
-)
+    val weeksRaw: String? = null,
+) {
+    fun occursInWeek(week: Int): Boolean = week > 0 && (week in weeks || (weeks.isEmpty() && WeekUtil.isUnrestricted(weeksRaw)))
+}
 
 /** 当前激活学号·激活课表的全量课程 + 当前周 + 开学日期（用于按任意日期算周次）。 */
 data class WidgetData(
@@ -83,8 +87,7 @@ object WidgetRepository {
             ProfileKind.TERM -> data.termCourses[profile.termValue].orEmpty()
             ProfileKind.CUSTOM -> profile.frozenCourses
         }
-        for (c in profile.visibleBase(base)) {
-            val nodes = Periods.nodesOfSection(c.sectionIndex)
+        for (c in profile.visibleBase(base)) for (nodes in c.nodeRanges()) {
             out.add(
                 WidgetCourse(
                     day = c.day,
@@ -94,6 +97,7 @@ object WidgetRepository {
                     location = c.location,
                     teacher = c.teacher,
                     weeks = WeekUtil.parseWeeks(c.weeksRaw),
+                    weeksRaw = c.weeksRaw,
                     colorIndex = if (c.colorIndex > 0) c.colorIndex else colorIndexOf(c.name),
                 ),
             )
@@ -123,7 +127,7 @@ object WidgetRepository {
         val week = WeekUtil.currentWeek(data.semesterStart, date) ?: return emptyList()
         if (week > data.totalWeeks) return emptyList()
         return data.courses
-            .filter { it.day == dow && (it.weeks.isEmpty() || it.weeks.contains(week)) }
+            .filter { it.day == dow && it.occursInWeek(week) }
             .sortedBy { it.startNode }
     }
 

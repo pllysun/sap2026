@@ -61,7 +61,7 @@ if [ -n "$MYSQL_URL" ]; then
     esac
     echo "[DB] URL: $MYSQL_URL"
     export SPRING_DATASOURCE_URL="$MYSQL_URL"
-    export SPRING_DATASOURCE_USERNAME="${MYSQL_USER:-root}"
+    export SPRING_DATASOURCE_USERNAME="${MYSQL_USER:-sap}"
     export SPRING_DATASOURCE_PASSWORD="${MYSQL_PASSWORD:-}"
     export SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver"
     export SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT="org.hibernate.dialect.MySQLDialect"
@@ -157,6 +157,7 @@ generate_https_config() {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
 
         # /admin 精确匹配 → 301 重定向到 /admin/
         location = /admin {
@@ -174,9 +175,14 @@ generate_https_config() {
             index index.html;
             try_files \$uri \$uri/ /index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|webp|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "SAMEORIGIN" always;
+                add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+                add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
+                add_header Strict-Transport-Security "max-age=31536000" always;
             }
         }
 
@@ -186,14 +192,24 @@ generate_https_config() {
             index index.html;
             try_files \$uri \$uri/ /admin/index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|webp|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "SAMEORIGIN" always;
+                add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+                add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
+                add_header Strict-Transport-Security "max-age=31536000" always;
             }
         }
 
         # API 反向代理
         location /api/ {
+            limit_req zone=sap_api burst=80 nodelay;
+            location ~ ^/api/(auth/(login|admin/login|app/login|register|app/register|password-recovery)|oj-nodes/[^/]+/heartbeat) {
+                client_max_body_size 16k;
+                proxy_pass http://127.0.0.1:8081;
+            }
             proxy_pass http://127.0.0.1:8081;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
@@ -232,14 +248,16 @@ http {
     sendfile    on;
     tcp_nopush  on;
     keepalive_timeout 65;
+    limit_req_zone \$binary_remote_addr zone=sap_api:10m rate=10r/s;
+    limit_req_status 429;
 
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml application/wasm;
     gzip_min_length 1024;
     gzip_vary on;
 
-    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                    '\$status \$body_bytes_sent "\$http_referer" '
+    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request_method \$uri \$server_protocol" '
+                    '\$status \$body_bytes_sent "\$host" '
                     '"\$http_user_agent"';
 
     access_log /app/logs/nginx-access.log main;
@@ -254,6 +272,7 @@ http {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
 
         # Let's Encrypt ACME 验证
         location /.well-known/acme-challenge/ {
@@ -286,6 +305,7 @@ http {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
 
         location = /admin {
             return 301 /admin/;
@@ -301,9 +321,14 @@ http {
             index index.html;
             try_files \$uri \$uri/ /index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|webp|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "SAMEORIGIN" always;
+                add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+                add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
+                add_header Strict-Transport-Security "max-age=31536000" always;
             }
         }
 
@@ -312,13 +337,23 @@ http {
             index index.html;
             try_files \$uri \$uri/ /admin/index.html;
 
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
+            location ~* \.(js|css|png|jpg|jpeg|gif|webp|ico|svg|woff|woff2|ttf|eot|wasm|br)\$ {
                 expires 30d;
                 add_header Cache-Control "public, immutable";
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "SAMEORIGIN" always;
+                add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+                add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
+                add_header Strict-Transport-Security "max-age=31536000" always;
             }
         }
 
         location /api/ {
+            limit_req zone=sap_api burst=80 nodelay;
+            location ~ ^/api/(auth/(login|admin/login|app/login|register|app/register|password-recovery)|oj-nodes/[^/]+/heartbeat) {
+                client_max_body_size 16k;
+                proxy_pass http://127.0.0.1:8081;
+            }
             proxy_pass http://127.0.0.1:8081;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
@@ -353,8 +388,8 @@ else
 fi
 
 # Business processes must not inherit the sandbox coordinator's capabilities.
+chown -R sapapp:sapapp /app/data /app/uploads /app/logs
 if [ "${JUDGER_ENABLED:-false}" = true ]; then
-    chown -R sapapp:sapapp /app/data /app/uploads /app/logs
     /opt/judger/start.sh
 fi
 
@@ -364,11 +399,8 @@ fi
 if command -v redis-server >/dev/null 2>&1; then
     echo "[REDIS] 启动 Redis (127.0.0.1:6379, AOF 持久化)..."
     mkdir -p /app/data/redis
-    REDIS_RUNNER=""
-    if [ "${JUDGER_ENABLED:-false}" = true ]; then
-        chown sapapp:sapapp /app/data/redis
-        REDIS_RUNNER="setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs"
-    fi
+    chown sapapp:sapapp /app/data/redis
+    REDIS_RUNNER="setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs"
     # Fixed runner, no user controlled command text.
     $REDIS_RUNNER redis-server \
         --bind 127.0.0.1 --port 6379 \
@@ -383,10 +415,7 @@ fi
 if [ -f /app/ocr/main.py ]; then
     echo "[OCR] 启动验证码识别服务 (127.0.0.1:9000)..."
     ( cd /app/ocr
-      if [ "${JUDGER_ENABLED:-false}" = true ]; then
-          exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs python3 -m uvicorn main:app --host 127.0.0.1 --port 9000
-      fi
-      exec python3 -m uvicorn main:app --host 127.0.0.1 --port 9000 ) \
+      exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs python3 -m uvicorn main:app --host 127.0.0.1 --port 9000 ) \
         >> /app/logs/ocr.log 2>&1 &
     echo "[OCR] 已后台启动 (日志: /app/logs/ocr.log)"
 fi
@@ -405,19 +434,6 @@ nginx
 # 不再拼进命令行，避免泄露到进程列表。
 echo "[APP] 启动 Spring Boot..."
 # JAVA_OPTS 仅承载非敏感的额外 JVM/Spring 参数；为空时不传入空参数。
-if [ "${JUDGER_ENABLED:-false}" = true ]; then
-    # shellcheck disable=SC2086
-    exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs java $JAVA_OPTS -jar /app/app.jar \
-        --spring.profiles.active=docker --file.upload.path=/app/uploads/
-fi
-if [ -n "$JAVA_OPTS" ]; then
-    # JVM 参数必须位于 -jar 之前；此处依赖按空白拆分以传递多个参数。
-    # shellcheck disable=SC2086
-    exec java $JAVA_OPTS -jar /app/app.jar \
-        --spring.profiles.active=docker \
-        --file.upload.path=/app/uploads/
-else
-    exec java -jar /app/app.jar \
-        --spring.profiles.active=docker \
-        --file.upload.path=/app/uploads/
-fi
+# shellcheck disable=SC2086
+exec setpriv --reuid=sapapp --regid=sapapp --init-groups --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs java $JAVA_OPTS -jar /app/app.jar \
+    --spring.profiles.active=docker --file.upload.path=/app/uploads/

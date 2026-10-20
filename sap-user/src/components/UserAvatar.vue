@@ -6,5 +6,5 @@ const failed = ref(false)
 watch(() => props.src, () => { failed.value = false })
 </script>
 <style scoped>
-.user-avatar{display:inline-grid;place-items:center;border-radius:50%;background:var(--surface-blue);color:var(--primary-dark);font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden;vertical-align:middle}.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-avatar{display:inline-grid;place-items:center;border-radius:50%;background:var(--surface-blue);color:var(--primary-dark);font-size:0.8125rem;font-weight:600;flex-shrink:0;overflow:hidden;vertical-align:middle}.user-avatar img{width:100%;height:100%;object-fit:cover}
 </style>

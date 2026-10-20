@@ -5,11 +5,12 @@
       <div v-for="hook in hooks" :key="hook.eventKey" class="hook-card">
         <div class="hook-heading"><strong>{{ hook.title }}</strong><el-tag size="small" :type="hook.compatible === false ? 'danger' : hook.templateId ? 'success' : 'info'">{{ hook.compatible === false ? '参数不匹配' : hook.templateId ? '已绑定' : '未绑定' }}</el-tag></div>
         <code>{{ hook.eventKey }}</code>
+        <p class="hint">发送策略：{{ deliveryLabel(hook.deliveryPolicy) }}</p>
         <div class="hook-variables"><el-tag v-for="key in hook.variables" :key="key" size="small" effect="plain">{{ key }}</el-tag></div>
         <el-select v-model="hook.selectedId" placeholder="选择适配该事件的模板" clearable style="width:100%"><el-option v-for="t in compatible(hook)" :key="t.id" :value="String(t.id)" :label="t.templateName + (t.enabled ? '' : '（停用）')" /></el-select>
         <p v-if="hook.compatible === false" class="hint">原绑定模板参数不匹配，已停止生成该事件邮件，请重新选择模板或解绑。</p>
         <p v-if="hook.eventKey === 'PASSWORD_CODE'" class="hint">用户在忘记密码页面点击发送后，向注册 QQ 邮箱发送验证码。有效期 15 分钟，过期不发；同账号/邮箱每 3 分钟一次、24 小时最多 3 次。</p>
-        <p v-if="hook.eventKey === 'APP_REGISTRATION_CODE'" class="hint">手机端注册时向本次 QQ 邮箱发送验证码；有效期 15 分钟，每 3 分钟可重发，同账号/邮箱 24 小时最多 5 次。Web 注册流程保持不变。</p>
+        <p v-if="hook.eventKey === 'APP_REGISTRATION_CODE'" class="hint">入会通道关闭时，Web 和新版 App 注册需验证 QQ 邮箱；开启时仅需图形验证码。邮件验证码有效期 15 分钟，每 3 分钟可重发，同账号/邮箱 24 小时最多 5 次。</p>
         <el-input v-if="hook.eventKey === 'ACCOUNT_REGISTERED'" v-model="hook.introduction" type="textarea" :rows="3" placeholder="协会介绍（固定参数，可修改）" style="margin-top:12px" />
         <p v-if="selectedDisabled(hook)" class="hint">模板已停用：绑定后仍不会生成自动邮件，需在模板编辑中启用。</p>
         <div class="ops-actions"><el-button type="primary" plain :loading="saving === hook.eventKey" @click="saveBinding(hook)">保存绑定</el-button><el-button :disabled="!hook.templateId" @click="unbind(hook)">解绑</el-button></div>
@@ -17,8 +18,9 @@
     </div>
   </section>
   <section class="mail-ops">
-    <div class="ops-title"><div><h3>邮件发送中心</h3><p>单条发送，完成后间隔至少 65 秒。空队列休眠，每天 08:00 自动检查。</p></div><div class="ops-actions"><el-button @click="refresh">刷新</el-button><el-button type="primary" plain :loading="activating" @click="activate">唤醒队列</el-button></div></div>
-    <div class="queue-summary"><div><b>{{ status.queue || 0 }}</b><span>等待处理 / 发送中</span></div><div><b>{{ status.failed || 0 }}</b><span>待处理失败邮件</span></div><div><b>{{ status.enabled ? '已开启' : '已暂停' }}</b><span>全局发送开关</span></div></div>
+    <div class="ops-title"><div><h3>邮件发送中心</h3><p>验证码优先立即发送；注册成功及入会成功通知逐封排队，间隔 65 秒。验证码等待或发送期间暂缓领取普通通知。</p></div><div class="ops-actions"><el-button @click="refresh">刷新</el-button><el-button type="primary" plain :loading="activating" @click="activate">立即处理</el-button></div></div>
+    <div class="queue-summary"><div><b>{{ status.queue || 0 }}</b><span>等待 / 发送中</span></div><div><b>{{ status.failed || 0 }}</b><span>待处理失败邮件</span></div><div><b>{{ status.enabled ? '已开启' : '已暂停' }}</b><span>全局发送开关</span></div></div>
+    <p class="hint">验证码：待发 {{ status.verification?.pending || 0 }} / 发送中 {{ status.verification?.sending || 0 }}；普通通知：待发 {{ status.notifications?.pending || 0 }} / 发送中 {{ status.notifications?.sending || 0 }}。</p>
     <p class="hint">SMTP 接受不代表最终送达。“结果未知”的邮件请先核实收件情况，避免重复发送。</p>
     <el-tabs v-model="kind" @tab-change="changeTab"><el-tab-pane label="发送队列" name="queue" /><el-tab-pane label="失败邮件" name="failed" /><el-tab-pane label="发送日志" name="logs" /></el-tabs>
     <p v-if="kind === 'logs'" class="hint">每封邮件仅显示最新状态。展开左侧箭头查看历史过程；历史“开始发送”不代表仍在发送。</p>
@@ -58,7 +60,8 @@
         <div v-if="row.context?.details?.['任务']" class="hint">{{ row.context.details['任务'] }} · 第 {{ row.context.details['周期'] }} 周期</div>
         <div v-if="row.context?.details && kind === 'logs'" class="hint">展开左侧箭头查看业务详情与处理历史</div>
       </template></el-table-column>
-      <el-table-column :label="kind === 'logs' ? '最新状态' : '状态'" width="138"><template #default="{row}"><el-tag :type="tagType(row.state || row.status)" effect="plain">{{ label(row.state || row.status) }}</el-tag></template></el-table-column>
+      <el-table-column label="发送策略" width="130"><template #default="{row}"><el-tag :type="row.deliveryPolicy === 'VERIFICATION' ? 'success' : 'info'" effect="plain">{{ deliveryLabel(row.deliveryPolicy) }}</el-tag></template></el-table-column>
+      <el-table-column :label="kind === 'logs' ? '最新状态' : '状态'" width="138"><template #default="{row}"><el-tag :type="tagType(row.state || row.status)" effect="plain">{{ label(row.state || row.status,row) }}</el-tag></template></el-table-column>
       <el-table-column v-if="kind !== 'queue'" label="说明" min-width="240"><template #default="{row}">{{ row.reason || row.detail || '—' }}</template></el-table-column>
       <el-table-column v-if="kind === 'logs'" label="本步执行人" min-width="170"><template #default="{row}">{{ row.context?.operator ? person(row.context.operator) : row.actor_id ? `用户 ID ${row.actor_id}` : '系统' }}</template></el-table-column>
       <el-table-column label="记录时间" width="175"><template #default="{row}">{{ date(row.failed_at || row.created_at) }}</template></el-table-column>
@@ -80,28 +83,69 @@ const props=defineProps({templates:{type:Array,default:()=>[]}})
 const emit=defineEmits(['bindings-change','hooks-loaded'])
 const hooks=ref([]),loading=ref(false),saving=ref(''),status=ref({}),kind=ref('queue'),rows=ref([]),page=ref(1),total=ref(0),listLoading=ref(false),selected=ref([]),acting=ref(false),activating=ref(false),detailVisible=ref(false),detailData=ref({})
 const history=ref({}),expanded=ref([])
-let timer,generation=0,alive=true
+let timer,generation=0,alive=true,polling=false
 async function loadBindings(){loading.value=true;try{const {data}=await request.get('/api/email/bindings');hooks.value=data.map(h=>({...h,selectedId:h.templateId==null||h.compatible===false?'':String(h.templateId),introduction:h.defaults?.associationIntro||''}));emit('bindings-change',hooks.value.filter(h=>h.templateId).map(h=>String(h.templateId)));emit('hooks-loaded',data)}finally{loading.value=false}}
 function compatible(h){const expected=new Set(h.variables);return props.templates.filter(t=>{const actual=new Set(t.variables||[]);return actual.size===expected.size&&[...actual].every(v=>expected.has(v))})}
 function selectedDisabled(h){return props.templates.some(t=>String(t.id)===h.selectedId&&!t.enabled)}
 async function saveBinding(h){saving.value=h.eventKey;try{await request.put('/api/email/bindings/'+h.eventKey,{templateId:h.selectedId||null,defaults:h.eventKey==='ACCOUNT_REGISTERED'?{associationIntro:h.introduction}:{}});ElMessage.success('绑定已保存');await loadBindings()}finally{saving.value=''}}
-async function unbind(h){try{await ElMessageBox.confirm('解绑后不再生成此事件邮件，已排队邮件不受影响。','解绑模板',{type:'warning',confirmButtonText:'确定',cancelButtonText:'取消'});h.selectedId='';await saveBinding(h)}catch(e){if(e!=='cancel'&&e!=='close')throw e}}
+async function unbind(h){try{await ElMessageBox.confirm('解绑后不再生成此事件邮件，已提交的邮件不受影响。','解绑模板',{type:'warning',confirmButtonText:'确定',cancelButtonText:'取消'});h.selectedId='';await saveBinding(h)}catch(e){if(e!=='cancel'&&e!=='close')throw e}}
 const rowKey=row=>String(row.message_id||('event-'+row.id))
-async function loadRows(){const g=++generation;listLoading.value=true;try{const {data}=await request.get('/api/email/delivery/'+(kind.value==='logs'?'messages':kind.value),{params:{page:page.value,size:20}});if(g!==generation)return;const keys=new Set(expanded.value.map(rowKey));rows.value=data.records;total.value=data.total;selected.value=[];expanded.value=rows.value.filter(r=>keys.has(rowKey(r)));history.value=Object.fromEntries(rows.value.filter(r=>history.value[r.id]).map(r=>[r.id,history.value[r.id]]));for(const row of expanded.value)if(!history.value[row.id])loadHistory(row)}finally{if(g===generation)listLoading.value=false}}
-async function loadHistory(row,p=1){const g=generation;history.value[row.id]={...(history.value[row.id]||{}),loading:true};try{const {data}=await request.get('/api/email/delivery/logs/'+row.id+'/history',{params:{page:p,size:20}});if(g!==generation||!alive)return;history.value[row.id]={...data,page:p,loading:false}}finally{if(history.value[row.id])history.value[row.id].loading=false}}
+const same = (a,b) => JSON.stringify(a) === JSON.stringify(b)
+async function loadRows(options={}) {
+  const quiet=options?.quiet===true, g=++generation, tab=kind.value, current=page.value
+  if(!quiet) listLoading.value=true
+  try {
+    const {data}=await request.get('/api/email/delivery/'+(tab==='logs'?'messages':tab),{params:{page:current,size:20},silent:quiet})
+    if(g!==generation||!alive||tab!==kind.value||current!==page.value||(quiet&&selected.value.length))return
+    const incoming=data.records||[]
+    if(!same(rows.value,incoming)) {
+      const old=new Map(rows.value.map(row=>[rowKey(row),row]))
+      const keys=new Set(expanded.value.map(rowKey))
+      // 相同记录保留对象引用，避免表格重建、展开收起与滚动位置跳动。
+      rows.value=incoming.map(row=>same(old.get(rowKey(row)),row)?old.get(rowKey(row)):row)
+      expanded.value=rows.value.filter(row=>keys.has(rowKey(row)))
+      history.value=Object.fromEntries(rows.value.filter(row=>history.value[row.id]).map(row=>[row.id,history.value[row.id]]))
+      for(const row of expanded.value) loadHistory(row,history.value[row.id]?.page||1,true).catch(()=>{})
+    }
+    if(Number(total.value)!==Number(data.total)) total.value=Number(data.total||0)
+    if(!quiet)selected.value=[]
+  } finally {if(g===generation)listLoading.value=false}
+}
+async function loadHistory(row,p=1,quiet=false) {
+  const tab=kind.value, current=page.value
+  if(!quiet)history.value[row.id]={...(history.value[row.id]||{}),loading:true}
+  try {
+    const {data}=await request.get('/api/email/delivery/logs/'+row.id+'/history',{params:{page:p,size:20},silent:quiet})
+    if(!alive||tab!==kind.value||current!==page.value||!expanded.value.some(item=>rowKey(item)===rowKey(row)))return
+    const next={...data,page:p,loading:false}
+    if(!same(history.value[row.id],next))history.value[row.id]=next
+  } finally {if(history.value[row.id]?.loading)history.value[row.id].loading=false}
+}
 function expandHistory(row,items){expanded.value=items;if(items.some(i=>i.id===row.id))loadHistory(row)}
-async function refresh(){const {data}=await request.get('/api/email/delivery/status');status.value=data;await loadRows()}
-function changeTab(){page.value=1;selected.value=[];expanded.value=[];history.value={};loadRows()}
-async function activate(){activating.value=true;try{await request.post('/api/email/delivery/activate');ElMessage.success('已唤醒；暂停状态需先开启全局发送开关');await refresh()}finally{activating.value=false}}
+async function refresh(options={}) {
+  const quiet=options?.quiet===true
+  if(quiet&&(polling||listLoading.value))return
+  if(quiet)polling=true
+  try {
+    const {data}=await request.get('/api/email/delivery/status',{silent:quiet})
+    if(!alive)return
+    if(!same(status.value,data))status.value=data
+    // 普通通知倒计时等状态变化不会使列表卸载或出现 loading 遮罩。
+    if(!quiet||!listLoading.value)await loadRows({quiet})
+  } finally {if(quiet)polling=false}
+}
+function changeTab(){page.value=1;selected.value=[];expanded.value=[];history.value={};rows.value=[];loadRows()}
+async function activate(){activating.value=true;try{await request.post('/api/email/delivery/activate');ElMessage.success('已开始处理；暂停状态需先开启全局发送开关');await refresh()}finally{activating.value=false}}
 async function detail(row){const {data}=await request.get('/api/email/failed/'+row.id);detailData.value=data;detailVisible.value=true}
-async function batch(action,items=selected.value){const ids=items.map(r=>r.id);if(!ids.length||acting.value)return;try{await ElMessageBox.confirm(action==='delete'?'永久删除失败记录及正文，不可恢复；操作日志保留。':action==='retry'?'重新加入队列。结果未知的邮件可能重复，请先核实。':'标记为已忽略，保留记录且不自动重试。','确认操作',{type:'warning',confirmButtonText:'确定',cancelButtonText:'取消'});acting.value=true;await request.post('/api/email/failed/actions/'+action,{ids});ElMessage.success('操作完成');await refresh()}catch(e){if(e!=='cancel'&&e!=='close')throw e}finally{acting.value=false}}
-const labels={PENDING:'等待发送',SENDING:'发送中',SUCCESS:'SMTP 已接受',FAILED:'发送失败',EXPIRED:'已过期',UNKNOWN:'结果未知',IGNORED:'已忽略',QUEUED:'已入队',SKIPPED:'未生成邮件',BOUND:'已绑定',UNBOUND:'已解绑',RETRY:'重新入队',IGNORE:'已忽略',DELETE:'已删除',PASSWORD_RESET:'密码已重置'}
-const label=s=>s==='QUEUED'||s==='RETRY'?'等待发送':labels[s]||s
+async function batch(action,items=selected.value){const ids=items.map(r=>r.id);if(!ids.length||acting.value)return;try{await ElMessageBox.confirm(action==='delete'?'永久删除失败记录及正文，不可恢复；操作日志保留。':action==='retry'?'按对应发送策略重新处理；普通通知继续排队。结果未知的邮件可能重复，请先核实。':'标记为已忽略，保留记录且不自动重试。','确认操作',{type:'warning',confirmButtonText:'确定',cancelButtonText:'取消'});acting.value=true;await request.post('/api/email/failed/actions/'+action,{ids});ElMessage.success('操作完成');await refresh()}catch(e){if(e!=='cancel'&&e!=='close')throw e}finally{acting.value=false}}
+const labels={PENDING:'准备发送',SENDING:'发送中',SUCCESS:'SMTP 已接受',FAILED:'发送失败',EXPIRED:'已过期',UNKNOWN:'结果未知',IGNORED:'已忽略',QUEUED:'已提交发送',SKIPPED:'未生成邮件',BOUND:'已绑定',UNBOUND:'已解绑',RETRY:'重新发送',IGNORE:'已忽略',DELETE:'已删除',PASSWORD_RESET:'密码已重置'}
+const deliveryLabel=p=>p==='VERIFICATION'?'验证码优先':p==='NOTIFICATION_QUEUE'?'普通通知排队':'即时发送'
+const label=(s,row)=>row?.deliveryPolicy==='NOTIFICATION_QUEUE'&&['PENDING','QUEUED','RETRY'].includes(s)?'等待发送':s==='QUEUED'||s==='RETRY'?'准备发送':labels[s]||s
 const eventLabel=s=>s==='SENDING'?'开始发送':labels[s]||s
 const tagType=s=>s==='SUCCESS'?'success':['FAILED','EXPIRED','UNKNOWN'].includes(s)?'danger':['SENDING','PENDING','QUEUED'].includes(s)?'warning':'info'
 const date=v=>v?new Date(Number(v)).toLocaleString('zh-CN',{hour12:false}):'—'
 const person=p=>`${p.name || '姓名未记录'} · ${p.account || '账号未记录'}${p.id ? `（ID ${p.id}）` : ''}`
-onMounted(async()=>{await Promise.all([loadBindings(),refresh()]);if(alive)timer=setInterval(()=>{if(!document.hidden&&!acting.value&&selected.value.length===0)refresh().catch(()=>{})},15000)})
+onMounted(async()=>{await Promise.all([loadBindings(),refresh()]);if(alive)timer=setInterval(()=>{if(!document.hidden&&!acting.value&&selected.value.length===0)refresh({quiet:true}).catch(()=>{})},5000)})
 onUnmounted(()=>{alive=false;clearInterval(timer);generation++})
 </script>
 <style scoped>

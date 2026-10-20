@@ -22,19 +22,11 @@ public class SettingController {
     @Autowired
     private CosService cosService;
 
-    /** 敏感配置项：禁止通过通用 value 接口读取，管理端请走脱敏的 /cos-config */
-    private static final java.util.Set<String> SENSITIVE_KEYS =
-            java.util.Set.of("cos_secret_id", "cos_secret_key", "guest_access_level", "allow_guest_login");
-
     @GetMapping("/value")
     @OperationLog("查询系统设置值")
     public Result<?> getValue(@RequestParam String key) {
-        String canonical = java.text.Normalizer.normalize(key, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT);
-        if (canonical.equals("app_download_url")) throw new com.sap.common.BusinessException(403, "请通过 App 下载接口获取安装包");
-        if (SENSITIVE_KEYS.contains(key)) {
-            throw new com.sap.common.BusinessException("无权通过该接口读取敏感配置");
-        }
-        return Result.ok(settingService.getValue(key));
+        SettingService.requireReadableKey(key);
+        return Result.ok(settingService.getReadableValue(key));
     }
 
     /**

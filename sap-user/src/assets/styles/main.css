@@ -1,10 +1,9 @@
 /* ============================================================
-   Blue & White Design System
+   Light Association Design System
    中南林业科技大学软件协会 · 用户端
-   浅蓝与白色 · 统一内容、表单与交互层级
+   暖白与蓝紫 · 统一内容、表单与交互层级
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700;800&display=swap');
 
 /* ---- Design Tokens ---- */
 :root {
@@ -12,35 +11,35 @@
 
   /* Core palette */
   --white:     #ffffff;
-  --bg:        #f5f9ff;
+  --bg:        #f6f7fb;
   --bg-card:   #ffffff;
 
   /* Ink */
-  --ink-900: #193653;
-  --ink-800: #25415e;
-  --ink-700: #385572;
-  --ink-600: #526c87;
-  --ink-500: #637d98;
-  --ink-400: #748ba2;
-  --ink-300: #adc5dc;
-  --ink-200: #d4e4f3;
-  --ink-100: #e3eef8;
-  --ink-50:  #f2f7fd;
+  --ink-900: #202c43;
+  --ink-800: #2e3d56;
+  --ink-700: #40516a;
+  --ink-600: #52617a;
+  --ink-500: #606e85;
+  --ink-400: #68758a;
+  --ink-300: #a2aec1;
+  --ink-200: #d1d8e5;
+  --ink-100: #e3e7ef;
+  --ink-50:  #f3f5fa;
 
-  /* Gradient — Teal-to-Blue primary */
-  --primary:       #2878d5;
-  --primary-dark:  #1c60b4;
+  /* Blue-violet actions and quiet decorative surfaces */
+  --primary:       #405bc2;
+  --primary-dark:  #30499f;
   --teal:          #5099e5;
   --gradient:      linear-gradient(125deg, #cce8ff 0%, #eef7ff 65%, #ffffff 100%);
   --gradient-soft: linear-gradient(130deg, #edf6ff, #f8fbff);
-  --gradient-btn:  linear-gradient(120deg, #398beb, #256bc4);
+  --gradient-btn:  linear-gradient(120deg, #4862c8, #405bc2);
 
   /* Semantic */
-  --success:  #22C55E;
-  --warning:  #F59E0B;
-  --error:    #EF4444;
+  --success:  #217454;
+  --warning:  #94631a;
+  --error:    #c23e50;
   --info:     #3B82F6;
-  --purple:   #477fbd;
+  --purple:   #6c53ae;
 
   /* Shadows */
   --shadow-sm:  0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
@@ -67,7 +66,7 @@
 
 /* ---- Reset ---- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+html { font-size: 1rem; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 body {
   font-family: var(--font);
   color: var(--ink-800);
@@ -285,7 +284,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   color: var(--ink-400);
 }
 .footer a { color: var(--teal); transition: color var(--dur); }
-.footer a:hover { color: #2DD4BF; }
+.footer a:hover { color: #188073; }
 .footer__copyright { color: var(--ink-300); margin-bottom: var(--s1); }
 
 /* ---- Grid ---- */

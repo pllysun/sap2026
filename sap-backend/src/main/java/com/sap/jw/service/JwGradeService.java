@@ -117,8 +117,8 @@ public class JwGradeService {
                     postHeaders.put("Sec-Fetch-Dest", "document");
                     HttpResponse<String> resp = session.postForm(spec.action(), spec.values(), postHeaders);
                     String html = resp == null || resp.body() == null ? "" : resp.body();
-                    log.info("成绩页面抓取 method=FORM action={} values={} formMeta={} status={} location={} contentType={} bytes={} parserSupported={} shape={}",
-                            safePath(spec.action()), spec.values(), formMeta(queryPage), resp == null ? -1 : resp.statusCode(),
+                    log.info("成绩页面抓取 method=FORM action={} fields={} formMeta={} status={} location={} contentType={} bytes={} parserSupported={} shape={}",
+                            safePath(spec.action()), spec.values().keySet(), formMeta(queryPage), resp == null ? -1 : resp.statusCode(),
                             resp == null ? "" : resp.headers().firstValue("location").orElse(""),
                             resp == null ? "" : resp.headers().firstValue("content-type").orElse(""),
                             html.getBytes(StandardCharsets.UTF_8).length, parser.supports(html), pageShape(html));

@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -80,6 +79,9 @@ fun LoginScreen(
     onRegister: () -> Unit = {},
     registeredStudentId: String? = null,
     onRegistrationConsumed: () -> Unit = {},
+    recoveredStudentId: String? = null,
+    onRecoveryConsumed: () -> Unit = {},
+    onForgotPassword: (String) -> Unit = {},
 ) {
     val state by vm.state.collectAsState()
     val context = LocalContext.current
@@ -94,6 +96,15 @@ fun LoginScreen(
             registrationMessage = "注册成功，请使用新账号登录"
             vm.clearError()
             onRegistrationConsumed()
+        }
+    }
+    LaunchedEffect(recoveredStudentId) {
+        recoveredStudentId?.let {
+            studentId = it
+            password = ""
+            registrationMessage = "密码已重置，请使用新密码登录"
+            vm.clearError()
+            onRecoveryConsumed()
         }
     }
 
@@ -119,6 +130,7 @@ fun LoginScreen(
         onDeclineMemberPrivacy = vm::declineMemberPrivacy,
         onRegister = { registrationMessage = null; vm.clearError(); onRegister() },
         registrationMessage = registrationMessage,
+        onForgotPassword = { password = ""; registrationMessage = null; vm.clearError(); onForgotPassword(studentId.trim()) },
     )
 }
 
@@ -135,12 +147,11 @@ internal fun LoginContent(
     onDeclineMemberPrivacy: () -> Unit = {},
     onRegister: () -> Unit = {},
     registrationMessage: String? = null,
+    onForgotPassword: () -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    val recoveryUri = LocalUriHandler.current
-    val recoveryContext = LocalContext.current
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var showPrivacy by rememberSaveable { mutableStateOf(false) }
     var entered by remember { mutableStateOf(false) }
@@ -258,8 +269,14 @@ internal fun LoginContent(
                             keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
                             modifier = Modifier.fillMaxWidth().semantics { contentDescription = "学号" },
                         )
-                        Text("密码", fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 7.dp))
+                        Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("密码", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            TextButton(onClick = { focus.clearFocus(); keyboard?.hide(); onForgotPassword() },
+                                enabled = !state.loading && !state.consentRequired, modifier = Modifier.heightIn(min = 44.dp)) {
+                                Text("忘记密码？", fontSize = 12.sp)
+                            }
+                        }
                         OutlinedTextField(
                             value = password, onValueChange = onPasswordChange,
                             placeholder = { Text("请输入密码", fontSize = 14.sp) },
@@ -320,12 +337,6 @@ internal fun LoginContent(
                     showPrivacy = true
                 }, enabled = !state.loading) {
                     Text("隐私协议", fontSize = 13.sp)
-                }
-                TextButton(onClick = {
-                    try { recoveryUri.openUri("https://csuftsap.top/forgot-password?from=app") }
-                    catch (_: Exception) { Toast.makeText(recoveryContext, "无法打开找回页面，请联系管理员", Toast.LENGTH_LONG).show() }
-                }, enabled = !state.loading) {
-                    Text("忘记密码？", fontSize = 13.sp)
                 }
                 }
                 Surface(

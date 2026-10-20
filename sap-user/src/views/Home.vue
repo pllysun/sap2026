@@ -1,12 +1,21 @@
 <template>
   <div ref="homeRoot" class="association-home">
     <section class="home-intro home-shell" aria-labelledby="home-title">
+      <div class="home-hero-backdrop" aria-hidden="true">
+        <svg class="home-hero-traces" viewBox="0 0 1200 800" fill="none" preserveAspectRatio="xMidYMid slice"><path d="M-60 634C233 811 376 89 743 229S960 551 1260 178"/><path d="M-30 672C252 833 400 110 766 253S986 575 1290 205"/><circle cx="740" cy="229" r="7"/><circle cx="226" cy="542" r="5"/></svg>
+        <span class="home-hero-grain"></span>
+      </div>
       <div class="intro-copy">
         <p class="intro-university"><span aria-hidden="true"></span>中南林业科技大学</p>
         <div class="intro-title"><h1 id="home-title"><span>软件</span><span>协会</span></h1><svg class="intro-title__mark" viewBox="0 0 72 72" fill="none" aria-hidden="true"><rect x="8" y="8" width="42" height="42" rx="12"/><rect x="24" y="24" width="40" height="40" rx="12"/><path d="m34 36-7 8 7 8m13-16 7 8-7 8"/></svg></div>
         <p class="intro-description">参加学习小组，练习算法题，查阅技术笔记与协会活动。</p>
-        <nav class="intro-pathways" aria-label="开始学习">
-          <router-link to="/oj" class="intro-pathway intro-pathway--practice">
+        <nav class="intro-pathways" :class="{ 'intro-pathways--recruiting': isGuest && joinEnabled }" :aria-label="isGuest && joinEnabled ? '入会与学习' : '开始学习'">
+          <router-link v-if="isGuest && joinEnabled" to="/join" class="intro-pathway intro-pathway--join">
+            <span class="intro-pathway__mark"><UiIcon name="user-plus" :size="21" /></span>
+            <span class="intro-pathway__copy"><span class="intro-join-label">入会申请开放</span><strong>加入软件协会</strong></span>
+            <span class="intro-join-arrow"><UiIcon name="arrow-right" :size="18" /></span>
+          </router-link>
+          <router-link v-else to="/oj" class="intro-pathway intro-pathway--practice">
             <span class="intro-pathway__mark"><UiIcon name="code" :size="18" /></span>
             <span class="intro-pathway__copy"><strong>算法题库</strong><span>从一道题开始练习</span></span>
             <UiIcon name="chevron-right" class="intro-pathway__arrow" :size="14" />
@@ -19,7 +28,7 @@
         </nav>
         <div class="intro-resource-links">
           <router-link to="/notes"><UiIcon name="book-open" :size="14" />查看学习笔记<UiIcon name="chevron-right" :size="12" /></router-link>
-          <router-link v-if="isGuest && joinEnabled" to="/join"><UiIcon name="user-plus" :size="14" />加入软件协会<UiIcon name="chevron-right" :size="12" /></router-link>
+          <router-link v-if="isGuest && joinEnabled" to="/oj"><UiIcon name="code" :size="14" />进入算法题库<UiIcon name="chevron-right" :size="12" /></router-link>
           <router-link v-else to="/activities"><UiIcon name="calendar" :size="14" />查看协会活动<UiIcon name="chevron-right" :size="12" /></router-link>
         </div>
         <HomeAppDownload class="intro-app-download" />
@@ -48,9 +57,10 @@
         <div class="logo-stamp" aria-hidden="true"><img src="/logo.png" alt=""></div>
         <router-link to="/message-board" class="stage-note"><UiIcon name="message-square" :size="20" /><strong>留言板</strong></router-link>
       </div>
+      <picture class="hero-mascot" aria-hidden="true"><source media="(max-width: 760px)" :srcset="heroSmall" /><img :src="heroLarge" width="960" height="1030" alt="" fetchpriority="high" decoding="async" /></picture>
       <a class="intro-scroll" href="#association-life" aria-label="查看协会活动"><UiIcon name="layers" :size="18" /></a>
     </section>
-    <div class="motto-ribbon"><div class="home-shell"><span class="ribbon-symbol" aria-hidden="true">✳</span><p>万维网连接五大洲，<br class="mobile-break">二进制写尽天下事</p><span class="ribbon-label">OUR MOTTO / 我们的口号</span></div></div>
+    <div class="motto-ribbon"><div class="home-shell"><svg class="ribbon-symbol" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2v28M2 16h28M6 6l20 20M6 26 26 6" stroke="currentColor" stroke-width="1.5" /></svg><p>万维网连接五大洲，<br class="mobile-break">二进制写尽天下事</p><span class="ribbon-label">OUR MOTTO / 我们的口号</span></div></div>
 
     <HomeAlgorithmSection class="home-shell home-section reveal" />
 
@@ -104,8 +114,8 @@
 
     <section v-if="!loaded.members || pending.members || errors.members || members.length" class="home-shell home-section members-section reveal" data-load="members" :aria-busy="pending.members" aria-labelledby="members-title"><div class="section-heading"><div><p class="eyebrow">05 / PEOPLE OF SAP</p><h2 id="members-title">同行的人，<br class="mobile-break">各有光芒。</h2></div><div v-if="members.length" class="member-navigation"><span>{{ memberPage + 1 }} / {{ memberPages }}</span><button aria-label="上一组优秀成员" :disabled="memberPage === 0" @click="memberPage--"><UiIcon name="chevron-left" /></button><button aria-label="下一组优秀成员" :disabled="memberPage + 1 >= memberPages" @click="memberPage++"><UiIcon name="chevron-right" /></button></div></div><div v-if="pending.members || !loaded.members" class="home-deferred-skeleton" aria-label="正在加载荣誉成员"><i v-for="i in 8" :key="i"></i></div><p v-else-if="errors.members" class="home-placeholder">荣誉成员暂时未能加载 <button @click="loadResource('members', true)">重试</button></p><div v-else class="people-grid"><article v-for="person in visibleMembers" :key="person.id" class="person-card"><span class="person-initial">{{ (person.name || '协')[0] }}</span><div><h3>{{ person.name || '软协成员' }}</h3><span>{{ person.grade }}级 <template v-if="person.destination">· {{ person.destination }}</template></span></div><p>{{ person.destinationDetail || person.bio || person.major || '在热爱的方向，继续探索。' }}</p></article></div></section>
 
-    <section class="home-shell join-section reveal"><div class="join-panel"><div><p class="eyebrow">YOUR NEXT CHAPTER</p><h2>带上好奇心。<br>剩下的，一起探索。</h2></div><div class="join-panel__right"><p>刚接触编程，也可以从这里开始。<br>先了解我们的学习与活动，再找到自己的节奏。</p><router-link v-if="isGuest && joinEnabled" to="/join" class="home-button home-button--dark">了解入会 <UiIcon name="user-plus" /></router-link><router-link v-else to="/message-board" class="home-button home-button--dark">和大家打个招呼 <UiIcon name="message-square" /></router-link></div></div>
-      <div class="home-faq"><details><summary>没有编程基础，可以参加吗？<span>＋</span></summary><p>可以先从基础语法和学习笔记开始，结合学习小组的任务练习。遇到问题时，把尝试过程写清楚，再和伙伴一起讨论。</p></details><details><summary>注册账号就代表加入协会吗？<span>＋</span></summary><p>注册账号与成为正式会员是两件事。入会开放时，可通过「了解入会」提交申请；完成入会审核后，账号会获得相应的会员权限。</p></details><details><summary>从哪里了解最新活动？<span>＋</span></summary><p>在「软协活动」查看协会记录与发布的内容，学习任务请前往「学习小组」。有疑问可以到留言板交流，或通过页脚的联系方式联系协会。</p></details></div>
+    <section class="home-shell join-section reveal"><div class="join-panel"><div><p class="eyebrow">YOUR NEXT CHAPTER</p><h2>带上好奇心。<br>剩下的，一起探索。</h2></div><div class="join-panel__right"><p>刚接触编程，也可以从这里开始。<br>先了解我们的学习与活动，再找到自己的节奏。</p><router-link v-if="isGuest && joinEnabled" to="/join" class="home-button home-button--dark">申请加入协会 <UiIcon name="user-plus" /></router-link><router-link v-else to="/message-board" class="home-button home-button--dark">和大家打个招呼 <UiIcon name="message-square" /></router-link></div></div>
+      <div class="home-faq"><details><summary>没有编程基础，可以参加吗？<span>＋</span></summary><p>可以先从基础语法和学习笔记开始，结合学习小组的任务练习。遇到问题时，把尝试过程写清楚，再和伙伴一起讨论。</p></details><details><summary>注册账号就代表加入协会吗？<span>＋</span></summary><p>注册账号与成为正式会员是两件事。入会开放时，可通过「加入软件协会」提交申请；完成入会审核后，账号会获得相应的会员权限。</p></details><details><summary>从哪里了解最新活动？<span>＋</span></summary><p>在「软协活动」查看协会记录与发布的内容，学习任务请前往「学习小组」。有疑问可以到留言板交流，或通过页脚的联系方式联系协会。</p></details></div>
     </section>
   </div>
 </template>
@@ -119,6 +129,8 @@ import HeroCodeWindow from '@/components/HeroCodeWindow.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import HomeAlgorithmSection from '@/components/HomeAlgorithmSection.vue'
 import HomeAppDownload from '@/components/HomeAppDownload.vue'
+import heroSmall from '@/assets/xiaoruan/hero-480.webp'
+import heroLarge from '@/assets/xiaoruan/hero-960.webp'
 const userStore = useUserStore()
 const isGuest = computed(() => !userStore.roles.some(role => [0, 1, 2, 3].includes(Number(role))))
 const homeRoot = ref(null), stats = ref(null), activities = ref([]), notes = ref([]), members = ref([]), calendar = ref([]), studyActivities = ref([])
@@ -168,7 +180,7 @@ const heatmapDays = computed(() => {
   return days.map(day => ({ ...day, level: intensity(day.count) }))
 })
 const heatmapRange = computed(() => `${heatmapDays.value[0].date.slice(5).replace('-', '.')} — ${heatmapDays.value.at(-1).date.slice(5).replace('-', '.')}`)
-let observer, dataObserver, countFrame, disposed = false
+let observer, dataObserver, countFrame, joinTimer, disposed = false
 const generations = {}
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 function animateStats() {
@@ -216,8 +228,12 @@ onMounted(() => {
   observeSections(); observeData()
   // First-screen cards resolve independently; lower-page data waits until its section approaches the viewport.
   ;['activities', 'notes', 'join'].forEach(key => loadResource(key))
+  joinTimer = setInterval(refreshJoinStatus, 30000)
+  window.addEventListener('focus', refreshJoinStatus)
+  document.addEventListener('visibilitychange', refreshJoinStatus)
 })
-onUnmounted(() => { disposed = true; observer?.disconnect(); dataObserver?.disconnect(); cancelAnimationFrame(countFrame) })
+function refreshJoinStatus() { if (document.visibilityState === 'visible') loadResource('join', true) }
+onUnmounted(() => { disposed = true; observer?.disconnect(); dataObserver?.disconnect(); cancelAnimationFrame(countFrame); clearInterval(joinTimer); window.removeEventListener('focus', refreshJoinStatus); document.removeEventListener('visibilitychange', refreshJoinStatus) })
 </script>
 
 <style scoped src="../assets/styles/home.css"></style>

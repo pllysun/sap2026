@@ -10,6 +10,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.File
 import java.io.FileOutputStream
 import java.security.MessageDigest
@@ -31,6 +32,14 @@ class UpdateRepository(
     private val http: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
+        .followSslRedirects(false)
+        .addNetworkInterceptor { chain ->
+            val request = chain.request()
+            val origin = baseUrl.toHttpUrl()
+            // 302 跳转到对象存储时，自定义鉴权头不能转发给另一个源站。
+            val sameOrigin = request.url.scheme == origin.scheme && request.url.host == origin.host && request.url.port == origin.port
+            chain.proceed(if (sameOrigin) request else request.newBuilder().removeHeader("sap-token").build())
+        }
         .build()
 
     suspend fun latest(): Outcome<AppVersionDto> = apiData { api.appLatest() }
@@ -45,6 +54,8 @@ class UpdateRepository(
         onProgress: (Float) -> Unit,
     ): File = withContext(Dispatchers.IO) {
         val cosUrl = info.downloadUrl?.takeIf { it.isNotBlank() } ?: error("下载地址为空，请联系管理员")
+        val expect = info.sha256?.trim()?.lowercase()
+        require(expect != null && expect.matches(Regex("[0-9a-f]{64}"))) { "安装包缺少有效校验信息，请联系管理员重新发布" }
         val dir = File(context.getExternalFilesDir(null), "update").apply { mkdirs() }
         // 清理历史包，避免占空间
         dir.listFiles()?.forEach { if (it.name.endsWith(".apk")) it.delete() }
@@ -79,16 +90,14 @@ class UpdateRepository(
                     }
                 }
             }
-            // 完整性校验：后端配了 sha256 才校验
-            val expect = info.sha256?.trim()?.lowercase()
-            if (!expect.isNullOrEmpty()) {
-                val actual = digest.digest().joinToString("") { b -> "%02x".format(b) }
-                if (actual != expect) {
+            val actual = digest.digest().joinToString("") { b -> "%02x".format(b) }
+            if (actual != expect) {
                     out.delete()
                     error("安装包校验失败，可能被篡改或下载损坏，请重试")
-                }
             }
         }
+        try { ApkInstaller.requireTrustedPackage(context, out) }
+        catch (e: Exception) { out.delete(); throw e }
         onProgress(1f)
         out
     }

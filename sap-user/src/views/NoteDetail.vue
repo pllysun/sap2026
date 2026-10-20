@@ -11,9 +11,9 @@
         </button>
         <h1 class="note-detail__title">{{ note.title }}</h1>
         <div class="note-detail__meta">
-          <span>✍ {{ note.authorName }}</span>
-          <span>📅 {{ formatDate(note.createdAt) }}</span>
-          <span>👁 {{ note.viewCount }} 次浏览</span>
+          <span><UiIcon name="edit" :size="18" /> {{ note.authorName }}</span>
+          <span><UiIcon name="calendar" :size="18" /> {{ formatDate(note.createdAt) }}</span>
+          <span><UiIcon name="eye" :size="18" /> {{ note.viewCount }} 次浏览</span>
           <span class="note-detail__download-count"><UiIcon name="file-save" :size="15" /> {{ note.downloadCount }} 次下载</span>
         </div>
       </div>
@@ -26,7 +26,7 @@
 
     <!-- 错误 -->
     <div v-else class="empty">
-      <div style="font-size:3rem; margin-bottom: var(--s3); opacity:0.4;">😥</div>
+      <div class="empty-icon"><UiIcon name="warning" :size="24" /></div>
       <div class="empty__text">{{ errorMsg || '笔记不存在或无权访问' }}</div>
       <button class="btn btn--primary btn--pill" style="margin-top: var(--s4);" @click="$router.push('/notes')">返回列表</button>
     </div>
@@ -53,7 +53,7 @@
         </Transition>
         <!-- 主按钮 -->
         <button class="fab-main" aria-label="笔记操作菜单" :aria-expanded="fabOpen" @click="fabOpen = !fabOpen" :class="{ 'fab-main--active': fabOpen }">
-          <span class="fab-main__icon">{{ fabOpen ? '✕' : '☰' }}</span>
+          <UiIcon :name="fabOpen ? 'close' : 'list'" :size="21" />
         </button>
       </div>
     </Teleport>
@@ -74,18 +74,22 @@ import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import request from '@/utils/request'
-import { marked } from 'marked'
+import { downloadFile } from '@/utils/downloadFile'
+import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 
-// 配置 marked 使用 highlight.js
-marked.setOptions({
-  highlight(code, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try { return hljs.highlight(code, { language: lang }).value } catch {}
+// Marked 的代码 renderer 负责高亮；最终 HTML 仍统一经过 DOMPurify。
+const markdown = new Marked({
+  renderer: {
+    code({ text, lang }) {
+      const language = lang?.trim().split(/\s+/)[0]
+      const highlighted = language && hljs.getLanguage(language)
+        ? hljs.highlight(text, { language }).value
+        : hljs.highlightAuto(text).value
+      return `<pre><code class="hljs">${highlighted}</code></pre>`
     }
-    return hljs.highlightAuto(code).value
   },
   breaks: true,
   gfm: true
@@ -100,7 +104,7 @@ const fabOpen = ref(false)
 
 const renderedHtml = computed(() => {
   if (!note.value?.content) return ''
-  try { return DOMPurify.sanitize(marked(note.value.content)) } catch { return '<p>Markdown 解析失败</p>' }
+  try { return DOMPurify.sanitize(markdown.parse(note.value.content), { FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'textarea'], FORBID_ATTR: ['style'] }) } catch { return '<p>Markdown 解析失败</p>' }
 })
 
 const formatDate = (t) => {
@@ -129,9 +133,8 @@ const scrollToTop = () => {
 const handleDownload = async () => {
   fabOpen.value = false
   // 通过后端接口下载 PDF
-  const token = localStorage.getItem('sap_token') || ''
-  const url = `/api/note/${route.params.id}/pdf?sap-token=${encodeURIComponent(token)}`
-  window.open(url, '_blank')
+  try { await downloadFile(`/api/note/${route.params.id}/pdf`, `${note.value?.title || '笔记'}.pdf`) }
+  catch (e) { errorMsg.value = e.message; window.alert(e.message) }
 }
 
 onMounted(() => {
@@ -231,20 +234,20 @@ onMounted(() => {
 }
 .markdown-body :deep(code) {
   background: rgba(59,130,246,0.06);
-  color: #e06c75;
+  color: #b2555b;
   padding: 2px 7px;
   border-radius: 5px;
   font-family: 'Fira Code', 'Consolas', monospace;
   font-size: 0.88em;
 }
 .markdown-body :deep(pre) {
-  background: #1e1e2e;
-  color: #cdd6f4;
+  background: #f5f7fc;
+  color: #33465f;
   padding: 20px;
   border-radius: 12px;
   overflow-x: auto;
   margin: 16px 0;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+  border: 1px solid #dce2ee;
   line-height: 1.6;
 }
 .markdown-body :deep(pre code) {
@@ -334,7 +337,7 @@ onMounted(() => {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #14B8A6, #3B82F6);
+  background: var(--primary);
   color: #fff;
   border: none;
   font-size: 1.2rem;
@@ -350,8 +353,8 @@ onMounted(() => {
   box-shadow: 0 6px 28px rgba(59,130,246,0.45);
 }
 .fab-main--active {
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  transform: rotate(90deg);
+  background: var(--primary-dark);
+  transform: none;
 }
 .fab-main__icon {
   transition: transform 0.3s;
@@ -457,5 +460,22 @@ onMounted(() => {
 
 <style scoped>
 .note-detail__body { min-width: 0; overflow-wrap: anywhere; }.markdown-body :deep(table) { display: block; overflow-x: auto; max-width: 100%; }.markdown-body :deep(pre) { max-width: 100%; overflow: auto; }.markdown-body :deep(img) { height: auto; }
-@media (max-width: 480px) { .note-detail__body { padding: 20px 16px; }.markdown-body :deep(pre) { padding: 15px; font-size: 12px; }.markdown-body :deep(th), .markdown-body :deep(td) { padding: 10px; min-width: 110px; }.fab-menu { right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); } }
+@media (max-width: 480px) { .note-detail__body { padding: 20px 16px; }.markdown-body :deep(pre) { padding: 15px; font-size: 0.75rem; }.markdown-body :deep(th), .markdown-body :deep(td) { padding: 10px; min-width: 110px; }.fab-menu { right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); } }
+</style>
+
+<style scoped>
+.page.note-detail-page { max-width: 64rem; }
+.note-detail-page .note-detail__header { padding: 1rem .5rem 2rem; }
+.note-detail-page .note-detail__title { font-size: clamp(1.625rem, 2.5vw, 2.25rem); line-height: 1.5; max-width: 30em; }
+.note-detail__meta > span { display: inline-flex; gap: .375rem; align-items: center; }
+.note-detail__meta :deep(svg) { width: .875rem; height: .875rem; }
+.note-detail-page .note-detail__body { padding: 2.25rem 3rem; font-size: 1rem; box-shadow: none; border-radius: 1rem; }
+.markdown-body { overflow-wrap: anywhere; }
+.markdown-body :deep(pre code) { font-size: .875rem; line-height: 1.8; }
+.markdown-body :deep(ul) { list-style: disc; }
+.markdown-body :deep(ol) { list-style: decimal; }
+.markdown-body :deep(table) { display: block; max-width: 100%; overflow-x: auto; }
+.markdown-body :deep(blockquote) { background: #f2f4fa; font-style: normal; }
+.markdown-body :deep(h2) { margin-top: 1.75em; }
+@media(max-width: 600px) { .note-detail-page .note-detail__body { padding: 1.25rem; font-size: .9375rem; }.note-detail__meta { gap: .75rem 1rem; }.fab-menu { right: 1rem; bottom: 1rem; } }
 </style>

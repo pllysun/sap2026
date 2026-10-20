@@ -51,7 +51,7 @@
           <el-icon><UserFilled /></el-icon>
           <span>入会管理</span>
         </el-menu-item>
-        <el-menu-item v-if="isAdmin" index="/email">
+        <el-menu-item v-if="isLeaderOrSuper" index="/email">
           <el-icon><Message /></el-icon>
           <span>邮件管理</span>
         </el-menu-item>

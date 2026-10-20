@@ -33,10 +33,10 @@
           <div class="split">
             <!-- Left: Task -->
             <div>
-              <div class="split__title">📄 本周学习任务</div>
+              <div class="split__title"><UiIcon name="file-plus" :size="18" /> 本周学习任务</div>
               <div v-if="status.homework" class="card card--gradient" style="padding: var(--s4);">
                 <div class="flex gap-2" style="align-items:center;">
-                  <div style="width:40px;height:40px;background:rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📘</div>
+                  <div style="width:40px;height:40px;background:rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;"><UiIcon name="book-open" :size="18" /></div>
                   <div>
                     <div style="font-weight:600;color:var(--ink-800);">{{ status.homework.title || status.homework.fileName || '学习资料' }}</div>
                     <div class="t-caption">
@@ -47,7 +47,7 @@
                 </div>
                 <a
                   v-if="status.homework.fileUrl"
-                  :href="'/api/file/go?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
+                  href="#" @click.prevent="openAttachment(status.homework.fileUrl)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="btn btn--primary btn--sm btn--pill mt-3"
@@ -89,6 +89,8 @@
 </template>
 
 <script setup>
+import { openStoredFile } from '@/utils/downloadFile'
+const openAttachment = value => openStoredFile(value).catch(e => window.alert(e.message))
 import UiIcon from '@/components/UiIcon.vue'
 import { ref, onMounted } from 'vue'
 import request from '@/utils/request'

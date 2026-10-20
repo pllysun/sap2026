@@ -135,9 +135,9 @@ class PasswordRecoveryServiceTest {
         for(int i=5;i<8;i++)service.request("account"+i,"id","text","ip"+i);
         assertEquals(429,assertThrows(BusinessException.class,()->service.request("another","id","text","different-ip")).getCode());
     }
-    @Test void queueBacklogRejectsNewCodeWithoutBypassingMailPacing() {
+    @Test void queueBacklogDoesNotRejectNewCode() {
         for(int i=0;i<5;i++)db.update("INSERT INTO sys_mail_queue(id,event_key,recipient,subject,payload,created_at) VALUES(?,'TEST','test@example.com','test','encrypted',0)","queued"+i);
-        assertEquals(429,assertThrows(BusinessException.class,this::request).getCode());assertEquals(0,count());verifyNoInteractions(hooks);
+        assertNotNull(request().get("requestId"));assertEquals(1,count());verify(hooks).passwordCode(eq(user),anyString(),any(),anyString());
     }
     @Test void realHookAndQueueProduceEncryptedMailAndUsableCodeInOneTransaction() {
         var queue=new MailQueue(store,email,new com.fasterxml.jackson.databind.ObjectMapper()) {@Override public synchronized void kick(){}};

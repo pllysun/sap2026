@@ -34,3 +34,10 @@ data class RegistrationCaptchaDto(
     val captchaId: String? = null,
     val image: String? = null,
 )
+
+/** 使用可空字段，防止缺少字段的旧响应被 Gson 当作 false，意外关闭邮箱验证。 */
+data class RegistrationPolicyDto(
+    val joinEnabled: Boolean? = null,
+    val emailVerificationRequired: Boolean? = null,
+    val captchaRequired: Boolean? = null,
+)

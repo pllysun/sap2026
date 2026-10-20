@@ -6,6 +6,14 @@ import org.junit.Test
 
 class WebImportRedirectTest {
 
+    @Test fun onlyAllowsExplicitHttpsSchoolOrigins() {
+        assertTrue(isTrustedWebImportUrl("https://webvpn.csuft.edu.cn/site-nav/home"))
+        assertTrue(isTrustedWebImportUrl("https://http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn/jsxsd/"))
+        for (url in listOf("http://cas.csuft.edu.cn/cas", "https://cas.csuft.edu.cn.evil.test/", "https://evil.test/",
+            "https://user@cas.csuft.edu.cn/", "https://cas.csuft.edu.cn:444/", "javascript:alert(1)", "file:///sdcard/test.html"))
+            assertFalse(url, isTrustedWebImportUrl(url))
+    }
+
     @Test
     fun recognizesDirectAndWebvpnCasLoginPages() {
         assertTrue(isWebImportLoginUrl("https://cas.csuft.edu.cn/cas/login?service=x"))

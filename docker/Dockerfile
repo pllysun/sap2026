@@ -120,19 +120,8 @@ VOLUME ["/app/data", "/app/logs", "/app/uploads", "/etc/letsencrypt"]
 # 暴露端口 (HTTP + HTTPS)
 EXPOSE 80 443
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget -qO- http://localhost:8081/api/ping >/dev/null && \
-    { [ "${JUDGER_ENABLED:-false}" != true ] || wget -qO /dev/null --header="Authorization: Bearer $(cat /run/judger/token)" http://127.0.0.1:5050/config; } || exit 1
-
-# 安全说明：本容器当前以 root 用户运行。
-#   原因：同一容器内的 Nginx 与 Certbot 需要 root 权限监听 80/443
-#         并写入 /etc/letsencrypt 证书目录。
-#   风险：Java 应用进程同样以 root 身份运行，若被攻破将拥有容器内
-#         root 权限，横向影响面更大。
-#   后续可改进方向：拆分为多容器（Nginx/Certbot 与 Java 应用分离），
-#         或在 entrypoint 内用 su-exec/gosu 将 Java 进程降权为非 root 用户。
-#   此处不强制改 USER，以免破坏 Nginx/Certbot 对特权端口与证书目录的访问。
+# Nginx/Certbot 和判题协调器保留所需权限；入口脚本始终将 Java、Redis、OCR
+# 降为 sapapp 并清空 capabilities。集成判题仍共享宿主内核，分离版用于缩小边界。
 COPY --chmod=0755 docker/judger-agent.py /opt/judger/agent.py
 COPY --chmod=0755 docker/node-start.sh /opt/judger/node-start.sh
 COPY --chmod=0755 docker/judger-health.sh /opt/judger/health.sh

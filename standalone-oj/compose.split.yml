@@ -1,0 +1,61 @@
+name: lume-split
+services:
+  server:
+    image: ${LUME_SERVER_IMAGE:-pllysun/lume-server:1.1.1}
+    restart: unless-stopped
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:8080"]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: ${DB_URL:?Set your external MySQL JDBC URL}
+      DB_USER: ${DB_USER:?Set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Run tools/init.py first}
+      OJ_ADMIN_ACCOUNT: ${OJ_ADMIN_ACCOUNT:-admin}
+      OJ_ADMIN_PASSWORD: ${OJ_ADMIN_PASSWORD:-}
+      JUDGER_ENABLED: "true"
+      JUDGER_BUILTIN_ENABLED: ${JUDGER_BUILTIN_ENABLED:-true}
+      JUDGER_AGENT_ENDPOINT: http://worker:5051
+      S3_ENABLED: ${S3_ENABLED:-false}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://rustfs:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-sap-oj-private}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      S3_CREATE_BUCKET: ${S3_CREATE_BUCKET:-false}
+    volumes: [app-data:/app/data]
+    secrets: [judger-token]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 512
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  worker:
+    image: ${LUME_WORKER_IMAGE:-pllysun/lume-worker:1.1.1}
+    platform: linux/amd64
+    profiles: [worker]
+    restart: unless-stopped
+    environment:
+      NODE_CGROUP_PREFIX: ${NODE_CGROUP_PREFIX:-lume-node}
+      NODE_CONCURRENCY: ${NODE_CONCURRENCY:-2}
+      NODE_CPU: ${NODE_CPU:-2}
+      NODE_MEMORY_MB: ${NODE_MEMORY_MB:-1280}
+    secrets: [judger-token]
+    volumes:
+      - worker-data:/app/data
+      - /sys/fs/cgroup/${NODE_CGROUP_PREFIX:-lume-node}:/sys/fs/cgroup/${NODE_CGROUP_PREFIX:-lume-node}:rw
+    cgroup: host
+    cap_add: [SYS_ADMIN, SYS_PTRACE, SYS_RESOURCE]
+    security_opt:
+      - seccomp=./judge/judger-seccomp.json
+      - apparmor=unconfined
+      - systempaths=unconfined
+    shm_size: 256m
+    mem_limit: 1536m
+    cpus: 2
+    pids_limit: 512
+secrets:
+  judger-token:
+    file: ./secrets/judger-token
+volumes:
+  app-data:
+  worker-data:

@@ -27,6 +27,10 @@ public class StatsService {
     private CosTrafficMapper cosTrafficMapper;
     @Autowired
     private ApiRequestStatMapper apiRequestStatMapper;
+    @Autowired
+    private ScheduleUsageService scheduleUsageService;
+    @Autowired private ApiLogExclusionService exclusions;
+    private ApiLogExclusionService.Sql filter(){return exclusions.sql("endpoint","http_method");}
 
     private LocalDate startOf(int days) {
         if (days <= 0) days = 7;
@@ -64,9 +68,9 @@ public class StatsService {
         Map<String, Object> r = new HashMap<>();
         r.put("uploadBytes", toLong(ci(cos, "uploadBytes")));
         r.put("downloadBytes", toLong(ci(cos, "downloadBytes")));
-        Long total = apiRequestStatMapper.totalRequests(start);
-        Long active = apiRequestStatMapper.activeUsers(start);
-        Long scheduleUsers = apiRequestStatMapper.scheduleUsers(start);
+        Long total = apiRequestStatMapper.totalRequests(start,filter());
+        Long active = apiRequestStatMapper.activeUsers(start,filter());
+        Long scheduleUsers = scheduleUsers(days);
         r.put("totalRequests", total != null ? total : 0L);
         r.put("activeUsers", active != null ? active : 0L);
         r.put("scheduleUsers", scheduleUsers != null ? scheduleUsers : 0L);
@@ -74,10 +78,13 @@ public class StatsService {
         return r;
     }
 
-    /** 软协课表专属页：统计窗口内访问课表接口的去重登录用户数。 */
+    /** 兼容原字段名；现在按实际前台展示去重，不能用请求人数冒充活跃人数。 */
     public long scheduleUsers(int days) {
-        Long count = apiRequestStatMapper.scheduleUsers(startOf(days));
-        return count == null ? 0L : count;
+        return scheduleUsageService.activeUsers(days);
+    }
+
+    public ScheduleUsageService.Summary scheduleUsage(int days) {
+        return scheduleUsageService.summary(days);
     }
 
     public List<Map<String, Object>> cosByUser(int days) {
@@ -120,7 +127,7 @@ public class StatsService {
     }
 
     public List<Map<String, Object>> apiTop(int days, int limit) {
-        return mapEndpointRows(apiRequestStatMapper.topEndpoints(startOf(days), limit <= 0 ? 20 : limit));
+        return mapEndpointRows(apiRequestStatMapper.topEndpoints(startOf(days), Math.max(1,Math.min(100,limit <= 0 ? 20 : limit)),filter()));
     }
 
     /** 接口请求趋势：返回 {dates:[], counts:[]}（按日补零）。 */
@@ -129,7 +136,7 @@ public class StatsService {
         LocalDate start = startOf(n);
         Map<String, Long> byDate = new LinkedHashMap<>();
         for (int i = 0; i < n; i++) byDate.put(start.plusDays(i).toString(), 0L);
-        for (Map<String, Object> row : apiRequestStatMapper.trend(start)) {
+        for (Map<String, Object> row : apiRequestStatMapper.trend(start,filter())) {
             String d = dateKey(ci(row, "statDate"));
             if (byDate.containsKey(d)) byDate.put(d, toLong(ci(row, "cnt")));
         }
@@ -140,13 +147,13 @@ public class StatsService {
     }
 
     public List<Map<String, Object>> apiByUser(Long userId, int days) {
-        return mapEndpointRows(apiRequestStatMapper.byUser(startOf(days), userId));
+        return mapEndpointRows(apiRequestStatMapper.byUser(startOf(days), userId,filter()));
     }
 
     /** 用户×接口 全量明细（规范化驼峰），供前端统一搜索/排序表格。 */
     public List<Map<String, Object>> apiDetail(int days, int limit) {
         List<Map<String, Object>> out = new ArrayList<>();
-        for (Map<String, Object> row : apiRequestStatMapper.detail(startOf(days), limit <= 0 ? 1000 : limit)) {
+        for (Map<String, Object> row : apiRequestStatMapper.detail(startOf(days), Math.max(1,Math.min(5000,limit <= 0 ? 1000 : limit)),filter())) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("userId", toLong(ci(row, "userId")));
             m.put("userName", ci(row, "userName"));
@@ -160,7 +167,7 @@ public class StatsService {
 
     public List<Map<String, Object>> apiByEndpoint(String endpoint, int days) {
         List<Map<String, Object>> out = new ArrayList<>();
-        for (Map<String, Object> row : apiRequestStatMapper.byEndpoint(startOf(days), endpoint)) {
+        for (Map<String, Object> row : apiRequestStatMapper.byEndpoint(startOf(days), endpoint,filter())) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("userId", toLong(ci(row, "userId")));
             m.put("userName", ci(row, "userName"));
@@ -172,7 +179,7 @@ public class StatsService {
 
     public List<Map<String, Object>> users() {
         List<Map<String, Object>> out = new ArrayList<>();
-        for (Map<String, Object> row : apiRequestStatMapper.distinctUsers()) {
+        for (Map<String, Object> row : apiRequestStatMapper.distinctUsers(filter())) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("userId", toLong(ci(row, "userId")));
             m.put("userName", ci(row, "userName"));

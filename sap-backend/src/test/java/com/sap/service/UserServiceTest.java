@@ -61,6 +61,16 @@ class UserServiceTest extends BaseUnitTest {
         return ur;
     }
 
+    @Test void listUsersSearchIncludesQqAndLimitsPageSize() {
+        when(userMapper.selectPage(any(),any())).thenAnswer(call->{
+            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User> query=call.getArgument(1);
+            assertTrue(query.getSqlSegment().contains("qq"));
+            assertTrue(query.getParamNameValuePairs().values().stream().anyMatch(value->"%3284219158%".equals(value)));
+            Page<User> page=call.getArgument(0);assertEquals(200,page.getSize());return page;
+        });
+        service.listUsers(1,1000," 3284219158 ");
+    }
+
     // ===================== listUsers =====================
 
     @Test
@@ -150,6 +160,23 @@ class UserServiceTest extends BaseUnitTest {
     }
 
     // ===================== updateUserRole =====================
+
+    @Test
+    void adminCannotChangeLeaderRecoveryAddressOrDisableSelf() {
+        User target = user(3);
+        when(userMapper.selectById(3L)).thenReturn(target);
+        when(userRoleMapper.selectRoleCodesByUserId(3L)).thenReturn(List.of(0));
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::getRoleList).thenReturn(List.of("2"));
+            assertThrows(BusinessException.class, () -> service.updateUser(3L, new User()));
+            when(userRoleMapper.selectRoleCodesByUserId(3L)).thenReturn(List.of(2));
+            stp.when(StpUtil::getLoginIdAsLong).thenReturn(3L);
+            User edit = new User(); edit.setStatus(0);
+            assertThrows(BusinessException.class, () -> service.updateUser(3L, edit));
+        }
+        verify(userMapper, never()).updateById(any(User.class));
+        verifyNoInteractions(cacheService);
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"0", "1"})
@@ -256,6 +283,7 @@ class UserServiceTest extends BaseUnitTest {
             assertNotEquals("oldhash", cap.getValue().getPassword());
             assertTrue(cap.getValue().getPassword().startsWith("$2"));
             verify(cacheService).updateUser(u);
+            st.verify(() -> StpUtil.kickout(5L));
         }
     }
 

@@ -1,0 +1,86 @@
+name: lume
+services:
+  app:
+    image: ${LUME_IMAGE:-pllysun/lume:1.1.1}
+    restart: unless-stopped
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:8080"]
+    environment:
+      DB_URL: ${DB_URL:?Set your external MySQL JDBC URL}
+      DB_USER: ${DB_USER:?Set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Run tools/init.py first}
+      OJ_ADMIN_ACCOUNT: ${OJ_ADMIN_ACCOUNT:-admin}
+      OJ_ADMIN_PASSWORD: ${OJ_ADMIN_PASSWORD:-}
+      APP_HEAP_MB: ${APP_HEAP_MB:-1024}
+      NODE_CPU: ${NODE_CPU:-2}
+      NODE_MEMORY_MB: ${NODE_MEMORY_MB:-1280}
+      NODE_CONCURRENCY: ${NODE_CONCURRENCY:-2}
+      S3_ENABLED: ${S3_ENABLED:-false}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://rustfs:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-sap-oj-private}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      S3_CREATE_BUCKET: ${S3_CREATE_BUCKET:-false}
+    volumes: [app-data:/app/data]
+    cgroup: private
+    cap_add: [SYS_ADMIN, SYS_PTRACE, SYS_RESOURCE]
+    security_opt:
+      - seccomp=./judge/judger-seccomp.json
+      - apparmor=unconfined
+      - systempaths=unconfined
+    shm_size: 256m
+    mem_limit: 4g
+    cpus: 4
+    pids_limit: 1024
+    stop_grace_period: 45s
+  mysql:
+    image: mysql:8.4
+    profiles: [mysql]
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_DATABASE: oj
+      MYSQL_USER: ${DB_USER:-oj}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run tools/init.py first}
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_ROOT_PASSWORD" mysqladmin ping -h 127.0.0.1 -uroot --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 1g
+    cpus: 1
+  rustfs-init:
+    image: ${RUSTFS_IMAGE:-rustfs/rustfs:1.0.1}
+    profiles: [rustfs]
+    user: "0:0"
+    entrypoint: [sh, -c, 'chown -R 10001:10001 /data /logs']
+    volumes: [rustfs-data:/data, rustfs-logs:/logs]
+    restart: "no"
+  rustfs:
+    image: ${RUSTFS_IMAGE:-rustfs/rustfs:1.0.1}
+    profiles: [rustfs]
+    restart: unless-stopped
+    user: "10001:10001"
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?Set S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?Set S3_SECRET_KEY}
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+    ports: ["127.0.0.1:${RUSTFS_CONSOLE_PORT:-9001}:9001"]
+    volumes: [rustfs-data:/data, rustfs-logs:/logs]
+    depends_on:
+      rustfs-init: {condition: service_completed_successfully}
+    mem_limit: 1g
+    cpus: 1
+    security_opt: [no-new-privileges:true]
+volumes:
+  app-data:
+  mysql-data:
+  rustfs-data:
+  rustfs-logs:

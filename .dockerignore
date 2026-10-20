@@ -32,3 +32,8 @@ templates/
 
 # 单元测试不需要进运行时镜像
 sap-backend/src/test
+
+# 独立服务运行时生成的密钥与凭据不能发送到构建器。
+**/secrets/
+**/__pycache__/
+**/*.pyc

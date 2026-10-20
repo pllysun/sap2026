@@ -18,13 +18,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 class ApiAuditPipelineTest {
+    private final com.sap.service.ApiLogExclusionService exclusions=new com.sap.service.ApiLogExclusionService(null,mock(org.springframework.transaction.PlatformTransactionManager.class));
     @RestController static class Endpoint {
         record Payload(@NotBlank String code){}
         @OperationLog("提交代码") @PostMapping("/api/oj/submit") public Result<?> submit(@Valid @RequestBody Payload value){return Result.ok();}
     }
     @Test void denialsAndValidationAppearExactlyOnceWithoutSourceOrTokens() throws Exception {
         var logs=mock(SysLogMapper.class);var aspect=new OperationLogAspect();
-        ReflectionTestUtils.setField(aspect,"sysLogMapper",logs);ReflectionTestUtils.setField(aspect,"logStatsMapper",mock(LogStatsMapper.class));ReflectionTestUtils.setField(aspect,"userMapper",mock(UserMapper.class));
+        ReflectionTestUtils.setField(aspect,"sysLogMapper",logs);ReflectionTestUtils.setField(aspect,"dailyStats",mock(com.sap.service.LogDailyStatsService.class));ReflectionTestUtils.setField(aspect,"exclusions",exclusions);ReflectionTestUtils.setField(aspect,"userMapper",mock(UserMapper.class));
         List<SysLog> captured=new ArrayList<>();when(logs.insert(any(SysLog.class))).thenAnswer(i->{captured.add(i.getArgument(0));return 1;});
         HandlerInterceptor guard=new HandlerInterceptor(){@Override public boolean preHandle(jakarta.servlet.http.HttpServletRequest req,jakarta.servlet.http.HttpServletResponse res,Object handler) throws Exception {
             String outcome=req.getHeader("outcome");
@@ -32,7 +33,7 @@ class ApiAuditPipelineTest {
             if("auth".equals(outcome))throw new BusinessException(401,"未登录");if("role".equals(outcome))throw new BusinessException(403,"无权限");return true;
         }};
         var mvc=MockMvcBuilders.standaloneSetup(new Endpoint()).setControllerAdvice(new GlobalExceptionHandler(),new ApiAuditResponseAdvice())
-            .addInterceptors(guard).addFilters(new ApiAuditFilter(aspect)).build();
+            .addInterceptors(guard).addFilters(new ApiAuditFilter(aspect,exclusions)).build();
         for(String outcome:List.of("auth","role","rate","validation","success")) {
             String payload=outcome.equals("validation")?"{}":"{\"code\":\"PRIVATE_SOURCE\"}";
             mvc.perform(post("/api/oj/submit").header("outcome",outcome).header("sap-token","PRIVATE_TOKEN").contentType("application/json").content(payload)).andReturn();
@@ -42,10 +43,10 @@ class ApiAuditPipelineTest {
         assertFalse(captured.toString().contains("PRIVATE_"));
     }
     @Test void aspectAndBoundaryFilterDoNotWriteTheSameRequestTwice() throws Throwable {
-        var logs=mock(SysLogMapper.class);var aspect=new OperationLogAspect();ReflectionTestUtils.setField(aspect,"sysLogMapper",logs);ReflectionTestUtils.setField(aspect,"logStatsMapper",mock(LogStatsMapper.class));ReflectionTestUtils.setField(aspect,"userMapper",mock(UserMapper.class));
+        var logs=mock(SysLogMapper.class);var aspect=new OperationLogAspect();ReflectionTestUtils.setField(aspect,"sysLogMapper",logs);ReflectionTestUtils.setField(aspect,"dailyStats",mock(com.sap.service.LogDailyStatsService.class));ReflectionTestUtils.setField(aspect,"exclusions",exclusions);ReflectionTestUtils.setField(aspect,"userMapper",mock(UserMapper.class));
         var request=new org.springframework.mock.web.MockHttpServletRequest("GET","/api/oj/test");var response=new org.springframework.mock.web.MockHttpServletResponse();
         var point=mock(org.aspectj.lang.ProceedingJoinPoint.class);when(point.proceed()).thenReturn(Result.ok());
-        new ApiAuditFilter(aspect).doFilter(request,response,(req,res)->{
+        new ApiAuditFilter(aspect,exclusions).doFilter(request,response,(req,res)->{
             org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));
             try{aspect.around(point,null);}catch(Throwable e){throw new RuntimeException(e);}finally{org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();}
         });

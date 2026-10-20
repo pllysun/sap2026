@@ -17,6 +17,13 @@ export function catalogQuery(state, tab = 'problems') {
 // Accept only known entry pages; never trust an arbitrary return URL.
 export function catalogReturn(value) {
   if (value === '/home#home-algorithms') return value
+  if(typeof value==='string'&&/^\/oj\/learning(?:\?|$)/.test(value)) {
+    const url=new URL(value,'https://local.invalid'),params=new URLSearchParams()
+    const tab=url.searchParams.get('tab'),node=url.searchParams.get('node')
+    if(['path','plan','review','tools','stats'].includes(tab))params.set('tab',tab)
+    if(/^[a-z][a-z0-9_]{0,40}$/.test(node||''))params.set('node',node)
+    return '/oj/learning'+(params.size?'?'+params.toString():'')
+  }
   if (typeof value !== 'string' || !/^\/oj(?:\?|$)/.test(value)) return '/oj'
   const url = new URL(value, 'https://local.invalid')
   const query = Object.fromEntries(url.searchParams)

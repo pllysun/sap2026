@@ -115,16 +115,27 @@ onUnmounted(() => clearInterval(timer))
 <style scoped>
 .recovery-page { min-height: 100dvh; padding: 36px 16px; background: #f5f7fb; display: flex; justify-content: center; align-items: flex-start; }
 .recovery-card { width: 100%; max-width: 500px; padding: 30px; border-radius: 22px; background: white; box-shadow: 0 8px 40px #2339510b; }
-h1 { margin: 16px 0 8px; font-size: 26px; } h2 { font-size: 19px; margin-bottom: 16px; }
+h1 { margin: 16px 0 8px; font-size: 1.625rem; } h2 { font-size: 1.1875rem; margin-bottom: 16px; }
 .subtitle, .small, footer { color: #657080; line-height: 1.65; }
-.notice { background: #edf7fc; color: #34566b; padding: 14px; border-radius: 12px; font-size: 14px; line-height: 1.7; margin: 20px 0; }
-label { display: block; margin: 16px 0 8px; font-size: 14px; font-weight: 600; }
+.notice { background: #edf7fc; color: #34566b; padding: 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.7; margin: 20px 0; }
+label { display: block; margin: 16px 0 8px; font-size: 0.875rem; font-weight: 600; }
 .input { width: 100%; min-width: 0; min-height: 46px; }
 .captcha-row { display: flex; align-items: center; gap: 12px; }
 .captcha-button { flex-shrink: 0; min-width: 120px; padding: 0; border: 1px solid #dce3ed; border-radius: 8px; background: white; cursor: pointer; overflow: hidden; min-height: 42px; }
 .captcha-button img { display: block; }.btn { margin-top: 20px; min-height: 46px; text-align: center; }
-.small { margin-top: 12px; font-size: 12px; }.reset-form { border-top: 1px solid #e5eaf0; padding-top: 24px; margin-top: 24px; }
+.small { margin-top: 12px; font-size: 0.75rem; }.reset-form { border-top: 1px solid #e5eaf0; padding-top: 24px; margin-top: 24px; }
 .error-text { margin-top: 16px; line-height: 1.65; }.back-link { display: inline-block; margin-top: 20px; color: #18668d; }
-footer { margin-top: 28px; font-size: 12px; text-align: center; }.success p { margin: 16px 0; line-height: 1.7; }
+footer { margin-top: 28px; font-size: 0.75rem; text-align: center; }.success p { margin: 16px 0; line-height: 1.7; }
 @media(max-width: 480px) { .recovery-page { padding: 16px 12px; }.recovery-card { padding: 22px 18px; } }
+</style>
+
+<style scoped>
+.recovery-page { padding: 2.5rem 1rem; background: #f4f5fa; }
+.recovery-card { max-width: 32rem; padding: 2rem; border: 1px solid #d8deeb; border-top: 3px solid #596dbd; border-radius: 1.25rem; }
+h1 { font-size: 1.75rem; color: var(--ink-900); }
+.subtitle { font-size: .9375rem; color: var(--ink-600); }
+.notice { background: #f0f2fa; color: #435272; border-left: 3px solid #7d8cc2; border-radius: .25rem .75rem .75rem .25rem; }
+.small { font-size: .8125rem; line-height: 1.8; }
+.back-link { color: var(--primary); font-size: .875rem; }
+@media(max-width: 480px) { .recovery-page { padding: 1.25rem .875rem; }.recovery-card { padding: 1.5rem 1.125rem; } }
 </style>

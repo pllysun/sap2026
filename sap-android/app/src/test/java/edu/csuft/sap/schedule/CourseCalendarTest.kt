@@ -7,6 +7,16 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CourseCalendarTest {
+    @Test fun importedParityAndUnknownWeeksStayConsistentInGridAndCalendar() {
+        val raw="1-16周（双周）"
+        val imported=course(weeks=WeekUtil.parseWeeks(raw)).copy(weeksLabel=raw)
+        assertFalse(imported.occursInWeek(1));assertTrue(imported.occursInWeek(2))
+        assertTrue(coursesOnDate(listOf(imported),settings,LocalDate.parse("2026-09-07"))!!.isEmpty())
+        assertEquals(listOf(imported),coursesOnDate(listOf(imported),settings,LocalDate.parse("2026-09-14")))
+        val invalid=course().copy(weeksLabel="周次待确认")
+        assertFalse(invalid.occursInWeek(1))
+        assertTrue(coursesOnDate(listOf(invalid),settings,LocalDate.parse("2026-09-07"))!!.isEmpty())
+    }
     private val settings = ScheduleSettings(semesterStartDate = "2026-09-07", totalWeeks = 20)
     private fun course(day: Int = 1, weeks: List<Int> = emptyList(), from: Int = 1, to: Int = 2) =
         DisplayCourse("数学", "老师", "教室", day, from, to, weeks, 0, false)

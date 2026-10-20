@@ -66,22 +66,22 @@ onMounted(() => {
     syntaxHighlighting(defaultHighlightStyle), language.of([]), assistance.of([]),
     editable.of([EditorState.readOnly.of(props.readOnly),EditorView.editable.of(!props.readOnly)]), EditorView.contentAttributes.of({ 'aria-label': props.label, spellcheck: 'false' }),
     EditorView.updateListener.of(update => { if (update.docChanged) emit('update:modelValue', update.state.doc.toString()) }),
-    EditorView.theme({ '&': { height: '100%', fontSize: '14px', background: '#fbfdff' },
+    EditorView.theme({ '&': { height: '100%', fontSize: '.875rem', background: '#fbfdff' },
       '.cm-scroller': { overflow: 'auto', fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', lineHeight: '1.8' },
-      '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#f1f6fc', color: '#8695a9', border: 'none' },
+      '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#f1f6fc', color: '#637189', border: 'none' },
       '&.cm-focused': { outline: 'none' }, '.cm-activeLineGutter': { background: '#e5effb' }, '.cm-activeLine': { background: '#edf5ff66' },
       '.cm-tooltip': { border: '1px solid #cfe0f3', borderRadius: '10px', background: '#fff', color: '#294e73', boxShadow: '0 8px 28px #264e731c', maxWidth: 'min(460px, calc(100vw - 24px))' },
       '.cm-tooltip-autocomplete > ul': { fontFamily: 'inherit', padding: '5px', maxHeight: '260px' },
-      '.cm-tooltip-autocomplete > ul > li': { padding: '5px 8px', borderRadius: '5px', fontSize: '12px' },
+      '.cm-tooltip-autocomplete > ul > li': { padding: '5px 8px', borderRadius: '5px', fontSize: '.8125rem' },
       '.cm-tooltip-autocomplete > ul > li[aria-selected]': { background: '#e7f1ff', color: '#1f67b7' },
-      '.cm-completionDetail': { color: '#8293a7', fontStyle: 'normal', marginLeft: '12px', fontSize: '11px' },
+      '.cm-completionDetail': { color: '#61728a', fontStyle: 'normal', marginLeft: '12px', fontSize: '.75rem' },
       '.cm-tooltip.cm-completionInfo': { padding: '0' },
       '.cm-panels': { background: '#f4f8fe', color: '#365978', borderColor: '#d9e6f6' },
       '.cm-search': { padding: '9px', lineHeight: '1.6' },
       '.cm-textfield': { background: '#fff', border: '1px solid #ccdef2', borderRadius: '6px', padding: '4px 7px', color: '#294e73', maxWidth: '180px' },
       '.cm-button': { backgroundImage: 'none', backgroundColor: '#fff', border: '1px solid #ccdef2', borderRadius: '6px', padding: '4px 8px', color: '#294e73', cursor: 'pointer' },
       '.cm-button:hover': { backgroundColor: '#eaf3ff' }, '.cm-foldGutter': { width: '15px' },
-      '.cm-diagnostic': { fontFamily: 'inherit', fontSize: '12px', padding: '8px 12px' },
+      '.cm-diagnostic': { fontFamily: 'inherit', fontSize: '.8125rem', padding: '8px 12px' },
       '.cm-selectionMatch': { backgroundColor: '#d8e9fa' }
     })
   ] }) })
@@ -96,18 +96,18 @@ onBeforeUnmount(() => { generation++; assistant?.destroy(view); view?.destroy();
 <style scoped>
 .oj-code-editor { height: 430px; min-height: 260px; overflow: hidden; resize: vertical; display: flex; flex-direction: column; }
 .oj-code-editor-host { flex: 1; min-height: 0; }
-.oj-editor-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 12px; font-size: 11px; color: #8195ac; border-top: 1px solid #e5edf8; background: #f8fbff; }
-.oj-editor-assist-error { color: #a87537; }
-.oj-editor-shortcuts { margin-left: auto; color: #6485a8; border: 0; background: transparent; cursor: pointer; font-size: inherit; padding: 2px 4px; border-radius: 4px; }
+.oj-editor-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 12px; font-size: 0.75rem; color: #657588; border-top: 1px solid #e5edf8; background: #f8fbff; }
+.oj-editor-assist-error { color: #986931; }
+.oj-editor-shortcuts { margin-left: auto; color: #587593; border: 0; background: transparent; cursor: pointer; font-size: inherit; padding: 2px 4px; border-radius: 4px; }
 .oj-editor-shortcuts:hover { background: #e8f1fb; }
 .oj-editor-shortcut-hint { flex-basis: 100%; line-height: 1.7; }
 </style>
 <style>
-.oj-editor-description { padding: 10px 12px; max-width: 380px; font-family: var(--font-body, sans-serif); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
-.oj-editor-description strong { display: block; font-family: ui-monospace, monospace; font-size: 12px; color: #315d89; }
-.oj-editor-description p { margin: 5px 0 0; color: #6c819b; }
-.oj-editor-signature { padding: 8px 11px; max-width: 420px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
-.oj-editor-signature strong { color: #2679cc; background: #edf5ff; border-radius: 3px; padding: 1px 3px; }
-.oj-editor-completions .cm-completionIcon { color: #638db9; }
+.oj-editor-description { padding: 10px 12px; max-width: 380px; font-family: var(--font-body, sans-serif); font-size: 0.75rem; line-height: 1.6; overflow-wrap: anywhere; }
+.oj-editor-description strong { display: block; font-family: ui-monospace, monospace; font-size: 0.75rem; color: #315d89; }
+.oj-editor-description p { margin: 5px 0 0; color: #61758c; }
+.oj-editor-signature { padding: 8px 11px; max-width: 420px; font-family: ui-monospace, monospace; font-size: 0.75rem; line-height: 1.7; overflow-wrap: anywhere; }
+.oj-editor-signature strong { color: #2475c5; background: #edf5ff; border-radius: 3px; padding: 1px 3px; }
+.oj-editor-completions .cm-completionIcon { color: #54779c; }
 @media (max-width: 600px) { .oj-editor-completions .cm-completionDetail { display: none; } }
 </style>

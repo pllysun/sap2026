@@ -41,7 +41,7 @@ class ClassScheduleSync(private val repository: ClassScheduleRepository, private
                 } ?: return
                 val key = "${identity.key()}:$term"
                 pending += ClassSyncSelection(key, term, identity.college, identity.grade, identity.major,
-                    identity.className, data.classRevisions?.get(term)) to
+                    identity.className, cachedClassRevision(data.termCourses[term].orEmpty(), data.classRevisions?.get(term))) to
                     ClassRefresh(account, profile.id, term, identity, data.termCourses[term].orEmpty(), emptyList(), null, "")
             }
         }
@@ -59,7 +59,7 @@ class ClassScheduleSync(private val repository: ClassScheduleRepository, private
             if (data.term != previous.term || !item.revision.matches(Regex("[a-f0-9]{64}"))) return
             previous.copy(courses = data.courses.map {
                 CachedCourse(it.name.orEmpty(), it.teacher.orEmpty(), it.room.orEmpty(), it.day,
-                    it.sectionIndex.coerceAtLeast(1), it.weeks, edu.csuft.sap.ui.theme.colorIndexOf(it.name))
+                    it.sectionIndex.coerceAtLeast(1), it.weeks, edu.csuft.sap.ui.theme.colorIndexOf(it.name), nodes = it.nodes)
             }, startDate = data.semesterStartDate, revision = item.revision)
         }
         store.applyClassRefresh(owner, updates) { allowed(owner) }

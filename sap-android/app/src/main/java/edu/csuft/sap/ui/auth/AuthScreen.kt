@@ -25,11 +25,18 @@ fun AuthScreen(onLoggedIn: () -> Unit, onOffline: () -> Unit) {
     ) {
         composable("login") { entry ->
             val registered by entry.savedStateHandle.getStateFlow<String?>("registeredStudentId", null).collectAsState()
+            val recovered by entry.savedStateHandle.getStateFlow<String?>("recoveredStudentId", null).collectAsState()
             LoginScreen(
                 onLoggedIn = onLoggedIn, onOffline = onOffline,
                 onRegister = { nav.navigate("register") { launchSingleTop = true } },
                 registeredStudentId = registered,
                 onRegistrationConsumed = { entry.savedStateHandle["registeredStudentId"] = null },
+                recoveredStudentId = recovered,
+                onRecoveryConsumed = { entry.savedStateHandle["recoveredStudentId"] = null },
+                onForgotPassword = { account ->
+                    entry.savedStateHandle["recoveryInitialAccount"] = account
+                    nav.navigate("recovery") { launchSingleTop = true }
+                },
             )
         }
         composable("register") {
@@ -38,6 +45,16 @@ fun AuthScreen(onLoggedIn: () -> Unit, onOffline: () -> Unit) {
                 onRegistered = { studentId ->
                     nav.previousBackStackEntry?.savedStateHandle?.set("registeredStudentId", studentId)
                     if (nav.currentBackStackEntry?.destination?.route == "register") nav.popBackStack()
+                },
+            )
+        }
+        composable("recovery") {
+            PasswordRecoveryScreen(
+                initialAccount = nav.previousBackStackEntry?.savedStateHandle?.get<String>("recoveryInitialAccount").orEmpty(),
+                onBack = { if (nav.currentBackStackEntry?.destination?.route == "recovery") nav.popBackStack() },
+                onRecovered = { account ->
+                    nav.previousBackStackEntry?.savedStateHandle?.set("recoveredStudentId", account)
+                    if (nav.currentBackStackEntry?.destination?.route == "recovery") nav.popBackStack()
                 },
             )
         }

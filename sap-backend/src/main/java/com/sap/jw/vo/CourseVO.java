@@ -13,6 +13,8 @@ public class CourseVO {
     private String section;
     /** 节次序号：1..6（第1,2节=1，第3,4节=2 …） */
     private int sectionIndex;
+    /** 实际小节，如连续实验课 [1,2,3,4,5,6,7,8]；旧客户端仍可读 sectionIndex。 */
+    private java.util.List<Integer> nodes;
     /** 课程名（不含[学时类型]） */
     private String name;
     /** 学时类型，如 "讲课学时"/"实验学时"/"实践学时" */

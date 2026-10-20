@@ -9,6 +9,7 @@ import java.util.Map;
 public class AppFeedbackSummaryVO {
     private int days;
     private long scheduleUsers;
+    private com.sap.service.ScheduleUsageService.Summary scheduleUsage;
     private long totalIssues;
     private long openIssues;
     private long closedIssues;

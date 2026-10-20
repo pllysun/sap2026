@@ -4,6 +4,7 @@
  */
 const store = require('../../utils/store')
 const term = require('../../utils/term')
+const apiRequest = require('../../utils/request')
 const { STORAGE } = require('../../config')
 
 const app = getApp()
@@ -197,10 +198,10 @@ Page({
       title: '退出登录',
       content: '确定要退出当前账号吗？',
       confirmColor: '#E2504A',
-      success: (res) => {
+      success: async (res) => {
         if (!res.confirm) return
-        store.clearAuth()
-        wx.reLaunch({ url: '/pages/login/login' })
+        try { await apiRequest.post('/api/auth/logout') } catch (e) {}
+        finally { store.clearAuth(); wx.reLaunch({ url: '/pages/login/login' }) }
       },
     })
   },

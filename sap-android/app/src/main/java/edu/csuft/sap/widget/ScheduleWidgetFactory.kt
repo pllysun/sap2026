@@ -13,8 +13,8 @@ import java.time.LocalDate
 private val dayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
 /**
- * 课表列表工厂：按 widgetId 的模式（今日/本周）从本地缓存取课，构建每行 RemoteViews。
- * 今日：左列「节-节 / 起始时间」；本周：左列「周X / 节-节」。左侧色条按课名取色。
+ * 课表列表工厂：按 widgetId 的模式（今日/明日/周一/本周）从本地缓存取课。
+ * 单日：左列「节-节 / 起始时间」；本周：左列「周X / 节-节」。左侧色条按课名取色。
  */
 class ScheduleWidgetFactory(
     private val context: Context,
@@ -22,22 +22,14 @@ class ScheduleWidgetFactory(
 ) : RemoteViewsService.RemoteViewsFactory {
 
     private var items: List<WidgetCourse> = emptyList()
-    private var mode: Int = ScheduleWidgetProvider.MODE_TODAY
+    private var mode: ScheduleWidgetMode = ScheduleWidgetMode.TODAY
 
     override fun onCreate() {}
 
     override fun onDataSetChanged() {
         val data = WidgetRepository.load(context)
         mode = ScheduleWidgetProvider.mode(context, widgetId)
-        val date = LocalDate.now()
-        val monday = date.minusDays((date.dayOfWeek.value - 1).toLong())
-        val active = (0..6).flatMap { WidgetRepository.coursesOn(data, monday.plusDays(it.toLong())) }
-        items = groupedWidgetCourses(if (mode == ScheduleWidgetProvider.MODE_TODAY) {
-            val today = LocalDate.now().dayOfWeek.value
-            active.filter { it.day == today }.sortedBy { it.startNode }
-        } else {
-            active.sortedWith(compareBy({ it.day }, { it.startNode }))
-        })
+        items = scheduleWidgetState(data, mode, LocalDate.now()).courses
     }
 
     override fun onDestroy() {
@@ -49,7 +41,7 @@ class ScheduleWidgetFactory(
     override fun getViewAt(position: Int): RemoteViews {
         val c = items[position]
         val rv = RemoteViews(context.packageName, R.layout.widget_item)
-        if (mode == ScheduleWidgetProvider.MODE_TODAY) {
+        if (mode != ScheduleWidgetMode.WEEK) {
             rv.setTextViewText(R.id.item_t1, "${c.startNode}-${c.endNode}")
             rv.setTextViewText(R.id.item_t2, Periods.period(c.startNode)?.start ?: "")
         } else {

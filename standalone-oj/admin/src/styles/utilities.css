@@ -1,0 +1,60 @@
+/* ============================================
+ * 禅意设计系统 - 工具类
+ * 跨页面复用的通用样式
+ * ============================================ */
+
+/* 页面标题区 */
+.page-header {
+  margin-bottom: var(--zen-spacing-xl);
+}
+.page-header h2 {
+  font-family: var(--zen-font-serif);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--zen-text);
+  letter-spacing: 2px;
+  margin: 0;
+}
+.page-header p {
+  color: var(--zen-text-muted);
+  font-size: 13px;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* 禅意卡片 */
+.zen-card {
+  background: var(--zen-card);
+  border: 1px solid var(--zen-border-light);
+  border-radius: var(--zen-radius-lg);
+  padding: var(--zen-spacing-lg);
+  box-shadow: var(--zen-shadow-sm);
+  transition: var(--zen-transition);
+}
+.zen-card:hover {
+  box-shadow: var(--zen-shadow-md);
+}
+
+/* 筛选栏 */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-spacing-md);
+  margin-bottom: var(--zen-spacing-lg);
+  flex-wrap: wrap;
+}
+
+/* 统计数字 */
+.stat-number {
+  font-family: var(--zen-font-serif);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--zen-text);
+  letter-spacing: 1px;
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--zen-text-muted);
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}

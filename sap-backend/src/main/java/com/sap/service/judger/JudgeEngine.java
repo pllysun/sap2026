@@ -40,7 +40,7 @@ public class JudgeEngine {
         String source = userCode;
         if ("FUNCTION".equals(mode)) {
             String driver = pack.getProfiles().get(key).getFunctionDriver();
-            source = driver.replace("__USER_CODE__", userCode);
+            source = FunctionSource.assemble(key, driver, userCode);
         }
         String filename = switch (key) {
             case "c" -> "main.c"; case "cpp" -> "main.cpp"; case "java" -> "Main.java";
@@ -49,7 +49,7 @@ public class JudgeEngine {
         };
         Map<String,Object> inputs = Map.of(filename, Map.of("content",source));
         List<String> artifacts = switch(key) {
-            case "python" -> List.of(); case "java" -> List.of("answer.jar"); default -> List.of("answer");
+            case "python" -> "FUNCTION".equals(mode) ? List.of("answer") : List.of(); case "java" -> List.of("answer.jar"); default -> List.of("answer");
         };
         List<String> compileArgs = switch(key) {
             case "c" -> List.of("/usr/local/bin/gcc","-std=c23","-O2","-pipe",filename,"-o","answer","-lm");
@@ -58,7 +58,7 @@ public class JudgeEngine {
             // process limit on larger nodes even when a compilation has one CPU allocated.
             case "rust" -> List.of("/opt/rust/bin/rustc","--edition=2024","-C","opt-level=2",
                 "-C","link-arg=-Wl,--threads=1",filename,"-o","answer");
-            case "python" -> List.of("/usr/local/bin/python3","-c","import ast; ast.parse(open('main.py',encoding='utf-8').read(),filename='main.py')");
+            case "python" -> List.of("/usr/local/bin/python3","-c",FunctionSource.pythonCompiler("FUNCTION".equals(mode)));
             // Fixed, trusted command; neither source nor user input is interpolated into the shell.
             case "java" -> List.of("/bin/sh","-c","/opt/java27/bin/javac -J-Xmx96m -J-XX:+UseSerialGC -J-XX:ActiveProcessorCount=1 -encoding UTF-8 Main.java && /opt/java27/bin/jar c *.class > answer.jar");
             default -> throw new BusinessException(400,"不支持的语言");
@@ -88,7 +88,7 @@ public class JudgeEngine {
             }
             stage(stages,"COMPILED",0,0,result,null);
             List<String> execute = new ArrayList<>();
-            if ("python".equals(key)) execute.addAll(List.of("/usr/local/bin/python3","/w/main.py"));
+            if ("python".equals(key)) execute.addAll(List.of("/usr/local/bin/python3", "FUNCTION".equals(mode) ? "/w/answer" : "/w/main.py"));
             else if ("java".equals(key)) {
                 execute.add("/opt/java27/bin/java"); execute.add("-Xmx"+javaHeapMb(language.getMemoryLimitMb())+"m"); execute.addAll(JAVA_FLAGS);
                 execute.addAll(List.of("-cp","/w/answer.jar","Main"));

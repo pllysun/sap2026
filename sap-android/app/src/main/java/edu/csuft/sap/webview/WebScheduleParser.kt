@@ -1,6 +1,7 @@
 package edu.csuft.sap.webview
 
 import edu.csuft.sap.data.schedule.CachedCourse
+import edu.csuft.sap.data.schedule.SchoolSections
 import edu.csuft.sap.data.schedule.Remark
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -54,6 +55,7 @@ object WebScheduleParser {
         val courses = ArrayList<CachedCourse>()
         val remarks = ArrayList<Remark>()
 
+        val columns = tableColumns(table)
         var sectionIndex = 0
         for (row in table.select("tr")) {
             val th = row.selectFirst("th")
@@ -62,7 +64,7 @@ object WebScheduleParser {
                 continue
             }
             if (isWeekdayHeaderRow(row)) continue
-            val dayCells = row.select("td")
+            val dayCells = row.children().filter { it.tagName() == "td" }
             if (dayCells.isEmpty()) continue // 表头行
 
             // 2026 新版 qz-weeklyTable 的第一格是节次标签，后面七格才是
@@ -75,27 +77,32 @@ object WebScheduleParser {
                 val section = clean(labelCell?.select(".index-title")?.text())
                     .ifBlank { clean(labelCell?.text()) }
                 val modernSectionIndex = parseSectionIndex(section).takeIf { it > 0 } ?: sectionIndex
-                for (i in 1 until minOf(dayCells.size, 8)) {
-                    val td = dayCells[i]
+                for (td in dayCells) {
+                    val day = columns[td] ?: continue
+                    if (day !in 1..7) continue
                     val items = td.select(".courselists-item")
                     if (items.isNotEmpty()) {
                         for (item in items) {
                             val c = parseModernItem(item) ?: continue
                             if (c.name.isBlank()) continue
-                            courses.add(c.copy(day = i, sectionIndex = modernSectionIndex))
+                            val nodes = c.nodes?.takeIf { it.isNotEmpty() }
+                                ?: SchoolSections.fromRow(section, modernSectionIndex)
+                            courses.add(c.copy(day = day, sectionIndex = (nodes.first() + 1) / 2, nodes = nodes))
                         }
                     } else {
                         // 个别主题仍把旧版 font 直接放在新版单元格中。
-                        parseLegacyCell(td, i, modernSectionIndex, courses)
+                        parseLegacyCell(td, day, modernSectionIndex, courses, section)
                     }
                 }
                 continue
             }
 
             sectionIndex++
-            for (i in 0 until minOf(dayCells.size, 7)) {
-                val td = dayCells[i]
-                parseLegacyCell(td, i + 1, sectionIndex, courses)
+            val labelOffset = if (th != null) 1 else 0
+            for (td in dayCells) {
+                val day = (columns[td] ?: continue) - labelOffset + 1
+                if (day !in 1..7) continue
+                parseLegacyCell(td, day, sectionIndex, courses, th?.text())
             }
         }
         return WebScheduleResult(term, courses, remarks)
@@ -106,6 +113,7 @@ object WebScheduleParser {
         day: Int,
         section: Int,
         out: MutableList<CachedCourse>,
+        sectionLabel: String? = null,
     ) {
         val blocks = td.select("div.kbcontent, [data-kbcontent]").let { selected ->
             if (selected.isNotEmpty()) selected
@@ -118,7 +126,10 @@ object WebScheduleParser {
             for (seg in DIVIDER.split(inner)) {
                 if (!seg.lowercase().contains("<font")) continue
                 val c = parseSegment(seg, day, section) ?: continue
-                if (c.name.isNotBlank()) out.add(c)
+                if (c.name.isNotBlank()) {
+                    val nodes = c.nodes?.takeIf { it.isNotEmpty() } ?: SchoolSections.fromRow(sectionLabel, section)
+                    out.add(c.copy(sectionIndex = (nodes.first() + 1) / 2, nodes = nodes))
+                }
             }
         }
     }
@@ -136,8 +147,10 @@ object WebScheduleParser {
         val details = normalize(item.select(".qz-hasCourse-detaillists, .course-detail, [class*=detail]").text())
             .ifBlank { normalize(item.text()) }
         val teacher = labeled(details, "教师", "老师", "任课教师")
-        val weeks = labeled(details, "周次", "上课周次")
-            ?: Regex("\\d+(?:[\\-,，、]\\d+)*周").find(details)?.value
+        val time = labeled(details, "周次", "上课周次", "时间", "上课时间")
+        val weeks = time
+            ?.replace(Regex("[\\[【（(][^\\]】）)]*节[^\\]】）)]*[\\]】）)]"), "")?.trim()
+            ?: Regex("(?:[（(\\[]?[单双]周?[）)\\]]?\\s*)?\\d+(?:[\\-－—–~～至,，、]\\d+)*\\s*(?:周\\s*(?:[（(\\[]?[单双]周?[）)\\]]?)?|[（(\\[][单双]?周?[）)\\]])").find(details)?.value
         val room = labeled(details, "地点", "教室", "上课地点")
         return CachedCourse(
             name = name,
@@ -147,8 +160,38 @@ object WebScheduleParser {
             sectionIndex = 0,
             weeksRaw = weeks,
             colorIndex = 0,
+            nodes = timeNodes(time),
         )
     }
+
+    private fun timeNodes(time: String?): List<Int>? = time?.let {
+        Regex("[\\[【（(]([^\\]】）)]*节)[\\]】）)]").find(it)?.groupValues?.get(1)
+            ?.let(SchoolSections::parse)?.takeIf { values -> values.isNotEmpty() }
+    }
+
+    /** 保留跨行单元格的真实星期列，避免其下方课程向左错位。 */
+    private fun tableColumns(table: Element): Map<Element, Int> {
+        val columns = java.util.IdentityHashMap<Element, Int>()
+        val occupiedUntil = IntArray(32)
+        for ((rowIndex, row) in table.select("tr").withIndex()) {
+            var column = 0
+            for (cell in row.children().filter { it.tagName() in setOf("td", "th") }) {
+                val width = span(cell, "colspan"); val height = span(cell, "rowspan")
+                while (column < 32) {
+                    if (column + width <= 32 && (column until column + width).all { occupiedUntil[it] <= rowIndex }) break
+                    column++
+                }
+                if (column + width > 32) break
+                columns[cell] = column
+                for (c in column until column + width) occupiedUntil[c] = rowIndex + height
+                column += width
+            }
+        }
+        return columns
+    }
+
+    private fun span(cell: Element, attribute: String): Int =
+        cell.attr(attribute).toIntOrNull()?.coerceIn(1, 32) ?: 1
 
     private fun labeled(text: String, vararg labels: String): String? {
         if (text.isBlank()) return null
@@ -173,7 +216,8 @@ object WebScheduleParser {
 
         val f = Jsoup.parseBodyFragment(cleaned)
         val teacher = textOf(firstFont(f, "老师", "教师"))
-        val weeks = textOf(firstFont(f, "周次"))
+        val time = textOf(firstFont(f, "周次"))
+        val weeks = time?.replace(Regex("[\\[【（(][^\\]】）)]*节[^\\]】）)]*[\\]】）)]"), "")?.trim()
         val room = textOf(firstFont(f, "教室", "地点"))
         return CachedCourse(
             name = name,
@@ -183,6 +227,7 @@ object WebScheduleParser {
             sectionIndex = sectionIndex,
             weeksRaw = weeks,
             colorIndex = 0,
+            nodes = timeNodes(time),
         )
     }
 

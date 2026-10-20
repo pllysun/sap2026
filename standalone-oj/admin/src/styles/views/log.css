@@ -1,0 +1,41 @@
+/* LogView 样式 */
+
+.log-page .stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.log-page .stat-card {
+  padding: 16px 20px;
+}
+
+.log-page .stat-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zen-text-secondary, #7c7a72);
+  margin-bottom: 8px;
+}
+
+.log-page .chart-box {
+  height: 200px;
+  width: 100%;
+}
+
+.log-page .pagination-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 4px;
+}
+
+.log-page .calendar-chart-box {
+  height: 200px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .log-page .stats-row {
+    grid-template-columns: 1fr;
+  }
+}

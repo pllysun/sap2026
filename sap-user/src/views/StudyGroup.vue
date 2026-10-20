@@ -13,15 +13,16 @@
     <div v-if="activeTab === 'task'" class="tab-content" :key="'task'">
       <!-- 游客提示 -->
       <div v-if="isGuest" class="guest-block anim-in">
-        <div class="guest-block__icon">🔒</div>
+        <div class="guest-block__icon"><UiIcon name="lock" :size="18" /></div>
         <h3 class="guest-block__title">成为正式成员后可使用</h3>
         <p class="guest-block__desc">学习任务、提交作业等功能仅对正式成员开放，<br/>请先加入协会成为正式成员。</p>
-        <router-link to="/join" class="btn btn--primary btn--pill">🌟 加入协会</router-link>
+        <router-link to="/join" class="btn btn--primary btn--pill"><UiIcon name="user-plus" :size="18" /> 加入协会</router-link>
       </div>
 
       <template v-else>
         <div v-if="taskLoading" class="loading"><div class="loading__spinner"></div></div>
 
+        <div v-else-if="taskError" class="empty" role="alert"><p>{{ taskError }}</p><button class="btn btn--secondary mt-3" @click="loadStatus">重新加载</button></div>
         <div v-else-if="!status.hasActivity" class="empty">
           <div class="empty__text">当前暂无进行中的学习活动</div>
           <p class="t-caption mt-2">请等待管理员创建新的学习活动</p>
@@ -49,10 +50,10 @@
               <div class="hw-grid">
                 <!-- 左栏：本周学习任务 -->
                 <div class="hw-col">
-                  <div class="split__title">📄 本周学习任务</div>
+                  <div class="split__title"><UiIcon name="file-plus" :size="18" /> 本周学习任务</div>
                   <div v-if="status.homework" class="card card--gradient hw-file-card">
                     <div class="flex gap-2" style="align-items:center;">
-                      <div class="hw-icon" style="background:rgba(59,130,246,0.1);">📘</div>
+                      <div class="hw-icon" style="background:rgba(59,130,246,0.1);"><UiIcon name="book-open" :size="18" /></div>
                       <div style="flex:1; min-width:0;">
                         <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ status.homework.title || status.homework.fileName || '学习资料' }}</div>
                         <div class="t-caption" v-if="status.homework.createdAt">{{ formatTime(status.homework.createdAt) }}</div>
@@ -60,7 +61,7 @@
                     </div>
                     <a
                       v-if="status.homework.fileUrl"
-                      :href="'/api/file/go?url=' + encodeURIComponent(status.homework.fileUrl) + '&name=' + encodeURIComponent(status.homework.fileName || 'file')"
+                      href="#" @click.prevent="openAttachment(status.homework.fileUrl)"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="btn btn--primary btn--full btn--sm btn--pill mt-3"
@@ -76,7 +77,7 @@
                   <div v-if="status.submitted && status.submissions && status.submissions.length">
                     <div v-for="s in status.submissions" :key="s.id" class="card card--gradient hw-file-card">
                       <div class="flex gap-2" style="align-items:center;">
-                        <div class="hw-icon" style="background:rgba(34,197,94,0.1);">📎</div>
+                        <div class="hw-icon" style="background:rgba(34,197,94,0.1);"><UiIcon name="link" :size="18" /></div>
                         <div style="flex:1; min-width:0;">
                           <div style="font-weight:600;color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.fileName }}</div>
                           <div class="t-caption">{{ formatTime(s.createdAt) }}</div>
@@ -85,18 +86,18 @@
                       </div>
                       <div class="flex gap-1 mt-3" style="flex-wrap: wrap;">
                         <a
-                          :href="'/api/file/go?url=' + encodeURIComponent(s.fileUrl) + '&name=' + encodeURIComponent(s.fileName || 'file')"
+                          href="#" @click.prevent="openAttachment(s.fileUrl)"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="btn btn--primary btn--sm btn--pill"
                         ><UiIcon name="file-save" :size="16" /> 下载</a>
                         <template v-if="!status.weekScore">
                           <label class="btn btn--secondary btn--sm btn--pill" style="cursor:pointer;">
-                            🔄 替换
+                            <UiIcon name="refresh" :size="18" /> 替换
                             <input type="file" @change="replaceHomework($event, s)" style="display:none;" />
                           </label>
                           <button class="btn btn--danger btn--sm btn--pill" @click="deleteHomework(s)" :disabled="deleting">
-                            🗑 删除
+                            <UiIcon name="trash" :size="18" /> 删除
                           </button>
                         </template>
                       </div>
@@ -105,7 +106,7 @@
                     <!-- 评分结果 -->
                     <div v-if="status.weekScore" class="card mt-3" style="padding: var(--s4); border-left: 4px solid var(--success);">
                       <div class="flex-between mb-2">
-                        <span class="t-heading" style="font-size: 0.9rem;">📊 本周评分</span>
+                        <span class="t-heading" style="font-size: 0.9rem;"><UiIcon name="chart" :size="18" /> 本周评分</span>
                         <span class="badge" :class="status.weekScore.score >= 7 ? 'badge--success' : status.weekScore.score >= 4 ? 'badge--warning' : 'badge--error'">
                           {{ status.weekScore.score }} 分
                         </span>
@@ -123,13 +124,13 @@
                       @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false"
                       @drop.prevent="handleDrop($event)">
                       <div v-if="selectedFile" style="text-align:center;">
-                        <div style="font-size:2rem; margin-bottom: var(--s2);">📄</div>
+                        <div style="font-size:2rem; margin-bottom: var(--s2);"><UiIcon name="file-plus" :size="18" /></div>
                         <div class="t-body" style="font-weight:600;">{{ selectedFile.name }}</div>
                         <div class="t-caption">{{ (selectedFile.size / 1024).toFixed(1) }} KB</div>
-                        <button class="btn btn--ghost btn--sm mt-2" @click="clearFile">✕ 移除</button>
+                        <button class="btn btn--ghost btn--sm mt-2" @click="clearFile"><UiIcon name="close" :size="18" /> 移除</button>
                       </div>
                       <div v-else style="text-align:center;">
-                        <div style="font-size:2rem; margin-bottom: var(--s2); opacity:0.5;">📂</div>
+                        <div style="font-size:2rem; margin-bottom: var(--s2); opacity:0.5;"><UiIcon name="file-plus" :size="18" /></div>
                         <p class="t-body" style="color:var(--ink-500);">拖拽文件到此处，或
                           <label style="color:var(--primary);font-weight:600;cursor:pointer;">
                             点击选择
@@ -139,7 +140,7 @@
                       </div>
                     </div>
                     <button class="btn btn--primary btn--full btn--pill mt-3" @click="submitHomework" :disabled="submitting || !selectedFile">
-                      {{ submitting ? '提交中…' : '📤 提交作业' }}
+                      <UiIcon name="send" :size="15" />{{ submitting ? '提交中…' : '提交作业' }}
                     </button>
                     <div v-if="submitError" class="error-text mt-1">{{ submitError }}</div>
                     <div v-if="submitSuccess" class="success-text mt-1">{{ submitSuccess }}</div>
@@ -156,15 +157,16 @@
     <div v-if="activeTab === 'scores'" class="tab-content" :key="'scores'">
       <!-- 游客提示 -->
       <div v-if="isGuest" class="guest-block anim-in">
-        <div class="guest-block__icon">🔒</div>
+        <div class="guest-block__icon"><UiIcon name="lock" :size="18" /></div>
         <h3 class="guest-block__title">成为正式成员后可查看</h3>
         <p class="guest-block__desc">我的成绩功能仅对正式成员开放，<br/>请先加入协会成为正式成员。</p>
-        <router-link to="/join" class="btn btn--primary btn--pill">🌟 加入协会</router-link>
+        <router-link to="/join" class="btn btn--primary btn--pill"><UiIcon name="user-plus" :size="18" /> 加入协会</router-link>
       </div>
 
       <template v-else>
         <div v-if="scoresLoading" class="loading"><div class="loading__spinner"></div></div>
 
+        <div v-else-if="scoresError" class="empty" role="alert"><p>{{ scoresError }}</p><button class="btn btn--secondary mt-3" @click="loadScores">重新加载</button></div>
         <div v-else-if="activities.length === 0" class="empty">
           <div class="empty__text">还没有成绩记录</div>
           <p class="t-caption mt-2">参加学习活动后即可在此查看成绩</p>
@@ -173,7 +175,7 @@
         <template v-else>
           <div class="filter-bar mb-4 anim-in">
             <div class="form-group" style="margin-bottom:0; min-width:120px;">
-              <select v-model="selectedIdx" class="select">
+              <select v-model="selectedIdx" class="select" aria-label="选择学习活动">
                 <option v-for="(a, i) in activities" :key="i" :value="i">
                   {{ a.title || `第${a.seqNum}次` }} ({{ a.grade }})
                 </option>
@@ -190,7 +192,7 @@
               </div>
             </div>
 
-            <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;">⏱ 成绩时间线</div>
+            <div class="t-heading mb-3" style="display:flex;align-items:center;gap:6px;"><UiIcon name="clock" :size="18" /> 成绩时间线</div>
 
             <div v-if="currentActivity.scores.length > 0">
               <div v-for="(s, idx) in currentActivity.scores" :key="idx"
@@ -214,6 +216,7 @@
     <div v-if="activeTab === 'ranking'" class="tab-content" :key="'ranking'">
       <div v-if="rankingLoading && allActivities.length === 0" class="loading"><div class="loading__spinner"></div></div>
 
+      <div v-else-if="rankingError" class="empty" role="alert"><p>{{ rankingError }}</p><button class="btn btn--secondary mt-3" @click="loadAllActivities">重新加载</button></div>
       <div v-else-if="allActivities.length === 0" class="empty"><div class="empty__text">暂无学习活动数据</div></div>
 
       <template v-else>
@@ -236,7 +239,7 @@
               @click="openRankingDetail(act)"
             >
               <div class="rank-act-card__header">
-                <div class="rank-act-card__icon">🏆</div>
+                <div class="rank-act-card__icon"><UiIcon name="trophy" :size="18" /></div>
                 <div class="rank-act-card__status">
                   <span v-if="act.status === 1" class="badge badge--gradient">进行中</span>
                   <span v-else class="badge badge--default">已归档</span>
@@ -244,9 +247,9 @@
               </div>
               <h3 class="rank-act-card__title">{{ act.title || `第${act.seqNum}次活动` }}</h3>
               <div class="rank-act-card__meta">
-                <span>📋 第{{ act.seqNum }}次</span>
-                <span>📅 共{{ act.currentWeek }}周</span>
-                <span v-if="act.memberCount">👥 {{ act.memberCount }}人</span>
+                <span><UiIcon name="clipboard-check" :size="18" /> 第{{ act.seqNum }}次</span>
+                <span><UiIcon name="calendar" :size="18" /> 共{{ act.currentWeek }}周</span>
+                <span v-if="act.memberCount"><UiIcon name="users" :size="18" /> {{ act.memberCount }}人</span>
               </div>
               <div class="rank-act-card__action">
                 <span>查看排名 <UiIcon name="trophy" :size="16" /></span>
@@ -270,12 +273,13 @@
                   {{ rankDetailAct.grade }}届 · 共{{ rankDetailAct.currentWeek }}周
                 </div>
               </div>
-              <button class="rank-modal__close" aria-label="关闭排名详情" @click="rankDetailAct = null">✕</button>
+              <button class="rank-modal__close" aria-label="关闭排名详情" @click="rankDetailAct = null"><UiIcon name="close" :size="18" /></button>
             </div>
 
             <div class="rank-modal__body">
               <div v-if="detailLoading" class="loading"><div class="loading__spinner"></div></div>
 
+              <div v-else-if="detailError" class="empty" role="alert"><p>{{ detailError }}</p><button class="btn btn--secondary mt-3" @click="loadRankingDetail">重新加载</button></div>
               <template v-else-if="records.length > 0">
                 <div class="table-wrap">
                   <table class="table">
@@ -304,6 +308,8 @@
 </template>
 
 <script setup>
+import { openStoredFile } from '@/utils/downloadFile'
+const openAttachment = value => openStoredFile(value).catch(e => window.alert(e.message))
 import PageHeader from '@/components/PageHeader.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted, watch } from 'vue'
@@ -318,6 +324,7 @@ const isGuest = computed(() => {
 })
 
 const activeTab = ref('task')
+const taskError = ref(''), scoresError = ref(''), rankingError = ref(''), detailError = ref('')
 
 // ===== 学习任务 =====
 const taskLoading = ref(true)
@@ -327,7 +334,7 @@ const selectedFile = ref(null); const fileInput = ref(null)
 const submitting = ref(false); const submitError = ref(''); const submitSuccess = ref('')
 const isDragOver = ref(false); const deleting = ref(false)
 
-async function loadStatus() { taskLoading.value = true; try { const r = await request.get('/api/study/my-status'); status.value = r.data } catch {} finally { taskLoading.value = false } }
+async function loadStatus() { taskLoading.value = true; taskError.value = ''; try { const r = await request.get('/api/study/my-status'); status.value = r.data } catch (e) { taskError.value = e.message || '学习任务加载失败，请重试。' } finally { taskLoading.value = false } }
 async function joinActivity() { joining.value = true; joinError.value = ''; try { await request.post('/api/study/member/auto-join'); await loadStatus() } catch (e) { joinError.value = e.message || '加入失败' } finally { joining.value = false } }
 function handleFileSelect(e) { selectedFile.value = e.target.files[0] || null }
 function handleDrop(e) { isDragOver.value = false; const f = e.dataTransfer?.files?.[0]; if (f) selectedFile.value = f }
@@ -365,7 +372,7 @@ const activities = ref([])
 const selectedIdx = ref(0)
 const currentActivity = computed(() => activities.value[selectedIdx.value] || null)
 
-async function loadScores() { scoresLoading.value = true; try { const r = await request.get('/api/study/my-scores'); activities.value = r.data.activities || [] } catch {} finally { scoresLoading.value = false } }
+async function loadScores() { scoresLoading.value = true; scoresError.value = ''; try { const r = await request.get('/api/study/my-scores'); activities.value = r.data.activities || [] } catch (e) { scoresError.value = e.message || '成绩加载失败，请重试。' } finally { scoresLoading.value = false } }
 
 // ===== 成绩统计 =====
 const allActivities = ref([])
@@ -390,11 +397,11 @@ const groupedActivities = computed(() => {
 })
 
 async function loadAllActivities() {
-  rankingLoading.value = true
+  rankingLoading.value = true; rankingError.value = ''
   try {
     const r = await request.get('/api/study/activity/all-with-stats')
     allActivities.value = r.data || []
-  } catch {}
+  } catch (e) { rankingError.value = e.message || '成绩统计加载失败，请重试。' }
   finally { rankingLoading.value = false }
 }
 
@@ -408,12 +415,12 @@ async function openRankingDetail(act) {
 
 async function loadRankingDetail() {
   if (!rankDetailAct.value) return
-  detailLoading.value = true
+  detailLoading.value = true; detailError.value = ''
   try {
     const r = await request.get('/api/study/ranking', { params: { activityId: rankDetailAct.value.id, current: currentPage.value, size: pageSize } })
     records.value = r.data.records || []
     total.value = r.data.total || 0
-  } catch {}
+  } catch (e) { detailError.value = e.message || '排名加载失败，请重试。' }
   finally { detailLoading.value = false }
 }
 
@@ -742,10 +749,39 @@ watch(isGuest, guest => { if (!guest) loadStatus() }, { immediate: true })
 .hw-col, .hw-grid > *, .upload-zone { min-width: 0; }.upload-zone { overflow-wrap: anywhere; }
 .rank-modal__header > div { min-width: 0; }.rank-modal__title { overflow-wrap: anywhere; }.rank-modal__subtitle { flex-wrap: wrap; row-gap: 6px; }
 .rank-modal-overlay { padding: 24px; }.rank-modal { max-height: calc(100dvh - 48px); border: 1px solid var(--border-blue); border-radius: 18px; }.rank-modal__body { min-height: 0; overscroll-behavior: contain; }.rank-modal .table-wrap { max-width: 100%; }.rank-modal .table { min-width: 420px; }.rank-modal .pagination { flex-wrap: wrap; }
-@media (max-width: 600px) { .rank-modal-overlay { padding: 12px; }.rank-modal { margin: 0; max-height: calc(100dvh - 24px); }.rank-modal__header, .rank-modal__body { padding: 18px; }.rank-modal__title { font-size: 18px; }.rank-modal .table th, .rank-modal .table td { padding: 12px; }.rank-modal .table-wrap { margin: 0; }.status-banner { align-items: flex-start; }.status-banner__title { line-height: 1.8; }.hw-file-card { padding: 16px; } }
+@media (max-width: 600px) { .rank-modal-overlay { padding: 12px; }.rank-modal { margin: 0; max-height: calc(100dvh - 24px); }.rank-modal__header, .rank-modal__body { padding: 18px; }.rank-modal__title { font-size: 1.125rem; }.rank-modal .table th, .rank-modal .table td { padding: 12px; }.rank-modal .table-wrap { margin: 0; }.status-banner { align-items: flex-start; }.status-banner__title { line-height: 1.8; }.hw-file-card { padding: 16px; } }
 @media (max-width: 600px) {
   .rank-modal .table { min-width: 0; width: 100%; table-layout: fixed; }
-  .rank-modal .table :is(th, td) { padding: 12px 8px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+  .rank-modal .table :is(th, td) { padding: 12px 8px; font-size: 0.75rem; white-space: normal; overflow-wrap: anywhere; }
   .rank-modal .table th:first-child { width: 15%; }.rank-modal .table th:nth-child(2) { width: 29%; }.rank-modal .table th:nth-child(3) { width: 36%; }.rank-modal .table th:last-child { width: 20%; }
 }
+</style>
+
+<style scoped>
+.study-page { max-width: 76rem; }
+.study-page .tab-bar { margin-bottom: 1.5rem; }
+.study-page .status-banner { background: #fff; border-left: 3px solid #6e80c4; padding: 1.25rem 1.5rem; gap: 1rem; }
+.status-banner__title { font-size: 1.25rem; }.status-banner__desc { font-size: .9375rem; margin-top: .5rem; }
+.study-page .card { box-shadow: none; }
+.hw-grid { gap: 2rem; }
+.hw-col + .hw-col { border-left: 1px solid #e0e5ee; padding-left: 2rem; }
+.hw-file-card { background: #f6f7fb; border-color: #dee3ef; }
+.split__title { display: flex; align-items: center; gap: .5rem; font-size: 1rem; }
+.upload-zone { background: #f7f8fc; border-color: #bbc6dc; padding: 2rem 1.5rem; }
+.upload-zone--active { background: #edf0fc; border-color: var(--primary); }
+.guest-block { border-style: solid; padding: 3rem 1.5rem; }
+.guest-block__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .875rem; background: #edf0fa; color: #596aaa; margin-bottom: 1rem; }
+.guest-block__desc { font-size: .9375rem; }
+.rank-act-card { border-color: #dce1ec; padding: 1.5rem; }
+.rank-act-card--active { background: #fff; border-color: #bec8e4; }
+.rank-act-card--featured { padding: 1.75rem; gap: .5rem 1.25rem; }
+.rank-act-card--featured .rank-act-card__icon { width: 3rem; height: 3rem; }
+.rank-act-card--featured .rank-act-card__title { font-size: 1.375rem; padding-right: 5rem; }
+.rank-act-card__icon { color: #6962a4; background: #efedf7; }
+.rank-year-badge { background: #eef0fa; color: #42569d; box-shadow: none; border-radius: .625rem; font-size: 1rem; }
+.rank-act-card__meta > span, .rank-act-card__action > span { display: inline-flex; align-items: center; gap: .375rem; }
+.rank-act-card__meta :deep(svg) { width: .875rem; height: .875rem; }
+.rank-modal { max-width: 46rem; }.rank-modal__header { background: #eef1f9; }
+.rank-modal .table td:last-child { color: #4055a1; font-variant-numeric: tabular-nums; }
+@media(max-width: 768px) { .hw-col + .hw-col { border-left: 0; border-top: 1px solid #e0e5ee; padding: 1.5rem 0 0; }.hw-grid { gap: 1.5rem; }.status-banner { flex-wrap: wrap; }.rank-act-card--featured .rank-act-card__title { font-size: 1.125rem; padding-right: 0; }.rank-act-card--featured .rank-act-card__status { position: static; }.rank-act-card--featured .rank-act-card__header { grid-row: auto; grid-column: 1/-1; }.rank-act-card--featured :is(.rank-act-card__title, .rank-act-card__meta) { grid-column: 1/-1; grid-row: auto; } }
 </style>

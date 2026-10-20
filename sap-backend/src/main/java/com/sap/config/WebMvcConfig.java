@@ -28,7 +28,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns(allowedOrigins.split(","))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true)
+                .allowCredentials(false)
                 .maxAge(3600);
     }
 
@@ -66,6 +66,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/auth/admin/login",
                         "/api/auth/app/login",
                         "/api/auth/register",
+                        "/api/auth/register/policy",
+                        "/api/auth/register/email-code",
                         "/api/auth/app/register",
                         "/api/auth/app/register/email-code",
                         "/api/auth/password-recovery/send",

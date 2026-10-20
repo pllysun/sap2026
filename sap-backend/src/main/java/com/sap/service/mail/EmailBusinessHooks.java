@@ -79,7 +79,7 @@ public class EmailBusinessHooks {
         try {
             Object id=cn.dev33.satoken.stp.StpUtil.getLoginIdDefaultNull();
             if(id!=null) {Long userId=Long.valueOf(String.valueOf(id));return MailAuditContext.person(userId,users.selectById(userId));}
-        } catch(cn.dev33.satoken.exception.SaTokenContextException ignored) { }
+        } catch(cn.dev33.satoken.exception.SaTokenContextException | cn.dev33.satoken.exception.NotWebContextException ignored) { }
         return Map.of("name","系统自动处理","account","系统");
     }
     private String text(String value){return value==null||value.isBlank()?"未记录":value;}

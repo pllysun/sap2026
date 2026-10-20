@@ -24,6 +24,7 @@ class LogAnalyticsServiceTest {
     @BeforeEach void setup() {
         var ds=new JdbcDataSource();ds.setURL("jdbc:h2:mem:"+UUID.randomUUID()+";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
         jdbc=new JdbcTemplate(ds);service=new LogAnalyticsService(jdbc,new DataSourceTransactionManager(ds));
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"exclusions",new ApiLogExclusionService(jdbc,new DataSourceTransactionManager(ds)));
         jdbc.execute("CREATE TABLE sys_log(id BIGINT AUTO_INCREMENT PRIMARY KEY,request_time TIMESTAMP,path VARCHAR(255),endpoint VARCHAR(255),source VARCHAR(8),user_id BIGINT,user_name VARCHAR(50),http_method VARCHAR(10),ip VARCHAR(50),operation_type VARCHAR(10),description VARCHAR(200),duration BIGINT,result_code INT)");
         jdbc.execute("CREATE TABLE log_stats(stat_date DATE,count BIGINT)");
         jdbc.update("INSERT INTO log_stats VALUES (?,123)",old.toLocalDate());

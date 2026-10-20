@@ -43,5 +43,15 @@ class ClassScheduleSyncDatabaseTest {
         jdbc.update("UPDATE jw_class_schedule_teacher SET teacher_name='新教师'");
         jdbc.update("UPDATE jw_class_schedule_room SET room_name='新教室'");
         assertTrue(sync.sync(new ClassScheduleSyncService.Request(List.of(known), false)).changed());
+        for (String table : List.of("class", "teacher", "room", "course"))
+            jdbc.update("UPDATE jw_class_schedule_" + table + " SET weekday='星期六',section='1-8',week_range='6-7'");
+        var longClass=sync.sync(new ClassScheduleSyncService.Request(List.of(known), false)).items().getFirst();
+        @SuppressWarnings("unchecked") var lab=((List<Map<String,Object>>) longClass.data().get("courses")).getFirst();
+        assertEquals(6,lab.get("day"));assertEquals("6-7",lab.get("weeks"));
+        assertEquals(java.util.stream.IntStream.rangeClosed(1,8).boxed().toList(),lab.get("nodes"));
+        var oldShape=new LinkedHashMap<>(longClass.data());var oldCourse=new LinkedHashMap<>(lab);oldCourse.remove("nodes");
+        oldShape.put("courses",List.of(oldCourse));
+        assertNotEquals(sync.fingerprint(oldShape),longClass.revision());
+
     }
 }

@@ -24,7 +24,7 @@ public class JwSessionManager {
     private final PendingLoginManager pendingManager;
 
     private final ConcurrentHashMap<String, JwHttpSession> sessions = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
+    private final Object[] locks = java.util.stream.IntStream.range(0, 256).mapToObj(i -> new Object()).toArray();
 
     public JwSessionManager(JwAuthClient authClient, JwCredentialService credentialService,
                             JwProperties props, PendingLoginManager pendingManager) {
@@ -36,6 +36,7 @@ public class JwSessionManager {
 
     /** 取（或建立）某学号的教务会话；未绑定则由 credentialService 抛业务异常。 */
     public JwHttpSession getSession(Long userId, String account) {
+        String password = credentialService.getDecryptedPassword(userId, account);
         String key = key(userId, account);
         JwHttpSession cached = sessions.get(key);
         if (cached != null && !cached.isExpired(props.getSessionTtlMinutes())) {
@@ -46,7 +47,6 @@ public class JwSessionManager {
             if (cached != null && !cached.isExpired(props.getSessionTtlMinutes())) {
                 return cached;
             }
-            String password = credentialService.getDecryptedPassword(userId, account);
             JwHttpSession s;
             try {
                 s = authClient.login(account, password);
@@ -98,11 +98,14 @@ public class JwSessionManager {
         sessions.remove(key(userId, account));
     }
 
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 60000)
+    public void purgeExpiredSessions() { sessions.values().removeIf(s -> s.isExpired(props.getSessionTtlMinutes())); }
+
     private String key(Long userId, String account) {
         return userId + ":" + account;
     }
 
     private Object lockFor(String key) {
-        return locks.computeIfAbsent(key, k -> new Object());
+        return locks[(key.hashCode() & 0x7fffffff) % locks.length];
     }
 }

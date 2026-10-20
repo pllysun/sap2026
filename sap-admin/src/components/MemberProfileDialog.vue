@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :model-value="modelValue" title="成员详情" width="1080px" append-to-body align-center
+  <el-dialog :model-value="modelValue" title="用户与关联资料" width="1080px" append-to-body align-center
     modal-class="member-profile-modal" class="member-profile-dialog" @update:model-value="emit('update:modelValue', $event)">
     <div v-if="outstanding" class="standalone-profile">
       <h2>{{ outstanding.name }}</h2><p class="profile-muted">优秀成员档案 · 未关联注册账号，不按同名匹配其他成员数据</p>
@@ -79,7 +79,7 @@ function cell(row, key) {
   if (key === 'fileType') return ['学习资料', '作业题目', '提交作业'][value] || value
   if (key === 'adminReply') return value ? '管理员' : '用户'
   if (key === 'status') {
-    if (section.value === 'joins') return ['待提交', '已提交', '已通过'][value] || value
+    if (section.value === 'joins') return ['待提交', '已提交', '已通过', '待补充'][value] || value
     if (['study', 'leading'].includes(section.value)) return value === 1 ? '进行中' : '已结束'
     return { OPEN: '待处理', CLOSED: '已关闭', open: '待处理', closed: '已关闭' }[value] || value
   }

@@ -170,6 +170,9 @@ public class OjService {
     }
     private String catalogSignature(){return catalogCache.get("signature:"+config.getRuntimeId(),String.class,this::signature);}
     public List<Long> visibleCatalogIds(List<Long> ids){return problems.visibleIds(catalogSignature(),ids);}
+    // Training uses the same published, validated metadata projection as the library.
+    // Never load problem packs or contest snapshots for a learner dashboard.
+    public Map<String,Object> learningCatalog(){return catalog(null,null,null,null,null,1,1000);}
     private static String filter(String value){return value==null||value.isBlank()?null:value;}
     private List<String> jsonStrings(String value) {
         if(value==null)return List.of();
@@ -279,8 +282,9 @@ public class OjService {
         if (p.getTitle()==null || p.getTitle().isBlank() || p.getTitle().length()>200 || p.getDescription()==null || p.getDescription().isBlank()) fail("标题和题面不能为空");
         if (p.getDifficulty()==null || !List.of("EASY","MEDIUM","HARD").contains(p.getDifficulty())) fail("请选择题目难度");
         if (p.getSourcePlatform()==null || p.getSourcePlatform().isBlank() || p.getSourceNote()==null || p.getSourceNote().isBlank()) fail("必须注明题目来源和测试数据来源");
-        if (!"ORIGINAL".equalsIgnoreCase(p.getSourcePlatform()) && !"原创".equals(p.getSourcePlatform())) {
-            try { URI u=URI.create(p.getSourceUrl()); if (!"https".equals(u.getScheme()) || u.getHost()==null) fail("来源链接必须为 HTTPS 地址"); }
+        boolean original = "ORIGINAL".equalsIgnoreCase(p.getSourcePlatform()) || "原创".equals(p.getSourcePlatform());
+        if (!original || (p.getSourceUrl()!=null && !p.getSourceUrl().isBlank())) {
+            try { URI u=URI.create(p.getSourceUrl()); if (!"https".equalsIgnoreCase(u.getScheme()) || u.getHost()==null || u.getUserInfo()!=null) fail("来源链接必须为 HTTPS 地址"); }
             catch (IllegalArgumentException | NullPointerException e) { fail("来源链接无效"); }
         }
         if (p.getModes()==null || p.getModes().isEmpty() || p.getModes().size()>2 || new HashSet<>(p.getModes()).size()!=p.getModes().size() ||

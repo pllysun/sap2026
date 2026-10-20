@@ -5,6 +5,8 @@
       <p>系统操作日志记录与统计分析</p>
     </div>
 
+    <LogExclusions @saved="refreshFilteredData" />
+
     <!-- 统计区 -->
     <div class="stats-row">
       <div class="zen-card stat-card">
@@ -38,7 +40,7 @@
       <div ref="calendarChart" class="calendar-chart-box"></div>
     </div>
 
-    <LogExplorer />
+    <LogExplorer :key="filterRevision" />
   </div>
 </template>
 
@@ -49,6 +51,9 @@ import { getLogStats } from '../api'
 import request from '../utils/request'
 import * as echarts from 'echarts'
 import LogExplorer from './LogExplorer.vue'
+import LogExclusions from '../components/LogExclusions.vue'
+const filterRevision=ref(0)
+function refreshFilteredData(){filterRevision.value++;loadStats();loadCalendarHeatmap()}
 const heatmapYear = ref(String(new Date().getFullYear()))
 
 
@@ -101,7 +106,7 @@ const COLORS = ['#3B82F6', '#14B8A6', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444'
 
 const renderPie = (data) => {
   if (!pieChart.value) return
-  pieInstance = echarts.init(pieChart.value)
+  pieInstance ||= echarts.init(pieChart.value)
   pieInstance.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     color: COLORS,
@@ -115,7 +120,7 @@ const renderPie = (data) => {
 
 const renderBar = (data) => {
   if (!barChart.value) return
-  barInstance = echarts.init(barChart.value)
+  barInstance ||= echarts.init(barChart.value)
   const entries = Object.entries(data)
   barInstance.setOption({
     tooltip: { trigger: 'axis' },
@@ -131,7 +136,7 @@ const renderBar = (data) => {
 
 const renderLine = (data) => {
   if (!lineChart.value) return
-  lineInstance = echarts.init(lineChart.value)
+  lineInstance ||= echarts.init(lineChart.value)
   const entries = Object.entries(data)
   lineInstance.setOption({
     tooltip: { trigger: 'axis' },

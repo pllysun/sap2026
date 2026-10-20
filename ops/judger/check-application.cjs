@@ -10,7 +10,9 @@ async function api(route,method='GET',data,who=token,expected=200){const res=awa
 async function job(id,admin=false){for(let n=0;n<1200;n++){const data=await api((admin?'/api/admin/oj/jobs/':'/api/oj/submissions/')+id);if(!['RUNNING','QUEUED'].includes(data.status))return data;await wait(1000)}throw Error('Job timeout '+id)}
 const slugs=['luogu-p1001','leetcode-1','leetcode-20','leetcode-704','leetcode-53','leetcode-206']
 async function main(){
- token=(await api('/api/auth/admin/login','POST',{studentId:process.env.SAP_ADMIN_ACCOUNT||'oj_admin',password:process.env.SAP_ADMIN_PASSWORD||'JudgerLocal2026!'},null)).token
+ if(!process.env.SAP_ADMIN_ACCOUNT || !process.env.SAP_ADMIN_PASSWORD) throw new Error('请通过私有环境配置提供测试管理员账号和密码')
+ if(!production && !process.env.SAP_OJ_TEST_USER_PASSWORD) throw new Error('请提供隔离测试用户密码 SAP_OJ_TEST_USER_PASSWORD')
+ token=(await api('/api/auth/admin/login','POST',{studentId:process.env.SAP_ADMIN_ACCOUNT,password:process.env.SAP_ADMIN_PASSWORD},null)).token
  fs.writeFileSync(cache,JSON.stringify({token,base}),{mode:0o600})
  const health=await api('/api/admin/oj/health');assert.equal(health.available,true);assert.equal(health.enabled,true)
  const languages=await api('/api/admin/oj/languages');assert.equal(languages.length,5);assert(languages.find(x=>x.languageKey==='java').version.includes('27'))
@@ -37,7 +39,7 @@ async function main(){
  if(!production){
  const cfg=await api('/api/setting/registration-protection');for(const key of ['captcha','quotas','requests'])cfg.config[key].enabled=false
  await api('/api/setting/registration-protection','PUT',{revision:cfg.revision,config:cfg.config})
- const users=[];for(let i=1;i<=2;i++){const studentId='oj_test_'+i;const existing=await fetch(base+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({studentId,password:'LocalJudge2026!',name:'OJ测试'+i,qq:'10000000'+i,gender:0})});const result=await existing.json();assert([200,400].includes(result.code));users.push((await api('/api/auth/login','POST',{studentId,password:'LocalJudge2026!'},null)).token)}
+ const users=[];for(let i=1;i<=2;i++){const studentId='oj_test_'+i;const existing=await fetch(base+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({studentId,password:process.env.SAP_OJ_TEST_USER_PASSWORD,name:'OJ测试'+i,qq:'10000000'+i,gender:0})});const result=await existing.json();assert([200,400].includes(result.code));users.push((await api('/api/auth/login','POST',{studentId,password:process.env.SAP_OJ_TEST_USER_PASSWORD},null)).token)}
  await api('/api/admin/oj/problems','GET',undefined,users[0],403)
  const q=await api('/api/oj/run','POST',{problemId:first.id,language:'python',mode:'STDIO',code:'print(3)'},users[0]);await api('/api/oj/submissions/'+q.id,'GET',undefined,users[1],404);await api('/api/oj/submissions/'+q.id,'GET',undefined,users[0]);
  fs.writeFileSync(cache,JSON.stringify({token,base,userToken:users[0]}),{mode:0o600})

@@ -2,7 +2,6 @@ package edu.csuft.sap.webview
 
 import android.annotation.SuppressLint
 import android.webkit.CookieManager
-import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -66,13 +65,22 @@ private fun calendarUrl(base: String) = "$base/jsxsd/jxzl/jxzl_query"
 /** 仅把强智的具体课表路由视作可导入页，避免 xsMain/课程列表等页面被误判。 */
 internal fun isScheduleUrl(url: String?): Boolean {
     val uri = runCatching { java.net.URI.create(url) }.getOrNull() ?: return false
-    return uri.host.equals("http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", ignoreCase = true) &&
+    return uri.host.orEmpty().lowercase() in setOf("http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", "https-jwxt-csuft-edu-cn-443.webvpn.csuft.edu.cn") &&
         uri.path.orEmpty().lowercase().removeSuffix("/") == "/jsxsd/xskb/xskb_list.do"
 }
 
-// 取页面 outerHTML 经 SapBridge 回传（大字符串走 JS 接口，不走 evaluateJavascript 的 JSON 编码）
+// 由 App 主动获取受信学校页面的 HTML，不向网页注入原生 JS 接口。
 private const val JS_GRAB_HTML =
-    "(function(){try{var h=document.documentElement.outerHTML;var f=document.getElementById('Iframe1');if(f&&f.contentDocument&&f.contentDocument.documentElement&&f.contentDocument.documentElement.outerHTML.length>h.length/2){h=f.contentDocument.documentElement.outerHTML;}SapBridge.onHtml(h);}catch(e){SapBridge.onHtml(document.documentElement.outerHTML||'');}})();"
+    "(function(){try{var h=document.documentElement.outerHTML;var f=document.getElementById('Iframe1');if(f&&f.contentDocument&&f.contentDocument.documentElement&&f.contentDocument.documentElement.outerHTML.length>h.length/2){h=f.contentDocument.documentElement.outerHTML;}return h.length<=4000000?h:'';}catch(e){return '';}})();"
+
+internal fun isTrustedWebImportUrl(value: String?): Boolean {
+    val url = runCatching { java.net.URI.create(value.orEmpty()) }.getOrNull() ?: return false
+    return url.scheme.equals("https", true) && (url.port == -1 || url.port == 443) && url.userInfo == null &&
+        url.host.orEmpty().lowercase() in setOf("webvpn.csuft.edu.cn", "cas.csuft.edu.cn",
+            "https-cas-csuft-edu-cn-443.webvpn.csuft.edu.cn", "https-portal-csuft-edu-cn-443.webvpn.csuft.edu.cn",
+            "http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", "https-jwxt-csuft-edu-cn-443.webvpn.csuft.edu.cn", "https-jxzlpt-csuft-edu-cn-443.webvpn.csuft.edu.cn",
+            "http-jwgl-csuft-edu-cn-80.webvpn.csuft.edu.cn")
+}
 
 /**
  * 融合门户是单页应用，教务入口的票据由“教务系统”服务卡片点击时生成。
@@ -116,7 +124,7 @@ internal fun isWebvpnPortalUrl(u: String): Boolean {
 
 internal fun isJwFrameworkUrl(u: String): Boolean {
     val uri = runCatching { java.net.URI.create(u) }.getOrNull() ?: return false
-    return uri.host.equals("http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", ignoreCase = true) &&
+    return uri.host.orEmpty().lowercase() in setOf("http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn", "https-jwxt-csuft-edu-cn-443.webvpn.csuft.edu.cn") &&
         uri.path.orEmpty().lowercase().removeSuffix("/") == "/jsxsd/framework/xsmainv.htmlx"
 }
 
@@ -131,12 +139,13 @@ internal fun isUnexpectedWebvpnProxyLanding(u: String): Boolean {
     val host = uri.host.orEmpty().lowercase()
     return host.endsWith(".webvpn.csuft.edu.cn") &&
         host != "https-cas-csuft-edu-cn-443.webvpn.csuft.edu.cn" &&
-        host != "http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn"
+        host != "http-jwxt-csuft-edu-cn-80.webvpn.csuft.edu.cn" &&
+        host != "https-jwxt-csuft-edu-cn-443.webvpn.csuft.edu.cn"
 }
 
 private fun enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8")
 
-/** WebView 事件等待器：把 onPageFinished / SapBridge.onHtml 桥接给协程顺序驱动。 */
+/** WebView 页面完成与主动 HTML 读取回调，供协程顺序导入。 */
 private class WebWaiters {
     var onPage: ((String) -> Unit)? = null
     var onHtml: ((String) -> Unit)? = null
@@ -155,6 +164,7 @@ private class WebWaiters {
 fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val importOwner = remember { edu.csuft.sap.data.account.CurrentAccount.key }
     val fullFeatures = MemberState.hasFullAppFeatures
     val waiters = remember { WebWaiters() }
     var status by remember {
@@ -187,7 +197,13 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
                 cont.invokeOnCancellation { waiters.onHtml = null }
                 val wv = webView
                 if (wv == null) { waiters.onHtml = null; if (cont.isActive) cont.resume("") }
-                else wv.evaluateJavascript(JS_GRAB_HTML, null)
+                else if (!isTrustedWebImportUrl(wv.url)) { waiters.onHtml = null; if (cont.isActive) cont.resume("") }
+                else wv.evaluateJavascript(JS_GRAB_HTML) { raw ->
+                    val html = if (isTrustedWebImportUrl(wv.url))
+                        runCatching { org.json.JSONTokener(raw.orEmpty()).nextValue() as? String }.getOrNull().orEmpty()
+                        else ""
+                    waiters.onHtml?.invoke(html.takeIf { it.length <= 4_000_000 }.orEmpty())
+                }
             }
         }
 
@@ -221,7 +237,7 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
                 if (!isServiceUnavailableHtml(html) &&
                     withContext(Dispatchers.Default) { WebScheduleParser.parse(html) } != null
                 ) {
-                    activeJwBase = base
+                    activeJwBase = runCatching { java.net.URI.create(wv.url.orEmpty()).let { "${it.scheme}://${it.authority}" } }.getOrDefault(base)
                     return true
                 }
             }
@@ -319,6 +335,7 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
             CookieManager.getInstance().flush()
             if (withData.isNotEmpty()) {
                 stop("已导入 ${withData.size} 个学期、共 $cCount 门课")
+                Graph.scheduleUsage.webImported(importOwner)
                 onImported()
             } else {
                 stop("当前学期暂无课表数据，可「换账号」或稍后重试")
@@ -354,6 +371,7 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
             if (start != null) Graph.scheduleStore.setSemesterStart(AccountManager.WEBVIEW_ACCOUNT, res.term, start)
             CookieManager.getInstance().flush()
             stop("已导入「${res.term}」共 ${res.courses.size} 门课" + (start?.let { " · 开学日 $it" } ?: ""))
+            Graph.scheduleUsage.webImported(importOwner)
             onImported()
         }
     }
@@ -427,24 +445,31 @@ fun WebImportScreen(onClose: () -> Unit, onImported: () -> Unit) {
                         setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
                     }
                     CookieManager.getInstance().setAcceptCookie(true)
-                    CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                    CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.databaseEnabled = true
                     settings.javaScriptCanOpenWindowsAutomatically = true
                     settings.setSupportMultipleWindows(false)
-                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
                     webChromeClient = object : android.webkit.WebChromeClient() {
                         override fun onProgressChanged(view: WebView, newProgress: Int) {
                             if (newProgress < 100 && !busy) status = "页面加载中… $newProgress%"
                         }
                     }
-                    addJavascriptInterface(object {
-                        @JavascriptInterface fun onHtml(html: String) { post { waiters.onHtml?.invoke(html) } }
-                    }, "SapBridge")
                     webViewClient = object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
+                            if (!isTrustedWebImportUrl(request.url.toString())) {
+                                if (request.isForMainFrame) status = "已阻止打开学校登录与教务范围以外的页面"
+                                return true
+                            }
+                            return false
+                        }
                         override fun onPageFinished(view: WebView, url: String?) {
                             val u = url ?: ""
+                            if (!isTrustedWebImportUrl(u)) { view.stopLoading(); return }
                             waiters.onPage?.invoke(u)
                             // 先见 WebVPN CAS 登录页；回到明确的导航首页后再进强智，避免根路径/旧 returnUrl
                             // 把回调误送到教学质量系统登录页。门户卡片的 /login_znly 不作为 SSO 入口。

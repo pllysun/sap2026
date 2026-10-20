@@ -7,13 +7,16 @@ import edu.csuft.sap.data.remote.apiData
 import edu.csuft.sap.data.remote.dto.RegisterRequest
 import edu.csuft.sap.data.remote.dto.RegisterEmailRequest
 import edu.csuft.sap.data.remote.dto.RegistrationEmailData
+import edu.csuft.sap.data.remote.dto.RegistrationPolicyDto
 import java.util.Base64
 
 enum class RegistrationResult { REGISTERED, CAPTCHA_REQUIRED }
 
 data class RegistrationCaptcha(val id: String, val image: ByteArray)
+data class RegistrationPolicy(val emailVerificationRequired: Boolean)
 
 interface RegistrationGateway {
+    suspend fun policy(): Outcome<RegistrationPolicy>
     suspend fun register(request: RegisterRequest): Outcome<RegistrationResult>
     suspend fun captcha(): Outcome<RegistrationCaptcha>
     suspend fun requestEmailCode(request: RegisterEmailRequest): Outcome<RegistrationEmailData>
@@ -21,6 +24,11 @@ interface RegistrationGateway {
 
 /** 注册不会创建 App 会话；完成后仍需走原有登录与协议确认流程。 */
 class RegistrationRepository(private val api: ApiService) : RegistrationGateway {
+    override suspend fun policy(): Outcome<RegistrationPolicy> =
+        when (val result = apiData { api.registrationPolicy() }) {
+            is Outcome.Success -> parseRegistrationPolicy(result.data)
+            is Outcome.Error -> result
+        }
     override suspend fun requestEmailCode(request: RegisterEmailRequest): Outcome<RegistrationEmailData> =
         when (val result = apiData { api.registrationEmailCode(request) }) {
             is Outcome.Success -> if (result.data.captchaRequired ||
@@ -51,6 +59,13 @@ class RegistrationRepository(private val api: ApiService) : RegistrationGateway 
             }
             is Outcome.Error -> result
         }
+}
+
+internal fun parseRegistrationPolicy(data: RegistrationPolicyDto): Outcome<RegistrationPolicy> {
+    val emailRequired = data.emailVerificationRequired
+    if (emailRequired == null || data.joinEnabled == null || data.joinEnabled == emailRequired || data.captchaRequired != true)
+        return Outcome.Error("注册方式返回异常，请重新加载")
+    return Outcome.Success(RegistrationPolicy(emailRequired))
 }
 
 internal fun parseRegistrationResult(data: JsonElement): Outcome<RegistrationResult> {

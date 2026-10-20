@@ -3,6 +3,7 @@ package com.sap.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -30,8 +31,19 @@ public class JoinApplication {
     @jakarta.persistence.Column(name = "payment_code", length = 100, columnDefinition = "VARCHAR(100) COMMENT '支付编码'")
     private String paymentCode;
 
-    /** 状态：0待提交 1已提交 2已通过 */
-    @jakarta.persistence.Column(name = "status", columnDefinition = "TINYINT DEFAULT 0 COMMENT '0待提交 1已提交 2已通过'")
+    /** 申请时的入会届别、会费快照；旧申请为空时兼容当前配置。 */
+    @jakarta.persistence.Column(name = "grade", length = 10)
+    private String grade;
+
+    @jakarta.persistence.Column(name = "membership_fee", precision = 10, scale = 2)
+    private BigDecimal membershipFee;
+
+    /** 退回原因，保留至申请人修正并重新提交。 */
+    @jakarta.persistence.Column(name = "review_note", length = 500)
+    private String reviewNote;
+
+    /** 状态：0待提交 1已提交 2已通过 3待补充 */
+    @jakarta.persistence.Column(name = "status", columnDefinition = "TINYINT DEFAULT 0 COMMENT '0待提交 1已提交 2已通过 3待补充'")
     private Integer status;
 
     /** 分配负责人时间 */

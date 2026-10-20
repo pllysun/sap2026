@@ -1,0 +1,8 @@
+*
+!backend/
+!backend/target/
+!backend/target/sap-oj.jar
+!docker/
+!docker/data/
+!docker/data/.keep
+!docker/healthcheck.sh

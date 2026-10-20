@@ -53,8 +53,8 @@ class ClassScheduleTaskServiceTest {
         tasks.resume(10L, challenge, "123456");
         verifyNoInteractions(sessions);
         work.remove().run();
-        verify(sessions).cache(10L, "test", session);
-        verify(schedules).pullAs(10L, "test", "term", "MANUAL", 10L, null, batch);
+        verifyNoInteractions(sessions);
+        verify(schedules).pullWithSession(10L, "test", "term", "MANUAL", null, batch, session);
         assertNull(tasks.activeBatchId());
     }
 

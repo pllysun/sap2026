@@ -75,6 +75,15 @@ class AuthServiceTest extends BaseUnitTest {
         assertEquals(java.util.Set.of("s-ok2|127.0.0.1"),locks.keySet());
     }
 
+    @Test void equivalentAccountSpellingsShareTheFailedLoginLock() {
+        when(userMapper.selectOne(any())).thenReturn(null);
+        for (String account : List.of("user", "USER", " user ", "usér", "uSeR"))
+            assertThrows(BusinessException.class, () -> service.login(loginDto(account, "wrong")));
+        var ex=assertThrows(BusinessException.class, () -> service.login(loginDto("USER", "wrong")));
+        assertTrue(ex.getMessage().contains("临时锁定"));
+        verify(userMapper,times(5)).selectOne(any());
+    }
+
     @Test
     void login_success_returnsTokenAndUserVO() {
         User u = user(1L, "S-ok", "pw", 1);
@@ -262,7 +271,8 @@ class AuthServiceTest extends BaseUnitTest {
         RegisterDTO dto = new RegisterDTO();
         dto.setStudentId("dup");
         BusinessException ex = assertThrows(BusinessException.class, () -> service.register(dto));
-        assertEquals("该学号已注册", ex.getMessage());
+        assertTrue(ex.getMessage().contains("该学号已注册"));
+        assertTrue(ex.getMessage().contains("登录"));
         verify(userMapper, never()).insert(any());
     }
 

@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController @RequestMapping("/api/admin/oj/nodes") @RequiredArgsConstructor
-@SaCheckRole(value={"0","1","2"},mode=SaMode.OR)
+@SaCheckRole(value={"0","1"},mode=SaMode.OR)
 public class OjNodeController {
     private final JudgerNodes nodes;
     @GetMapping @OperationLog("算法题库：查看判题节点与资源")

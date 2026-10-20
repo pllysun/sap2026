@@ -1,11 +1,11 @@
 <template>
-  <div class="page">
+  <div class="page activities-page">
     <PageHeader title="软协活动" label="OUR MOMENTS / 协会日常" description="一起探索、一起实践，把值得记住的瞬间留下。" />
 
     <div v-if="initialLoading" class="loading"><div class="loading__spinner"></div></div>
 
-    <div v-else-if="activities.length === 0" class="empty">
-      <div style="font-size:3rem; margin-bottom: var(--s3); opacity:0.4;">📅</div>
+    <div v-else-if="!loadError && activities.length === 0" class="empty">
+      <UiIcon name="calendar" :size="36" class="act-empty-icon" />
       <div class="empty__text">暂无活动记录</div>
     </div>
 
@@ -26,19 +26,20 @@
             alt=""
             class="act-featured__img"
           />
-          <div v-else class="act-featured__img-placeholder">📸</div>
+          <div v-else class="act-featured__img-placeholder"><UiIcon name="image" :size="48" /></div>
           <div class="act-featured__overlay">
             <span class="badge badge--gradient">{{ activities[0].grade }}</span>
           </div>
         </div>
         <div class="act-featured__body">
+          <span class="act-featured__eyebrow">最新相册</span>
           <h2 class="act-featured__title">{{ activities[0].title }}</h2>
           <p class="act-featured__desc" v-if="activities[0].content">{{ activities[0].content }}</p>
-          <p class="act-featured__desc act-featured__desc--empty" v-else>暂无描述，等待补充精彩记忆。</p>
           <div class="act-featured__meta">
-            <span>📅 {{ formatTime(activities[0].createdAt) }}</span>
-            <span v-if="activities[0].images && activities[0].images.length > 1">📷 {{ activities[0].images.length }} 张照片</span>
+            <span><UiIcon name="calendar" :size="15" />发布于 {{ formatTime(activities[0].createdAt) }}</span>
+            <span v-if="activities[0].images?.length"><UiIcon name="image" :size="15" />{{ activities[0].images.length }} 张照片</span>
           </div>
+          <span class="act-featured__link">打开活动相册<UiIcon name="arrow-right" :size="16" /></span>
         </div>
       </div>
 
@@ -58,8 +59,9 @@
               :src="act.images[0].imageUrl"
               alt=""
               class="act-card__img"
+              loading="lazy" decoding="async"
             />
-            <div v-else class="act-card__img-placeholder">📸</div>
+            <div v-else class="act-card__img-placeholder"><UiIcon name="image" :size="36" /></div>
             <span class="act-card__badge">{{ act.grade }}</span>
             <div v-if="act.images && act.images.length > 1" class="act-card__count">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 4-4 5 5"/></svg>
@@ -70,7 +72,7 @@
             <h3 class="act-card__title">{{ act.title }}</h3>
             <p class="act-card__desc" v-if="act.content">{{ act.content }}</p>
             <div class="act-card__footer">
-              <span class="t-caption">📅 {{ formatTime(act.createdAt) }}</span>
+              <span class="t-caption"><UiIcon name="calendar" :size="14" />{{ formatTime(act.createdAt) }}</span><UiIcon name="arrow-right" :size="16" />
             </div>
           </div>
         </div>
@@ -78,9 +80,10 @@
     </div>
 
     <!-- Load more -->
+    <div v-if="loadError" class="act-load-error" role="alert"><p>{{ loadError }}</p><button class="btn btn--secondary btn--sm" @click="loadPage">重新加载</button></div>
     <div class="load-more-area" ref="loadMoreRef">
       <div v-if="loadingMore" class="loading" style="padding: 24px 0;"><div class="loading__spinner"></div></div>
-      <div v-else-if="noMore && activities.length > 0" class="t-caption" style="text-align: center; padding: 24px 0; color: var(--ink-400);">已加载全部活动 ✨</div>
+      <div v-else-if="noMore && activities.length > 0" class="t-caption" style="text-align: center; padding: 24px 0; color: var(--ink-400);">已加载全部活动</div>
     </div>
 
     <!-- Detail Modal -->
@@ -88,7 +91,7 @@
       <Transition name="modal">
         <div v-if="detailAct" class="act-modal-overlay" @click.self="detailAct = null">
           <div ref="activityDialog" class="act-modal" role="dialog" aria-modal="true" aria-labelledby="activity-detail-title" tabindex="-1">
-            <button class="act-modal__close" aria-label="关闭活动详情" @click="detailAct = null">✕</button>
+            <button class="act-modal__close" aria-label="关闭活动详情" @click="detailAct = null"><UiIcon name="close" :size="18" /></button>
 
             <!-- Image Carousel -->
             <div class="act-modal__carousel" v-if="detailAct.images && detailAct.images.length">
@@ -101,12 +104,12 @@
                 <button class="act-modal__nav act-modal__nav--prev" aria-label="上一张活动照片" @click="carouselIdx = Math.max(0, carouselIdx - 1)" :disabled="carouselIdx === 0"><UiIcon name="chevron-left" :size="22" /></button>
                 <button class="act-modal__nav act-modal__nav--next" aria-label="下一张活动照片" @click="carouselIdx = Math.min(detailAct.images.length - 1, carouselIdx + 1)" :disabled="carouselIdx === detailAct.images.length - 1"><UiIcon name="chevron-right" :size="22" /></button>
                 <div class="act-modal__dots">
-                  <span v-for="(_, i) in detailAct.images" :key="i" class="act-modal__dot" :class="{ active: i === carouselIdx }" @click="carouselIdx = i"></span>
+                  <button v-for="(_, i) in detailAct.images" :key="i" class="act-modal__dot" :class="{ active: i === carouselIdx }" :aria-label="`查看第 ${i + 1} 张照片`" :aria-pressed="i === carouselIdx" @click="carouselIdx = i"></button>
                 </div>
               </template>
             </div>
             <div v-else class="act-modal__no-img">
-              <span style="font-size: 3rem; opacity: 0.3;">📷</span>
+              <UiIcon name="image" :size="36" />
               <span class="t-caption">暂无活动照片</span>
             </div>
 
@@ -117,21 +120,21 @@
                 <span class="badge badge--primary">{{ detailAct.grade }}</span>
               </div>
               <div class="act-modal__info">
-                <span>📅 {{ formatTime(detailAct.createdAt) }}</span>
-                <span v-if="detailAct.images && detailAct.images.length">📷 {{ detailAct.images.length }} 张照片</span>
+                <span><UiIcon name="calendar" :size="15" />{{ formatTime(detailAct.createdAt) }}</span>
+                <span v-if="detailAct.images && detailAct.images.length"><UiIcon name="image" :size="15" />{{ detailAct.images.length }} 张照片</span>
               </div>
               <div class="act-modal__content" v-if="detailAct.content">{{ detailAct.content }}</div>
               <div class="act-modal__content act-modal__content--empty" v-else>暂无活动描述。</div>
 
               <!-- Thumbnail strip -->
               <div v-if="detailAct.images && detailAct.images.length > 1" class="act-modal__thumbs">
-                <img
+                <button
                   v-for="(img, i) in detailAct.images" :key="i"
-                  :src="img.imageUrl" alt=""
                   class="act-modal__thumb"
                   :class="{ active: i === carouselIdx }"
+                  :aria-label="`选择照片 ${i + 1}`" :aria-pressed="i === carouselIdx"
                   @click="carouselIdx = i"
-                />
+                ><img :src="img.imageUrl" alt="" loading="lazy" /></button>
               </div>
             </div>
           </div>
@@ -159,6 +162,7 @@ import { useDialog } from '@/utils/useDialog'
 const activities = ref([])
 const initialLoading = ref(true)
 const loadingMore = ref(false)
+const loadError = ref('')
 const previewImg = ref(null)
 const detailAct = ref(null)
 const activityDialog = ref(null), imageDialog = ref(null)
@@ -182,6 +186,7 @@ function openDetail(act) {
 async function loadPage() {
   if (loadingMore.value || noMore.value) return
   loadingMore.value = true
+  loadError.value = ''
   try {
     const r = await request.get('/api/activity/page', { params: { current: currentPage.value, size: pageSize } })
     const data = r.data || {}
@@ -193,14 +198,14 @@ async function loadPage() {
     } else {
       currentPage.value++
     }
-  } catch {}
+  } catch { loadError.value = '活动暂时未能加载，请稍后重试。' }
   finally { loadingMore.value = false }
 }
 
 function setupObserver() {
   if (!loadMoreRef.value) return
   observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && !loadingMore.value && !noMore.value) {
+    if (entries[0].isIntersecting && !loadingMore.value && !noMore.value && !loadError.value) {
       loadPage()
     }
   }, { rootMargin: '200px' })
@@ -665,9 +670,54 @@ function formatTime(t) { return t ? new Date(t).toLocaleDateString('zh-CN') : ''
   .act-cards { grid-template-columns: 1fr; }
   .act-card__img-wrap { aspect-ratio: 16 / 9; }
 }
+
+/* Photo-led archive: a quiet heading and a generous, readable feature. */
+.activities-page :deep(.page-header) { background: transparent; border: 0; border-radius: 0; padding: 0 0 1.75rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--ink-200); }
+.activities-page :deep(.page-header__art) { display: none; }
+.activities-page :deep(.page-title) { font-size: 2.5rem; }
+.activities-page :deep(.page-kicker) { letter-spacing: .16em; }
+.act-featured { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); min-height: 0; border-color: var(--ink-200); box-shadow: none; }
+.act-featured__img-wrap { aspect-ratio: 3 / 2; background: #eceff4; }
+.act-featured__img { position: absolute; inset: 0; }
+.act-featured__body { padding: clamp(1.5rem, 3vw, 3rem); align-items: flex-start; }
+.act-featured__eyebrow { color: var(--primary); font-size: .75rem; letter-spacing: .14em; font-weight: 600; margin-bottom: 1.5rem; }
+.act-featured__title { font-size: clamp(1.5rem, 2vw, 2rem); line-height: 1.5; margin-bottom: 1rem; text-wrap: pretty; }
+.act-featured__desc { font-size: .9375rem; line-height: 1.9; }
+.act-featured__meta { align-items: flex-start; flex-direction: column; gap: .75rem; font-size: .8125rem; color: var(--ink-500); margin-top: .5rem; }
+.act-featured__meta span, .act-modal__info span, .act-card__footer span { display: inline-flex; align-items: center; gap: 7px; }
+.act-featured__link { display: inline-flex; align-items: center; gap: 1rem; margin-top: 2rem; padding-bottom: 5px; border-bottom: 1px solid #b9c5e3; font-size: .875rem; color: var(--primary); font-weight: 600; }
+.act-featured__link svg { transition: transform .2s; }
+.act-featured:hover .act-featured__link svg { transform: translateX(4px); }
+.act-cards { gap: 1.5rem; }
+.act-card__body { padding: 1.25rem; }
+.act-card__title { font-size: 1.125rem; line-height: 1.6; }
+.act-card__desc { font-size: .875rem; line-height: 1.85; }
+.act-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 1.25rem; padding-top: .875rem; color: var(--ink-500); }
+.act-card__badge, .act-card__count { font-size: .75rem; }
+.act-featured__img-placeholder, .act-card__img-placeholder { background: #eceff7; color: #647290; opacity: 1; }
+.act-empty-icon { color: var(--ink-500); margin-bottom: 12px; }
+.act-load-error { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; padding: 24px; color: var(--ink-600); }
+.act-modal__carousel { background: #eef1f7; }
+.act-modal__dot { width: 24px; height: 24px; background: transparent; border-radius: 50%; position: relative; }
+.act-modal__dot::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #52617a99; }
+.act-modal__dot.active { width: 24px; background: transparent; }
+.act-modal__dot.active::after { inset: 6px; background: var(--primary); border: 2px solid #fff; }
+.act-modal__thumb { padding: 0; overflow: hidden; }
+.act-modal__thumb img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 768px) {
+  .activities-page :deep(.page-title) { font-size: 2rem; }
+  .act-featured { grid-template-columns: 1fr; }
+  .act-featured__img-wrap { aspect-ratio: 3 / 2; }
+  .act-featured__body { padding: 1.5rem; }
+  .act-featured__eyebrow { margin-bottom: .75rem; }
+  .act-featured__meta { flex-direction: row; flex-wrap: wrap; }
+  .act-featured__link { margin-top: 1.25rem; }
+  .act-cards { gap: 1rem; }
+}
+
 </style>
 
 <style scoped>
-.act-modal-overlay { padding: 24px; }.act-modal { max-height: calc(100dvh - 48px); overscroll-behavior: contain; border: 1px solid var(--border-blue); border-radius: 18px; }.act-modal__title, .act-modal__content { overflow-wrap: anywhere; }.act-modal__title { padding-right: 22px; }.preview-close { position: absolute; right: max(18px, env(safe-area-inset-right)); top: max(18px, env(safe-area-inset-top)); width: 44px; height: 44px; font-size: 28px; border-radius: 50%; color: #fff; background: #ffffff26; z-index: 2; }.act-preview-img { object-fit: contain; max-height: calc(100dvh - 110px); }
-@media (max-width: 600px) { .act-modal-overlay { padding: 12px; }.act-modal { margin: 0; max-height: calc(100dvh - 24px); }.act-modal__body { padding: 20px; }.act-modal__title { font-size: 20px; }.act-modal__carousel { height: auto; aspect-ratio: 4/3; }.act-modal__slide img { height: 100%; object-fit: contain; }.act-modal__info { flex-wrap: wrap; }.act-modal__thumbs { padding-bottom: 6px; } }
+.act-modal-overlay { padding: 24px; }.act-modal { max-height: calc(100dvh - 48px); overscroll-behavior: contain; border: 1px solid var(--border-blue); border-radius: 18px; }.act-modal__title, .act-modal__content { overflow-wrap: anywhere; }.act-modal__title { padding-right: 22px; }.preview-close { position: absolute; right: max(18px, env(safe-area-inset-right)); top: max(18px, env(safe-area-inset-top)); width: 44px; height: 44px; font-size: 1.75rem; border-radius: 50%; color: #fff; background: #ffffff26; z-index: 2; }.act-preview-img { object-fit: contain; max-height: calc(100dvh - 110px); }
+@media (max-width: 600px) { .act-modal-overlay { padding: 12px; }.act-modal { margin: 0; max-height: calc(100dvh - 24px); }.act-modal__body { padding: 20px; }.act-modal__title { font-size: 1.25rem; }.act-modal__carousel { height: auto; aspect-ratio: 4/3; }.act-modal__slide img { height: 100%; object-fit: contain; }.act-modal__info { flex-wrap: wrap; }.act-modal__thumbs { padding-bottom: 6px; } }
 </style>

@@ -22,6 +22,8 @@ public class PositionService {
     }
 
     public void addPosition(Position position) {
+        if (position.getRoleCode() == null || position.getRoleCode() < 0 || position.getRoleCode() > 4)
+            throw new BusinessException(400, "身份角色必须在 0–4 之间");
         position.setIsSystem(0);
         positionMapper.insert(position);
     }

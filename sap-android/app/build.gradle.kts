@@ -14,14 +14,14 @@ android {
         applicationId = "edu.csuft.sap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 118
-        versionName = "2.3"
+        versionCode = 136
+        versionName = "2.6"
         // 后端地址：模拟器用 10.0.2.2 指向宿主机；真机改成局域网IP或部署域名
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081\"")
     }
 
     // 发版签名：从项目根目录的 keystore.properties 读取（该文件不入库）。
-    // 缺该文件时 release 回退用 debug 签名，保证 CI/本地仍能打包（但请勿用 debug 签名分发）。
+    // release 必须使用正式签名，缺失时构建直接失败；debug 构建不受影响。
     // keystore.properties 示例：
     //   storeFile=/绝对路径/sap-release.jks
     //   storePassword=xxxx
@@ -58,7 +58,7 @@ android {
             // 正式环境后端域名（应用内升级 + 所有接口都走它，https）
             buildConfigField("String", "BASE_URL", "\"https://csuftsap.top\"")
             signingConfig = if (keystorePropsFile.exists())
-                signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+                signingConfigs.getByName("release") else null
         }
     }
 
@@ -116,3 +116,9 @@ tasks.register<Copy>("copyReleaseApk") {
     doLast { println("✓ release APK + mapping -> $releaseOutDir") }
 }
 // 不自动归档：测试包和正式发布包的目录/命名由 build-release.sh 按显式模式控制。
+
+// 测试分发包同样使用正式证书，禁止静默退回调试签名。
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.name == "packageRelease" } && !rootProject.file("keystore.properties").exists())
+        error("缺少 keystore.properties，不能构建可分发 APK")
+}

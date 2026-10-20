@@ -31,6 +31,12 @@ public class DashboardController {
     @Autowired private StudyService studyService;
     @Autowired private SettingMapper settingMapper;
     @Autowired private TermMapper termMapper;
+    @Autowired private DashboardInsightsService insights;
+
+    @GetMapping("/insights")
+    public Result<?> insights() {
+        return Result.ok(insights.overview(cn.dev33.satoken.stp.StpUtil.hasRole("0")||cn.dev33.satoken.stp.StpUtil.hasRole("1")));
+    }
 
     @GetMapping("/stats")
     @OperationLog("查询仪表盘统计")
@@ -49,15 +55,13 @@ public class DashboardController {
 
         if ("all".equals(grade)) {
             // 全部数据
-            Long memberCount = termMapper.selectCount(null);
+            Long memberCount = termMapper.countMembers(null);
             stats.put("userCount", memberCount);
             stats.put("activityCount", activityService.countActivities());
             stats.put("studyActivityCount", studyService.countStudyActivities());
             stats.put("financeStats", billService.getStats(null));
         } else {
-            Long memberCount = termMapper.selectCount(
-                    new LambdaQueryWrapper<Term>().eq(Term::getGrade, currentGrade)
-            );
+            Long memberCount = termMapper.countMembers(currentGrade);
             stats.put("userCount", memberCount);
             stats.put("activityCount", activityService.countActivitiesByGrade(currentGrade));
             stats.put("studyActivityCount", studyService.countStudyActivitiesByGrade(currentGrade));
@@ -69,21 +73,6 @@ public class DashboardController {
     @GetMapping("/grade-stats")
     @OperationLog("查询历届成员统计")
     public Result<?> gradeStats() {
-        LambdaQueryWrapper<Term> gradeWrapper = new LambdaQueryWrapper<>();
-        gradeWrapper.select(Term::getGrade).groupBy(Term::getGrade).orderByAsc(Term::getGrade);
-        List<Term> gradeTerms = termMapper.selectList(gradeWrapper);
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Term gt : gradeTerms) {
-            String g = gt.getGrade();
-            Long count = termMapper.selectCount(
-                    new LambdaQueryWrapper<Term>().eq(Term::getGrade, g)
-            );
-            Map<String, Object> item = new HashMap<>();
-            item.put("grade", g);
-            item.put("count", count);
-            result.add(item);
-        }
-        return Result.ok(result);
+        return Result.ok(termMapper.countsByGrade());
     }
 }

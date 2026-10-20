@@ -3,7 +3,7 @@ package com.sap.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import com.sap.common.Result;
 import com.sap.dto.LoginDTO;
-import com.sap.dto.RegisterDTO;
+import com.sap.dto.AppRegisterDTO;
 import com.sap.service.AuthService;
 import com.sap.service.RegistrationProtectionService;
 import com.sap.common.BusinessException;
@@ -32,6 +32,7 @@ class AuthControllerTest {
     @Mock com.sap.service.CaptchaService captchaService;
     @Mock RegistrationProtectionService registrationProtection;
     @Mock RegistrationProtectionService.Permit permit;
+    @Mock com.sap.service.AppRegistrationService emailRegistration;
 
     @InjectMocks AuthController controller;
 
@@ -59,44 +60,20 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_returnsSuccessMessage() {
-        when(captchaService.requiresCaptchaForAttempt(any())).thenReturn(false);
-        when(registrationProtection.acquire(any(), any())).thenReturn(permit);
-        Result<?> result = controller.register(new RegisterDTO(),
-                new org.springframework.mock.web.MockHttpServletRequest());
-
-        assertEquals(200, result.getCode());
+    void register_delegatesOnlyToVerifiedEmailFlow() {
+        var dto = new AppRegisterDTO();
+        var result = controller.register(dto, new org.springframework.mock.web.MockHttpServletRequest());
         assertEquals("注册成功", result.getData());
-        verify(authService).register(any());
-        verify(permit).close();
+        verify(emailRegistration).register(dto, "127.0.0.1");
+        verifyNoInteractions(authService, captchaService, registrationProtection);
     }
 
     @Test
-    void register_whenRiskTriggered_returnsCaptchaRequired() {
-        // 风控触发且未带验证码 → 返回 captchaRequired，不创建用户
-        when(captchaService.requiresCaptchaForAttempt(any())).thenReturn(true);
-        Result<?> result = controller.register(new RegisterDTO(),
-                new org.springframework.mock.web.MockHttpServletRequest());
-
-        assertEquals(200, result.getCode());
-        assertTrue(result.getData() instanceof Map);
-        assertEquals(Boolean.TRUE, ((Map<?, ?>) result.getData()).get("captchaRequired"));
-        verify(authService, never()).register(any());
-    }
-
-    @Test
-    void register_whenRiskTriggered_wrongCaptcha_returnsError() {
-        // 风控触发且验证码错误 → 返回错误，不创建用户
-        when(captchaService.requiresCaptchaForAttempt(any())).thenReturn(true);
-        when(captchaService.verify(any(), any(), any())).thenReturn(false);
-        RegisterDTO dto = new RegisterDTO();
-        dto.setCaptchaId("cid");
-        dto.setCaptchaCode("bad");
-        Result<?> result = controller.register(dto,
-                new org.springframework.mock.web.MockHttpServletRequest());
-
-        assertNotEquals(200, result.getCode());
-        verify(authService, never()).register(any());
+    void register_rejectsInvalidEmailChallengeWithoutLegacyBypass() {
+        doThrow(new BusinessException(400, "邮箱验证码错误")).when(emailRegistration).register(any(), any());
+        assertThrows(BusinessException.class, () -> controller.register(new AppRegisterDTO(),
+                new org.springframework.mock.web.MockHttpServletRequest()));
+        verifyNoInteractions(authService);
     }
 
     @Test
@@ -109,36 +86,6 @@ class AuthControllerTest {
 
         assertEquals(200, result.getCode());
         assertEquals(data, result.getData());
-    }
-
-    @Test
-    void register_validCaptcha_reservesQuotaBeforeDatabase_andReleasesOnFailure() {
-        when(captchaService.requiresCaptchaForAttempt(any())).thenReturn(true);
-        when(captchaService.verify("cid", "ABC123", "127.0.0.1")).thenReturn(true);
-        when(registrationProtection.acquire("127.0.0.1", "123456")).thenReturn(permit);
-        RegisterDTO dto = new RegisterDTO();
-        dto.setCaptchaId("cid");
-        dto.setCaptchaCode("ABC123");
-        dto.setQq("123456");
-        doThrow(new BusinessException("该学号已注册")).when(authService).register(dto);
-
-        assertThrows(BusinessException.class, () -> controller.register(dto,
-                new org.springframework.mock.web.MockHttpServletRequest()));
-        var order = inOrder(captchaService, registrationProtection, authService, permit);
-        order.verify(captchaService).requiresCaptchaForAttempt("127.0.0.1");
-        order.verify(captchaService).verify("cid", "ABC123", "127.0.0.1");
-        order.verify(registrationProtection).acquire("127.0.0.1", "123456");
-        order.verify(authService).register(dto);
-        order.verify(permit).close();
-    }
-
-    @Test
-    void register_quotaExceeded_neverCreatesAccount() {
-        when(registrationProtection.acquire(any(), any())).thenThrow(new BusinessException(429, "注册过于频繁"));
-        BusinessException error = assertThrows(BusinessException.class, () -> controller.register(new RegisterDTO(),
-                new org.springframework.mock.web.MockHttpServletRequest()));
-        assertEquals(429, error.getCode());
-        verifyNoInteractions(authService);
     }
 
     @Test

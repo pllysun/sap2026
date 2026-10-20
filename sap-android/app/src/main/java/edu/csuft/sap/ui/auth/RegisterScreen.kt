@@ -90,7 +90,7 @@ fun RegisterScreen(
     // 显式处理注册页返回，避免导航组件在输入法收起/返回栈切换时重复处理预测返回。
     // 提交期间等待结果，防止服务端已注册而客户端丢失成功提示。
     BackHandler { if (!state.loading) onBack() }
-    RegistrationContent(state, vm::edit, vm::submit, vm::refreshCaptcha, onBack, vm::captchaImageFailed, vm::sendEmailCode)
+    RegistrationContent(state, vm::edit, vm::submit, vm::refreshCaptcha, onBack, vm::captchaImageFailed, vm::sendEmailCode, vm::loadPolicy)
 }
 
 @Composable
@@ -102,6 +102,7 @@ internal fun RegistrationContent(
     onBack: () -> Unit,
     onCaptchaImageFailed: (String) -> Unit = {},
     onSendEmailCode: () -> Unit = {},
+    onRetryPolicy: () -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
     val focus = LocalFocusManager.current
@@ -133,7 +134,8 @@ internal fun RegistrationContent(
         state.fieldErrors.keys.firstOrNull { it != RegistrationField.GENDER }?.let { fields.getValue(it).requestFocus() }
     }
     LaunchedEffect(state.captcha?.id) {
-        if (state.captchaRequired && state.captcha != null) fields.getValue(RegistrationField.CAPTCHA).requestFocus()
+        if (state.validationAttempt > 0 && state.captchaRequired && state.captcha != null)
+            fields.getValue(RegistrationField.CAPTCHA).requestFocus()
     }
     LaunchedEffect(state.emailRequestId) {
         if (state.emailRequestId != null) fields.getValue(RegistrationField.EMAIL_CODE).requestFocus()
@@ -169,6 +171,21 @@ internal fun RegistrationContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = colors.primaryContainer.copy(alpha = 0.45f)) {
+                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(when {
+                                state.policyLoading -> "正在获取注册方式…"
+                                !state.policyLoaded -> "注册方式加载失败"
+                                state.emailVerificationRequired -> "验证 QQ 邮箱后即可创建账号"
+                                else -> "入会通道开放中 · 图形验证即可注册"
+                            }, color = colors.primary, fontSize = 12.sp, lineHeight = 18.sp,
+                                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                            if (state.policyError != null) {
+                                Text(state.policyError, color = colors.error, fontSize = 12.sp, lineHeight = 18.sp)
+                                TextButton(onClick = onRetryPolicy, enabled = !state.busy) { Text("重新获取注册方式") }
+                            }
+                        }
+                    }
                     RegistrationTextField(
                         "学号", state.form.studentId, { onEdit(RegistrationField.STUDENT_ID, it.take(20)) }, "请输入学号",
                         state.fieldErrors[RegistrationField.STUDENT_ID], !state.busy, AppIcons.Profile,
@@ -226,12 +243,14 @@ internal fun RegistrationContent(
                         onNext = { fields.getValue(if (state.captchaRequired) RegistrationField.CAPTCHA else RegistrationField.EMAIL_CODE).requestFocus() },
                         modifier = Modifier.focusRequester(fields.getValue(RegistrationField.QQ)),
                     )
-                    Text(if (state.form.qq.trim().matches(Regex("[1-9][0-9]{4,14}")))
+                    Text(if (!state.emailVerificationRequired) "请准确填写 QQ 号，用于联系和找回密码，无需收取注册邮件"
+                        else if (state.form.qq.trim().matches(Regex("[1-9][0-9]{4,14}")))
                         "验证邮箱：${state.form.qq.trim()}@qq.com" else "手机端注册需要验证 QQ 邮箱，请准确填写 QQ 号",
                         fontSize = 12.sp, lineHeight = 18.sp, color = colors.onSurfaceVariant)
                     if (state.captchaRequired) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("发送邮箱验证码前，请完成图片验证", fontSize = 12.sp, lineHeight = 18.sp, color = colors.primary,
+                            Text(if (state.emailVerificationRequired) "发送邮箱验证码前，请完成图片验证" else "输入图中字符，即可完成注册",
+                                fontSize = 12.sp, lineHeight = 18.sp, color = colors.primary,
                                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                             CaptchaImage(state, onRefreshCaptcha, onCaptchaImageFailed)
                             state.error?.let {
@@ -241,11 +260,13 @@ internal fun RegistrationContent(
                             RegistrationTextField(
                                 "图形验证码", state.form.captchaCode, { onEdit(RegistrationField.CAPTCHA, it.take(6)) }, "请输入图中字符",
                                 state.fieldErrors[RegistrationField.CAPTCHA], !state.busy && state.captcha != null, AppIcons.Shield,
-                                keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done, onDone = sendEmail,
+                                keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done,
+                                onDone = if (state.emailVerificationRequired) sendEmail else submit,
                                 modifier = Modifier.focusRequester(fields.getValue(RegistrationField.CAPTCHA)),
                             )
                         }
                     }
+                    if (state.emailVerificationRequired) {
                     OutlinedButton(onClick = sendEmail, enabled = state.canSendEmail,
                         shape = RoundedCornerShape(13.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(when {
@@ -271,6 +292,7 @@ internal fun RegistrationContent(
                         keyboardType = KeyboardType.Number, imeAction = ImeAction.Done, onDone = submit,
                         modifier = Modifier.focusRequester(fields.getValue(RegistrationField.EMAIL_CODE)),
                     )
+                    }
                     Button(
                         onClick = submit, enabled = state.canSubmit,
                         shape = RoundedCornerShape(13.dp),
@@ -281,7 +303,7 @@ internal fun RegistrationContent(
                     ) {
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (state.busy) SyncIcon(true, Modifier.size(20.dp), tint = colors.onPrimary)
-                            Text(if (state.loading) "正在注册" else "验证邮箱并注册",
+                            Text(if (state.loading) "正在注册" else if (state.emailVerificationRequired) "验证邮箱并注册" else "创建账号",
                                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }

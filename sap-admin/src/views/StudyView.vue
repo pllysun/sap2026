@@ -456,6 +456,7 @@ import {
   getSettingValue, submitScore, getUserInfo, getGrades,
   getHomeworkSchedule
 } from '../api'
+import { openStoredFile } from '../utils/downloadFile'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const studyActivities = ref([])
@@ -909,15 +910,18 @@ const scheduleCountdown = (publishTime) => {
 const downloadFile = (material) => {
   if (material?.fileUrl) {
     const name = material.fileName || material.fileUrl.split('/').pop()
-    window.open(`/api/file/go?url=${encodeURIComponent(material.fileUrl)}&name=${encodeURIComponent(name)}`, '_blank')
+    openStoredFile(material.fileUrl).catch(e => ElMessage.error(e.message))
   }
 }
 
 const downloadFileByUrl = (url, filename) => {
-  window.open(`/api/file/go?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`, '_blank')
+  openStoredFile(url).catch(e => ElMessage.error(e.message))
 }
 
-const openUrl = (url) => window.open(url, '_blank')
+const openUrl = (value) => {
+  try { const url = new URL(value); if (url.protocol !== 'https:' || url.username || url.password) throw new Error(); window.open(url.href, '_blank', 'noopener,noreferrer') }
+  catch { ElMessage.error('附件链接无效，请联系管理员重新上传') }
+}
 
 const handleSetActiveWeek = async (week) => {
   if (loading.setActiveWeek) return

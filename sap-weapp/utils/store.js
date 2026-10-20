@@ -30,6 +30,9 @@ function clearAuth() {
     wx.removeStorageSync(STORAGE.TOKEN)
     wx.removeStorageSync(STORAGE.MEMBER)
     wx.removeStorageSync(STORAGE.USER)
+    wx.removeStorageSync(STORAGE.ACTIVE_ACCOUNT)
+    wx.removeStorageSync(STORAGE.SCHEDULE_ROOT)
+    wx.removeStorageSync(STORAGE.JW_CACHE)
   } catch (e) {}
 }
 

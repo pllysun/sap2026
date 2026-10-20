@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/** 管理端邮件 SMTP 配置、HTML 模板与测试发送。仅管理员及以上角色可访问。 */
+/** 邮件包含账号恢复凭据，配置、模板、日志统一只向超级管理员与会长开放。 */
 @RestController
 @RequestMapping("/api/email")
-@SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+@SaCheckRole(value = {"0", "1"}, mode = SaMode.OR)
 public class EmailController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.sap.service.mail.MailQueue mailQueue;
@@ -90,7 +90,7 @@ public class EmailController {
     @OperationLog("发送测试邮件")
     public Result<?> sendTest(@RequestBody Map<String, Object> request) {
         emailService.sendTest(request);
-        return Result.ok("测试邮件已加入队列，请在发送日志查看结果");
+        return Result.ok("测试邮件已提交发送，请在发送日志查看结果");
     }
 
     @GetMapping("/bindings")
@@ -113,7 +113,7 @@ public class EmailController {
     public Result<?> status(){return Result.ok(mailQueue.status());}
     @PostMapping("/delivery/activate")
     @OperationLog("手动唤醒邮件队列")
-    public Result<?> activate(){mailQueue.kick();return Result.ok("已唤醒邮件队列");}
+    public Result<?> activate(){mailQueue.kick();return Result.ok("已开始处理待发邮件");}
     @GetMapping("/delivery/{kind}")
     public Result<?> delivery(@org.springframework.web.bind.annotation.PathVariable String kind,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue="1") int page,

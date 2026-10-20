@@ -67,6 +67,7 @@ class AppViewModel : ViewModel() {
                 }
                 MemberState.setAccess(r.data.roles, r.data.appAccessLevel)
                 Graph.classScheduleSync.request()
+                Graph.scheduleUsage.flush()
                 if (MemberState.isJw) Graph.accountManager.refresh()
                 _gate.value = Gate.APP
             }

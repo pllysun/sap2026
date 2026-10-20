@@ -4,7 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.sap.annotation.OperationLog;
 import com.sap.common.Result;
 import com.sap.dto.LoginDTO;
-import com.sap.dto.RegisterDTO;
+import com.sap.dto.AppRegisterDTO;
 import com.sap.service.AuthService;
 import com.sap.service.RegistrationProtectionService;
 import jakarta.validation.Valid;
@@ -25,6 +25,21 @@ public class AuthController {
 
     @Autowired
     private RegistrationProtectionService registrationProtection;
+
+    @Autowired
+    private com.sap.service.AppRegistrationService emailRegistration;
+
+    @GetMapping("/register/policy")
+    public Result<?> registrationPolicy(jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control","no-store");
+        return Result.ok(emailRegistration.policy());
+    }
+
+    @PostMapping("/register/email-code")
+    public Result<?> registrationEmailCode(@Valid @RequestBody AppRegistrationController.EmailCodeRequest dto,
+                                          jakarta.servlet.http.HttpServletRequest request) {
+        return Result.ok(emailRegistration.request(dto.studentId(), dto.name(), dto.qq(), dto.captchaId(), dto.captchaCode(), clientIp(request)));
+    }
 
     @PostMapping("/admin/login")
     @OperationLog("管理端登录")
@@ -49,26 +64,10 @@ public class AuthController {
 
     @PostMapping("/register")
     @OperationLog("用户注册")
-    public Result<?> register(@Valid @RequestBody RegisterDTO dto,
+    public Result<?> register(@Valid @RequestBody AppRegisterDTO dto,
                               jakarta.servlet.http.HttpServletRequest request) {
-        // 默认首次注册即验证；可选豁免在判断时原子预占，防止并发绕过。
-        String ip = clientIp(request);
-        if (captchaService.requiresCaptchaForAttempt(ip)) {
-            boolean blank = dto.getCaptchaId() == null || dto.getCaptchaId().isBlank()
-                    || dto.getCaptchaCode() == null || dto.getCaptchaCode().isBlank();
-            if (blank) {
-                // 非错误：告诉前端"请展示验证码后重提"，前端据 captchaRequired 弹出验证码
-                java.util.Map<String, Object> data = new java.util.HashMap<>();
-                data.put("captchaRequired", true);
-                return Result.ok(data);
-            }
-            if (!captchaService.verify(dto.getCaptchaId(), dto.getCaptchaCode(), ip)) {
-                return Result.error(400, "验证码错误或已过期，请刷新后重试");
-            }
-        }
-        try (var permit = registrationProtection.acquire(ip, dto.getQq())) {
-            authService.register(dto);
-        }
+        // Web 与 App 共用服务端验证策略，入会关闭时仍强制校验邮箱挑战。
+        emailRegistration.register(dto, clientIp(request));
         return Result.ok("注册成功");
     }
 

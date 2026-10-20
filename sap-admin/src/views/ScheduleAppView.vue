@@ -5,17 +5,24 @@
         <h2>软协课表</h2>
         <p>使用概览、用户意见反馈与 App 版本发布的一体化运营台</p>
       </div>
+      <div class="summary-controls">
+      <el-button :icon="Refresh" size="small" :loading="summaryLoading" @click="loadSummary">刷新统计</el-button>
       <el-radio-group v-model="days" size="small" @change="loadSummary">
         <el-radio-button :value="7">近 7 天</el-radio-button>
         <el-radio-button :value="30">近 30 天</el-radio-button>
         <el-radio-button :value="90">近 90 天</el-radio-button>
       </el-radio-group>
+      </div>
     </div>
 
     <div class="summary-grid" v-loading="summaryLoading">
       <div class="summary-card primary">
         <div class="summary-icon">▦</div>
-        <div><strong>{{ formatInt(summary.scheduleUsers) }}</strong><span>课表使用人数 · 近 {{ days }} 天去重</span></div>
+        <div><strong>{{ formatInt(summary.scheduleUsage?.activeUsers) }}</strong><span>课表活跃人数 · 近 {{ days }} 天去重</span></div>
+      </div>
+      <div class="summary-card synced">
+        <div class="summary-icon"><el-icon><Refresh /></el-icon></div>
+        <div><strong>{{ formatInt(summary.scheduleUsage?.syncUsers) }}</strong><span>同步成功人数 · 近 {{ days }} 天去重</span></div>
       </div>
       <div class="summary-card open">
         <div class="summary-icon">●</div>
@@ -36,6 +43,27 @@
 
     <div class="zen-card workspace-card">
       <el-tabs v-model="activeTab" class="workspace-tabs">
+        <el-tab-pane label="使用统计" name="usage">
+          <div class="usage-explainer">
+            <strong>按实际使用统计，三种模式分别查看</strong>
+            <p>活跃人数：在 App 前台查看已建立的课表，包括读取本地缓存。同步成功人数：教务、班级课表成功获取或校验，或 Web 课表成功导入；失败请求不计入。</p>
+            <p>同一登录账号在所选时间内只计一人；分模式和每日人数分别去重，不能直接相加。日期按北京时间计算，包含今天。</p>
+          </div>
+          <el-alert type="info" :closable="false" show-icon class="usage-notice"
+                    :title="summary.scheduleUsage?.trackingSince ? `前台活跃统计自 ${summary.scheduleUsage.trackingSince} 开始收到新版 App 上报。` : '前台活跃统计等待新版 App 上报，当前为 0 不代表无人使用。'"
+                    description="旧版 App 的教务、班级同步成功记录继续统计；Web 导入和实际查看需要新版 App。离线查看在恢复网络后补报，桌面小组件自动刷新不计为前台活跃。" />
+          <el-table :data="summary.scheduleUsage?.modes || []" class="usage-modes">
+            <el-table-column prop="label" label="课表模式" />
+            <el-table-column prop="activeUsers" label="活跃人数" align="right" />
+            <el-table-column prop="syncUsers" label="同步成功人数" align="right" />
+          </el-table>
+          <div class="usage-daily-heading"><strong>每日使用人数</strong><span>所选时段内按日去重</span></div>
+          <el-table :data="dailyUsage" max-height="420" stripe>
+            <el-table-column prop="date" label="日期" />
+            <el-table-column prop="activeUsers" label="活跃人数" align="right" />
+            <el-table-column prop="syncUsers" label="同步成功人数" align="right" />
+          </el-table>
+        </el-tab-pane>
         <el-tab-pane label="意见反馈" name="issues">
           <div class="issue-toolbar">
             <el-segmented v-model="filters.status" :options="statusOptions" @change="reloadIssues" />
@@ -271,10 +299,11 @@ const router = useRouter()
 const roles = ref([])
 const isLeaderOrSuper = computed(() => roles.value.includes(0) || roles.value.includes(1))
 const isAdmin = computed(() => isLeaderOrSuper.value || roles.value.includes(2))
-const activeTab = ref('issues')
+const activeTab = ref('usage')
 const days = ref(7)
 const summaryLoading = ref(false)
-const summary = reactive({ scheduleUsers: 0, openIssues: 0, closedIssues: 0, latestVersion: null })
+const summary = reactive({ scheduleUsers: 0, scheduleUsage: null, openIssues: 0, closedIssues: 0, latestVersion: null })
+const dailyUsage = computed(() => [...(summary.scheduleUsage?.daily || [])].reverse())
 let summaryGeneration = 0
 
 const statusOptions = [
@@ -333,6 +362,7 @@ async function loadSummary() {
     if (generation === summaryGeneration) Object.assign(summary, result.data || {})
   } catch (e) {
     // 全局请求拦截器负责提示，保留上一次概览数据。
+    if (generation === summaryGeneration) days.value = summary.scheduleUsage?.days || 7
   } finally {
     if (generation === summaryGeneration) summaryLoading.value = false
   }
@@ -500,10 +530,18 @@ const categoryType = (category) => ({ BUG: 'danger', FEATURE: 'primary', EXPERIE
 .page-header h2 { margin: 0 0 4px; font-size: 22px; }
 .page-header p { margin: 0; color: var(--zen-text-muted); font-size: 13px; }
 .app-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
-.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; min-height: 94px; }
+.summary-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; min-height: 94px; }
+.summary-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .summary-card { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: var(--zen-radius-lg); background: var(--zen-card); border: 1px solid var(--zen-border-light); box-shadow: var(--zen-shadow-sm); }
 .summary-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: #fff; font-size: 20px; font-weight: 700; flex: 0 0 auto; }
 .summary-card.primary .summary-icon { background: linear-gradient(135deg, #14b8a6, #0ea5e9); }
+.summary-card.synced .summary-icon { background: #487ba5; }
+.usage-explainer { padding: 12px 0 4px; color: var(--zen-text); }
+.usage-explainer p { color: var(--zen-text-muted); line-height: 1.8; margin: 8px 0; font-size: 13px; }
+.usage-notice { margin: 12px 0 18px; }
+.usage-modes { margin-bottom: 26px; }
+.usage-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; }
+.usage-daily-heading span { color: var(--zen-text-muted); font-size: 12px; }
 .summary-card.open .summary-icon { background: linear-gradient(135deg, #22c55e, #14b8a6); }
 .summary-card.closed .summary-icon { background: linear-gradient(135deg, #64748b, #94a3b8); }
 .summary-card.version .summary-icon { background: linear-gradient(135deg, #6366f1, #8b5cf6); }

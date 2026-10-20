@@ -24,47 +24,20 @@ public interface ApiRequestStatMapper extends BaseMapper<ApiRequestStat> {
                @Param("endpoint") String endpoint,
                @Param("httpMethod") String httpMethod);
 
-    /** 全部接口总计 Top N（按方法分组）。 */
-    @Select("SELECT endpoint, http_method httpMethod, SUM(count) cnt FROM stat_api_request " +
-            "WHERE stat_date >= #{start} GROUP BY endpoint, http_method ORDER BY cnt DESC LIMIT #{limit}")
-    List<Map<String, Object>> topEndpoints(@Param("start") LocalDate start, @Param("limit") int limit);
-
-    /** 按日总请求数，用于趋势。 */
-    @Select("SELECT stat_date statDate, SUM(count) cnt FROM stat_api_request " +
-            "WHERE stat_date >= #{start} GROUP BY stat_date ORDER BY stat_date")
-    List<Map<String, Object>> trend(@Param("start") LocalDate start);
-
-    /** 指定用户的逐接口请求数。 */
-    @Select("SELECT endpoint, http_method httpMethod, SUM(count) cnt FROM stat_api_request " +
-            "WHERE stat_date >= #{start} AND user_id = #{userId} GROUP BY endpoint, http_method ORDER BY cnt DESC")
-    List<Map<String, Object>> byUser(@Param("start") LocalDate start, @Param("userId") Long userId);
-
-    /** 用户×接口×方法 全量明细（窗口内，按次数倒序，限 N 行），供前端统一搜索/排序表格。 */
-    @Select("SELECT user_id userId, user_name userName, endpoint, http_method httpMethod, SUM(count) cnt " +
-            "FROM stat_api_request WHERE stat_date >= #{start} " +
-            "GROUP BY user_id, user_name, endpoint, http_method ORDER BY cnt DESC LIMIT #{limit}")
-    List<Map<String, Object>> detail(@Param("start") LocalDate start, @Param("limit") int limit);
-
-    /** 指定接口的逐用户请求数。 */
-    @Select("SELECT user_id userId, user_name userName, SUM(count) cnt FROM stat_api_request " +
-            "WHERE stat_date >= #{start} AND endpoint = #{endpoint} GROUP BY user_id, user_name ORDER BY cnt DESC")
-    List<Map<String, Object>> byEndpoint(@Param("start") LocalDate start, @Param("endpoint") String endpoint);
-
-    /** 窗口内总请求数。 */
-    @Select("SELECT COALESCE(SUM(count),0) FROM stat_api_request WHERE stat_date >= #{start}")
-    Long totalRequests(@Param("start") LocalDate start);
-
-    /** 窗口内活跃用户数（排除匿名 0）。 */
-    @Select("SELECT COUNT(DISTINCT user_id) FROM stat_api_request WHERE stat_date >= #{start} AND user_id <> 0")
-    Long activeUsers(@Param("start") LocalDate start);
-
-    /** 窗口内访问过课程表接口的去重用户数（排除匿名 0）。 */
-    @Select("SELECT COUNT(DISTINCT user_id) FROM stat_api_request " +
-            "WHERE stat_date >= #{start} AND user_id <> 0 AND endpoint = '/api/jw/schedule'")
-    Long scheduleUsers(@Param("start") LocalDate start);
-
-    /** 有统计记录的用户列表（供下钻选择器）。 */
-    @Select("SELECT DISTINCT user_id userId, user_name userName FROM stat_api_request " +
-            "WHERE user_id <> 0 ORDER BY user_name")
-    List<Map<String, Object>> distinctUsers();
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> topEndpoints(@Param("start") LocalDate start,@Param("limit") int limit,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> trend(@Param("start") LocalDate start,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> byUser(@Param("start") LocalDate start,@Param("userId") Long userId,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> detail(@Param("start") LocalDate start,@Param("limit") int limit,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> byEndpoint(@Param("start") LocalDate start,@Param("endpoint") String endpoint,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    Long totalRequests(@Param("start") LocalDate start,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    Long activeUsers(@Param("start") LocalDate start,@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
+    @org.apache.ibatis.annotations.SelectProvider(type=ApiRequestStatSql.class,method="select")
+    List<Map<String,Object>> distinctUsers(@Param("filter") com.sap.service.ApiLogExclusionService.Sql filter);
 }

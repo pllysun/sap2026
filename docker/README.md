@@ -258,7 +258,7 @@ docker run -d `
   -e DOMAIN="sap.example.com" `
   -e SSL_EMAIL="admin@example.com" `
   -e MYSQL_URL="jdbc:mysql://host.docker.internal:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" `
-  -e MYSQL_USER="root" `
+  -e MYSQL_USER="sap" `
   -e MYSQL_PASSWORD="your_password" `
   -e JAVA_OPTS="-Xms256m -Xmx512m" `
   -v sap-data:/app/data `
@@ -279,7 +279,7 @@ docker run -d \
   -e DOMAIN="sap.example.com" \
   -e SSL_EMAIL="admin@example.com" \
   -e MYSQL_URL="jdbc:mysql://host.docker.internal:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" \
-  -e MYSQL_USER="root" \
+  -e MYSQL_USER="sap" \
   -e MYSQL_PASSWORD="your_password" \
   -e JAVA_OPTS="-Xms256m -Xmx512m" \
   -v /home/sap/sap-data:/app/data \
@@ -384,8 +384,8 @@ sap-docker/data/
 docker run -d `
   --name sap `
   -p 80:80 `
-  -e MYSQL_URL="jdbc:mysql://your-host:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" `
-  -e MYSQL_USER="root" `
+  -e MYSQL_URL="jdbc:mysql://your-host:3306/sap?serverTimezone=Asia/Shanghai&sslMode=VERIFY_IDENTITY" `
+  -e MYSQL_USER="sap" `
   -e MYSQL_PASSWORD="your_password" `
   -v sap-logs:/app/logs `
   -v sap-uploads:/app/uploads `
@@ -398,8 +398,8 @@ docker run -d `
 docker run -d \
   --name sap \
   -p 80:80 \
-  -e MYSQL_URL="jdbc:mysql://your-host:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" \
-  -e MYSQL_USER="root" \
+  -e MYSQL_URL="jdbc:mysql://your-host:3306/sap?serverTimezone=Asia/Shanghai&sslMode=VERIFY_IDENTITY" \
+  -e MYSQL_USER="sap" \
   -e MYSQL_PASSWORD="your_password" \
   -v sap-logs:/app/logs \
   -v sap-uploads:/app/uploads \
@@ -417,7 +417,7 @@ docker run -d `
   --name sap `
   -p 80:80 `
   -e MYSQL_URL="jdbc:mysql://host.docker.internal:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" `
-  -e MYSQL_USER="root" `
+  -e MYSQL_USER="sap" `
   -e MYSQL_PASSWORD="your_password" `
   -v sap-logs:/app/logs `
   pllysun/sap
@@ -430,7 +430,7 @@ docker run -d \
   --name sap \
   -p 80:80 \
   -e MYSQL_URL="jdbc:mysql://host.docker.internal:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" \
-  -e MYSQL_USER="root" \
+  -e MYSQL_USER="sap" \
   -e MYSQL_PASSWORD="your_password" \
   -v sap-logs:/app/logs \
   pllysun/sap
@@ -450,8 +450,10 @@ docker network create sap-network
 docker run -d `
   --name sap-mysql `
   --network sap-network `
-  -e MYSQL_ROOT_PASSWORD=root123 `
+  -e MYSQL_ROOT_PASSWORD="<独立的强随机根密码>" `
   -e MYSQL_DATABASE=sap `
+  -e MYSQL_USER=sap `
+  -e MYSQL_PASSWORD="<应用账号强随机密码>" `
   -v sap-mysql-data:/var/lib/mysql `
   mysql:8.0
 
@@ -461,8 +463,8 @@ docker run -d `
   --network sap-network `
   -p 80:80 `
   -e MYSQL_URL="jdbc:mysql://sap-mysql:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" `
-  -e MYSQL_USER="root" `
-  -e MYSQL_PASSWORD="root123" `
+  -e MYSQL_USER="sap" `
+  -e MYSQL_PASSWORD="<应用账号强随机密码>" `
   -v sap-logs:/app/logs `
   pllysun/sap
 ```
@@ -477,8 +479,10 @@ docker network create sap-network
 docker run -d \
   --name sap-mysql \
   --network sap-network \
-  -e MYSQL_ROOT_PASSWORD=root123 \
+  -e MYSQL_ROOT_PASSWORD="<独立的强随机根密码>" \
   -e MYSQL_DATABASE=sap \
+  -e MYSQL_USER=sap \
+  -e MYSQL_PASSWORD="<应用账号强随机密码>" \
   -v sap-mysql-data:/var/lib/mysql \
   mysql:8.0
 
@@ -488,8 +492,8 @@ docker run -d \
   --network sap-network \
   -p 80:80 \
   -e MYSQL_URL="jdbc:mysql://sap-mysql:3306/sap?serverTimezone=Asia/Shanghai&useSSL=false" \
-  -e MYSQL_USER="root" \
-  -e MYSQL_PASSWORD="root123" \
+  -e MYSQL_USER="sap" \
+  -e MYSQL_PASSWORD="<应用账号强随机密码>" \
   -v sap-logs:/app/logs \
   pllysun/sap
 ```
@@ -527,7 +531,7 @@ docker run -d \
 | 变量名 | 必填 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `MYSQL_URL` | 否 | 不设则用 H2 | MySQL JDBC 连接 URL |
-| `MYSQL_USER` | 否 | `root` | MySQL 用户名 |
+| `MYSQL_USER` | 否 | `sap` | MySQL 用户名 |
 | `MYSQL_PASSWORD` | 否 | 空 | MySQL 密码 |
 
 ---
@@ -1090,3 +1094,7 @@ docker run -d \
 ```bash
 docker run -d --network host pllysun/sap
 ```
+
+### 数据库传输与权限
+
+外部 MySQL 应启用 TLS 并使用 `sslMode=VERIFY_IDENTITY`，安装服务商要求的 CA；应用使用仅授权当前数据库的独立账号。文中的 `sap-mysql` / `host.docker.internal` 明文示例仅用于隔离的本机开发网络，不用于公网数据库。已有数据库不能直接更改加密密钥或删除 root 账号，应先验证新连接并保留回退方式。

@@ -51,6 +51,7 @@ import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleSettings
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.displayPeriodCount
 import edu.csuft.sap.notify.ReminderPermissions
 import edu.csuft.sap.notify.ReminderPrefs
 import edu.csuft.sap.notify.ReminderScheduler
@@ -86,6 +87,7 @@ fun ScheduleSettingsScreen(
     onSave: (ScheduleSettings) -> Unit,
     onBack: () -> Unit,
 ) {
+    val periodCount = remember(settings.dailyPeriods, previewCourses) { settings.displayPeriodCount(previewCourses) }
     var showSwitcher by remember { mutableStateOf(false) }
     var showDate by remember { mutableStateOf(false) }
     var showWeeks by remember { mutableStateOf(false) }
@@ -132,7 +134,7 @@ fun ScheduleSettingsScreen(
     }
     if (showPeriodTimes) {
         PeriodTimesScreen(
-            initial = Periods.tableFor(settings.dailyPeriods), // 有多少节就编辑多少节的时间
+            initial = Periods.tableFor(periodCount), // 包括课程自动扩展出来的晚课时间
             onSave = { Periods.save(context, it); ScheduleWidgetProvider.notifyChanged(context); ReminderScheduler.reschedule(context) },
             onReset = { Periods.resetDefault(context); ScheduleWidgetProvider.notifyChanged(context); ReminderScheduler.reschedule(context) },
             onBack = { showPeriodTimes = false },
@@ -236,11 +238,12 @@ fun ScheduleSettingsScreen(
             SettingRow("本学期总周数", "请选择本学期总共多少周",
                 value = "${settings.totalWeeks}", onClick = { showWeeks = true })
             RowDivider()
-            SettingRow("一天的总课时数", "每天显示多少节课，可设 8-16 节",
+            SettingRow("默认每日节数", if (periodCount > settings.dailyPeriods)
+                "当前课表有晚课，已自动显示至第 $periodCount 节" else "按课程自动扩展，可设 8-16 节",
                 value = "${settings.dailyPeriods} 节", onClick = { showPeriods = true })
             RowDivider()
             SettingRow("课表时间设置", "自定义每节的起止时间，提醒/课表按新时间生效",
-                value = Periods.tableFor(settings.dailyPeriods).let { "${it.first().start}–${it.last().end}" },
+                value = Periods.tableFor(periodCount).let { "${it.first().start}–${it.last().end}" },
                 onClick = { showPeriodTimes = true })
             RowDivider()
             NavRow("个性化", "课表外观与布局") { showPersonalization = true }
@@ -334,7 +337,7 @@ fun ScheduleSettingsScreen(
     if (showWeeks) OptionSheet("本学期总周数", (10..30).toList(), settings.totalWeeks, { "$it 周" },
         onPick = { onSave(settings.copy(totalWeeks = it)) }, onDismiss = { showWeeks = false })
 
-    if (showPeriods) OptionSheet("一天的总课时数", (8..16).toList(), settings.dailyPeriods, { "$it 节" },
+    if (showPeriods) OptionSheet("默认每日节数", (8..16).toList(), settings.dailyPeriods, { "$it 节" },
         onPick = { onSave(settings.copy(periodsPerDay = it)) }, onDismiss = { showPeriods = false })
 
     if (showLead) OptionSheet("提前提醒", listOf(5, 10, 15, 20, 30, 45, 60), lead, { "$it 分钟" },

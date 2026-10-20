@@ -198,6 +198,19 @@ public class ClassScheduleService {
     private Map<String, Object> pullAs(Long credentialUserId, String account, String term,
                                        String triggerType, Long actorId, String actorName,
                                        String rawPassword, String requestedBatchId) {
+        return pullAs(credentialUserId, account, term, triggerType, actorId, actorName, rawPassword, requestedBatchId, null);
+    }
+
+    /** 管理端短信续登只在当前采集任务中使用已认证会话，不混入用户绑定会话缓存。 */
+    public Map<String, Object> pullWithSession(Long actorId, String account, String term, String triggerType,
+                                              String actorName, String batchId, JwHttpSession session) {
+        if (session == null) throw new BusinessException("学校登录会话已失效，请重新采集");
+        return pullAs(actorId, account, term, triggerType, actorId, actorName, null, batchId, session);
+    }
+
+    private Map<String, Object> pullAs(Long credentialUserId, String account, String term,
+                                       String triggerType, Long actorId, String actorName,
+                                       String rawPassword, String requestedBatchId, JwHttpSession authenticatedSession) {
         if (!pullLock.tryLock()) throw new BusinessException(409, "已有班级课表采集任务正在执行");
         String batchId = requestedBatchId != null && requestedBatchId.matches(BATCH_ID_PATTERN)
                 ? requestedBatchId : java.util.UUID.randomUUID().toString();
@@ -214,7 +227,7 @@ public class ClassScheduleService {
             if (cleanAccount == null || cleanAccount.isBlank()) throw new BusinessException("当前账号尚未绑定教务账号，无法采集");
             appendLog(batchId, term, "all", triggerType, actorId, displayActor,
                     "RUNNING", "正在验证教务身份", 0, null, "AUTH", null, null);
-            JwHttpSession session = rawPassword == null || rawPassword.isBlank()
+            JwHttpSession session = authenticatedSession != null ? authenticatedSession : rawPassword == null || rawPassword.isBlank()
                     ? sessionManager.getSession(credentialUserId, cleanAccount)
                     : sessionManager.loginEphemeral(cleanAccount, rawPassword);
             appendLog(batchId, term, "all", triggerType, actorId, displayActor,
@@ -604,6 +617,7 @@ public class ClassScheduleService {
             Map<String, Object> course = new LinkedHashMap<>();
             course.put("day", dayOf(dayName)); course.put("dayName", dayName == null ? "" : dayName);
             course.put("section", section == null ? "" : section); course.put("sectionIndex", sectionIndex(section));
+            course.put("nodes", com.sap.jw.util.CourseSections.parse(section));
             course.put("name", value(row, "course_name")); course.put("teacher", value(row, "teacher_name"));
             course.put("weeks", value(row, "week_range")); course.put("room", value(row, "room_name"));
             course.put("type", ""); courses.add(course);

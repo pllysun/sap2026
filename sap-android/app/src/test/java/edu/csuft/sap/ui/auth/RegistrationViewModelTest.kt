@@ -7,6 +7,7 @@ import edu.csuft.sap.data.remote.dto.RegistrationEmailData
 import edu.csuft.sap.data.repository.RegistrationCaptcha
 import edu.csuft.sap.data.repository.RegistrationGateway
 import edu.csuft.sap.data.repository.RegistrationResult
+import edu.csuft.sap.data.repository.RegistrationPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -25,6 +26,7 @@ class RegistrationViewModelTest {
         Dispatchers.setMain(dispatcher)
         gateway = FakeRegistration()
         vm = RegistrationViewModel(gateway) { dispatcher.scheduler.currentTime }
+        dispatcher.scheduler.runCurrent()
         vm.edit(RegistrationField.STUDENT_ID, " 20260001 ")
         vm.edit(RegistrationField.PASSWORD, "secret123")
         vm.edit(RegistrationField.NAME, "测试同学")
@@ -33,6 +35,52 @@ class RegistrationViewModelTest {
     }
 
     @After fun teardown() { Dispatchers.resetMain() }
+
+    @Test fun openingRegistrationLoadsPolicyOnceAndOpenJoinNeedsOnlyGraphicCaptcha() = runTest(dispatcher) {
+        gateway.policyResult = Outcome.Success(RegistrationPolicy(false))
+        val open = RegistrationViewModel(gateway) { dispatcher.scheduler.currentTime }
+        runCurrent()
+        assertEquals(2,gateway.policyCalls) // 每个注册页面实例只查询一次。
+        assertFalse(open.state.value.emailVerificationRequired)
+        assertTrue(open.state.value.captchaRequired)
+        assertNotNull(open.state.value.captcha)
+        for ((field,value) in mapOf(RegistrationField.STUDENT_ID to "20260002",RegistrationField.PASSWORD to "secret123",
+            RegistrationField.NAME to "测试同学",RegistrationField.QQ to "12345678")) open.edit(field,value)
+        open.submit();runCurrent();assertTrue(gateway.requests.isEmpty())
+        open.edit(RegistrationField.CAPTCHA," Ab23 ")
+        open.sendEmailCode();open.submit();open.submit();runCurrent()
+        val request=gateway.requests.single()
+        assertEquals("captcha-1",request.captchaId);assertEquals("Ab23",request.captchaCode)
+        assertNull(request.emailRequestId);assertNull(request.emailCode);assertTrue(gateway.emailRequests.isEmpty())
+        assertEquals("20260002",open.state.value.registeredStudentId)
+        assertEquals(2,gateway.policyCalls)
+    }
+
+    @Test fun failedPolicyLookupCannotBypassValidationAndCanBeRetried() = runTest(dispatcher) {
+        gateway.policyResult=Outcome.Error("无法连接服务器",offline=true)
+        val pending=RegistrationViewModel(gateway) { dispatcher.scheduler.currentTime }
+        pending.submit();pending.sendEmailCode();runCurrent()
+        assertFalse(pending.state.value.canSubmit);assertFalse(pending.state.value.canSendEmail)
+        assertEquals("无法连接服务器",pending.state.value.policyError)
+        assertTrue(gateway.requests.isEmpty());assertTrue(gateway.emailRequests.isEmpty())
+        gateway.policyResult=Outcome.Success(RegistrationPolicy(true))
+        pending.loadPolicy();pending.loadPolicy();runCurrent()
+        assertTrue(pending.state.value.policyLoaded);assertTrue(pending.state.value.emailVerificationRequired)
+        assertNull(pending.state.value.policyError)
+    }
+
+    @Test fun serverPolicyChangeReloadsModeAndKeepsAccountDetailsWithoutAutoSubmitting() = runTest(dispatcher) {
+        gateway.policyResult=Outcome.Success(RegistrationPolicy(false));vm.loadPolicy();runCurrent()
+        vm.edit(RegistrationField.CAPTCHA,"ABCD")
+        gateway.policyResult=Outcome.Success(RegistrationPolicy(true))
+        gateway.nextResult=Outcome.Error("入会通道已关闭，请获取邮箱验证码后注册",409)
+        vm.submit();runCurrent()
+        assertTrue(vm.state.value.emailVerificationRequired);assertFalse(vm.state.value.captchaRequired)
+        assertEquals("secret123",vm.state.value.form.password);assertEquals(" 20260001 ",vm.state.value.form.studentId)
+        assertEquals(1,gateway.requests.size);assertTrue(gateway.emailRequests.isEmpty())
+        assertNull(vm.state.value.registeredStudentId)
+        vm.submit();runCurrent();assertEquals(1,gateway.requests.size)
+    }
 
     @Test fun validationNeverRequestsMailWithInvalidDetails() = runTest(dispatcher) {
         vm.edit(RegistrationField.QQ, "0123")
@@ -216,6 +264,9 @@ class RegistrationViewModelTest {
     }
 
     private class FakeRegistration : RegistrationGateway {
+        var policyResult: Outcome<RegistrationPolicy> = Outcome.Success(RegistrationPolicy(true))
+        var policyCalls = 0
+        override suspend fun policy(): Outcome<RegistrationPolicy> { policyCalls++;return policyResult }
         val requests = mutableListOf<RegisterRequest>()
         val emailRequests = mutableListOf<RegisterEmailRequest>()
         var nextResult: Outcome<RegistrationResult> = Outcome.Success(RegistrationResult.REGISTERED)

@@ -1,30 +1,30 @@
 <template>
   <div class="page oj-workspace-page oj-studio" :class="{'oj-focus-mode':focusMode}">
-    <div class="oj-workspace-topbar"><router-link :to="setId ? `/oj/sets/${setId}` : returnTo" class="oj-back"><UiIcon name="chevron-left" /> {{ setId ? setInfo?.name || '题单' : returnTo.startsWith('/home') ? '首页' : '算法题库' }}</router-link><span v-if="runtime?.available===false || runtime?.available && !Number(runtime.availableSlots)" class="oj-runtime-indicator" :class="{offline:runtime?.available===false,busy:runtime?.available && !Number(runtime.availableSlots)}"><i />{{ !runtime.available ? '运行服务暂不可用' : '运行资源忙碌' }}</span></div>
+    <div class="oj-workspace-topbar"><router-link :to="setId ? `/oj/sets/${setId}` : returnTo" class="oj-back"><UiIcon name="chevron-left" /> {{ setId ? setInfo?.name || '题单' : returnTo.startsWith('/home') ? '首页' : returnTo.startsWith('/oj/learning') ? '算法训练' : '算法题库' }}</router-link><span v-if="runtime?.available===false || runtime?.available && !Number(runtime.availableSlots)" class="oj-runtime-indicator" :class="{offline:runtime?.available===false,busy:runtime?.available && !Number(runtime.availableSlots)}"><i />{{ !runtime.available ? '运行服务暂不可用' : '运行资源忙碌' }}</span></div>
     <p v-if="error" class="oj-error" role="alert">{{ error }}</p>
     <div v-if="loading" class="loading"><div class="loading__spinner" /></div>
     <template v-else-if="problem">
-      <div class="oj-workspace-heading"><div><span class="oj-workspace-mark">&lt;/&gt;</span><div><span class="oj-eyebrow">{{ problem.sourcePlatform }} / {{ problem.sourceId || 'ALGORITHM' }}</span><h1>{{ problem.title }}</h1></div><span :class="['oj-difficulty', problem.difficulty.toLowerCase()]"><i />{{ levels[problem.difficulty] }}</span></div><button class="oj-focus-toggle" :aria-pressed="focusMode" @click="focusMode=!focusMode"><UiIcon :name="focusMode?'panel-top':'code'" :size="13" />{{ focusMode ? '返回双栏' : '专注写代码' }}</button></div>
+      <div class="oj-workspace-heading"><div><span class="oj-workspace-mark">&lt;/&gt;</span><div><span class="oj-eyebrow">{{ problem.sourcePlatform }} / {{ problem.sourceId || 'ALGORITHM' }}</span><h1>{{ problem.title }}</h1></div><span :class="['oj-difficulty', problem.difficulty.toLowerCase()]"><i />{{ levels[problem.difficulty] }}</span></div><router-link v-if="!setId" class="oj-learning-note-link" :to="{path:'/oj/learning',query:{tab:'review',problem:problem.id}}"><UiIcon name="edit" :size="13" />解题笔记</router-link><button class="oj-focus-toggle" :aria-pressed="focusMode" @click="focusMode=!focusMode"><UiIcon :name="focusMode?'panel-top':'code'" :size="13" />{{ focusMode ? '返回双栏' : '专注写代码' }}</button></div>
       <div v-if="setId && setInfo" class="oj-set-workspace-strip"><strong>{{ setInfo.mode==='CONTEST'?'比赛':'练习' }} · {{ setInfo.name }}</strong><OjSelect :model-value="String(itemId)" :options="setNavigation" compact label="题单题目导航" @update:model-value="navigateSet" /><span v-if="setInfo.mode==='CONTEST'" class="oj-set-countdown">{{ setInfo.phase==='ENDED'?'已结束':'剩余 '+setCountdown }}</span><span v-if="!setCanSubmit">{{ setInfo.disqualified?'已取消参与资格':setInfo.phase==='ARCHIVED'?'已归档':!setInfo.joined?'未报名':'无法提交' }}</span><button class="oj-tool-button" @click="openDialog('ranking')"><UiIcon name="trophy" :size="15" />题单排名</button></div>
       <div class="oj-mobile-tabs"><button :class="{ active: panel==='statement' && statementView==='statement' }" @click="panel='statement';statementView='statement'">题目</button><button :class="{ active: panel==='statement' && statementView==='solution' }" @click="openSolution">题解</button><button :class="{ active: panel==='code' }" @click="panel='code'">代码与控制台</button></div>
       <div class="oj-workspace" :data-panel="panel">
         <section class="oj-statement" aria-label="题目与题解"><div class="oj-pane-heading"><nav class="oj-lesson-tabs" role="tablist" aria-label="题目内容"><button role="tab" :aria-selected="statementView==='statement'" :class="{active:statementView==='statement'}" @click="statementView='statement'"><UiIcon name="book-open" :size="14" />题目</button><button role="tab" :aria-selected="statementView==='solution'" :class="{active:statementView==='solution'}" @click="openSolution"><UiIcon name="code" :size="14" />题解</button></nav><nav v-show="statementView==='statement'" class="oj-statement-nav" aria-label="题目章节"><button @click="scrollSection('description')">描述</button><button @click="scrollSection('samples')">示例</button><button @click="scrollSection('source')">来源</button></nav></div><div v-show="statementView==='statement'" class="oj-statement-content">
           <div class="oj-tags"><span v-for="tag in problem.tags" :key="tag">{{ tag }}</span></div>
-          <h2 id="oj-description">题目描述</h2><p class="oj-prose">{{ problem.description }}</p>
-          <h2>输入格式</h2><p class="oj-prose">{{ problem.inputFormat }}</p>
-          <h2>输出格式</h2><p class="oj-prose">{{ problem.outputFormat }}</p>
-          <h2>数据范围</h2><p class="oj-prose">{{ problem.constraints }}</p>
+          <h2 id="oj-description">题目描述</h2><OjMarkdown :text="problem.description" />
+          <h2>输入格式</h2><OjMarkdown :text="problem.inputFormat" />
+          <h2>输出格式</h2><OjMarkdown :text="problem.outputFormat" />
+          <h2>数据范围</h2><OjMarkdown :text="problem.constraints" />
           <div v-for="(sample, index) in problem.samples" :id="index===0?'oj-samples':undefined" :key="index" class="oj-sample"><div class="oj-sample-heading"><h2>示例 {{ index + 1 }}</h2><button class="oj-tool-button" @click="useSample(index)"><UiIcon name="terminal" :size="13" />带入测试</button></div><div class="oj-sample-io"><div><label>输入<button class="oj-copy-input" :aria-label="'复制示例 '+(index+1)+' 输入'" @click="copySample(sample.input,index)"><UiIcon :name="copiedSample===index?'check':'copy'" :size="13" />{{ copiedSample===index?'已复制':'复制' }}</button></label><pre>{{ sample.input }}</pre></div><div><label>输出</label><pre>{{ sample.expectedOutput }}</pre></div></div></div>
-          <div id="oj-source" class="oj-source-note"><strong>题目来源</strong><p><a v-if="problem.sourceUrl" :href="problem.sourceUrl" target="_blank" rel="noopener noreferrer">{{ problem.sourcePlatform }} {{ problem.sourceId }} ↗</a><span v-else>{{ problem.sourcePlatform }}</span></p><p>{{ problem.sourceNote }}</p></div>
+          <div id="oj-source" class="oj-source-note"><strong>题目来源</strong><p><a v-if="safeSourceUrl" :href="safeSourceUrl" target="_blank" rel="noopener noreferrer">{{ problem.sourcePlatform }} {{ problem.sourceId }} ↗</a><span v-else>{{ problem.sourcePlatform }}</span></p><p>{{ problem.sourceNote }}</p></div>
         </div><OjSolution v-if="solutionVisited" v-show="statementView==='solution'" :active="statementView==='solution'" :problem-id="problem.id" :set-id="setId" :item-id="itemId" :language="language" :mode="mode" :contest-ended="setInfo?.phase==='ENDED'" @use-code="useSolutionCode" /></section>
         <section class="oj-coding" aria-label="代码和控制台"><div class="oj-pane-heading"><strong><UiIcon name="code" :size="15" />代码工作台</strong></div>
           <div class="oj-workspace-shortcuts" aria-label="运行与提交记录"><button v-for="view in dialogViews" :key="view.value" @click="openDialog(view.value)"><UiIcon :name="view.icon" :size="13" />{{ view.label }}<i v-if="view.value==='result' && pending" class="oj-shortcut-pending" /></button></div>
           <div class="oj-editor-toolbar">
-            <OjSelect compact v-model="language" :options="languageOptions" label="编程语言" :disabled="templateLoading" />
+            <OjSelect compact summary-only v-model="language" :options="languageOptions" label="编程语言" :disabled="templateLoading" />
             <div class="oj-mode-switch" role="group" aria-label="做题模式"><button v-for="m in problem.modes" :key="m" :aria-pressed="mode === m" :class="{active:mode===m}" :disabled="templateLoading" @click="mode=m">{{ m === 'FUNCTION' ? '核心函数' : '完整程序' }}</button></div>
             <button class="oj-tool-button" :disabled="templateLoading" @click="restoreTemplate"><UiIcon name="refresh" :size="13" />恢复模板</button>
           </div>
-          <div class="oj-mode-help"><details><summary><UiIcon name="info" :size="12" />{{ mode==='FUNCTION'?'函数模式说明':'输入输出说明' }}<UiIcon name="chevron-down" :size="12" /></summary><p>{{ mode === 'FUNCTION' ? '实现模板中的函数，平台负责读取输入、构造参数和输出结果。' : '提交完整程序，自行读取标准输入并将结果写入标准输出。' }}</p></details><span v-if="currentLanguage"><UiIcon name="clock" :size="12" />{{ currentLanguage.timeLimitMs }} ms <UiIcon name="cpu" :size="12" />{{ currentLanguage.memoryLimitMb }} MiB</span></div>
+          <div class="oj-mode-help"><details><summary><UiIcon name="info" :size="12" />{{ mode==='FUNCTION'?'函数模式说明':'输入输出说明' }}<UiIcon name="chevron-down" :size="12" /></summary><p>{{ mode === 'FUNCTION' ? '实现模板中的函数即可，常用标准库已默认导入。平台负责读取输入、构造参数和输出结果。' : '提交完整程序，自行读取标准输入并将结果写入标准输出。' }}</p></details><span v-if="currentLanguage"><UiIcon name="clock" :size="12" />{{ currentLanguage.timeLimitMs }} ms <UiIcon name="cpu" :size="12" />{{ currentLanguage.memoryLimitMb }} MiB</span></div>
           <div class="oj-file-bar"><span><span class="oj-file-dot" /> {{ language==='java' && mode==='FUNCTION'?'Solution.java':filenames[language] }} <small>{{ mode === 'FUNCTION' ? '函数实现' : '完整程序' }}</small></span><button class="oj-tool-button" :disabled="formatting || templateLoading" @click="formatCurrent">{{ formatting ? '格式化中…' : '格式化代码' }}</button></div>
           <div v-if="templateLoading" class="oj-template-loading" role="status">正在整理代码模板…</div>
           <OjCodeEditor ref="editor" :key="language + ':' + mode" v-model="code" :language="language" :read-only="templateLoading" @format="formatCurrent" @run="send('run')" @submit="send('submit')" />
@@ -58,7 +58,7 @@
       </section>
       <section v-show="dialogView==='ranking'" class="oj-ranking-view" aria-label="排行">
         <div class="oj-modal-section-heading"><div><h3>{{ setId ? '题单排名' : '本题排行' }}</h3><p>{{ setId ? setInfo?.mode==='CONTEST'?'按通过题数、ACM 总罚时排序':'按通过题数、完成时间排序' : '每人最快一次正式 AC · 用时升序，内存同分排序 · 前 100 名' }}</p></div><button class="oj-modal-button" :disabled="rankingLoading" @click="loadRanking(true)"><UiIcon name="refresh" :size="13" />刷新</button></div>
-        <div v-if="!setId" class="oj-modal-ranking-filters"><OjSelect compact v-model="rankingLanguage" :options="languageOptions" label="排行语言" @change="loadRanking()" /><OjSelect compact v-model="rankingMode" :options="problem?.modes.map(m=>({value:m,label:modeNames[m]})) || []" label="排行模式" @change="loadRanking()" /></div>
+        <div v-if="!setId" class="oj-modal-ranking-filters"><OjSelect compact summary-only v-model="rankingLanguage" :options="languageOptions" label="排行语言" @change="loadRanking()" /><OjSelect compact v-model="rankingMode" :options="problem?.modes.map(m=>({value:m,label:modeNames[m]})) || []" label="排行模式" @change="loadRanking()" /></div>
         <div v-else class="oj-modal-set-summary"><span>{{ setInfo?.name }}</span><span>{{ rankTotals.total }} 道题 · {{ rankTotal }} 人</span></div>
         <div v-if="rankingLoading && !ranking.length" class="oj-modal-loading" role="status"><i />正在加载排行…</div>
         <div v-else-if="rankingError" class="oj-modal-error" role="alert"><p>{{ rankingError }}</p><button class="oj-modal-button" @click="loadRanking(true)">重试</button></div>
@@ -74,6 +74,7 @@ import { useRoute,useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import OjCodeEditor from '@/components/OjCodeEditor.vue'
+import OjMarkdown from '@/components/OjMarkdown.vue'
 const OjSolution=defineAsyncComponent(()=>import('@/components/OjSolution.vue'))
 import OjWorkspaceDialog from '@/components/OjWorkspaceDialog.vue'
 import OjRunResult from '@/components/OjRunResult.vue'
@@ -91,6 +92,12 @@ import './studio.css'
 import '@/components/oj-solution.css'
 import {catalogReturn} from '@/utils/ojNavigation'
 const route = useRoute(), router=useRouter(), user = useUserStore()
+const safeSourceUrl = computed(() => {
+  try {
+    const url = new URL(problem.value?.sourceUrl || '')
+    return url.protocol === 'https:' && !url.username && !url.password ? url.href : ''
+  } catch { return '' }
+})
 const statementView=ref(route.query.tab==='solution'?'solution':'statement'),solutionVisited=ref(route.query.tab==='solution')
 function openSolution(){solutionVisited.value=true;statementView.value='solution';panel.value='statement';focusMode.value=false}
 async function useSolutionCode(value){

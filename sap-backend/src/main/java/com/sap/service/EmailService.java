@@ -202,7 +202,7 @@ public class EmailService {
         return boolValue(settingService.getValue(KEY_ENABLED), true);
     }
 
-    /** 仅由数据库队列工作器调用。成功表示 SMTP 接受，不代表最终收件。 */
+    /** 仅由邮件发送器调用。成功表示 SMTP 接受，不代表最终收件。 */
     public void deliver(String to, String subject, String html) {
         JavaMailSenderImpl sender = buildSender(false);
         try {

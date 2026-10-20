@@ -1,0 +1,314 @@
+{
+  "slug": "original-sum-demo",
+  "title": "两个整数的和",
+  "difficulty": "EASY",
+  "tags": [
+    "输入输出",
+    "基础数学"
+  ],
+  "description": "给定两个整数 a 和 b，计算并输出它们的和。",
+  "inputFormat": "输入一行，包含两个用空白分隔的整数 a、b。",
+  "outputFormat": "输出一个整数，表示 a 与 b 的和。",
+  "constraints": "-1000000000 ≤ a, b ≤ 1000000000。",
+  "sourcePlatform": "原创",
+  "sourceUrl": "",
+  "sourceId": "",
+  "sourceNote": "软件协会原创",
+  "modes": [
+    "STDIO"
+  ],
+  "defaultMode": "STDIO",
+  "checker": "TOKENS",
+  "profiles": {
+    "c": {
+      "starterStdio": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    scanf(\"%lld %lld\", &a, &b);\n    // TODO：计算两个整数的和并输出。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "cpp": {
+      "starterStdio": "#include <iostream>\nint main() {\n    long long a, b;\n    std::cin >> a >> b;\n    // TODO：计算两个整数的和并输出。\n    return 0;\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "java": {
+      "starterStdio": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        long a = input.nextLong(), b = input.nextLong();\n        // TODO：计算两个整数的和并输出。\n    }\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "python": {
+      "starterStdio": "import sys\na, b = map(int, sys.stdin.buffer.read().split())\n# TODO：计算两个整数的和并输出。\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    },
+    "rust": {
+      "starterStdio": "use std::io::{self, Read};\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut values = input.split_whitespace();\n    let a: i64 = values.next().unwrap().parse().unwrap();\n    let b: i64 = values.next().unwrap().parse().unwrap();\n    // TODO：计算两个整数的和并输出。\n}\n",
+      "starterFunction": "",
+      "functionDriver": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "case-01",
+      "input": "3 5\n",
+      "expectedOutput": "8\n",
+      "sample": true
+    },
+    {
+      "name": "case-02",
+      "input": "-7 4\n",
+      "expectedOutput": "-3\n",
+      "sample": true
+    },
+    {
+      "name": "case-03",
+      "input": "0 0\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "case-04",
+      "input": "0 -9\n",
+      "expectedOutput": "-9\n",
+      "sample": false
+    },
+    {
+      "name": "case-05",
+      "input": "-1 -1\n",
+      "expectedOutput": "-2\n",
+      "sample": false
+    },
+    {
+      "name": "case-06",
+      "input": "-10 10\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "case-07",
+      "input": "10 -10\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "case-08",
+      "input": "-1000000000 -1000000000\n",
+      "expectedOutput": "-2000000000\n",
+      "sample": false
+    },
+    {
+      "name": "case-09",
+      "input": "1000000000 1000000000\n",
+      "expectedOutput": "2000000000\n",
+      "sample": false
+    },
+    {
+      "name": "case-10",
+      "input": "-1000000000 1000000000\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "case-11",
+      "input": "1000000000 -1000000000\n",
+      "expectedOutput": "0\n",
+      "sample": false
+    },
+    {
+      "name": "case-12",
+      "input": "310678488 -18306427\n",
+      "expectedOutput": "292372061\n",
+      "sample": false
+    },
+    {
+      "name": "case-13",
+      "input": "-584746481 234557635\n",
+      "expectedOutput": "-350188846\n",
+      "sample": false
+    },
+    {
+      "name": "case-14",
+      "input": "887827595 956651043\n",
+      "expectedOutput": "1844478638\n",
+      "sample": false
+    },
+    {
+      "name": "case-15",
+      "input": "515647313 -295787411\n",
+      "expectedOutput": "219859902\n",
+      "sample": false
+    },
+    {
+      "name": "case-16",
+      "input": "17113080 -791738151\n",
+      "expectedOutput": "-774625071\n",
+      "sample": false
+    },
+    {
+      "name": "case-17",
+      "input": "-108846828 337630967\n",
+      "expectedOutput": "228784139\n",
+      "sample": false
+    },
+    {
+      "name": "case-18",
+      "input": "327744315 527320177\n",
+      "expectedOutput": "855064492\n",
+      "sample": false
+    },
+    {
+      "name": "case-19",
+      "input": "276310584 -885322772\n",
+      "expectedOutput": "-609012188\n",
+      "sample": false
+    },
+    {
+      "name": "case-20",
+      "input": "777258970 548625623\n",
+      "expectedOutput": "1325884593\n",
+      "sample": false
+    },
+    {
+      "name": "case-21",
+      "input": "894299432 -491026010\n",
+      "expectedOutput": "403273422\n",
+      "sample": false
+    },
+    {
+      "name": "case-22",
+      "input": "806219080 260827419\n",
+      "expectedOutput": "1067046499\n",
+      "sample": false
+    },
+    {
+      "name": "case-23",
+      "input": "-841822201 -959806070\n",
+      "expectedOutput": "-1801628271\n",
+      "sample": false
+    },
+    {
+      "name": "case-24",
+      "input": "-524901562 544967665\n",
+      "expectedOutput": "20066103\n",
+      "sample": false
+    },
+    {
+      "name": "case-25",
+      "input": "560596667 232953978\n",
+      "expectedOutput": "793550645\n",
+      "sample": false
+    },
+    {
+      "name": "case-26",
+      "input": "769068124 193948370\n",
+      "expectedOutput": "963016494\n",
+      "sample": false
+    },
+    {
+      "name": "case-27",
+      "input": "-775617525 -463287543\n",
+      "expectedOutput": "-1238905068\n",
+      "sample": false
+    },
+    {
+      "name": "case-28",
+      "input": "288513790 -723135984\n",
+      "expectedOutput": "-434622194\n",
+      "sample": false
+    },
+    {
+      "name": "case-29",
+      "input": "-568517622 -29708084\n",
+      "expectedOutput": "-598225706\n",
+      "sample": false
+    },
+    {
+      "name": "case-30",
+      "input": "51002164 562654984\n",
+      "expectedOutput": "613657148\n",
+      "sample": false
+    },
+    {
+      "name": "case-31",
+      "input": "-671224041 -899731703\n",
+      "expectedOutput": "-1570955744\n",
+      "sample": false
+    },
+    {
+      "name": "case-32",
+      "input": "-701039281 444673135\n",
+      "expectedOutput": "-256366146\n",
+      "sample": false
+    },
+    {
+      "name": "case-33",
+      "input": "454147979 -518365890\n",
+      "expectedOutput": "-64217911\n",
+      "sample": false
+    },
+    {
+      "name": "case-34",
+      "input": "-612737962 257910138\n",
+      "expectedOutput": "-354827824\n",
+      "sample": false
+    },
+    {
+      "name": "case-35",
+      "input": "907377514 306879311\n",
+      "expectedOutput": "1214256825\n",
+      "sample": false
+    },
+    {
+      "name": "case-36",
+      "input": "601488367 -300997514\n",
+      "expectedOutput": "300490853\n",
+      "sample": false
+    },
+    {
+      "name": "case-37",
+      "input": "-147666742 -103820692\n",
+      "expectedOutput": "-251487434\n",
+      "sample": false
+    },
+    {
+      "name": "case-38",
+      "input": "623588640 444689661\n",
+      "expectedOutput": "1068278301\n",
+      "sample": false
+    },
+    {
+      "name": "case-39",
+      "input": "-270992083 561305221\n",
+      "expectedOutput": "290313138\n",
+      "sample": false
+    },
+    {
+      "name": "case-40",
+      "input": "536279949 9410114\n",
+      "expectedOutput": "545690063\n",
+      "sample": false
+    },
+    {
+      "name": "case-41",
+      "input": "721479856 994562543\n",
+      "expectedOutput": "1716042399\n",
+      "sample": false
+    }
+  ],
+  "references": {
+    "c": {
+      "STDIO": "#include <stdio.h>\nint main(void) {\n    // 使用 long long，统一承载读入的整数及其和。\n    long long a, b;\n    if (scanf(\"%lld %lld\", &a, &b) != 2) return 0;\n    // 两个有符号整数直接相加，负数和零无需特殊判断。\n    long long sum = a + b;\n    // 输出整数并换行，不附加说明文字。\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n"
+    },
+    "cpp": {
+      "STDIO": "#include <iostream>\nint main() {\n    // 用 long long 读取整数，预留足够的取值范围。\n    long long a, b;\n    if (!(std::cin >> a >> b)) return 0;\n    // 加法对正数、负数和零都遵循同一条规则。\n    long long sum = a + b;\n    // 按题目协议只输出答案和一个换行。\n    std::cout << sum << '\\n';\n    return 0;\n}\n"
+    },
+    "java": {
+      "STDIO": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        // Scanner 按空白分隔读取输入，换行和空格都可作为分隔符。\n        Scanner input = new Scanner(System.in);\n        long a = input.nextLong();\n        long b = input.nextLong();\n        // long 可承载输入值及它们的和，避免类型范围造成误判。\n        long sum = a + b;\n        // 标准输出中只放答案，println 自动追加换行。\n        System.out.println(sum);\n    }\n}\n"
+    },
+    "python": {
+      "STDIO": "import sys\n# 按空白切分标准输入，所以末尾换行不会影响读取。\nvalues = sys.stdin.buffer.read().split()\na, b = map(int, values)\n# Python 整数支持负数；这里直接计算两个整数的和。\nsum_value = a + b\n# print 自动换行，不输出提示信息。\nprint(sum_value)\n"
+    },
+    "rust": {
+      "STDIO": "use std::io::{self, Read};\nfn main() {\n    // 一次读取输入，并按空白获取两个整数。\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    let mut values = input.split_whitespace();\n    let a: i64 = values.next().unwrap().parse().unwrap();\n    let b: i64 = values.next().unwrap().parse().unwrap();\n    // i64 保留正负号和足够的取值范围。\n    let sum = a + b;\n    // 只输出结果，println! 自动追加换行。\n    println!(\"{}\", sum);\n}\n"
+    }
+  }
+}

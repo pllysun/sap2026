@@ -24,10 +24,12 @@ class AppRegistrationControllerTest {
         verify(service,never()).register(any(),any());
     }
     @Test void mobileEndpointRejectsMissingEmailVerificationAndInvalidRecipient() throws Exception {
+        doThrow(new com.sap.common.BusinessException(400,"请先验证邮箱")).when(service).register(any(),any());
         mvc.perform(post("/api/auth/app/register").contentType("application/json").content("{\"studentId\":\"20260001\",\"password\":\"secret123\",\"name\":\"同学\",\"gender\":0,\"qq\":\"123456789\"}"))
                 .andExpect(jsonPath("$.code").value(400));
         mvc.perform(post("/api/auth/app/register/email-code").contentType("application/json").content("{\"studentId\":\"20260001\",\"name\":\"同学\",\"qq\":\"bad@example.com\"}"))
                 .andExpect(jsonPath("$.code").value(400));
-        verifyNoInteractions(service);
+        verify(service).register(any(),eq("127.0.0.1"));
+        verifyNoMoreInteractions(service);
     }
 }

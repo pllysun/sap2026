@@ -63,38 +63,53 @@ class StudyControllerTest extends BaseUnitTest {
 
     @Test
     void getActivityDetail_delegates() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
         Map<String, Object> detail = Map.of("k", "v");
         when(studyService.getActivityDetail(5L)).thenReturn(detail);
         Result<?> r = controller.getActivityDetail(5L);
         assertEquals(detail, r.getData());
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+        }
     }
 
     @Test
     void getCycleDetail_delegates() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
         when(studyService.getCycleDetail(1L, 2)).thenReturn(List.of());
         controller.getCycleDetail(1L, 2);
         verify(studyService).getCycleDetail(1L, 2);
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+        }
     }
 
     @Test
     void listMembers_delegatesToCycleDetail() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
         when(studyService.getCycleDetail(1L, 3)).thenReturn(List.of());
         controller.listMembers(1L, 3);
         verify(studyService).getCycleDetail(1L, 3);
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+        }
     }
 
     @Test
     void listLeaders_delegates() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
         when(studyService.listLeaders(1L)).thenReturn(List.of());
         controller.listLeaders(1L);
         verify(studyService).listLeaders(1L);
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+        }
     }
 
     @Test
     void scoreOverview_delegates() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
         when(studyService.scoreOverview(1L, 2)).thenReturn(List.of());
         controller.scoreOverview(1L, 2);
         verify(studyService).scoreOverview(1L, 2);
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+        }
     }
 
     @Test

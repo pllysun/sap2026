@@ -15,6 +15,8 @@ export const getGradeStats = () => request.get('/api/dashboard/grade-stats')
 
 // ===== 用户 =====
 export const getUserList = (params) => request.get('/api/user/list', { params })
+export const getUserDirectory = (params) => request.get('/api/user/directory', { params })
+export const getUserDirectoryFilters = () => request.get('/api/user/directory/filters')
 export const getMemberProfile = (id) => request.get(`/api/user/${id}/profile`)
 export const getMemberRelations = (id, params) => request.get(`/api/user/${id}/profile/relations`, { params })
 export const updateUser = (id, data) => request.put(`/api/user/${id}`, data)
@@ -150,6 +152,8 @@ export const getLogStats = (days) => request.get('/api/log/stats', { params: { d
 
 // ===== 入会管理 =====
 export const getJoinStatus = () => request.get('/api/join/status')
+export const getJoinReadiness = () => request.get('/api/join/readiness')
+export const syncJoinManagers = () => request.post('/api/join/managers/sync')
 export const toggleJoin = (enabled) => request.post('/api/join/toggle', { enabled })
 export const getJoinManagers = () => request.get('/api/join/managers')
 export const addJoinManager = (userId) => request.post('/api/join/manager', { userId })
@@ -157,6 +161,7 @@ export const removeJoinManager = (id) => request.delete(`/api/join/manager/${id}
 export const uploadManagerQr = (data) => request.post('/api/join/manager/qr', data)
 export const getJoinApplications = (params) => request.get('/api/join/applications', { params })
 export const approveJoinApplication = (id) => request.post(`/api/join/approve/${id}`)
+export const returnJoinApplication = (id, reason) => request.post(`/api/join/return/${id}`, { reason })
 export const directUpgradeMember = (studentId) => request.post('/api/join/direct-upgrade', { studentId })
 
 // ===== 邮件管理 =====

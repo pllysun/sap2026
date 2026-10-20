@@ -1,0 +1,20 @@
+/* Selected motion ideas from Open Claude UI (MIT): tactile press, soft overshoot,
+   and a 105-degree light sweep. Existing page/card/code transitions stay intact.
+   Attribution: /licenses/open-claude-ui.txt. No animation runtime is imported. */
+:root { --motion-press: cubic-bezier(.32,.72,0,1); --motion-settle: cubic-bezier(.34,1.3,.64,1); }
+.btn, .pagination__btn { transition: color .18s, background .18s, border-color .18s, box-shadow .18s, transform .22s var(--motion-settle); }
+.btn:active:not(:disabled), .pagination__btn:active:not(:disabled) { transform: translateY(0) scale(.98); transition-duration: .08s; transition-timing-function: var(--motion-press); }
+:is(.intro-update-skeleton i, .intro-update-skeleton span, .intro-update-skeleton b, .home-deferred-skeleton i) {
+  position: relative; overflow: hidden;
+}
+:is(.intro-update-skeleton i, .intro-update-skeleton span, .intro-update-skeleton b, .home-deferred-skeleton i)::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg,transparent 35%,#ffffff9c 50%,transparent 65%);
+  transform: translateX(-100%); animation: surface-sweep 2s linear infinite;
+}
+@keyframes surface-sweep { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .pagination__btn { transition: none; }
+  .btn:active:not(:disabled), .pagination__btn:active:not(:disabled) { transform: none; }
+  :is(.intro-update-skeleton i, .intro-update-skeleton span, .intro-update-skeleton b, .home-deferred-skeleton i)::after { animation: none; opacity: 0; }
+}

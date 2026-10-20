@@ -47,6 +47,10 @@ mybatis-plus:
 # sa-token 配置
 sa-token:
   token-name: sap-token
+  is-read-body: false
+  is-read-cookie: false
+  is-write-header: false
+  is-read-header: true
   # timeout：token 绝对有效期（秒）。Web/管理端走此默认值（86400=1天，到期重登，Redis 自动按 TTL 清理不膨胀）。
   #          App 登录(appLogin)单独 setTimeout(-1) 覆盖为永久——本地有凭证即永久免密。
   timeout: 86400

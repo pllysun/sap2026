@@ -39,11 +39,17 @@ class JudgeProtocolTest {
             assertEquals("AC",result.getVerdict(),key+"/"+mode);assertEquals(6,result.getPassedCases());assertFalse(result.isOutputTruncated());
             var compile=json.valueToTree(requests.get(0).get("body")).path("cmd").get(0);
             String source=compile.path("copyIn").elements().next().path("content").asText();
-            assertEquals(mode.equals("FUNCTION")?"driver-prefix\nuser-source-中文🙂\ndriver-suffix":"user-source-中文🙂",source);
+            if (mode.equals("STDIO")) assertEquals("user-source-中文🙂", source);
+            else {assertTrue(source.contains("driver-prefix\nuser-source-中文🙂\ndriver-suffix"));assertFalse(source.contains("__USER_CODE__"));}
             assertEquals(15000000000L,compile.path("cpuLimit").asLong());assertEquals(512L*1024*1024,compile.path("memoryLimit").asLong());
             if(key.equals("rust"))assertTrue(compile.path("args").toString().contains("link-arg=-Wl,--threads=1"));
-            assertEquals(key.equals("python")?7:8,requests.size());
-            if(!key.equals("python"))assertEquals("DELETE",requests.get(requests.size()-1).get("method"));
+            if(key.equals("python") && mode.equals("FUNCTION")) {
+                assertTrue(compile.path("copyOutCached").toString().contains("answer"));
+                var execution=json.valueToTree(requests.get(1).get("body")).path("cmd").get(0);
+                assertEquals("artifact-answer", execution.path("copyIn").path("answer").path("fileId").asText());
+            }
+            assertEquals(key.equals("python") && mode.equals("STDIO") ? 7 : 8,requests.size());
+            if(!key.equals("python") || mode.equals("FUNCTION"))assertEquals("DELETE",requests.get(requests.size()-1).get("method"));
             groups.add(Map.of("language",key,"mode",mode,"requests",List.copyOf(requests)));
         }
         String export=System.getProperty("judger.contract.output");

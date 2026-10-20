@@ -606,6 +606,7 @@ public class StudyService {
     @Transactional
     public void uploadHomework(Long activityId, Integer week, String title, String fileUrl,
                                String fileName, LocalDateTime publishTime) {
+        validateFileUrl(fileUrl);
         if (week == null || week < 1) throw new BusinessException("周期不合法");
         StudyActivity activity = studyActivityMapper.selectById(activityId);
         if (activity == null) throw new BusinessException("活动不存在");
@@ -660,6 +661,7 @@ public class StudyService {
      */
     @Transactional
     public void submitStudentHomework(Long activityId, Integer week, Long userId, String title, String fileUrl, String fileName) {
+        validateFileUrl(fileUrl);
         // 先删除旧提交
         studyMaterialMapper.delete(
                 new LambdaQueryWrapper<StudyMaterial>()
@@ -679,6 +681,15 @@ public class StudyService {
         material.setUserId(userId);
         studyMaterialMapper.insert(material);
         emailHooks.studySubmission(activityId, week, userId);
+    }
+
+    private void validateFileUrl(String value) {
+        if (value == null || value.isBlank()) return;
+        try {
+            var uri = java.net.URI.create(value);
+            if (value.length() > 4096 || !"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null)
+                throw new IllegalArgumentException();
+        } catch (IllegalArgumentException e) { throw new BusinessException(400, "作业附件链接必须是有效的 HTTPS 地址"); }
     }
 
     /**

@@ -73,7 +73,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginId).thenReturn(7L);
 
-            service.uploadHomework(1L, 2, "第二周作业", "url", "hw.pdf", null);
+            service.uploadHomework(1L, 2, "第二周作业", "https://files.example.test/url", "hw.pdf", null);
 
             verify(studyMaterialMapper).delete(any());
             ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
@@ -83,7 +83,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
             assertEquals(2, m.getWeek());
             assertEquals(1, m.getFileType());
             assertEquals("第二周作业", m.getTitle());
-            assertEquals("url", m.getFileUrl());
+            assertEquals("https://files.example.test/url", m.getFileUrl());
             assertEquals("hw.pdf", m.getFileName());
             assertEquals(7L, m.getUserId());
             assertNull(m.getPublishTime());
@@ -96,7 +96,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
             st.when(StpUtil::getLoginId).thenReturn(7L);
 
-            service.uploadHomework(1L, 2, null, "url", "fallback.pdf", null);
+            service.uploadHomework(1L, 2, null, "https://files.example.test/url", "fallback.pdf", null);
 
             ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
             verify(studyMaterialMapper).insert(captor.capture());
@@ -112,7 +112,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
             st.when(StpUtil::getLoginId).thenReturn(7L);
 
             // 给未来第 5 周排期，带发布时间
-            service.uploadHomework(1L, 5, "第五周作业", "url", "w5.pdf", publish);
+            service.uploadHomework(1L, 5, "第五周作业", "https://files.example.test/url", "w5.pdf", publish);
 
             ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
             verify(studyMaterialMapper).insert(captor.capture());
@@ -127,14 +127,14 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
     @Test
     void uploadHomework_invalidWeek_throws() {
         assertThrows(BusinessException.class,
-                () -> service.uploadHomework(1L, 0, "t", "u", "f", null));
+                () -> service.uploadHomework(1L, 0, "t", "https://files.example.test/u", "f", null));
     }
 
     @Test
     void uploadHomework_activityNotFound_throws() {
         when(studyActivityMapper.selectById(9L)).thenReturn(null);
         assertThrows(BusinessException.class,
-                () -> service.uploadHomework(9L, 1, "t", "u", "f", null));
+                () -> service.uploadHomework(9L, 1, "t", "https://files.example.test/u", "f", null));
     }
 
     // ===================== 到点自动推进 =====================
@@ -240,7 +240,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
 
     @Test
     void submitStudentHomework_deletesOldThenInserts_usesTitle() {
-        service.submitStudentHomework(1L, 2, 50L, "我的作业", "url", "my.pdf");
+        service.submitStudentHomework(1L, 2, 50L, "我的作业", "https://files.example.test/url", "my.pdf");
 
         verify(studyMaterialMapper).delete(any());
         ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
@@ -254,7 +254,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
 
     @Test
     void submitStudentHomework_nullTitle_fallsBackToFileName() {
-        service.submitStudentHomework(1L, 2, 50L, null, "url", "auto.pdf");
+        service.submitStudentHomework(1L, 2, 50L, null, "https://files.example.test/url", "auto.pdf");
 
         ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
         verify(studyMaterialMapper).insert(captor.capture());

@@ -468,8 +468,6 @@ public class JwScheduleService {
                     .filter(s -> !s.isBlank()).distinct().limit(12).toList();
             List<String> inputNames = doc.select("input[name]").stream()
                     .map(e -> e.attr("name")).filter(s -> !s.isBlank()).distinct().limit(12).toList();
-            List<String> inputValues = doc.select("input[name]").stream().limit(12)
-                    .map(e -> e.attr("name") + "=" + e.attr("value")).toList();
             List<String> rootChildren = doc.body() == null ? List.of() : doc.body().children().stream()
                     .map(e -> e.tagName() + (e.id().isBlank() ? "" : "#" + e.id()))
                     .limit(12).toList();
@@ -496,7 +494,7 @@ public class JwScheduleService {
             shape.put("links", linkPaths);
             shape.put("scripts", scriptPaths);
             shape.put("inputs", inputNames);
-            shape.put("inputValues", inputValues);
+            // 只记录字段名，不能将学校页面的隐藏票据写入日志。
             shape.put("root", rootChildren);
             shape.put("ajaxHints", ajaxHints);
             shape.put("dataRoutes", dataRoutes);

@@ -57,6 +57,7 @@ import edu.csuft.sap.data.schedule.CustomCourse
 import edu.csuft.sap.data.schedule.DisplayCourse
 import edu.csuft.sap.data.schedule.Remark
 import edu.csuft.sap.data.schedule.WeekUtil
+import edu.csuft.sap.data.schedule.displayPeriodCount
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.share.ScheduleShareRenderer
 import edu.csuft.sap.ui.common.ErrorRetry
@@ -100,8 +101,10 @@ fun ScheduleScreen(
     var showSaveAs by remember { mutableStateOf(false) }
     var showRename by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
+    ScheduleUsageEffect(state, enabled = route != Route.WebImport)
 
     val s = state.settings
+    val periodCount = remember(s.dailyPeriods, state.display) { s.displayPeriodCount(state.display) }
     val days = remember(s.showWeekend, s.weekStartSunday) {
         when {
             !s.showWeekend -> (1..5).toList()
@@ -128,14 +131,14 @@ fun ScheduleScreen(
                 onWeekTitle = { showWeekPicker = true },
                 onShare = {
                     val wk = visibleWeek
-                    val weekCourses = state.display.filter { it.weeks.isEmpty() || it.weeks.contains(wk) }
+                    val weekCourses = state.display.filter { it.occursInWeek(wk) }
                         .map { it.copy(isThisWeek = true) }
                     ScheduleShareRenderer.renderAndShare(
                         shareCtx,
                         title = state.activeProfileName.ifBlank { "课程表" },
                         week = wk,
                         days = days,
-                        periodCount = s.dailyPeriods,
+                        periodCount = periodCount,
                         courses = weekCourses,
                         settings = s,
                     )
@@ -186,7 +189,7 @@ fun ScheduleScreen(
                                     // 开弹窗、翻页吸附、分钟刷新等无关重组不再重复 map/copy/filter。
                                     val weekCourses = remember(state.display, week, s.showNonWeek) {
                                         state.display.mapNotNull { c ->
-                                            val thisWeek = c.weeks.isEmpty() || c.weeks.contains(week)
+                                            val thisWeek = c.occursInWeek(week)
                                             when {
                                                 thisWeek -> c.copy(isThisWeek = true)
                                                 s.showNonWeek -> c.copy(isThisWeek = false)
@@ -197,7 +200,7 @@ fun ScheduleScreen(
                                     ScheduleGrid(
                                         days = days,
                                         courses = weekCourses,
-                                        periodCount = s.dailyPeriods,
+                                        periodCount = periodCount,
                                         showNowLine = s.showNowLine,
                                         settings = s,
                                         weekDates = WeekUtil.datesOfWeek(s.semesterStartDate, week),
@@ -285,7 +288,7 @@ fun ScheduleScreen(
                 prefillEndNode = r.prefillEndNode,
                 prefillColorIndex = r.prefillColorIndex,
                 maxWeeks = s.totalWeeks,
-                maxNodes = s.dailyPeriods,
+                maxNodes = periodCount,
                 settings = s,
                 onSave = { vm.upsertCourse(it); route = Route.None },
                 onDelete = { vm.deleteCourse(it); route = Route.None },
@@ -359,7 +362,7 @@ private fun slotCourses(
     showOtherWeeks: Boolean,
 ): List<DisplayCourse> =
     all.filter { it.day == clicked.day && it.startNode <= clicked.endNode && clicked.startNode <= it.endNode }
-        .map { it.copy(isThisWeek = it.weeks.isEmpty() || it.weeks.contains(week)) }
+        .map { it.copy(isThisWeek = it.occursInWeek(week)) }
         .filter { showOtherWeeks || it.isThisWeek } // 关掉"点课显示其他周课程"时只看本周
         .sortedByDescending { it.isThisWeek }
 

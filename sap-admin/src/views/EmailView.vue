@@ -177,7 +177,7 @@
     </el-dialog>
 
     <el-dialog v-model="sendVisible" title="发送测试邮件" width="560px" append-to-body modal-class="email-modal" destroy-on-close class="email-dialog">
-      <p class="dialog-tip">测试邮件会渲染后加入统一队列，不会修改模板。每次发送间隔至少 65 秒，可在发送日志查看结果。</p>
+      <p class="dialog-tip">测试邮件渲染后立即发送，不会修改模板；可在发送日志查看处理结果。</p>
       <el-form label-position="top">
         <el-form-item label="收件邮箱" required>
           <el-input v-model="sendTo" type="email" placeholder="请输入用于接收测试邮件的邮箱" />
@@ -417,7 +417,7 @@ async function sendTest() {
       variables: { ...sendValues },
     })
     sendVisible.value = false
-    ElMessage.success('测试邮件已加入队列，请在发送日志查看结果')
+    ElMessage.success('测试邮件已提交发送，请在发送日志查看结果')
   } finally {
     sending.value = false
   }

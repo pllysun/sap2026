@@ -61,6 +61,7 @@ class FileControllerTest {
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            stp.when(StpUtil::getRoleList).thenReturn(List.of("3"));
             Result<?> result = controller.upload(file);
             assertSame(uploaded, result.getData());
         }
@@ -77,6 +78,7 @@ class FileControllerTest {
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            stp.when(StpUtil::getRoleList).thenReturn(List.of("3"));
             Result<?> result = controller.batchUpload(new MultipartFile[]{f1, empty, f2});
             @SuppressWarnings("unchecked")
             List<Map<String, String>> data = (List<Map<String, String>>) result.getData();
@@ -91,6 +93,7 @@ class FileControllerTest {
         MockMultipartFile empty = new MockMultipartFile("files", "b.jpg", "image/jpeg", new byte[0]);
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(7L);
+            stp.when(StpUtil::getRoleList).thenReturn(List.of("3"));
             Result<?> result = controller.batchUpload(new MultipartFile[]{empty});
             @SuppressWarnings("unchecked")
             List<Map<String, String>> data = (List<Map<String, String>>) result.getData();

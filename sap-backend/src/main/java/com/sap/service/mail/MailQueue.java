@@ -20,14 +20,17 @@ import java.util.regex.Pattern;
 /** 数据库为事实来源；本地执行器只负责唤醒，不保存待发邮件。 */
 @Service
 public class MailQueue {
-    public static final long GAP = 65_000;
     public static final long LEASE = 600_000;
+    public static final long NOTIFICATION_GAP = 65_000;
+    private static final String CODE_EVENTS = "('PASSWORD_CODE','APP_REGISTRATION_CODE')";
+    private static final String QUEUED_EVENTS = "('ACCOUNT_REGISTERED','MEMBER_JOINED')";
     private final MailStore store;
     private final EmailService email;
     private final ObjectMapper json;
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "database-mail-worker"); t.setDaemon(true); return t;
     });
+    private final ExecutorService senders = Executors.newVirtualThreadPerTaskExecutor();
     private boolean active;
     private boolean signalled;
     @Value("${jw.aes-key}") private String key;
@@ -39,7 +42,13 @@ public class MailQueue {
     public void start() {
         // 首次安装按代码推荐标识绑定，后续解绑不会被重新绑定。
         store.transaction(() -> {
-            store.lock();
+            var legacy = store.lock();
+            // 旧版全局租约只迁移给当时正在发送的一封，不能阻塞其他邮件。
+            if (legacy.get("owner") != null) {
+                store.db.update("UPDATE sys_mail_queue SET lease_until=? WHERE state='SENDING' AND owner=? AND lease_until=0",
+                        number(legacy.get("lease_until")), legacy.get("owner"));
+            }
+            store.db.update("UPDATE sys_mail_worker SET owner=NULL,lease_until=0 WHERE id=1");
             for (MailHook hook : MailHook.values()) {
                 if (store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_binding WHERE event_key=?", Long.class, hook.name()) == 0) {
                     var matches = store.db.queryForList("SELECT id FROM sys_email_template WHERE template_key=? AND deleted=0", hook.initialTemplateKey);
@@ -61,9 +70,18 @@ public class MailQueue {
         });
         kick();
     }
-    @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Shanghai")
-    public void morningRecovery() { kick(); }
-    @PreDestroy public void stop() { executor.shutdown(); }
+    // 持久化记录兜底恢复；正常邮件在业务提交后立即唤醒，不等待此扫描。
+    @Scheduled(fixedDelay = 5000)
+    public void recover() { kick(); }
+    @PreDestroy public void stop() {
+        executor.shutdown();
+        senders.shutdown();
+        try {
+            if (!senders.awaitTermination(20, TimeUnit.SECONDS)) senders.shutdownNow();
+        } catch (InterruptedException interrupted) {
+            senders.shutdownNow(); Thread.currentThread().interrupt();
+        }
+    }
     public synchronized void kick() {
         signalled = true;
         if (active || executor.isShutdown()) return;
@@ -77,82 +95,91 @@ public class MailQueue {
             });
         } else kick();
     }
-    private synchronized void next(long delay) {
-        if (executor.isShutdown()) { active = false; return; }
-        if (delay >= 0 || signalled) {
-            signalled = false;
-            executor.schedule(this::work, Math.max(0, delay), TimeUnit.MILLISECONDS);
-        } else active = false;
-    }
     private void work() {
         synchronized (this) { signalled = false; }
-        long delay = -1;
         try {
-            if (!email.sendingEnabled()) return;
-            Map<String,Object> job = claim();
-            if (job == null) { delay = waitingDelay(); return; }
-            String error = null;
-            String result = "SUCCESS";
-            try {
-                long expires = number(job.get("expires_at"));
-                if (expires > 0 && expires <= System.currentTimeMillis()) {
-                    result = "EXPIRED"; error = "邮件已过期，未进行 SMTP 发送；验证码请重新申请";
-                } else {
-                    String html = AesUtil.decrypt(key, String.valueOf(job.get("payload")));
-                    email.deliver(String.valueOf(job.get("recipient")), String.valueOf(job.get("subject")), html);
+            while (!senders.isShutdown() && email.sendingEnabled()) {
+                var job = claim();
+                if (job == null) break;
+                try { senders.execute(() -> send(job)); }
+                catch (RejectedExecutionException stopping) {
+                    // 执行器拒绝时还没有发起 SMTP，可安全恢复为待处理。
+                    store.db.update("UPDATE sys_mail_queue SET state='PENDING',owner=NULL,lease_until=0 WHERE id=? AND owner=?",
+                            job.get("id"), job.get("owner"));
+                    break;
                 }
-            } catch (Exception e) {
-                result = "FAILED";
-                // 不记录 SMTP 原始异常（可能包含账号、验证码、邮件正文或授权信息）。
-                error = "SMTP 发送失败（" + e.getClass().getSimpleName() + "），请检查配置和网络；超时可能已被服务器接收";
             }
-            finish(job, result, error);
-            delay = GAP;
-        } catch (Exception e) {
-            // 数据库故障时保留队列，不删记录；稍后重试 claim，过期租约转为结果未知。
-            org.slf4j.LoggerFactory.getLogger(getClass()).warn("邮件工作器暂停：{}", e.getClass().getSimpleName());
-            delay = GAP;
-        } finally { next(delay); }
+        } catch (Exception error) {
+            org.slf4j.LoggerFactory.getLogger(getClass()).warn("邮件调度暂不可用：{}", error.getClass().getSimpleName());
+        } finally {
+            synchronized (this) {
+                active = false;
+                if (signalled && !executor.isShutdown()) kick();
+            }
+        }
+    }
+    private void send(Map<String,Object> job) {
+        String error = null, result = "SUCCESS";
+        try {
+            long expires = number(job.get("expires_at"));
+            if (expires > 0 && expires <= System.currentTimeMillis()) {
+                result = "EXPIRED"; error = "邮件已过期，未进行 SMTP 发送；验证码请重新申请";
+            } else {
+                String html = AesUtil.decrypt(key, String.valueOf(job.get("payload")));
+                email.deliver(String.valueOf(job.get("recipient")), String.valueOf(job.get("subject")), html);
+            }
+        } catch (Exception failure) {
+            result = "FAILED";
+            error = "SMTP 发送失败（" + failure.getClass().getSimpleName() + "），请检查配置和网络；超时可能已被服务器接收";
+        }
+        try { finish(job, result, error); }
+        catch (Exception failure) {
+            // 保留发送记录与租约；恢复时标记未知，不能因落库失败而重复发信。
+            org.slf4j.LoggerFactory.getLogger(getClass()).warn("邮件结果暂无法保存：{}", failure.getClass().getSimpleName());
+        } finally { kick(); }
     }
     Map<String,Object> claim() {
         return store.transaction(() -> {
             var state = store.lock(); long now = System.currentTimeMillis();
-            if (state.get("owner") != null && number(state.get("lease_until")) > now) return null;
-            if (state.get("owner") != null) {
-                for (var job : store.db.queryForList("SELECT * FROM sys_mail_queue WHERE state='SENDING'")) {
-                    moveFailure(job, "UNKNOWN", "发送中断，结果未知；请核实收件情况后决定是否重试", null);
+            for (var expired : store.db.queryForList("SELECT * FROM sys_mail_queue WHERE state='SENDING' AND lease_until<=? FOR UPDATE", now)) {
+                moveFailure(expired, "UNKNOWN", "发送中断，结果未知；请核实收件情况后决定是否重试", null);
+                if (MailHook.isQueuedNotification(String.valueOf(expired.get("event_key")))) {
+                    store.db.update("UPDATE sys_mail_worker SET next_at=? WHERE id=1", now + NOTIFICATION_GAP);
+                    state.put("next_at",now + NOTIFICATION_GAP);
                 }
-                store.db.update("UPDATE sys_mail_worker SET owner=NULL,lease_until=0,next_at=? WHERE id=1", now + GAP);
-                return null;
             }
-            if (number(state.get("next_at")) > now) return null;
-            var rows = store.db.queryForList("SELECT * FROM sys_mail_queue WHERE state='PENDING' ORDER BY created_at,id LIMIT 1 FOR UPDATE");
+            // 验证码优先。欢迎通知仅在没有验证码等待/发送、没有另一封欢迎通知在发时领取。
+            boolean codesActive = store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE event_key IN " + CODE_EVENTS + " AND state IN ('PENDING','SENDING')",Long.class)>0;
+            boolean notificationActive = store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE event_key IN " + QUEUED_EVENTS + " AND state='SENDING'",Long.class)>0;
+            boolean allowNotification = !codesActive && !notificationActive && number(state.get("next_at"))<=now;
+            String eligible = allowNotification ? "" : " AND event_key NOT IN " + QUEUED_EVENTS;
+            var rows = store.db.queryForList("SELECT * FROM sys_mail_queue WHERE state='PENDING'" + eligible
+                    + " ORDER BY CASE WHEN event_key IN " + CODE_EVENTS + " THEN 0 WHEN event_key IN " + QUEUED_EVENTS + " THEN 2 ELSE 1 END,created_at,id LIMIT 1 FOR UPDATE");
             if (rows.isEmpty()) return null;
             var job = rows.get(0); String owner = UUID.randomUUID().toString();
-            store.db.update("UPDATE sys_mail_queue SET state='SENDING',owner=?,attempts=attempts+1 WHERE id=?", owner, job.get("id"));
-            store.db.update("UPDATE sys_mail_worker SET owner=?,lease_until=? WHERE id=1", owner, now + LEASE);
-            job.put("owner", owner); job.put("attempts", number(job.get("attempts")) + 1);
-            store.audit(String.valueOf(job.get("id")), String.valueOf(job.get("event_key")), String.valueOf(job.get("recipient")), String.valueOf(job.get("subject")), "SENDING", "开始处理", null);
+            store.db.update("UPDATE sys_mail_queue SET state='SENDING',owner=?,lease_until=?,attempts=attempts+1 WHERE id=?", owner, now + LEASE, job.get("id"));
+            job.put("owner", owner); job.put("lease_until", now + LEASE); job.put("attempts", number(job.get("attempts")) + 1);
+            if (MailHook.isQueuedNotification(String.valueOf(job.get("event_key"))))
+                store.db.update("UPDATE sys_mail_worker SET next_at=? WHERE id=1",now + NOTIFICATION_GAP);
+            store.audit(String.valueOf(job.get("id")), String.valueOf(job.get("event_key")), String.valueOf(job.get("recipient")), String.valueOf(job.get("subject")), "SENDING", "开始发送", null);
             return job;
         });
     }
     void finish(Map<String,Object> job, String result, String error) {
         store.transaction(() -> {
-            var state = store.lock();
-            if (!Objects.equals(state.get("owner"), job.get("owner"))) return null;
+            // 与领取保持相同锁顺序，普通通知完成时持久化节奏，不占用验证码发送通道。
+            store.lock();
+            var rows = store.db.queryForList("SELECT owner FROM sys_mail_queue WHERE id=? AND state='SENDING' FOR UPDATE", job.get("id"));
+            if (rows.isEmpty() || !Objects.equals(rows.get(0).get("owner"), job.get("owner"))) return null;
+            if (MailHook.isQueuedNotification(String.valueOf(job.get("event_key"))))
+                store.db.update("UPDATE sys_mail_worker SET next_at=? WHERE id=1",System.currentTimeMillis() + NOTIFICATION_GAP);
             if (error != null) moveFailure(job, result, error, null);
             else {
                 store.audit(String.valueOf(job.get("id")), String.valueOf(job.get("event_key")), String.valueOf(job.get("recipient")), String.valueOf(job.get("subject")), "SUCCESS", "SMTP 已接受（不代表最终投递或已读）", null);
                 store.db.update("DELETE FROM sys_mail_queue WHERE id=?", job.get("id"));
             }
-            store.db.update("UPDATE sys_mail_worker SET owner=NULL,lease_until=0,next_at=? WHERE id=1", System.currentTimeMillis() + GAP);
             return null;
         });
-    }
-    private long waitingDelay() {
-        if (store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue", Long.class) == 0) return -1;
-        var state = store.db.queryForMap("SELECT * FROM sys_mail_worker WHERE id=1");
-        return Math.max(1000, Math.max(number(state.get("next_at")), number(state.get("lease_until"))) - System.currentTimeMillis());
     }
     private void moveFailure(Map<String,Object> job, String status, String reason, Long actor) {
         store.db.update("INSERT INTO sys_mail_failed(id,event_key,recipient,user_id,subject,payload,expires_at,created_at,attempts,status,reason,failed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -227,7 +254,7 @@ public class MailQueue {
         if (html == null || html.length()>256000) throw new BusinessException(400,"邮件正文超过大小限制");
         String id=UUID.randomUUID().toString();
         store.db.update("INSERT INTO sys_mail_queue(id,event_key,recipient,user_id,subject,payload,expires_at,created_at) VALUES (?,?,?,?,?,?,?,?)", id, hook, to, userId, subject, AesUtil.encrypt(key,html), expiry, System.currentTimeMillis());
-        store.audit(id,hook,to,subject,"QUEUED","已加入发送队列",actor,context); return id;
+        store.audit(id,hook,to,subject,"QUEUED",MailHook.isQueuedNotification(hook)?"已加入普通通知队列，验证码优先":"已提交，立即发送",actor,context); return id;
     }
     static Long initiatorId(Map<String,Object> context) {
         return context.get("initiator") instanceof Map<?,?> person && person.get("id") instanceof Number id ? id.longValue() : null;
@@ -238,6 +265,7 @@ public class MailQueue {
             Map<String,Object> row=new LinkedHashMap<>(); row.put("eventKey",hook.name()); row.put("title",hook.title); row.put("variables",hook.variables);
             var list=store.db.queryForList("SELECT * FROM sys_mail_binding WHERE event_key=?",hook.name());
             row.put("templateId",list.isEmpty()?null:list.get(0).get("template_id"));
+            row.put("deliveryPolicy",MailHook.deliveryPolicy(hook.name()));
             boolean compatible=true;
             if(row.get("templateId")!=null) {
                 try { validateContract(hook,email.getTemplate(number(row.get("templateId")))); }
@@ -266,6 +294,18 @@ public class MailQueue {
         for(var row:store.db.queryForList("SELECT event_key FROM sys_mail_binding WHERE template_id=?",id)) validateContract(MailHook.parse(String.valueOf(row.get("event_key"))),template);
     }
     public static void validateContract(MailHook hook, Map<String,Object> template) {
+        if (hook.isVerificationCode()) {
+            var secret = java.util.regex.Pattern.compile("\\{\\{\\s*code\\s*}}");
+            var document = org.jsoup.Jsoup.parse(String.valueOf(template.get("htmlContent")));
+            for (var element : document.getAllElements()) {
+                for (var attribute : element.attributes()) {
+                    if (secret.matcher(attribute.getValue()).find())
+                        throw new BusinessException(400, "验证码只能出现在邮件正文文本中，不能用于链接或图片等属性");
+                }
+                if ((element.tagName().equals("style") || element.tagName().equals("script")) && secret.matcher(element.data()).find())
+                    throw new BusinessException(400, "验证码不能出现在样式或脚本中");
+            }
+        }
         Set<String> actual = variables(template);
         Set<String> expected = new LinkedHashSet<>(hook.variables);
         if (!actual.equals(expected)) {
@@ -330,8 +370,20 @@ public class MailQueue {
         });
     }
     public Map<String,Object> status() {
-        var state=store.db.queryForMap("SELECT lease_until,next_at FROM sys_mail_worker WHERE id=1");
-        return Map.of("queue",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue",Long.class),"failed",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_failed WHERE status<>'IGNORED'",Long.class),"state",state,"enabled",email.sendingEnabled());
+        var state=new LinkedHashMap<>(store.db.queryForMap("SELECT COALESCE(MAX(lease_until),0) AS lease_until FROM sys_mail_queue WHERE state='SENDING'"));
+        state.put("next_at",0L);
+        var verification = laneStatus(CODE_EVENTS);
+        var notifications = new LinkedHashMap<>(laneStatus(QUEUED_EVENTS));
+        notifications.put("nextAt",store.db.queryForObject("SELECT next_at FROM sys_mail_worker WHERE id=1",Long.class));
+        notifications.put("intervalSeconds",NOTIFICATION_GAP/1000);
+        return Map.of("queue",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue",Long.class),"failed",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_failed WHERE status<>'IGNORED'",Long.class),"state",state,"enabled",email.sendingEnabled(),
+                "pending",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE state='PENDING'",Long.class),
+                "sending",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE state='SENDING'",Long.class),"deliveryMode","VERIFICATION_FIRST",
+                "verification",verification,"notifications",notifications);
+    }
+    private Map<String,Object> laneStatus(String events) {
+        return Map.of("pending",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE state='PENDING' AND event_key IN " + events,Long.class),
+                "sending",store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue WHERE state='SENDING' AND event_key IN " + events,Long.class));
     }
     private Map<String,Object> readJson(Object raw) {try{return raw==null?Map.of():json.readValue(String.valueOf(raw),new TypeReference<>(){});}catch(Exception e){throw new BusinessException(400,"事件固定参数无效");}}
     private String writeJson(Object data){try{return json.writeValueAsString(data);}catch(Exception e){throw new BusinessException(400,"参数无法保存");}}

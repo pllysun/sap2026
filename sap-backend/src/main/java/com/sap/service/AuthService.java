@@ -97,7 +97,9 @@ public class AuthService {
     /** 校验账号密码（含失败锁定/禁用判断），返回用户；失败抛业务异常。 */
     private User authenticate(LoginDTO dto) {
         // 锁定按 (学号 + 客户端IP) 维度：避免攻击者对某学号循环错误把受害者从其自身 IP 也锁死(定向DoS)
-        String key = dto.getStudentId() + "|" + clientIp();
+        if (dto.getStudentId() == null || dto.getStudentId().isBlank()) throw new BusinessException("账号或密码错误");
+        String account = java.text.Normalizer.normalize(dto.getStudentId().trim(), java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT);
+        String key = account + "|" + clientIp();
         long now = System.currentTimeMillis();
         long[] rec = key != null ? loginAttempts.get(key) : null;
         if (rec != null) {
@@ -110,7 +112,7 @@ public class AuthService {
         }
 
         User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getStudentId, dto.getStudentId())
+                new LambdaQueryWrapper<User>().eq(User::getStudentId, dto.getStudentId().trim())
         );
         // 统一“账号或密码错误”，避免通过提示区分账号是否存在（防枚举）
         if (user == null) {
@@ -142,14 +144,30 @@ public class AuthService {
 
     private void recordLoginFail(String key, long now) {
         if (key == null) return;
-        long[] rec = loginAttempts.computeIfAbsent(key, k -> new long[]{0, 0});
+        long[] rec;
+        synchronized (loginAttempts) {
+            if (loginAttempts.size() >= 10000) purgeLoginAttempts();
+            if (loginAttempts.size() >= 10000 && !loginAttempts.containsKey(key))
+                throw new BusinessException(429, "登录尝试较多，请稍后重试");
+            rec = loginAttempts.computeIfAbsent(key, k -> new long[]{0, 0, now});
+        }
         synchronized (rec) {
+            if (rec.length > 2) rec[2] = now;
             rec[0]++;
             if (rec[0] >= MAX_FAIL_ATTEMPTS) {
                 rec[1] = now + LOCK_DURATION_MS;
                 rec[0] = 0; // 锁定后重置计数，锁定期满重新计
             }
         }
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 60000)
+    public void purgeLoginAttempts() {
+        long now = System.currentTimeMillis();
+        loginAttempts.entrySet().removeIf(entry -> {
+            long[] value = entry.getValue();
+            synchronized (value) { return value.length > 2 && value[1] <= now && now - value[2] >= LOCK_DURATION_MS; }
+        });
     }
 
     /**
@@ -173,13 +191,7 @@ public class AuthService {
      */
     @Transactional
     public void register(RegisterDTO dto) {
-        // 检查学号是否已存在
-        Long count = userMapper.selectCount(
-                new LambdaQueryWrapper<User>().eq(User::getStudentId, dto.getStudentId())
-        );
-        if (count > 0) {
-            throw new BusinessException("该学号已注册");
-        }
+        requireUnregistered(dto.getStudentId());
         // 获取当前年级
         Setting gradeSetting = settingMapper.selectOne(
                 new LambdaQueryWrapper<Setting>().eq(Setting::getSettingKey, "current_grade")
@@ -187,7 +199,7 @@ public class AuthService {
         String currentGrade = gradeSetting != null ? gradeSetting.getSettingValue() : "2025";
 
         User user = new User();
-        user.setStudentId(dto.getStudentId());
+        user.setStudentId(dto.getStudentId().trim());
         user.setPassword(PasswordUtil.encode(dto.getPassword()));
         user.setName(dto.getName());
         user.setNickname(dto.getNickname() != null ? dto.getNickname() : dto.getName());
@@ -204,9 +216,20 @@ public class AuthService {
         userRole.setRoleCode(4);
         userRoleMapper.insert(userRole);
 
-        // 刷新缓存
         cacheService.addUser(user);
         emailHooks.registered(user);
+    }
+
+    /** 发送注册邮件、校验验证码及占用注册额度之前检查；写入时仍复查并由唯一索引兜底。 */
+    public void requireUnregistered(String studentId) {
+        if (studentId == null || studentId.isBlank()) throw new BusinessException(400, "请输入学号");
+        // 检查学号是否已存在
+        Long count = userMapper.selectCount(
+                new LambdaQueryWrapper<User>().eq(User::getStudentId, studentId.trim())
+        );
+        if (count > 0) {
+            throw new BusinessException(400, "该学号已注册，请直接使用该学号登录；忘记密码可在登录页找回");
+        }
     }
 
     /**

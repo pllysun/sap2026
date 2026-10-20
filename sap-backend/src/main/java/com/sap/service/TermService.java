@@ -69,7 +69,8 @@ public class TermService {
 
         // 4. 手动分页
         int total = allTerms.size();
-        int from = (current - 1) * size;
+        current = Math.max(1, current); size = Math.max(1, Math.min(size, 200));
+        int from = (int)Math.min((long)(current - 1) * size, total);
         int to = Math.min(from + size, total);
         List<Term> pageTerms = from < total ? allTerms.subList(from, to) : List.of();
 

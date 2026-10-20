@@ -46,7 +46,7 @@ class DashboardControllerTest extends BaseUnitTest {
     @Test
     @SuppressWarnings("unchecked")
     void stats_withGrade_usesGradeScopedQueries() {
-        when(termMapper.selectCount(any())).thenReturn(12L);
+        when(termMapper.countMembers(any())).thenReturn(12L);
         when(activityService.countActivitiesByGrade("2025")).thenReturn(3L);
         when(studyService.countStudyActivitiesByGrade("2025")).thenReturn(4L);
         when(billService.getStats("2025")).thenReturn(Map.of("income", 100));
@@ -67,7 +67,7 @@ class DashboardControllerTest extends BaseUnitTest {
         Setting s = new Setting();
         s.setSettingValue("2024");
         when(settingMapper.selectOne(any())).thenReturn(s);
-        when(termMapper.selectCount(any())).thenReturn(7L);
+        when(termMapper.countMembers(any())).thenReturn(7L);
         when(activityService.countActivitiesByGrade("2024")).thenReturn(1L);
         when(studyService.countStudyActivitiesByGrade("2024")).thenReturn(2L);
         when(billService.getStats("2024")).thenReturn(Map.of());
@@ -82,7 +82,7 @@ class DashboardControllerTest extends BaseUnitTest {
     @SuppressWarnings("unchecked")
     void stats_nullGradeNoSetting_defaults2025() {
         when(settingMapper.selectOne(any())).thenReturn(null);
-        when(termMapper.selectCount(any())).thenReturn(0L);
+        when(termMapper.countMembers(any())).thenReturn(0L);
 
         Result<?> r = controller.stats("");
         Map<String, Object> data = (Map<String, Object>) r.getData();
@@ -92,7 +92,7 @@ class DashboardControllerTest extends BaseUnitTest {
     @Test
     @SuppressWarnings("unchecked")
     void stats_all_usesGlobalQueries() {
-        when(termMapper.selectCount(isNull())).thenReturn(100L);
+        when(termMapper.countMembers(isNull())).thenReturn(100L);
         when(activityService.countActivities()).thenReturn(20L);
         when(studyService.countStudyActivities()).thenReturn(30L);
         when(billService.getStats(isNull())).thenReturn(Map.of("total", 999));
@@ -109,8 +109,7 @@ class DashboardControllerTest extends BaseUnitTest {
     @Test
     @SuppressWarnings("unchecked")
     void gradeStats_returnsPerGradeCounts() {
-        when(termMapper.selectList(any())).thenReturn(List.of(gradeTerm("2024"), gradeTerm("2025")));
-        when(termMapper.selectCount(any())).thenReturn(5L, 8L);
+        when(termMapper.countsByGrade()).thenReturn(List.of(Map.of("grade","2024","count",5L),Map.of("grade","2025","count",8L)));
 
         Result<?> r = controller.gradeStats();
         List<Map<String, Object>> data = (List<Map<String, Object>>) r.getData();
@@ -124,7 +123,7 @@ class DashboardControllerTest extends BaseUnitTest {
     @Test
     @SuppressWarnings("unchecked")
     void gradeStats_empty() {
-        when(termMapper.selectList(any())).thenReturn(List.of());
+        when(termMapper.countsByGrade()).thenReturn(List.of());
         Result<?> r = controller.gradeStats();
         List<Map<String, Object>> data = (List<Map<String, Object>>) r.getData();
         assertTrue(data.isEmpty());

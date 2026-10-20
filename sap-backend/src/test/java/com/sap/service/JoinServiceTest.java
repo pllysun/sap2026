@@ -5,6 +5,7 @@ import com.sap.common.BusinessException;
 import com.sap.entity.*;
 import com.sap.mapper.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -39,6 +40,15 @@ class JoinServiceTest extends BaseUnitTest {
     @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks JoinService service;
 
+    @BeforeEach
+    void activeAccountsAndManagers() {
+        when(userMapper.lockActiveUserById(anyLong())).thenAnswer(call -> call.getArgument(0));
+        when(userMapper.selectById(anyLong())).thenAnswer(call -> user(call.getArgument(0)));
+        when(userRoleMapper.selectCount(any())).thenReturn(1L);
+        when(joinManagerMapper.selectCount(any())).thenReturn(1L);
+        when(joinManagerMapper.selectList(any())).thenReturn(List.of(manager(1, 10, "2025")));
+    }
+
     private JoinManager manager(long id, long userId, String grade) {
         JoinManager m = new JoinManager();
         m.setId(id);
@@ -61,7 +71,8 @@ class JoinServiceTest extends BaseUnitTest {
         u.setId(id);
         u.setName("用户" + id);
         u.setStudentId("S" + id);
-        u.setQq("qq" + id);
+        u.setQq("12345" + id);
+        u.setStatus(1);
         return u;
     }
 
@@ -299,6 +310,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void refreshManager_within24h_throws() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(0);
         app.setAssignedAt(LocalDateTime.now().minusHours(2));
         when(joinApplicationMapper.selectOne(any())).thenReturn(app);
@@ -309,6 +322,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void refreshManager_noOtherManagers_throws() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(0);
         app.setManagerId(10L);
         app.setAssignedAt(LocalDateTime.now().minusHours(25));
@@ -322,6 +337,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void refreshManager_reassigns() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(0);
         app.setManagerId(10L);
         app.setAssignedAt(LocalDateTime.now().minusHours(25));
@@ -339,6 +356,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void refreshManager_nullAssignedAt_passesThroughToReassign() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(0);
         app.setManagerId(10L);
         app.setAssignedAt(null); // skip 24h check
@@ -365,6 +384,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void submitPaymentCode_updates() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(0);
         when(joinApplicationMapper.selectOne(any())).thenReturn(app);
 
@@ -385,6 +406,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void getMyApplication_returnsDetail() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setId(3L);
         app.setStatus(1);
         when(joinApplicationMapper.selectOne(any())).thenReturn(app);
@@ -397,6 +420,8 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void listApplications_withStatusAndOnlyMine() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setId(1L);
         app.setUserId(50L);
         when(joinApplicationMapper.selectList(any())).thenReturn(List.of(app));
@@ -425,20 +450,27 @@ class JoinServiceTest extends BaseUnitTest {
     }
 
     @Test
-    void approve_alreadyApproved_throws() {
+    void approve_alreadyApproved_isIdempotent() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(2);
         when(joinApplicationMapper.selectById(1L)).thenReturn(app);
-        BusinessException ex = assertThrows(BusinessException.class, () -> service.approve(1L, 9L));
-        assertEquals("已审核通过", ex.getMessage());
+        when(joinApplicationMapper.selectList(any())).thenReturn(List.of(app));
+        when(userRoleMapper.selectList(any())).thenReturn(List.of(role(9, 1)));
+        service.approve(1L, 9L);
+        verify(billService, never()).addBill(any(), any());
     }
 
     @Test
     void approve_noPermission_throws() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(1);
         app.setManagerId(10L);
         when(joinApplicationMapper.selectById(1L)).thenReturn(app);
+        when(joinApplicationMapper.selectList(any())).thenReturn(List.of(app));
         // approver has only role 3, not leader/super, and not the assigned manager
         when(userRoleMapper.selectList(any())).thenReturn(List.of(role(9, 3)));
         BusinessException ex = assertThrows(BusinessException.class, () -> service.approve(1L, 9L));
@@ -448,10 +480,13 @@ class JoinServiceTest extends BaseUnitTest {
     @Test
     void approve_byLeader_succeeds_upgradesAndBills() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(1);
         app.setManagerId(10L);
         app.setUserId(50L);
         when(joinApplicationMapper.selectById(1L)).thenReturn(app);
+        when(joinApplicationMapper.selectList(any())).thenReturn(List.of(app));
         when(userRoleMapper.selectList(any())).thenReturn(List.of(role(9, 1))); // leader
 
         // upgradeToMember path
@@ -471,12 +506,15 @@ class JoinServiceTest extends BaseUnitTest {
     }
 
     @Test
-    void approve_byAssignedManager_succeeds() {
+    void approve_byAssignedManager_alreadyMember_doesNotBillAgain() {
         JoinApplication app = new JoinApplication();
+        app.setId(1L);
+        app.setUserId(50L);
         app.setStatus(1);
         app.setManagerId(9L); // approver is the manager
         app.setUserId(50L);
         when(joinApplicationMapper.selectById(1L)).thenReturn(app);
+        when(joinApplicationMapper.selectList(any())).thenReturn(List.of(app));
         when(userRoleMapper.selectList(any())).thenReturn(List.of(role(9, 2))); // not 0/1
         when(userRoleMapper.selectOne(any())).thenReturn(role(50, 3)); // already member -> no insert
         when(settingService.getValue("current_grade")).thenReturn("2025");
@@ -487,10 +525,7 @@ class JoinServiceTest extends BaseUnitTest {
         service.approve(1L, 9L);
         assertEquals(2, app.getStatus());
         verify(userRoleMapper, never()).insert(any());
-        ArgumentCaptor<Bill> cap = ArgumentCaptor.forClass(Bill.class);
-        verify(billService).addBill(cap.capture(), isNull());
-        assertEquals(new BigDecimal("30"), cap.getValue().getAmount());
-        assertEquals(1, cap.getValue().getBillType());
+        verify(billService, never()).addBill(any(Bill.class), isNull());
     }
 
     // ============ directUpgrade ============

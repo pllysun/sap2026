@@ -90,6 +90,8 @@ public class JwAuthClient {
 
     private final JwProperties props;
     private final OcrClient ocr;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sap.service.RateLimiterService loginLimiter;
 
     public JwAuthClient(JwProperties props, OcrClient ocr) {
         this.props = props;
@@ -103,6 +105,11 @@ public class JwAuthClient {
      * @throws CaptchaRequiredException 自动 OCR 用尽，需人工输入验证码
      */
     public JwHttpSession login(String account, String password) {
+        if (account == null || account.isBlank() || account.length() > 64 || password == null || password.length() > 256)
+            throw new BusinessException(400, "学校账号或密码格式无效");
+        if (loginLimiter != null && (!loginLimiter.tryAcquireWindowEnforced("jw-auth:account:" + account.trim().toLowerCase(java.util.Locale.ROOT), 6, 600)
+                || !loginLimiter.tryAcquireEnforced("jw-auth:global", 120, 2)))
+            throw new BusinessException(429, "学校登录尝试过于频繁，请稍后再试");
         try {
             LoginBootstrap bootstrap = bootstrapLogin();
             JwHttpSession s = bootstrap.session();
@@ -136,7 +143,7 @@ public class JwAuthClient {
             // 【临时调试】JW_FORCE_CAPTCHA=1 时强制走人工验证码分支，用真实验证码图验证闭环
             if ("1".equals(System.getenv("JW_FORCE_CAPTCHA"))) {
                 byte[] img = fetchCaptcha(s);
-                log.warn("[FORCE-CAPTCHA] imgBytes={} ocr='{}'", img.length, ocr.recognize(img));
+                log.warn("[FORCE-CAPTCHA] 已生成图形验证码，仅供本地联调");
                 throw new CaptchaRequiredException(pending, img);
             }
             HttpResponse<String> resp = submitCas(pending, "", 0);
@@ -147,7 +154,7 @@ public class JwAuthClient {
             // BusinessException，会丢掉 challengeId/手机号，导致 App 只看到「教务登录异常：需要短信二次验证」而无验证码输入框。
             throw e;
         } catch (Exception e) {
-            log.error("教务登录异常 account={}", account, e);
+            log.error("教务登录异常", e);
             throw new BusinessException("教务登录异常：" + JwErrorMessages.userDetail(
                     e, "学校登录流程暂时异常，请稍后重试"));
         }
@@ -159,7 +166,7 @@ public class JwAuthClient {
      */
     private LoginBootstrap bootstrapLogin() throws Exception {
         if (props.isWebvpnPreferred()) {
-            JwHttpSession webvpn = new JwHttpSession(props.getHttpTimeoutSeconds());
+            JwHttpSession webvpn = newSession();
             try {
                 configureWebvpnRoute(webvpn);
                 String page = webvpn.get(webvpn.getCasLoginUrl()).body();
@@ -173,7 +180,7 @@ public class JwAuthClient {
             }
         }
 
-        JwHttpSession direct = new JwHttpSession(props.getHttpTimeoutSeconds());
+        JwHttpSession direct = newSession();
         direct.configureRoute(new JwHttpSession.Route(
                 false,
                 trimSlash(props.getCasBase()),
@@ -221,6 +228,14 @@ public class JwAuthClient {
                 trimSlash(props.getCasBase()),
                 primary.directBase(),
                 trimSlash(props.getQualityBase())));
+    }
+
+    private JwHttpSession newSession() {
+        JwHttpSession session = new JwHttpSession(props.getHttpTimeoutSeconds());
+        for (String base : new String[]{props.getWebvpnBase(), props.getWebvpnCasBase(), props.getWebvpnPortalBase(),
+                props.getWebvpnJwglBase(), props.getWebvpnQualityBase(), props.getCasBase(), props.getJwglBase(), props.getQualityBase()})
+            session.trustConfiguredOrigin(base);
+        return session;
     }
 
     private String discoverWebvpnExternalId(JwHttpSession session) throws Exception {
@@ -293,7 +308,7 @@ public class JwAuthClient {
         } catch (CaptchaRequiredException | BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("验证码续登异常 account={}", pending.account, e);
+            log.error("验证码续登异常", e);
             throw new BusinessException("教务登录异常：" + JwErrorMessages.userDetail(
                     e, "验证码登录流程暂时异常，请稍后重试"));
         }
@@ -313,6 +328,7 @@ public class JwAuthClient {
         }
         JSONObject d = init.getJSONObject("data");
         p.attestServerUrl = d.getString("attestServerUrl");
+        p.session.trustSchoolAttestationOrigin(p.attestServerUrl);
         p.gid = d.getString("gid");
         sendSms(p);
         return d.getString("securePhone");
@@ -333,7 +349,7 @@ public class JwAuthClient {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("MFA 短信发送异常 account={}", p.account, e);
+            log.error("MFA 短信发送异常", e);
             throw new BusinessException("短信发送失败：" + JwErrorMessages.userDetail(
                     e, "短信服务暂时异常，请稍后重试"));
         }
@@ -364,7 +380,7 @@ public class JwAuthClient {
         } catch (CaptchaRequiredException | BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("MFA 续登异常 account={}", p.account, e);
+            log.error("MFA 续登异常", e);
             throw new BusinessException("二次验证续登异常：" + JwErrorMessages.userDetail(
                     e, "二次验证流程暂时异常，请稍后重试"));
         }
@@ -390,7 +406,7 @@ public class JwAuthClient {
             refreshExecution(p, body);
             byte[] img = fetchCaptcha(p.session);
             String captcha = ocr.recognize(img);
-            log.info("验证码自动识别 第{}次 account={} code='{}'", i + 1, p.account, captcha);
+            log.debug("验证码自动识别 第{}次", i + 1);
             resp = submitCas(p, captcha, CAPTCHA_FAIL_N);
             ticketRedirect = ticketRedirectOf(p.session, resp);
             if (ticketRedirect != null) return finishLogin(p, ticketRedirect);

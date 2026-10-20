@@ -7,7 +7,7 @@ import java.util.Map;
 /** 事件及参数由业务代码定义，模板只能使用该契约内的变量。 */
 public enum MailHook {
     ACCOUNT_REGISTERED("注册成功", "account.registered", List.of("name", "associationIntro")),
-    APP_REGISTRATION_CODE("App 注册邮箱验证码", "app.registration-code", List.of("name", "account", "email", "code", "expiresInMinutes")),
+    APP_REGISTRATION_CODE("注册邮箱验证码", "app.registration-code", List.of("name", "account", "email", "code", "expiresInMinutes")),
     PASSWORD_CODE("修改密码验证码", "account.password-code", List.of("name", "account", "code", "expiresInMinutes")),
     MEMBER_JOINED("升级会员 / 欢迎入会", "member.upgraded", List.of("name")),
     ISSUE_REPLIED("App 问题管理员回复", "app.issue-replied", List.of("name", "issueId", "issueTitle", "issueStatus", "adminName", "replyContent", "repliedAt")),
@@ -24,8 +24,9 @@ public enum MailHook {
     public Map<String,Object> definition() {
         return Map.of("eventKey",name(), "title",title, "variables",variables,
                 "parameters",variables.stream().map(MailHook::parameter).toList(),
+                "deliveryPolicy",deliveryPolicy(name()),
                 "guidance",switch(this) {
-                    case APP_REGISTRATION_CODE -> "手机端注册时验证 QQ 邮箱。code 和 expiresInMinutes 必须放在正文，主题不得含验证码；验证码由注册业务生成、限时且一次有效。注册成功后继续触发注册成功事件。";
+                    case APP_REGISTRATION_CODE -> "Web 和 App 注册时验证 QQ 邮箱。code 和 expiresInMinutes 必须放在正文，主题不得含验证码；验证码由注册业务生成、限时且一次有效。注册成功后继续触发注册成功事件。";
                     case PASSWORD_CODE -> "验证码 code 和有效分钟数 expiresInMinutes 必须放在正文，主题不得含验证码。示例只用于预览；用户点击发送后，找回密码流程向注册 QQ 邮箱发送真实验证码，实际有效期由密码业务控制。";
                     case ISSUE_REPLIED -> "请引导用户打开软协课表 App，在「我的 → 意见反馈」中查看对应问题与回复，不要添加不存在的问题链接参数。";
                     case ACCOUNT_REGISTERED -> "欢迎用户了解软件协会；associationIntro 由管理员在事件绑定时填写，其他参数由业务提供。";
@@ -59,6 +60,12 @@ public enum MailHook {
     public static MailHook parse(String value) {
         try { return valueOf(value); }
         catch (Exception e) { throw new BusinessException(400, "未知邮件代码事件"); }
+    }
+    public static boolean isQueuedNotification(String key) {
+        return ACCOUNT_REGISTERED.name().equals(key) || MEMBER_JOINED.name().equals(key);
+    }
+    public static String deliveryPolicy(String key) {
+        return isVerificationCode(key) ? "VERIFICATION" : isQueuedNotification(key) ? "NOTIFICATION_QUEUE" : "IMMEDIATE";
     }
     public boolean isVerificationCode() { return this == PASSWORD_CODE || this == APP_REGISTRATION_CODE; }
     public static boolean isVerificationCode(String key) {

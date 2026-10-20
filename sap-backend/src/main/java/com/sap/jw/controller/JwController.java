@@ -42,8 +42,7 @@ import java.util.Map;
 public class JwController {
 
     /** 单实例内按用户串行提交绑定，避免并发请求绕过单账号上限。 */
-    private final java.util.concurrent.ConcurrentHashMap<Long, Object> bindLocks =
-            new java.util.concurrent.ConcurrentHashMap<>();
+    private final Object[] bindLocks = java.util.stream.IntStream.range(0, 256).mapToObj(i -> new Object()).toArray();
 
     @Autowired
     private JwCredentialService credentialService;
@@ -94,7 +93,7 @@ public class JwController {
     /** 输入短信验证码后续登：成功保存绑定；错误则报错让用户重输。 */
     @PostMapping("/bind/mfa")
     @OperationLog("短信验证码续登绑定")
-    public Result<?> bindMfa(@RequestBody JwCaptchaDTO dto) {
+    public Result<?> bindMfa(@Valid @RequestBody JwCaptchaDTO dto) {
         long userId = fullAccessUserId();
         PendingLoginManager.Entry e = pendingManager.get(dto.getChallengeId());
         if (e == null || e.userId == null || e.userId != userId) {
@@ -111,7 +110,7 @@ public class JwController {
     /** 重新发送短信验证码。 */
     @PostMapping("/bind/mfa/resend")
     @OperationLog("重发短信验证码")
-    public Result<?> bindMfaResend(@RequestBody JwCaptchaDTO dto) {
+    public Result<?> bindMfaResend(@Valid @RequestBody JwCaptchaDTO dto) {
         long userId = fullAccessUserId();
         PendingLoginManager.Entry e = pendingManager.get(dto.getChallengeId());
         if (e == null || e.userId == null || e.userId != userId) {
@@ -132,7 +131,7 @@ public class JwController {
     /** 人工输入验证码后续登：成功保存绑定；仍错则返回新验证码图。 */
     @PostMapping("/bind/captcha")
     @OperationLog("验证码续登绑定")
-    public Result<?> bindCaptcha(@RequestBody JwCaptchaDTO dto) {
+    public Result<?> bindCaptcha(@Valid @RequestBody JwCaptchaDTO dto) {
         long userId = fullAccessUserId();
         PendingLoginManager.Entry e = pendingManager.get(dto.getChallengeId());
         if (e == null || e.userId == null || e.userId != userId) {
@@ -287,7 +286,7 @@ public class JwController {
     }
 
     private void saveBinding(long userId, String account, String rawPassword) {
-        Object lock = bindLocks.computeIfAbsent(userId, ignored -> new Object());
+        Object lock = bindLocks[(Long.hashCode(userId) & 0x7fffffff) % bindLocks.length];
         synchronized (lock) {
             requireBindSlot(userId, account);
             credentialService.save(userId, account, rawPassword);

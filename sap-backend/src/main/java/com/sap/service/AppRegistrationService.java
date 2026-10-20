@@ -15,7 +15,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 
-/** 手机端邮箱验证：持久化限额与 HMAC 摘要，创建账号和消费验证码在同一事务内。 */
+/** Web/App 注册共用入会开关；邮箱模式持久化限额与 HMAC 摘要。 */
 @Service
 public class AppRegistrationService {
     public static final int COOLDOWN_SECONDS = 180;
@@ -27,12 +27,22 @@ public class AppRegistrationService {
     private final CaptchaService captcha;
     private final AuthService auth;
     private final RegistrationProtectionService protection;
+    private final SettingService settings;
     private final SecureRandom random = new SecureRandom();
     @Value("${jw.aes-key}") private String key;
 
     public AppRegistrationService(MailStore store, EmailBusinessHooks hooks, EmailService email,
-                                  CaptchaService captcha, AuthService auth, RegistrationProtectionService protection) {
+                                  CaptchaService captcha, AuthService auth, RegistrationProtectionService protection,
+                                  SettingService settings) {
         this.store=store; this.hooks=hooks; this.email=email; this.captcha=captcha; this.auth=auth; this.protection=protection;
+        this.settings=settings;
+    }
+
+    private boolean joinEnabled() { return "true".equalsIgnoreCase(settings.getValue("join_enabled")); }
+
+    public Map<String,Object> policy() {
+        boolean open=joinEnabled();
+        return Map.of("joinEnabled",open,"emailVerificationRequired",!open,"captchaRequired",true);
     }
 
     @PostConstruct public void init() {
@@ -59,17 +69,17 @@ public class AppRegistrationService {
             if(!Boolean.TRUE.equals(template.get("enabled"))) throw new IllegalStateException();
             MailQueue.validateContract(MailHook.APP_REGISTRATION_CODE,template);
         } catch(RuntimeException e) { throw new BusinessException(503,"注册验证码邮件暂不可用，请稍后再试或联系管理员"); }
-        if(store.db.queryForObject("SELECT COUNT(*) FROM sys_mail_queue",Long.class)>=5)
-            throw new BusinessException(429,"邮件发送较忙，请几分钟后再试");
     }
     public Map<String,Object> request(String account,String name,String qq,String captchaId,String answer,String ip) {
         if(account==null || !account.matches("[A-Za-z0-9_-]{1,20}") || qq==null || !qq.matches("[1-9][0-9]{4,14}")
                 || name==null || name.isBlank() || name.length()>50) throw new BusinessException(400,"请填写正确的学号、姓名和 QQ 号");
-        // 发送邮件始终先验证图形挑战，避免匿名接口被用于批量发信；不改变 Web 注册配置。
+        // 发送邮件始终先验证图形挑战，不能使用旧版免验证配置跳过。
         if(captchaId==null || captchaId.isBlank() || answer==null || answer.isBlank()) return Map.of("captchaRequired",true);
         if(!captcha.verify(captchaId,answer,ip)) throw new BusinessException(400,"图形验证码错误或已过期，请刷新后重试");
         return store.transaction(() -> {
-            store.lock(); available(); long now=now(),day=now-86_400_000L;
+            store.lock();
+            auth.requireUnregistered(account);
+            available(); long now=now(),day=now-86_400_000L;
             String ah=accountHash(account),qh=qqHash(qq),ih=digest("app-register:ip:"+ip);
             if(count("(account_hash=? OR qq_hash=?) AND created_at>?",ah,qh,now-COOLDOWN_SECONDS*1000L)>0)
                 throw new BusinessException(429,"验证码申请过于频繁，请间隔 3 分钟后重试");
@@ -84,15 +94,23 @@ public class AppRegistrationService {
                 throw new BusinessException(503,"注册验证码邮件暂无法生成，请稍后重试");
             store.db.update("UPDATE sys_app_registration_code SET consumed=1,code_hash=NULL WHERE (account_hash=? OR qq_hash=?) AND id<>?",ah,qh,id);
             return Map.of("requestId",id,"email",qq+"@qq.com","cooldownSeconds",COOLDOWN_SECONDS,"expiresInSeconds",TTL/1000,
-                    "notice","验证码邮件已加入发送队列，请查收 QQ 邮箱及垃圾箱，15 分钟内有效");
+                    "notice","验证码邮件已提交发送，请查收 QQ 邮箱及垃圾箱，15 分钟内有效");
         });
     }
     public void register(AppRegisterDTO dto,String ip) {
+        // 已注册账号无需再消耗邮箱挑战或注册额度，即使之前的验证码已使用/失效也应引导登录。
+        auth.requireUnregistered(dto.getStudentId());
         String id=dto.getEmailRequestId(),code=dto.getEmailCode();
+        // 旧版 App 仍可提交有效邮箱挑战；新版在入会开启时直接验证图形验证码。
+        if ((id==null || id.isBlank()) && (code==null || code.isBlank())) {
+            registerWithCaptcha(dto,ip);
+            return;
+        }
         if(id==null || !id.matches("[0-9a-f-]{36}") || code==null || !code.matches("[0-9]{6}")
                 || dto.getStudentId()==null || dto.getQq()==null) throw new BusinessException(400,INVALID);
         boolean registered=store.transaction(() -> {
             store.lock();
+            auth.requireUnregistered(dto.getStudentId());
             var rows=store.db.queryForList("SELECT * FROM sys_app_registration_code WHERE id=? FOR UPDATE",id);
             if(rows.isEmpty()) return false;
             var row=rows.get(0);
@@ -110,6 +128,25 @@ public class AppRegistrationService {
         });
         // 验证失败在事务提交之后抛出，错误次数不能随异常回滚。
         if(!registered) throw new BusinessException(400,INVALID);
+    }
+
+    private void registerWithCaptcha(AppRegisterDTO dto,String ip) {
+        store.transaction(() -> {
+            store.lock();
+            auth.requireUnregistered(dto.getStudentId());
+            // 不采信客户端模式：页面打开后关闭通道，也必须重新完成邮箱验证。
+            if(!joinEnabled()) {
+                boolean hadCaptcha=dto.getCaptchaId()!=null && !dto.getCaptchaId().isBlank();
+                throw new BusinessException(hadCaptcha?409:400,"入会通道已关闭，请获取邮箱验证码后注册");
+            }
+            if(dto.getCaptchaId()==null || dto.getCaptchaId().isBlank() || dto.getCaptchaCode()==null
+                    || dto.getCaptchaCode().isBlank() || !captcha.verify(dto.getCaptchaId(),dto.getCaptchaCode(),ip))
+                throw new BusinessException(400,"图形验证码错误或已过期，请刷新后重试");
+            try(var permit=protection.acquire(ip,dto.getQq())) {
+                auth.register(dto);
+            }
+            return true;
+        });
     }
     @Scheduled(cron="0 40 4 * * *",zone="Asia/Shanghai") public void cleanup() {
         store.db.update("DELETE FROM sys_app_registration_code WHERE created_at<?",now()-2*86_400_000L);

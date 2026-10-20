@@ -6,6 +6,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CourseEditsTest {
+    @Test fun fixingFullWidthParityKeepsEditsSavedByOlderVersions() {
+        val imported=monday.copy(weeksRaw="1-16周（双周）")
+        // 旧版解析失败时用空周次生成源标识。
+        val oldId=imported.copy(weeksRaw=null).sourceId()
+        assertNotEquals(oldId,imported.sourceId())
+        assertTrue(profile.copy(hiddenSourceIds=setOf(oldId)).visibleBase(listOf(imported)).isEmpty())
+        assertTrue(profile.withCourseDeleted(imported.sourceId()).visibleBase(listOf(imported)).isEmpty())
+    }
     private val monday = CachedCourse("数学", "王老师", "A101", 1, 1, "1-16")
     private val other = monday.copy(day = 3)
     private val profile = ScheduleProfile("p", "课表", ProfileKind.TERM, "2026-2027-1")

@@ -300,7 +300,9 @@ public class AppFeedbackService {
         int safeDays = days == 30 || days == 90 ? days : 7;
         AppFeedbackSummaryVO vo = new AppFeedbackSummaryVO();
         vo.setDays(safeDays);
-        vo.setScheduleUsers(statsService.scheduleUsers(safeDays));
+        ScheduleUsageService.Summary usage = statsService.scheduleUsage(safeDays);
+        vo.setScheduleUsers(usage.activeUsers());
+        vo.setScheduleUsage(usage);
         long open = countByStatus(OPEN);
         long closed = countByStatus(CLOSED);
         vo.setOpenIssues(open);

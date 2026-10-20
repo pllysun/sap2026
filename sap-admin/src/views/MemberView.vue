@@ -2,7 +2,7 @@
   <div class="member-page zen-fade-in">
     <div class="page-header">
       <h2>成员管理</h2>
-      <p>任职档案与成员资料</p>
+      <p>平台用户、任职档案与成员资料</p>
     </div>
 
     <el-tabs v-model="activeTab" class="member-tabs">
@@ -100,6 +100,9 @@
           </div>
           <el-empty v-else description="暂无优秀成员" />
         </div>
+      </el-tab-pane>
+      <el-tab-pane label="用户管理" name="users" lazy>
+        <UserManagementPanel @open-profile="openProfile" />
       </el-tab-pane>
     </el-tabs>
     <MemberProfileDialog v-model="showProfile" :user-id="profileUserId" :outstanding="profileOutstanding" />
@@ -247,8 +250,11 @@ import {
 } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MemberProfileDialog from '../components/MemberProfileDialog.vue'
+import UserManagementPanel from '../components/UserManagementPanel.vue'
+import { useRoute } from 'vue-router'
 
-const activeTab = ref('term')
+const route=useRoute()
+const activeTab = ref(['term','outstanding','users'].includes(route.query.tab)?route.query.tab:'term')
 const currentGrade = ref('')
 const currentGradeValue = ref('')
 const nextGradeValue = ref('')
@@ -542,6 +548,7 @@ const handleOmDelete = async (id) => {
 }
 
 onMounted(async () => {
+  if (/^[1-9][0-9]*$/.test(String(route.query.userId||''))) openProfile(route.query.userId)
   loadGrades()
   loadOutstanding()
   try {

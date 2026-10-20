@@ -33,6 +33,7 @@ import edu.csuft.sap.data.schedule.TermScan
 import edu.csuft.sap.data.schedule.TermUtil
 import edu.csuft.sap.data.schedule.WeekUtil
 import edu.csuft.sap.data.schedule.sourceId
+import edu.csuft.sap.data.schedule.nodeRanges
 import edu.csuft.sap.data.schedule.visibleBase
 import edu.csuft.sap.di.Graph
 import edu.csuft.sap.notify.ReminderScheduler
@@ -432,8 +433,7 @@ class ScheduleViewModel : ViewModel() {
             ProfileKind.CUSTOM -> p.frozenCourses
         }
         val out = ArrayList<DisplayCourse>(base.size + p.customCourses.size)
-        for (c in p.visibleBase(base)) {
-            val nodes = Periods.nodesOfSection(c.sectionIndex)
+        for (c in p.visibleBase(base)) for (nodes in c.nodeRanges()) {
             out.add(
                 DisplayCourse(
                     name = c.name,
@@ -527,6 +527,7 @@ class ScheduleViewModel : ViewModel() {
         sectionIndex = sectionIndex.coerceAtLeast(1),
         weeksRaw = weeks,
         colorIndex = colorIndexOf(name),
+        nodes = nodes,
     )
 
     private fun termProfile(t: TermDto) = ScheduleProfile(

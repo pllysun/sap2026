@@ -24,7 +24,16 @@ public class TermController {
     public Result<?> list(@RequestParam String grade,
                           @RequestParam(defaultValue = "1") int current,
                           @RequestParam(defaultValue = "40") int size) {
-        return Result.ok(termService.listByGradePaged(grade, current, size));
+        var page = termService.listByGradePaged(grade, current, size);
+        boolean member = false;
+        try { member = cn.dev33.satoken.stp.StpUtil.getRoleList().stream().anyMatch(r -> java.util.Set.of("0", "1", "2", "3").contains(r)); }
+        catch (Exception ignored) { }
+        if (!member) page.setRecords(page.getRecords().stream().map(record -> {
+            Map<String, Object> view = new java.util.LinkedHashMap<>(record);
+            view.remove("studentId"); view.remove("userId");
+            return view;
+        }).toList());
+        return Result.ok(page);
     }
 
     @GetMapping("/grades")

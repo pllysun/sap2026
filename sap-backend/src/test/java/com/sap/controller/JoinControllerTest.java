@@ -36,11 +36,54 @@ class JoinControllerTest extends BaseUnitTest {
         assertEquals(true, r.getData());
     }
 
+    @Test void infoDoesNotExposeManagerOrApplicantDetails() {
+        Map<String, Object> data = Map.of("enabled", true, "ready", true, "grade", "2026", "membershipFee", 30);
+        when(joinService.getJoinInfo()).thenReturn(data);
+        assertEquals(data, controller.info().getData());
+    }
+
+    @Test void readinessReturnsPreparationState() {
+        when(joinService.getReadiness()).thenReturn(Map.of("ready", false, "issues", List.of("请配置负责人")));
+        assertEquals(false, ((Map<?, ?>)controller.readiness().getData()).get("ready"));
+    }
+
+    @Test void managersCanBePreparedBeforeOpening() {
+        controller.syncManagers();
+        verify(joinService).initManagers();
+        verify(joinService, never()).toggleJoin(anyBoolean());
+    }
+
+    @Test void correctionPassesReasonAndAuthenticatedReviewer() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(9L);
+            controller.returnApplication(3L, Map.of("reason", "请核对单号"));
+            verify(joinService).returnApplication(3L, 9L, "请核对单号");
+        }
+    }
+
+    @Test void ordinaryAdministratorCannotRequestOtherManagersApplications() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(9L);
+            st.when(StpUtil::getRoleList).thenReturn(List.of("2"));
+            controller.applications(null, false);
+            verify(joinService).listApplications(null, true, 9L);
+        }
+    }
+
+    @Test void leaderCanReviewAllApplicantsIncludingUnsubmittedOnes() {
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(9L);
+            st.when(StpUtil::getRoleList).thenReturn(List.of("1"));
+            controller.applications(0, false);
+            verify(joinService).listApplications(0, false, 9L);
+        }
+    }
+
     @Test
-    void toggle_enabled_initsManagers() {
+    void toggle_enabled_delegatesAtomicPreparation() {
         Result<?> r = controller.toggle(Map.of("enabled", "true"));
         verify(joinService).toggleJoin(true);
-        verify(joinService).initManagers();
+        verify(joinService, never()).initManagers();
         assertEquals("操作成功", r.getData());
     }
 
@@ -164,8 +207,11 @@ class JoinControllerTest extends BaseUnitTest {
 
     @Test
     void directUpgrade_delegates() {
-        Result<?> r = controller.directUpgrade(Map.of("studentId", "S001"));
-        verify(joinService).directUpgrade("S001");
-        assertEquals("升级成功", r.getData());
+        try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
+            st.when(StpUtil::getLoginIdAsLong).thenReturn(9L);
+            Result<?> r = controller.directUpgrade(Map.of("studentId", " S001 "));
+            verify(joinService).directUpgrade("S001", 9L);
+            assertEquals("升级成功", r.getData());
+        }
     }
 }
