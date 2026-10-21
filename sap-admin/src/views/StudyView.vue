@@ -158,7 +158,7 @@
                   <el-tag v-if="row.homeworkPublished === false || row.scheduled === true" type="warning" size="small" effect="plain" style="margin-left: 4px">
                     定时{{ row.homeworkPublishTime ? ' · ' + row.homeworkPublishTime : '' }}
                   </el-tag>
-                  <el-button v-if="row.homeworkFileUrl" text size="small" type="primary" @click="openUrl(row.homeworkFileUrl)" style="margin-left: 4px">下载</el-button>
+                  <el-button v-if="row.homeworkFileUrl" text size="small" type="primary" @click="downloadFileByUrl(row.homeworkFileUrl, row.homeworkFileName)" style="margin-left: 4px">下载</el-button>
                 </span>
                 <span v-else style="color: var(--zen-text-muted)">-</span>
               </template>
@@ -910,17 +910,12 @@ const scheduleCountdown = (publishTime) => {
 const downloadFile = (material) => {
   if (material?.fileUrl) {
     const name = material.fileName || material.fileUrl.split('/').pop()
-    openStoredFile(material.fileUrl).catch(e => ElMessage.error(e.message))
+    openStoredFile(material.fileUrl, name).catch(e => ElMessage.error(e.message))
   }
 }
 
 const downloadFileByUrl = (url, filename) => {
-  openStoredFile(url).catch(e => ElMessage.error(e.message))
-}
-
-const openUrl = (value) => {
-  try { const url = new URL(value); if (url.protocol !== 'https:' || url.username || url.password) throw new Error(); window.open(url.href, '_blank', 'noopener,noreferrer') }
-  catch { ElMessage.error('附件链接无效，请联系管理员重新上传') }
+  openStoredFile(url, filename).catch(e => ElMessage.error(e.message))
 }
 
 const handleSetActiveWeek = async (week) => {

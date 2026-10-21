@@ -105,3 +105,16 @@ logs/
 /ops/judger/problem-packs/contest-original/
 /ops/judger/solutions/documents/contest-original-*.json
 /ops/judger/PROBLEMSETS-RELEASE-1511.md
+
+# ===== 本地部署核验记录与生成的文档 =====
+/output/
+/ops/deployment-*.md
+/ops/admin-base-*.json
+/ops/markdown-download-*.json
+/ops/judger/problem-packs/**/format-validation.json
+/ops/judger/problem-packs/**/local-validation*.json
+/ops/judger/problem-packs/**/validation-local.json
+/ops/judger/problem-packs/corpus/import-readiness-*.json
+/ops/judger/problem-packs/corpus/source-check.json
+/ops/judger/problem-packs/corpus/test-quality.json
+/ops/judger/problem-packs/pilot-local-validation.json

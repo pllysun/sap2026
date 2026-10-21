@@ -61,7 +61,7 @@
                     </div>
                     <a
                       v-if="status.homework.fileUrl"
-                      href="#" @click.prevent="openAttachment(status.homework.fileUrl)"
+                      href="#" @click.prevent="openAttachment(status.homework.fileUrl, status.homework.fileName)"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="btn btn--primary btn--full btn--sm btn--pill mt-3"
@@ -86,7 +86,7 @@
                       </div>
                       <div class="flex gap-1 mt-3" style="flex-wrap: wrap;">
                         <a
-                          href="#" @click.prevent="openAttachment(s.fileUrl)"
+                          href="#" @click.prevent="openAttachment(s.fileUrl, s.fileName)"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="btn btn--primary btn--sm btn--pill"
@@ -309,7 +309,7 @@
 
 <script setup>
 import { openStoredFile } from '@/utils/downloadFile'
-const openAttachment = value => openStoredFile(value).catch(e => window.alert(e.message))
+const openAttachment = (value, name) => openStoredFile(value, name).catch(e => window.alert(e.message))
 import PageHeader from '@/components/PageHeader.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted, watch } from 'vue'

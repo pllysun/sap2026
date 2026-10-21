@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-export default defineConfig({
-  base: process.env.VITE_BASE_URL || '/',
+export default defineConfig(({ command }) => ({
+  base: process.env.VITE_BASE_URL || (command === 'build' ? '/admin/' : '/'),
   plugins: [vue()],
   server: {
     port: 3000,
@@ -18,4 +18,4 @@ export default defineConfig({
       '@': '/src'
     }
   }
-})
+}))

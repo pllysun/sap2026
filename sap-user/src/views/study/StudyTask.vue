@@ -47,7 +47,7 @@
                 </div>
                 <a
                   v-if="status.homework.fileUrl"
-                  href="#" @click.prevent="openAttachment(status.homework.fileUrl)"
+                  href="#" @click.prevent="openAttachment(status.homework.fileUrl, status.homework.fileName)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="btn btn--primary btn--sm btn--pill mt-3"
@@ -90,7 +90,7 @@
 
 <script setup>
 import { openStoredFile } from '@/utils/downloadFile'
-const openAttachment = value => openStoredFile(value).catch(e => window.alert(e.message))
+const openAttachment = (value, name) => openStoredFile(value, name).catch(e => window.alert(e.message))
 import UiIcon from '@/components/UiIcon.vue'
 import { ref, onMounted } from 'vue'
 import request from '@/utils/request'

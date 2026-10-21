@@ -15,11 +15,20 @@ export async function downloadFile(path, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-/** 保留对象存储直传和下载计量，登录令牌只发送给本站后端。 */
-export async function openStoredFile(url) {
-  const popup = window.open('about:blank', '_blank')
-  if (!popup) throw new Error('请允许本站打开下载窗口后重试')
-  popup.opener = null
+/** Markdown 按原始字节保存，避免浏览器把缺少 charset 的直链作为网页解码。 */
+export async function openStoredFile(url, filename) {
+  const source = new URL(url)
+  if (source.protocol !== 'https:' || source.username || source.password) throw new Error('下载地址无效')
+  let name = filename
+  if (!name) {
+    const last = source.pathname.split('/').pop()
+    try { name = decodeURIComponent(last) } catch { name = last }
+  }
+  name = name || '附件'
+  const markdown = /\.(?:md|markdown)$/i.test(name) || /\.(?:md|markdown)$/i.test(source.pathname)
+  const popup = markdown ? null : window.open('about:blank', '_blank')
+  if (!markdown && !popup) throw new Error('请允许本站打开下载窗口后重试')
+  if (popup) popup.opener = null
   try {
     const response = await fetch('/api/file/download-link', {
       method: 'POST', credentials: 'omit', redirect: 'error',
@@ -30,6 +39,9 @@ export async function openStoredFile(url) {
     if (!response.ok || result.code !== 200) throw new Error(result.message || '获取下载地址失败')
     const target = new URL(result.data.url)
     if (target.protocol !== 'https:' || target.username || target.password) throw new Error('下载地址无效')
-    popup.location.replace(target.href)
-  } catch (e) { popup.close(); throw e }
+    if (markdown) {
+      const query = new URLSearchParams({ url: target.href, name })
+      await downloadFile(`/api/file/download?${query}`, name)
+    } else popup.location.replace(target.href)
+  } catch (e) { popup?.close(); throw e }
 }
