@@ -34,18 +34,23 @@ def lint(pack):
         if u.scheme!='https' or not u.hostname:raise Error('引用题型必须提供 HTTPS 来源链接')
     modes=pack['modes']
     if not isinstance(modes,list) or not modes or len(set(modes))!=len(modes) or not set(modes)<= {'STDIO','FUNCTION'} or pack['defaultMode'] not in modes:raise Error('模式配置无效')
-    if pack['checker'] not in ('TOKENS','UNORDERED_TOKENS'):raise Error('比较器只支持 TOKENS 和 UNORDERED_TOKENS')
+    if pack['checker'] not in ('TOKENS','UNORDERED_TOKENS','UNORDERED_LINES','ANY_OF','SPECIAL_JUDGE'):raise Error('比较器无效')
+    source=pack.get('checkerSource','')
+    if not isinstance(source,str) or len(source.encode())>65536 or pack['checker']=='SPECIAL_JUDGE' and not source.strip():raise Error('自定义校验器必须提供 Python check 函数，UTF-8 代码不能超过 64 KiB')
     if not isinstance(pack['tags'],list) or len(pack['tags'])>20 or any(not isinstance(t,str) or len(t)>50 for t in pack['tags']):raise Error('标签格式无效')
     cases=pack['cases']
     if not isinstance(cases,list) or not 1<=len(cases)<=500:raise Error('测试集须为 1–500 个用例')
     names=set();inputs={};total=0;sample=False
     for c in cases:
-        if not isinstance(c,dict) or set(c)!= {'name','input','expectedOutput','sample'}:raise Error('用例必须且只能包含 name/input/expectedOutput/sample')
+        if not isinstance(c,dict) or not {'name','input','expectedOutput','sample'}<=set(c) or set(c)-{'name','input','expectedOutput','sample','acceptedOutputs'}:raise Error('用例须包含 name/input/expectedOutput/sample，可选 acceptedOutputs')
         if not all(isinstance(c[k],str) for k in ('name','input','expectedOutput')) or not c['name'].strip() or type(c['sample']) is not bool:raise Error('用例字段类型无效')
         if c['name'] in names:raise Error('用例名称不能重复: '+c['name'])
         names.add(c['name']);sample |= c['sample']
         if len(c['input'].encode())>1048576 or len(c['expectedOutput'].encode())>262144:raise Error('单个用例过大')
-        total+=len(c['input'].encode())+len(c['expectedOutput'].encode())
+        alternatives=c.get('acceptedOutputs',[])
+        if not isinstance(alternatives,list) or len(alternatives)>20 or any(not isinstance(a,str) or len(a.encode())>262144 for a in alternatives):raise Error('每个用例最多包含 20 个其他合法输出，每个不超过 256 KiB')
+        if pack['checker']=='SPECIAL_JUDGE' and len(c['input'].encode())+len(c['expectedOutput'].encode())>524288:raise Error('自定义校验器每个用例的输入与参考输出合计不超过 512 KiB')
+        total+=len(c['input'].encode())+len(c['expectedOutput'].encode())+sum(len(a.encode()) for a in alternatives)
         if c['input'] in inputs and inputs[c['input']]!=c['expectedOutput']:raise Error('相同输入存在相互冲突的答案')
         inputs[c['input']]=c['expectedOutput']
     if not sample or total>2_000_000:raise Error('至少一条公开样例；测试数据 UTF-8 总量不超过 2 MB')

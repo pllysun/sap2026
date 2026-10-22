@@ -22,7 +22,8 @@
 | `sourceUrl` / `sourceId` / `sourceNote` | 原创 URL / ID 留空，note 为 `软件协会原创`；引用题型保留 HTTPS 链接和来源说明 |
 | `modes` | `['STDIO']`、`['FUNCTION']` 或两者，不能重复 |
 | `defaultMode` | 必须属于 modes |
-| `checker` | `TOKENS` 或 `UNORDERED_TOKENS` |
+| `checker` | `TOKENS` / `UNORDERED_TOKENS` / `UNORDERED_LINES` / `ANY_OF` / `SPECIAL_JUDGE` |
+| `checkerSource` | 自定义校验器的 Python 源码，仅 SPECIAL_JUDGE 必填，UTF-8 最多 64 KiB |
 | `profiles` | c / cpp / java / python / rust 的初始代码及可选函数驱动 |
 | `cases` | 1–500 个测试用例，至少一个公开样例 |
 | `references` | 每个语言和每个题目模式都必须有参考实现 |
@@ -41,7 +42,7 @@
 
 `TOKENS` 忽略空白分隔的细微差异，按顺序比较 token。换行、多个空格等通常不决定结果，但 token 内容和顺序必须一致。
 
-`UNORDERED_TOKENS` 比较 token 的多重集合，允许 token 顺序不同；它不是“任意合法解”通用检查器，也不是浮点容差检查器。题目存在多种合法方案时，要设计唯一结果或与现有比较器兼容的规范输出，不能把不同合法答案误判为 WA。
+`UNORDERED_TOKENS` 比较 token 的多重集合，允许 token 顺序不同；它不是“任意合法解”通用检查器，也不是浮点容差检查器。题目存在多种合法方案时，可使用 `ANY_OF` 列出有限答案，或 `SPECIAL_JUDGE` 按题意校验任意合法解；详见 [多答案题与校验器](MULTIPLE_ANSWERS.md)。
 
 当前没有 `EXACT`、特殊评测程序或浮点容差字段。不要生成服务器不支持的 checker 名称。
 

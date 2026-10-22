@@ -16,7 +16,7 @@ def initialize(root: Path,account: str):
       'S3_ENABLED':'false','S3_ENDPOINT':'http://rustfs:9000','S3_REGION':'us-east-1','S3_BUCKET':'sap-oj-private','S3_PATH_STYLE':'true','S3_CREATE_BUCKET':'false',
       'S3_ACCESS_KEY':secrets.token_hex(10).upper(),'S3_SECRET_KEY':secrets.token_hex(24),
       'RUSTFS_IMAGE':'rustfs/rustfs:1.0.1',
-      'LUME_IMAGE':'pllysun/lume:1.1.1','LUME_SERVER_IMAGE':'pllysun/lume-server:1.1.1','LUME_WORKER_IMAGE':'pllysun/lume-worker:1.1.1',
+      'LUME_IMAGE':'pllysun/lume:1.1.2','LUME_SERVER_IMAGE':'pllysun/lume-server:1.1.2','LUME_WORKER_IMAGE':'pllysun/lume-worker:1.1.2',
       'NODE_CGROUP_PREFIX':'lume-node','APP_HEAP_MB':'1024','NODE_CONCURRENCY':'2','NODE_CPU':'2','NODE_MEMORY_MB':'1280',
       'JUDGER_BUILTIN_ENABLED':'true'}
     fd=os.open(env,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)

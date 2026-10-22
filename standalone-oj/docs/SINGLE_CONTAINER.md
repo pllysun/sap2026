@@ -1,6 +1,6 @@
 # 单容器部署
 
-`pllysun/lume:1.1.1` 内含用户端、管理端、Java 后端、判题控制服务、go-judge 与五语言工具链。只启动一个应用容器，外接 MySQL；没有 Redis 服务或依赖。RustFS / S3 可选。
+`pllysun/lume:1.1.2` 内含用户端、管理端、Java 后端、判题控制服务、go-judge 与五语言工具链。只启动一个应用容器，外接 MySQL；没有 Redis 服务或依赖。RustFS / S3 可选。
 
 ## 环境与配置
 
@@ -43,7 +43,7 @@ docker run -d --name lume --restart unless-stopped \
   --memory=4g --cpus=4 --pids-limit=1024 --shm-size=256m \
   --stop-timeout=45 --env-file .env \
   -p 8080:8080 -v lume-data:/app/data \
-  pllysun/lume:1.1.1
+  pllysun/lume:1.1.2
 ```
 
 也可执行 `bash tools/run-container.sh`，参数相同。脚本可通过 shell 环境 `LUME_IMAGE`、`LUME_CONTAINER_NAME`、`LUME_HOST_BIND`、`LUME_HOST_PORT`、`LUME_DATA_VOLUME` 调整镜像、容器名、绑定地址、端口和卷名；这几个脚本参数需在运行脚本前设置。Compose 则读取 `.env` 中的 `LUME_IMAGE`、`BIND_ADDRESS` 和 `HTTP_PORT`。
@@ -96,7 +96,7 @@ python3 tools/ojctl.py health
 
 升级前备份并等待任务结束，拉取新固定版本，停止并删除旧容器（保留卷），用相同配置、端口和卷重新运行。不得同时启动两个主服务写同一业务库。Compose 用户执行 `docker compose pull app && docker compose up -d app`。
 
-从 1.0.0 分离版升级时停止旧主服务和判题机，保留原 MySQL 与应用卷，替换为新镜像；旧 Redis 中的登录不迁移，用户需重新登录一次。1.1.1 新会话之后存于 MySQL。切换 split/bundle 时确保沿用实际卷名；内置节点地址会更新为当前部署地址，已有节点禁用状态会保留。不要把原协会业务整库接到本独立项目。
+从 1.0.0 分离版升级时停止旧主服务和判题机，保留原 MySQL 与应用卷，替换为新镜像；旧 Redis 中的登录不迁移，用户需重新登录一次。1.1.2 新会话之后存于 MySQL。切换 split/bundle 时确保沿用实际卷名；内置节点地址会更新为当前部署地址，已有节点禁用状态会保留。不要把原协会业务整库接到本独立项目。
 
 ## 排障
 

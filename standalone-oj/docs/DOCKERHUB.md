@@ -1,12 +1,12 @@
-# Lume 1.1.1
+# Lume 1.1.2
 
 独立算法练习与在线判题平台，初始题库为空。合并版内含用户端、管理端、Java 后端与 C / C++ / Java / Python / Rust 判题机，一次 docker run 即可启动应用；数据库外接 MySQL，无 Redis。独立判题机与分离版网站也保留。
 
 | 镜像 | 用途 |
 | --- | --- |
-| pllysun/lume:1.1.1 | 单容器合并版 |
-| pllysun/lume-server:1.1.1 | 两端前端和后端，连接独立节点 |
-| pllysun/lume-worker:1.1.1 | 独立五语言判题机 |
+| pllysun/lume:1.1.2 | 单容器合并版 |
+| pllysun/lume-server:1.1.2 | 两端前端和后端，连接独立节点 |
+| pllysun/lume-worker:1.1.2 | 独立五语言判题机 |
 
 三个镜像均为 linux/amd64，latest 与当前验收版本一致。固定版本或 digest 用于生产。完整源码和文档部署包包含 Compose、seccomp、初始化与 AI 工具；从包根目录操作。
 
@@ -29,7 +29,7 @@ docker run -d --name lume --restart unless-stopped \
   --memory=4g --cpus=4 --pids-limit=1024 --shm-size=256m \
   --stop-timeout=45 --env-file .env \
   -p 8080:8080 -v lume-data:/app/data \
-  pllysun/lume:1.1.1
+  pllysun/lume:1.1.2
 ```
 
 
@@ -78,7 +78,7 @@ S3_CREATE_BUCKET=false
 
 同机可选 RustFS：配置 Endpoint=http://rustfs:9000、S3_CREATE_BUCKET=true 后执行 docker compose --profile rustfs up -d。官方镜像固定 rustfs/rustfs:1.0.1，数据与日志独立持久化，S3 在容器网内、控制台只绑定 127.0.0.1。已有外部 RustFS 就不启动此 profile。
 
-## 1.1.1 更新
+## 1.1.2 更新
 
 登录页和浏览器标题去除算法文案；题面四个字段支持净化的 Markdown、表格和代码高亮。核心函数五语言默认引入常用标准库，兼容原有显式导入、Python 类型标注与合法 future 导入；完整程序模式保持自行引包。详细列表见文档包 docs/CORE_MODE.md。
 
@@ -116,3 +116,7 @@ bash tools/build-images.sh
 ```
 
 根 Dockerfile 的 server / worker / bundle 三目标可从源码独立构建，无需提前推送中间镜像。默认目标 bundle。许可证与上游材料见 LICENSE、docs/THIRD_PARTY_NOTICES.md；完整操作、接口、题包与测试设计见包内文档。
+
+1.1.2 增加多答案判题（有限答案集合、按行无序和隔离 Python 校验器），并修复测试集弹窗溢出。旧题包无需迁移，修改判定规则后须重新验证。详见源码包内 `docs/MULTIPLE_ANSWERS.md`。
+
+[完整源码与部署文件](https://github.com/pllysun/sap2026/tree/master/standalone-oj) · [AI 多答案出题与校验器手册](https://github.com/pllysun/sap2026/blob/master/standalone-oj/docs/MULTIPLE_ANSWERS.md)

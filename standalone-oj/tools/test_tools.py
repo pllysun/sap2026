@@ -5,6 +5,20 @@ def module(name):
     s=importlib.util.spec_from_file_location(name,ROOT/'tools'/f'{name}.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 oj=module('ojctl');generator=module('generate_example');initializer=module('init')
 class ToolsTest(unittest.TestCase):
+    def test_multiple_answer_schema_and_limits(self):
+        base=oj.read(ROOT/'examples/original-sum/pack.json')
+        for checker in ('ANY_OF','UNORDERED_LINES','SPECIAL_JUDGE'):
+            pack=copy.deepcopy(base);pack['checker']=checker
+            pack['checkerSource']='def check(a,b,c): return True' if checker=='SPECIAL_JUDGE' else ''
+            pack['cases'][0]['acceptedOutputs']=['another answer']
+            oj.lint(pack)
+        for answers in (None,'answer',[0],['x']*21):
+            pack=copy.deepcopy(base);pack['checker']='ANY_OF';pack['cases'][0]['acceptedOutputs']=answers
+            with self.assertRaises(oj.Error):oj.lint(pack)
+        pack=copy.deepcopy(base);pack['checker']='SPECIAL_JUDGE'
+        with self.assertRaises(oj.Error):oj.lint(pack)
+        pack['checkerSource']='x'*65537
+        with self.assertRaises(oj.Error):oj.lint(pack)
     def test_example_pack_and_editorial_is_valid(self):
         pack=oj.read(ROOT/'examples/original-sum/pack.json');oj.lint(pack)
         oj.lint_solution(oj.read(ROOT/'examples/original-sum/solution.json'),pack)

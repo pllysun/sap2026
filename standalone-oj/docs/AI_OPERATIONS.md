@@ -35,6 +35,8 @@ python3 tools/ojctl.py --url https://oj.example.com --token-file secrets/remote-
 
 先写出输入、输出、约束、边界、算法、复杂度和检查器。确定是否只提供 `STDIO`，或确实需要 `FUNCTION`。两种模式必须使用同一套测试协议，函数签名与驱动规则必须一致。
 
+多答案、构造题、任意方案题先阅读 [MULTIPLE_ANSWERS.md](MULTIPLE_ANSWERS.md)，不要将无序比较当作通用多答案校验。
+
 ### 2. 准备独立文件
 
 建议一题一个目录：

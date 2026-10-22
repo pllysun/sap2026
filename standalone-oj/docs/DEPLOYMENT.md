@@ -1,6 +1,6 @@
 # 部署与运维
 
-版本 1.1.1 提供合并版 `pllysun/lume`、网站 `pllysun/lume-server` 和独立判题节点 `pllysun/lume-worker`。三个镜像均不依赖 Redis；账号会话与业务数据存于 MySQL。生产题库初始为空，不预设题目。
+版本 1.1.2 提供合并版 `pllysun/lume`、网站 `pllysun/lume-server` 和独立判题节点 `pllysun/lume-worker`。三个镜像均不依赖 Redis；账号会话与业务数据存于 MySQL。生产题库初始为空，不预设题目。
 
 ## 推荐：合并版
 
@@ -69,7 +69,7 @@ python3 tools/ojctl.py health
 docker compose -f compose.split.yml up -d server
 ```
 
-另一个原生 Linux 主机准备专用 cgroup 和独立的至少 32 字符随机令牌，以 `lume-worker:1.1.1` 运行节点。可在该主机使用同一份 split Compose，只启动 worker；以只读 secret 提供令牌，不传业务 `.env` 中的数据库与 S3 凭据。
+另一个原生 Linux 主机准备专用 cgroup 和独立的至少 32 字符随机令牌，以 `lume-worker:1.1.2` 运行节点。可在该主机使用同一份 split Compose，只启动 worker；以只读 secret 提供令牌，不传业务 `.env` 中的数据库与 S3 凭据。
 
 5051 默认不发布到宿主。跨机接入通过私有网络或 HTTPS、限制来源的防火墙，并在管理端登记 name / endpoint / token / maxConcurrency。需要暴露控制端口时仅绑定受控内网地址。`NODE_TLS_CERT` / `NODE_TLS_KEY` 可配置只读证书；客户端校验 TLS，不跳过验证。节点必须上报兼容 runtimeId、正常资源探针和容量。
 
@@ -79,7 +79,7 @@ docker compose -f compose.split.yml up -d server
 
 | 变量 | 说明 |
 | --- | --- |
-| LUME_IMAGE | 合并版，默认 pllysun/lume:1.1.1 |
+| LUME_IMAGE | 合并版，默认 pllysun/lume:1.1.2 |
 | LUME_SERVER_IMAGE / LUME_WORKER_IMAGE | 分离版固定版本镜像 |
 | HTTP_PORT / BIND_ADDRESS | Compose 网站端口与绑定地址 |
 | DB_URL / DB_USER / DB_PASSWORD | 外部 MySQL 连接，两个模式均必需 |
@@ -153,17 +153,17 @@ python3 tools/ojctl.py health
 bash tools/build-local.sh
 bash tools/build-images.sh
 docker login
-docker push pllysun/lume:1.1.1
-docker push pllysun/lume-server:1.1.1
-docker push pllysun/lume-worker:1.1.1
+docker push pllysun/lume:1.1.2
+docker push pllysun/lume-server:1.1.2
+docker push pllysun/lume-worker:1.1.2
 ```
 
 根 Dockerfile 的三个目标可独立构建，无需先发布中间镜像：
 
 ```bash
-docker buildx build --platform linux/amd64 --target bundle -t pllysun/lume:1.1.1 --load .
-docker buildx build --platform linux/amd64 --target server -t pllysun/lume-server:1.1.1 --load .
-docker buildx build --platform linux/amd64 --target worker -t pllysun/lume-worker:1.1.1 --load .
+docker buildx build --platform linux/amd64 --target bundle -t pllysun/lume:1.1.2 --load .
+docker buildx build --platform linux/amd64 --target server -t pllysun/lume-server:1.1.2 --load .
+docker buildx build --platform linux/amd64 --target worker -t pllysun/lume-worker:1.1.2 --load .
 ```
 
 源码构建全新 npm ci、前后端测试、产物构建，判题固定 SDK digest 和引擎源码。Maven 不自动使用 shell HTTPS_PROXY，代理环境用 `--secret id=maven-settings,src=/私有路径/settings.xml`；BuildKit 临时挂载，不写进运行层。Go 模块可通过 `--build-arg GOPROXY=...` 指定。个人代理凭据不写入 Dockerfile。
@@ -191,3 +191,17 @@ docker buildx build --platform linux/amd64 --target worker -t pllysun/lume-worke
 会话在 MySQL 中使用 AES-GCM 加密，包含令牌索引原文和会话内容；主索引仍使用 SHA-256。密钥默认在 app-data 卷的 `auth-state.key`，权限 0600，可用 `app.auth-state-key-file` 指向其它私有路径。升级会自动加密历史明文记录，保留有效会话。数据库与该密钥必须成套备份；不要删除、重生成或公开密钥，否则旧会话无法恢复。密文绑定记录和类型，不能在不同记录之间替换使用。
 
 分离部署的 `http://worker:5051` 只用于可信的 Docker 私有网络；跨主机节点使用受控网络或配置 TLS，不能把明文端口暴露公网。节点必须由受信管理员维护：签名不能证明被攻陷的执行器诚实执行了程序。
+# 升级到 1.1.2
+
+本版增加多答案与沙箱校验器，不需要导入题库或修改既有题目。先备份 MySQL 与应用数据卷，保留当前私有 `.env`、节点密钥和全部数据卷。合并版将 `LUME_IMAGE` 更新为 `pllysun/lume:1.1.2`；分离版同时更新 `LUME_SERVER_IMAGE` 与 `LUME_WORKER_IMAGE` 为对应的 `1.1.2` 标签，再在原 Compose 项目目录拉取镜像并重建相关服务。不要执行 `down -v`。
+
+从合并版改成分离版时，MySQL 与应用数据卷必须一同保留。应用数据卷中的加密密钥用于读取数据库内的认证状态，换成空卷会导致解密失败；这不是需要清空数据库的信号。若更换 Compose 项目名，先通过 `docker volume ls` 确认原卷名，并将新 Compose 的 `app-data` 显式映射为原卷，例如：
+
+```yaml
+volumes:
+  app-data:
+    external: true
+    name: existing-project_app-data
+```
+
+`existing-project_app-data` 必须替换为实际的原应用卷名。分离版的 server 与 worker 使用同一份私有 `secrets/judger-token`。保留 MySQL、应用密钥和会话数据即可继续使用原账号、题目与登录状态。切换后先确认网站与判题节点健康，再在隔离环境验证多答案题。操作规范见 [MULTIPLE_ANSWERS.md](MULTIPLE_ANSWERS.md)。

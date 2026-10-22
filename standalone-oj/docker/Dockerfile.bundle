@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1.7
-ARG APP_IMAGE=pllysun/lume-server:1.1.1
-ARG WORKER_IMAGE=pllysun/lume-worker:1.1.1
+ARG APP_IMAGE=pllysun/lume-server:1.1.2
+ARG WORKER_IMAGE=pllysun/lume-worker:1.1.2
 FROM ${APP_IMAGE} AS website
 FROM eclipse-temurin:21.0.5_11-jre-jammy AS java
 FROM ${WORKER_IMAGE}
-ARG VERSION=1.1.1
+ARG VERSION=1.1.2
 LABEL org.opencontainers.image.title="Lume" org.opencontainers.image.version=$VERSION org.opencontainers.image.description="Single-container website, administration, MySQL-backed sessions and isolated five-language judge"
 COPY --from=java /opt/java/openjdk/ /opt/application-java/
 COPY --from=java /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 /opt/application-libs/

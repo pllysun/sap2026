@@ -7,7 +7,7 @@ COPY judge/go-judge/ ./
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build GOPROXY="$GOPROXY" CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags seccomp -trimpath -ldflags '-s -w' -o /go-judge ./cmd/go-judge
 FROM pllysun/sap-judger-sdk@sha256:ff9484d4ba7b2a510cd49b10e701d8ff2106a86f19cf36ee8fb2049298914ca0 AS sdk
 FROM python:3.12-slim-bookworm
-ARG VERSION=1.1.1
+ARG VERSION=1.1.2
 LABEL org.opencontainers.image.title="Lume worker" org.opencontainers.image.version=$VERSION org.opencontainers.image.licenses="MIT" org.opencontainers.image.description="Dedicated authenticated five-language sandbox; no application credentials"
 COPY --from=sdk /usr/ /opt/judger/rootfs/usr/
 COPY --from=sdk /opt/java27/ /opt/judger/rootfs/opt/java27/

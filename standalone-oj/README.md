@@ -6,9 +6,9 @@
 
 | 镜像 | 用途 |
 | --- | --- |
-| [`pllysun/lume:1.1.1`](https://hub.docker.com/r/pllysun/lume) | 推荐：两端前端、后端、内置判题机，一个容器 |
-| [`pllysun/lume-server:1.1.1`](https://hub.docker.com/r/pllysun/lume-server) | 分离部署：两端前端与后端，连接独立判题节点 |
-| [`pllysun/lume-worker:1.1.1`](https://hub.docker.com/r/pllysun/lume-worker) | 分离部署：C、C++、Java、Python、Rust 判题节点 |
+| [`pllysun/lume:1.1.2`](https://hub.docker.com/r/pllysun/lume) | 推荐：两端前端、后端、内置判题机，一个容器 |
+| [`pllysun/lume-server:1.1.2`](https://hub.docker.com/r/pllysun/lume-server) | 分离部署：两端前端与后端，连接独立判题节点 |
+| [`pllysun/lume-worker:1.1.2`](https://hub.docker.com/r/pllysun/lume-worker) | 分离部署：C、C++、Java、Python、Rust 判题节点 |
 
 三个镜像均为 `linux/amd64`。使用固定版本；`latest` 与当前验收版本一致。MySQL 与可选 RustFS / S3 属于基础服务，不打入应用容器。
 
@@ -126,3 +126,5 @@ standalone-oj/
   compose.split.yml     分离版与独立判题机
   VERSION               独立镜像版本号
 ```
+
+多答案题、有限答案集合与沙箱校验器的配置和 AI 验收步骤见 [docs/MULTIPLE_ANSWERS.md](docs/MULTIPLE_ANSWERS.md)。

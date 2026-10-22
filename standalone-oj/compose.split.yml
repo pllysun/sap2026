@@ -1,7 +1,7 @@
 name: lume-split
 services:
   server:
-    image: ${LUME_SERVER_IMAGE:-pllysun/lume-server:1.1.1}
+    image: ${LUME_SERVER_IMAGE:-pllysun/lume-server:1.1.2}
     restart: unless-stopped
     ports: ["${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:8080"]
     environment:
@@ -30,7 +30,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
   worker:
-    image: ${LUME_WORKER_IMAGE:-pllysun/lume-worker:1.1.1}
+    image: ${LUME_WORKER_IMAGE:-pllysun/lume-worker:1.1.2}
     platform: linux/amd64
     profiles: [worker]
     restart: unless-stopped

@@ -19,7 +19,7 @@ COPY --from=frontend /build/admin/dist/ ./src/main/resources/static/admin/
 RUN --mount=type=cache,target=/root/.m2 --mount=type=secret,id=maven-settings if [ -f /run/secrets/maven-settings ]; then mvn -s /run/secrets/maven-settings -B package; else mvn -B package; fi
 
 FROM eclipse-temurin:21.0.5_11-jre-jammy AS server
-ARG VERSION=1.1.1
+ARG VERSION=1.1.2
 LABEL org.opencontainers.image.title="Lume server" org.opencontainers.image.version=$VERSION org.opencontainers.image.licenses="MIT" org.opencontainers.image.description="Standalone user frontend, administration and judging backend"
 WORKDIR /app
 COPY --chown=2000:2000 --from=backend /build/backend/target/sap-oj.jar /app/app.jar
@@ -40,7 +40,7 @@ COPY judge/go-judge/ ./
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build GOPROXY="$GOPROXY" CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags seccomp -trimpath -ldflags '-s -w' -o /go-judge ./cmd/go-judge
 FROM pllysun/sap-judger-sdk@sha256:ff9484d4ba7b2a510cd49b10e701d8ff2106a86f19cf36ee8fb2049298914ca0 AS sdk
 FROM python:3.12-slim-bookworm AS worker
-ARG VERSION=1.1.1
+ARG VERSION=1.1.2
 LABEL org.opencontainers.image.title="Lume worker" org.opencontainers.image.version=$VERSION org.opencontainers.image.licenses="MIT"
 COPY --from=sdk /usr/ /opt/judger/rootfs/usr/
 COPY --from=sdk /opt/java27/ /opt/judger/rootfs/opt/java27/
@@ -57,7 +57,7 @@ HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=3 CMD pytho
 ENTRYPOINT ["/opt/judger/entrypoint.sh"]
 
 FROM worker AS bundle
-ARG VERSION=1.1.1
+ARG VERSION=1.1.2
 LABEL org.opencontainers.image.title="Lume" org.opencontainers.image.version=$VERSION org.opencontainers.image.description="Single-container website, administration, MySQL-backed sessions and isolated five-language judge"
 COPY --from=server /opt/java/openjdk/ /opt/application-java/
 COPY --from=server /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 /opt/application-libs/

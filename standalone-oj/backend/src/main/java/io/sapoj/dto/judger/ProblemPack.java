@@ -11,6 +11,8 @@ public class ProblemPack {
     private List<String> tags = new ArrayList<>();
     private List<String> modes = new ArrayList<>(List.of("STDIO"));
     private String defaultMode = "STDIO", checker = "TOKENS";
+    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)
+    private String checkerSource = "";
     private Map<String, Profile> profiles = new LinkedHashMap<>();
     private List<TestCase> cases = new ArrayList<>();
     private Map<String, Map<String, String>> references = new LinkedHashMap<>();
@@ -20,6 +22,8 @@ public class ProblemPack {
     }
     @Data public static class TestCase {
         private String name, input, expectedOutput;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)
+        private List<String> acceptedOutputs = new ArrayList<>();
         private boolean sample;
     }
 }

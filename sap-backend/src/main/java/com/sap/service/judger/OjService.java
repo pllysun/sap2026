@@ -248,7 +248,8 @@ public class OjService {
         result.put("description",pack.getDescription()); result.put("inputFormat",pack.getInputFormat());
         result.put("outputFormat",pack.getOutputFormat()); result.put("constraints",pack.getConstraints());
         result.put("sourceUrl",pack.getSourceUrl()); result.put("sourceId",pack.getSourceId()); result.put("sourceNote",pack.getSourceNote());
-        result.put("defaultMode",pack.getDefaultMode()); result.put("samples",pack.getCases().stream().filter(ProblemPack.TestCase::isSample).toList());
+        result.put("defaultMode",pack.getDefaultMode()); result.put("checker",pack.getChecker());
+        result.put("samples",pack.getCases().stream().filter(ProblemPack.TestCase::isSample).toList());
         Map<String,Object> templates=new LinkedHashMap<>();
         for (OjLanguage language : allowed) {
             ProblemPack.Profile profile=pack.getProfiles().get(language.getLanguageKey());
@@ -289,13 +290,22 @@ public class OjService {
         }
         if (p.getModes()==null || p.getModes().isEmpty() || p.getModes().size()>2 || new HashSet<>(p.getModes()).size()!=p.getModes().size() ||
             p.getModes().stream().anyMatch(m -> m==null || !List.of("STDIO","FUNCTION").contains(m)) || !p.getModes().contains(p.getDefaultMode())) fail("做题模式或默认模式无效");
-        if (p.getChecker()==null || !List.of("TOKENS","UNORDERED_TOKENS").contains(p.getChecker())) fail("比较方式无效");
+        if (p.getChecker()==null || !com.sap.util.judger.OutputChecker.TYPES.contains(p.getChecker())) fail("比较方式无效");
+        if (p.getCheckerSource()==null || p.getCheckerSource().getBytes(StandardCharsets.UTF_8).length>65536 ||
+            "SPECIAL_JUDGE".equals(p.getChecker()) && p.getCheckerSource().isBlank()) fail("自定义校验器须提供 Python check 函数，代码不能超过 65536 字符");
         if (p.getCases()==null || p.getCases().isEmpty() || p.getCases().size()>500) fail("测试集须包含 1–500 个用例");
         long bytes=0; boolean sample=false;
         for (ProblemPack.TestCase test : p.getCases()) {
             if (test==null || test.getInput()==null || test.getExpectedOutput()==null || test.getName()==null || test.getName().isBlank()) fail("用例名称、输入和期望输出不能为空");
             bytes+=test.getInput().length()+test.getExpectedOutput().length(); sample|=test.isSample();
             if (test.getInput().length()>1048576 || test.getExpectedOutput().length()>262144) fail("单个用例过大");
+            if ("SPECIAL_JUDGE".equals(p.getChecker()) && (long)test.getInput().length()+test.getExpectedOutput().length()>SpecialJudge.MAX_DATA_LENGTH)
+                fail("自定义校验器的单个用例输入与参考输出合计不能超过 512 KiB 字符");
+            if (test.getAcceptedOutputs()==null || test.getAcceptedOutputs().size()>20) fail("每个用例最多设置 20 个其他合法输出");
+            for (String alternative : test.getAcceptedOutputs()) {
+                if (alternative==null || alternative.length()>262144) fail("其他合法输出格式无效或过大");
+                bytes+=alternative.length();
+            }
         }
         if (!sample || bytes>2_000_000) fail("至少设置一个样例，测试数据总量不能超过 2 MB");
         if (p.getProfiles()==null || p.getReferences()==null || p.getTags()==null || p.getTags().size()>20) fail("语言模板、参考解或标签无效");

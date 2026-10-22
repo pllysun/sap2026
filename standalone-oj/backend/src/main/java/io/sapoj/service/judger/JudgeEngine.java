@@ -104,8 +104,17 @@ public class JudgeEngine {
                 String verdict = verdict(execution.path("status").asText());
                 if("SYSTEM_ERROR".equals(verdict))throw new NodeUnavailableException();
                 String output = execution.path("files").path("stdout").asText();
-                if ("AC".equals(verdict) && test.getExpectedOutput()!=null &&
-                    !OutputChecker.matches(output,test.getExpectedOutput(),pack.getChecker())) verdict="WA";
+                if ("AC".equals(verdict) && test.getExpectedOutput()!=null) {
+                    if ("SPECIAL_JUDGE".equals(pack.getChecker())) {
+                        JsonNode checked=client.execute(List.of("/usr/local/bin/python3","/w/main.py"),
+                            Map.of("main.py",Map.of("content",SpecialJudge.source(pack.getCheckerSource()))),
+                            SpecialJudge.input(test.getInput(),output,test.getExpectedOutput()),1000,128,false,List.of());
+                        String decision=checked.path("files").path("stdout").asText().strip();
+                        verdict="Accepted".equals(checked.path("status").asText()) && List.of("AC","WA").contains(decision)
+                            ? decision : "SYSTEM_ERROR";
+                        if ("SYSTEM_ERROR".equals(verdict)) result.setMessage("答案校验器运行异常，请联系管理员；本次不计比赛罚时");
+                    } else if (!OutputChecker.matches(output,test.getExpectedOutput(),pack.getChecker(),test.getAcceptedOutputs())) verdict="WA";
+                }
                 result.setTimeMs(Math.max(result.getTimeMs(), execution.path("time").asLong()/1_000_000));
                 result.setMemoryBytes(Math.max(result.getMemoryBytes(),execution.path("memory").asLong()));
                 if (reveal) {
@@ -119,7 +128,7 @@ public class JudgeEngine {
                 }
                 if (!"AC".equals(verdict)) {
                     stage(stages,"CASE_FINISHED",++completed,completed,result,verdict);
-                    result.setVerdict(verdict); result.setMessage(message(verdict)); break outer;
+                    result.setVerdict(verdict); if (!"SYSTEM_ERROR".equals(verdict) || result.getMessage()==null || result.getMessage().isBlank()) result.setMessage(message(verdict)); break outer;
                 }
                 result.setPassedCases(result.getPassedCases()+1);
                 stage(stages,"CASE_FINISHED",++completed,completed,result,verdict);
