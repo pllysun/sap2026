@@ -670,7 +670,6 @@ public class StudyService {
                         .eq(StudyMaterial::getFileType, 2)
                         .eq(StudyMaterial::getUserId, userId)
         );
-
         StudyMaterial material = new StudyMaterial();
         material.setActivityId(activityId);
         material.setWeek(week);
@@ -690,6 +689,78 @@ public class StudyService {
             if (value.length() > 4096 || !"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null)
                 throw new IllegalArgumentException();
         } catch (IllegalArgumentException e) { throw new BusinessException(400, "作业附件链接必须是有效的 HTTPS 地址"); }
+    }
+
+    /**
+     * 学生补交作业。
+     * <p>补交范围：只能补交「加入学习小组之后、当前周期之前、从未提交过、且尚未评分」的作业；
+     * 当前周期请走正常提交 {@link #submitStudentHomework}。</p>
+     * <p>活动关闭（status != 1）后不允许补交。注意：新建同学期活动时上一期会被自动归档为 0，
+     * 所以"关闭"既包含手动关闭，也包含被新活动自动归档。</p>
+     * <p>评分不在这里做：补交的那一周在 {@code study_member} 上有当时的 leader，
+     * 由该负责人走 {@link #score} / {@link #rescore} 正常评分。</p>
+     */
+    @Transactional
+    public void lateSubmitStudentHomework(Long activityId, Integer week, Long userId, String title, String fileUrl, String fileName) {
+        validateFileUrl(fileUrl);
+        if (activityId == null) throw new BusinessException("学习活动不能为空");
+        if (week == null || week < 1) throw new BusinessException("周期不合法");
+
+        StudyActivity activity = studyActivityMapper.selectById(activityId);
+        if (activity == null) throw new BusinessException("学习活动不存在");
+        // 活动关闭后不允许补交（新建活动会把上一期自动置 0，属于"已归档"）
+        if (!Integer.valueOf(1).equals(activity.getStatus())) {
+            throw new BusinessException("学习活动已关闭，不能补交作业");
+        }
+        // 只能补交当前周期之前的历史周期
+        if (week >= activity.getCurrentWeek()) {
+            throw new BusinessException("当前周期请使用正常提交，只能补交历史周期");
+        }
+        // 必须是"进组之后"的周期：该周存在自己的成员行
+        if (studyMemberMapper.selectCount(
+                new LambdaQueryWrapper<StudyMember>()
+                        .eq(StudyMember::getActivityId, activityId)
+                        .eq(StudyMember::getUserId, userId)
+                        .eq(StudyMember::getWeek, week)) == 0) {
+            throw new BusinessException("该周期你尚未加入学习小组，不能补交");
+        }
+        // 该周期确实布置过作业（fileType=1）
+        if (studyMaterialMapper.selectCount(
+                new LambdaQueryWrapper<StudyMaterial>()
+                        .eq(StudyMaterial::getActivityId, activityId)
+                        .eq(StudyMaterial::getWeek, week)
+                        .eq(StudyMaterial::getFileType, 1)) == 0) {
+            throw new BusinessException("该周期没有布置作业，无需补交");
+        }
+        // 只能补交从未提交过的作业（只统计学生提交 fileType=2）
+        if (studyMaterialMapper.selectCount(
+                new LambdaQueryWrapper<StudyMaterial>()
+                        .eq(StudyMaterial::getActivityId, activityId)
+                        .eq(StudyMaterial::getWeek, week)
+                        .eq(StudyMaterial::getUserId, userId)
+                        .eq(StudyMaterial::getFileType, 2)) > 0) {
+            throw new BusinessException("该周期作业已提交过，不能重复补交");
+        }
+        // 已经评过分的周期不允许再补交（避免"换了文件、分数还是旧的"）。
+        // 注意：score() 不要求有提交即可评分，所以这条能挡住"负责人先评分、学生后补交"的情况。
+        if (studyScoreMapper.selectCount(
+                new LambdaQueryWrapper<StudyScore>()
+                        .eq(StudyScore::getActivityId, activityId)
+                        .eq(StudyScore::getWeek, week)
+                        .eq(StudyScore::getMemberUserId, userId)) > 0) {
+            throw new BusinessException("该周期已评分，不能补交，如需调整请联系负责人");
+        }
+
+        StudyMaterial material = new StudyMaterial();
+        material.setActivityId(activityId);
+        material.setWeek(week);
+        material.setFileType(2);
+        material.setTitle(title != null ? title : fileName);
+        material.setFileUrl(fileUrl);
+        material.setFileName(fileName);
+        material.setUserId(userId);
+        studyMaterialMapper.insert(material);
+        emailHooks.studySubmission(activityId, week, userId);
     }
 
     /**
@@ -744,6 +815,7 @@ public class StudyService {
         if (studyScoreMapper.selectCount(check) > 0) {
             throw new BusinessException("该成员本周期已评分");
         }
+
         try {
             studyScoreMapper.insert(studyScore);
         } catch (org.springframework.dao.DuplicateKeyException e) {
@@ -751,6 +823,56 @@ public class StudyService {
             throw new BusinessException("该成员本周期已评分");
         }
     }
+
+    //                 修改评分--------------下面这个修改评分方法基本照搬上面,和上面那个差不多
+
+    public void rescore(StudyScore studyScore) {
+        if (studyScore.getScore() < 1 || studyScore.getScore() > 10) {
+            throw new BusinessException("分数范围为1-10");
+        }
+        if (studyScore.getComment() == null || studyScore.getComment().length() < 10) {
+            throw new BusinessException("评语不得少于10个字");
+        }
+        // 权限校验：评分人必须是该活动的负责人，且只能给分配给自己的成员评分
+        StudyLeader leader = studyLeaderMapper.selectOne(
+                new LambdaQueryWrapper<StudyLeader>()
+                        .eq(StudyLeader::getActivityId, studyScore.getActivityId())
+                        .eq(StudyLeader::getUserId, studyScore.getLeaderUserId())
+                        .last("LIMIT 1"));
+        if (leader == null) {
+            throw new BusinessException("无权评分：您不是该学习活动的负责人");
+        }
+        StudyMember member = studyMemberMapper.selectOne(
+                new LambdaQueryWrapper<StudyMember>()
+                        .eq(StudyMember::getActivityId, studyScore.getActivityId())
+                        .eq(StudyMember::getUserId, studyScore.getMemberUserId())
+                        .eq(StudyMember::getWeek, studyScore.getWeek())
+                        .last("LIMIT 1"));
+        if (member == null) {
+            throw new BusinessException("该成员本周期不在学习名单中");
+        }
+        if (member.getLeaderId() != null && !member.getLeaderId().equals(leader.getId())) {
+            throw new BusinessException("无权评分：该成员未分配给您");
+        }
+        LambdaQueryWrapper<StudyScore> check = new LambdaQueryWrapper<>();
+        check.eq(StudyScore::getActivityId, studyScore.getActivityId())
+                .eq(StudyScore::getWeek, studyScore.getWeek())
+                .eq(StudyScore::getMemberUserId, studyScore.getMemberUserId());
+        StudyScore oldStudyScore = studyScoreMapper.selectOne(check);
+        if (oldStudyScore == null) {
+            throw new BusinessException("该成员本周期尚未评分，无法修改");
+        }
+
+        // 把本次要修改的字段写到查出来的记录上，再按主键更新
+        oldStudyScore.setScore(studyScore.getScore());
+        oldStudyScore.setComment(studyScore.getComment());
+        oldStudyScore.setLeaderUserId(studyScore.getLeaderUserId());
+        int rows = studyScoreMapper.updateById(oldStudyScore);
+        if (rows == 0) {
+            throw new BusinessException("修改失败，请重试");
+        }
+    }
+
 
     public List<Map<String, Object>> scoreOverview(Long activityId, Integer week) {
         LambdaQueryWrapper<StudyScore> wrapper = new LambdaQueryWrapper<>();

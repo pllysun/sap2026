@@ -245,6 +245,23 @@ public class StudyController {
         return Result.ok("提交成功");
     }
 
+    /*
+    *补交作业
+    *
+    * */
+    @PostMapping("/homework/latesubmit")
+    @OperationLog("学生补提交作业")
+    public Result<?> lateSubmit(@RequestBody Map<String, Object> params){
+        Long userId = StpUtil.getLoginIdAsLong();
+        Long activityId = Long.valueOf(params.get("activityId").toString());
+        Integer week = Integer.valueOf(params.get("week").toString());
+        String title = params.get("title") != null ? params.get("title").toString() : null;
+        String fileUrl = params.get("fileUrl") != null ? params.get("fileUrl").toString() : null;
+        String fileName = params.get("fileName") != null ? params.get("fileName").toString() : null;
+        studyService.lateSubmitStudentHomework(activityId, week, userId, title, fileUrl, fileName);
+        return Result.ok("补提交成功");
+    }
+
     // ---- 评分 ----
     @PostMapping("/score")
     @OperationLog("提交评分")
@@ -252,6 +269,15 @@ public class StudyController {
         studyScore.setLeaderUserId(StpUtil.getLoginIdAsLong());
         studyService.score(studyScore);
         return Result.ok("评分成功");
+    }
+
+    //---- 修改分数 -----
+    @PostMapping("/rescore")
+    @OperationLog("修改分数")
+    public Result<?>rescore(@RequestBody StudyScore studyScore){
+        studyScore.setLeaderUserId(StpUtil.getLoginIdAsLong());
+        studyService.rescore(studyScore);
+        return Result.ok("修改成功");
     }
 
     @GetMapping("/score/overview")
