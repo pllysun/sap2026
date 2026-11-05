@@ -148,6 +148,37 @@
                 </div>
               </div>
             </div>
+
+            <div v-if="lateWeeks.length" class="card late-card anim-in">
+              <div class="split__title"><UiIcon name="clock" :size="18" /> 补交历史作业</div>
+              <p class="t-caption late-card__desc">仅可补交加入学习小组后、尚未提交且尚未评分的历史周期作业。</p>
+              <div class="late-form">
+                <div class="form-group">
+                  <label class="form-label" for="late-week">补交周期</label>
+                  <select id="late-week" v-model.number="lateWeek" class="select">
+                    <option :value="null" disabled>请选择历史周期</option>
+                    <option v-for="week in lateWeeks" :key="week" :value="week">第 {{ week }} 周</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">作业文件</label>
+                  <label class="btn btn--secondary btn--pill late-file-picker">
+                    <UiIcon name="file-plus" :size="16" />{{ lateFile ? '重新选择' : '选择文件' }}
+                    <input ref="lateFileInput" type="file" @change="handleLateFileSelect" hidden />
+                  </label>
+                  <div v-if="lateFile" class="late-file-info">
+                    <span>{{ lateFile.name }}</span>
+                    <span class="t-caption">{{ (lateFile.size / 1024).toFixed(1) }} KB</span>
+                    <button class="btn btn--ghost btn--sm" @click="clearLateFile"><UiIcon name="close" :size="16" />移除</button>
+                  </div>
+                </div>
+                <button class="btn btn--primary btn--pill" @click="lateSubmitHomework" :disabled="lateSubmitting || !lateWeek || !lateFile">
+                  <UiIcon name="send" :size="15" />{{ lateSubmitting ? '补交中…' : '确认补交' }}
+                </button>
+              </div>
+              <div v-if="lateSubmitError" class="error-text mt-2" role="alert">{{ lateSubmitError }}</div>
+              <div v-if="lateSubmitSuccess" class="success-text mt-2" role="status">{{ lateSubmitSuccess }}</div>
+            </div>
           </template>
         </template>
       </template>
@@ -364,6 +395,55 @@ async function deleteHomework(submission) {
   try { await request.delete('/api/study/homework/my', { params: { activityId: status.value.activity.id, week: status.value.activity.activeWeek } }); await loadStatus() }
   catch (e) { submitError.value = e.message || '删除失败' }
   finally { deleting.value = false }
+}
+
+const lateWeek = ref(null)
+const lateFile = ref(null)
+const lateFileInput = ref(null)
+const lateSubmitting = ref(false)
+const lateSubmitError = ref('')
+const lateSubmitSuccess = ref('')
+const lateWeeks = computed(() => {
+  const currentWeek = Number(status.value.activity?.currentWeek || 1)
+  return Array.from({ length: Math.max(0, currentWeek - 1) }, (_, index) => currentWeek - index - 1)
+})
+
+function handleLateFileSelect(e) {
+  lateFile.value = e.target.files[0] || null
+  lateSubmitError.value = ''
+  lateSubmitSuccess.value = ''
+}
+function clearLateFile() {
+  lateFile.value = null
+  if (lateFileInput.value) lateFileInput.value.value = ''
+}
+async function lateSubmitHomework() {
+  if (!lateWeek.value || !lateFile.value) return
+  lateSubmitting.value = true
+  lateSubmitError.value = ''
+  lateSubmitSuccess.value = ''
+  const file = lateFile.value
+  const week = lateWeek.value
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const up = await request.post('/api/file/upload', fd)
+    const fileName = up.data.originalName || file.name
+    await request.post('/api/study/homework/latesubmit', {
+      activityId: status.value.activity.id,
+      week,
+      title: fileName,
+      fileUrl: up.data.url,
+      fileName
+    })
+    lateSubmitSuccess.value = `第 ${week} 周作业补交成功`
+    lateWeek.value = null
+    clearLateFile()
+  } catch (e) {
+    lateSubmitError.value = e.message || '补交失败，请重试'
+  } finally {
+    lateSubmitting.value = false
+  }
 }
 
 // ===== 我的成绩 =====
@@ -769,6 +849,14 @@ watch(isGuest, guest => { if (!guest) loadStatus() }, { immediate: true })
 .split__title { display: flex; align-items: center; gap: .5rem; font-size: 1rem; }
 .upload-zone { background: #f7f8fc; border-color: #bbc6dc; padding: 2rem 1.5rem; }
 .upload-zone--active { background: #edf0fc; border-color: var(--primary); }
+.late-card { margin-top: 1.5rem; }
+.late-card__desc { margin: .75rem 0 1.25rem; }
+.late-form { display: grid; grid-template-columns: minmax(140px, .6fr) minmax(260px, 1.4fr) auto; gap: 1rem; align-items: end; }
+.late-form .form-group { margin-bottom: 0; min-width: 0; }
+.late-file-picker { width: fit-content; cursor: pointer; }
+.late-file-info { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; overflow-wrap: anywhere; }
+.late-file-info > span:first-child { font-size: .875rem; font-weight: 600; }
+@media (max-width: 768px) { .late-form { grid-template-columns: 1fr; }.late-form > .btn { width: 100%; } }
 .guest-block { border-style: solid; padding: 3rem 1.5rem; }
 .guest-block__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .875rem; background: #edf0fa; color: #596aaa; margin-bottom: 1rem; }
 .guest-block__desc { font-size: .9375rem; }

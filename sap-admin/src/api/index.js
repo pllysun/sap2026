@@ -125,6 +125,7 @@ export const deleteHomework = (params) => request.delete('/api/study/homework', 
 export const getHomeworkSchedule = (activityId) => request.get('/api/study/homework/schedule', { params: { activityId } })
 export const setActiveWeek = (id, week) => request.put(`/api/study/activity/${id}/active-week`, { week })
 export const submitScore = (data) => request.post('/api/study/score', data)
+export const updateStudyScore = (data) => request.post('/api/study/rescore', data)
 export const getScoreOverview = (params) => request.get('/api/study/score/overview', { params })
 
 // ===== 留言 =====

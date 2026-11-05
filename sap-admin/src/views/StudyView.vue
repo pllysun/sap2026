@@ -259,13 +259,13 @@
                         <span v-else style="color: var(--zen-text-muted)">-</span>
                       </template>
                     </el-table-column>
-                    <el-table-column v-if="isEditable" label="操作" width="70" fixed="right">
+                    <el-table-column v-if="isEditable" label="操作" width="90" fixed="right">
                       <template #default="{ row }">
-                        <el-button v-if="row.score === null" type="primary" size="small" text
+                        <el-button v-if="row.score === null || row.score === undefined" type="primary" size="small" text
                           :disabled="scoreForm[row.userId] === undefined || scoreForm[row.userId] === null"
                           :loading="loading.score === row.userId"
                           @click="handleScore(row)">打分</el-button>
-                        <el-tag v-else type="success" size="small" effect="plain">✓</el-tag>
+                        <el-button v-else type="primary" size="small" text @click="openRescore(row)">修改</el-button>
                       </template>
                     </el-table-column>
                   </el-table>
@@ -427,6 +427,25 @@
       </div>
     </el-dialog>
 
+    <!-- 修改已评分成绩 -->
+    <el-dialog v-model="showRescore" title="修改已评分成绩" width="480px" append-to-body>
+      <el-form label-width="70px" @submit.prevent>
+        <el-form-item label="成员">
+          <span>{{ rescoreForm.memberName }}（{{ rescoreForm.studentId }}）</span>
+        </el-form-item>
+        <el-form-item label="分数" required>
+          <el-input-number v-model="rescoreForm.score" :min="1" :max="10" :step="1" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="评语" required>
+          <el-input v-model="rescoreForm.comment" type="textarea" :rows="4" maxlength="1000" show-word-limit placeholder="不少于10个字" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRescore = false">取消</el-button>
+        <el-button type="primary" :loading="loading.rescore" @click="handleRescore">保存修改</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 查看负责人全部成员弹窗 -->
     <el-dialog v-model="showLeaderMembers" :title="leaderDetailName + ' 的成员详情'" width="500px" append-to-body>
       <el-table :data="leaderDetailMembers" stripe size="small" max-height="400">
@@ -453,7 +472,7 @@ import {
   getStudyActivities, createStudyActivity, getStudyActivityDetail,
   getStudyCycleDetail, addStudyLeader, deleteStudyLeader,
   nextWeek, uploadHomework, deleteHomework, setActiveWeek,
-  getSettingValue, submitScore, getUserInfo, getGrades,
+  getSettingValue, submitScore, updateStudyScore, getUserInfo, getGrades,
   getHomeworkSchedule
 } from '../api'
 import { openStoredFile } from '../utils/downloadFile'
@@ -484,6 +503,7 @@ const loading = reactive({
   deleteHomework: false,
   nextWeek: false,
   score: null, // 存放当前打分的userId
+  rescore: false,
   setActiveWeek: false,
   schedule: false, // 加载排期列表
   scheduleSubmit: false // 提交排期
@@ -508,6 +528,14 @@ const currentUserId = ref(null)
 const leaderMembers = ref([])
 const scoreForm = reactive({})
 const commentForm = reactive({})
+const showRescore = ref(false)
+const rescoreForm = reactive({
+  memberUserId: null,
+  memberName: '',
+  studentId: '',
+  score: 1,
+  comment: ''
+})
 
 // 创建活动
 const showCreateActivity = ref(false)
@@ -995,5 +1023,48 @@ const handleScore = async (row) => {
     delete scoreForm[row.userId]
     delete commentForm[row.userId]
   } catch (e) {} finally { loading.score = null }
+}
+
+const openRescore = (row) => {
+  rescoreForm.memberUserId = row.userId
+  rescoreForm.memberName = row.userName || ''
+  rescoreForm.studentId = row.studentId || ''
+  rescoreForm.score = row.score
+  rescoreForm.comment = row.comment || ''
+  showRescore.value = true
+}
+
+const handleRescore = async () => {
+  if (loading.rescore) return
+  const score = rescoreForm.score
+  const comment = (rescoreForm.comment || '').trim()
+  if (score === undefined || score === null || score < 1 || score > 10) {
+    ElMessage.warning('分数需在 1-10 之间')
+    return
+  }
+  if (comment.length < 10) {
+    ElMessage.warning('评语必填，且不得少于10个字')
+    return
+  }
+  loading.rescore = true
+  try {
+    await updateStudyScore({
+      activityId: selectedActivity.value.id,
+      week: unifiedWeek.value,
+      memberUserId: rescoreForm.memberUserId,
+      score,
+      comment
+    })
+    for (const members of [leaderMembers.value, cycleMembers.value]) {
+      const member = members.find(m => m.userId === rescoreForm.memberUserId)
+      if (member) {
+        member.score = score
+        member.comment = comment
+      }
+    }
+    showRescore.value = false
+    ElMessage.success(`${rescoreForm.memberName} 的成绩已修改`)
+    await loadActivityDetail(selectedActivity.value.id)
+  } catch (e) {} finally { loading.rescore = false }
 }
 </script>
