@@ -52,6 +52,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
     @Mock SettingMapper settingMapper;
     @Mock PositionMapper positionMapper;
     @Mock CacheService cacheService;
+    @Mock HomeworkPreviewService homeworkPreviewService;
 
     @Mock com.sap.service.mail.EmailBusinessHooks emailHooks;
     @InjectMocks StudyService service;
@@ -76,6 +77,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
             service.uploadHomework(1L, 2, "第二周作业", "https://files.example.test/url", "hw.pdf", null);
 
             verify(studyMaterialMapper).delete(any());
+            verify(homeworkPreviewService).evict(1L, 2);
             ArgumentCaptor<StudyMaterial> captor = ArgumentCaptor.forClass(StudyMaterial.class);
             verify(studyMaterialMapper).insert(captor.capture());
             StudyMaterial m = captor.getValue();
@@ -230,6 +232,7 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
     void deleteHomework_deletesFileType1() {
         service.deleteHomework(1L, 3);
         verify(studyMaterialMapper).delete(any());
+        verify(homeworkPreviewService).evict(1L, 3);
     }
 
     @Test

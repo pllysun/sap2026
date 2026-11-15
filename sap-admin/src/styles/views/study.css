@@ -533,3 +533,88 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ===== 作业在线预览 ===== */
+.homework-preview-dialog {
+  min-height: 120px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.homework-preview-dialog__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--zen-border-light, #ebeef5);
+  color: var(--zen-text-secondary, #606266);
+  font-size: 13px;
+}
+
+.homework-preview-dialog .markdown-body {
+  line-height: 1.8;
+  color: var(--zen-text, #303133);
+  overflow-wrap: anywhere;
+}
+.homework-preview-dialog .markdown-body h1,
+.homework-preview-dialog .markdown-body h2,
+.homework-preview-dialog .markdown-body h3,
+.homework-preview-dialog .markdown-body h4 {
+  margin: 1em 0 .45em;
+  line-height: 1.45;
+  color: var(--zen-text, #303133);
+}
+.homework-preview-dialog .markdown-body h1 { font-size: 1.6em; }
+.homework-preview-dialog .markdown-body h2 { font-size: 1.35em; }
+.homework-preview-dialog .markdown-body h3 { font-size: 1.15em; }
+.homework-preview-dialog .markdown-body p { margin: .6em 0; }
+.homework-preview-dialog .markdown-body code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f3f5fa;
+  color: #b2555b;
+  font-size: .9em;
+}
+.homework-preview-dialog .markdown-body pre {
+  padding: 14px 16px;
+  margin: 12px 0;
+  border: 1px solid #e2e7f0;
+  border-radius: 8px;
+  background: #f7f9fd;
+  overflow-x: auto;
+  line-height: 1.65;
+}
+.homework-preview-dialog .markdown-body pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+}
+.homework-preview-dialog .markdown-body blockquote {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 3px solid #b5c8e1;
+  background: #f5f8fc;
+  color: #536a84;
+}
+.homework-preview-dialog .markdown-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.homework-preview-dialog .markdown-body th,
+.homework-preview-dialog .markdown-body td {
+  padding: 8px 12px;
+  border: 1px solid #dfe7f1;
+  text-align: left;
+}
+.homework-preview-dialog .markdown-body th { background: #f0f4fa; }
+.homework-preview-dialog .markdown-body img { max-width: 100%; height: auto; border-radius: 6px; }
+.homework-preview-dialog .markdown-body ul,
+.homework-preview-dialog .markdown-body ol { padding-left: 22px; margin: 10px 0; }
+.homework-preview-dialog .markdown-body ul { list-style: disc; }
+.homework-preview-dialog .markdown-body ol { list-style: decimal; }
+.homework-preview-dialog .markdown-body a { color: #366eaf; text-decoration: underline; text-underline-offset: 2px; }

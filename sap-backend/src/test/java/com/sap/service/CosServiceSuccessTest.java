@@ -1,6 +1,9 @@
 package com.sap.service;
 
 import com.qcloud.cos.COSClient;
+import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.COSObjectInputStream;
+import com.qcloud.cos.model.ObjectMetadata;
 import com.sap.common.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,6 +80,39 @@ class CosServiceSuccessTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> cosService.upload(file));
             assertTrue(ex.getMessage().contains("上传到 COS 失败"));
         }
+    }
+
+    @Test
+    void readUploadObject_readsMarkdownBytes() throws Exception {
+        configCos("ap-nanjing");
+        byte[] bytes = "# 作业".getBytes(StandardCharsets.UTF_8);
+        COSObject object = mock(COSObject.class);
+        COSObjectInputStream in = new COSObjectInputStream(
+                new ByteArrayInputStream(bytes),
+                mock(org.apache.http.client.methods.HttpRequestBase.class));
+        when(object.getObjectContent()).thenReturn(in);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(bytes.length);
+        try (MockedConstruction<COSClient> ignored = mockConstruction(COSClient.class, (mock, ctx) -> {
+            when(mock.getObjectMetadata("mybucket-123", "uploads/2026-11-15/a.md")).thenReturn(metadata);
+            when(mock.getObject("mybucket-123", "uploads/2026-11-15/a.md")).thenReturn(object);
+        })) {
+            byte[] result = cosService.readUploadObject(
+                    "https://mybucket-123.cos.ap-nanjing.myqcloud.com/uploads/2026-11-15/a.md", 1024);
+            assertArrayEquals(bytes, result);
+        }
+    }
+
+    @Test
+    void readUploadObject_rejectsNonOwnedHostAndNonMarkdown() {
+        configCos("ap-nanjing");
+        BusinessException host = assertThrows(BusinessException.class, () -> cosService.readUploadObject(
+                "https://evil.example.com/uploads/2026-11-15/a.md", 1024));
+        assertTrue(host.getMessage().contains("不在本站对象存储"));
+
+        BusinessException type = assertThrows(BusinessException.class, () -> cosService.readUploadObject(
+                "https://mybucket-123.cos.ap-nanjing.myqcloud.com/uploads/2026-11-15/a.pdf", 1024));
+        assertTrue(type.getMessage().contains("Markdown"));
     }
 
     @Test

@@ -75,6 +75,7 @@
           </el-tooltip>
           <template v-if="currentHomework">
             <el-tag effect="plain" size="small">📄 {{ currentHomework.fileName || currentHomework.title }}</el-tag>
+            <el-button v-if="isMarkdownFileName(currentHomework.fileName)" text size="small" type="primary" @click="openCurrentHomeworkPreview">预览</el-button>
             <el-button text size="small" type="primary" @click="downloadHomework">下载</el-button>
             <el-upload action="/api/file/upload" :headers="uploadHeaders" :show-file-list="false"
               :on-success="handleHomeworkReplace" accept=".md,.txt,.pdf,.doc,.docx,.zip">
@@ -385,9 +386,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button text size="small" type="primary" @click="editHomeworkRow(row)">编辑</el-button>
+            <el-button v-if="row.fileUrl && isMarkdownFileName(row.fileName)" text size="small" type="primary" @click="openHomeworkPreview(selectedActivity.id, row.week)">预览</el-button>
             <el-button v-if="row.fileUrl" text size="small" @click="downloadFileByUrl(row.fileUrl, row.fileName || 'homework')">下载</el-button>
             <el-button text size="small" type="danger" @click="handleScheduleDelete(row)">删除</el-button>
           </template>
@@ -462,18 +464,38 @@
         </el-table-column>
       </el-table>
     </el-dialog>
+
+    <!-- 作业在线预览 -->
+    <el-dialog v-model="showHomeworkPreview" title="作业预览" width="820px" append-to-body @closed="invalidatePreviewRequest">
+      <div v-loading="previewLoading" class="homework-preview-dialog">
+        <template v-if="previewData">
+          <div class="homework-preview-dialog__meta">
+            <strong>{{ previewData.title || previewData.fileName }}</strong>
+            <span>第 {{ previewData.week }} 周 · {{ previewData.fileName }}</span>
+          </div>
+          <div v-if="previewData.previewable" class="markdown-body" v-html="previewHtml"></div>
+          <el-empty v-else :description="previewData.reason || '该作业暂不支持在线预览'" />
+        </template>
+      </div>
+      <template #footer>
+        <el-button @click="showHomeworkPreview = false">关闭</el-button>
+        <el-button v-if="previewData?.fileUrl" type="primary" @click="downloadPreviewFile">下载原文件</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import {
   getStudyActivities, createStudyActivity, getStudyActivityDetail,
   getStudyCycleDetail, addStudyLeader, deleteStudyLeader,
   nextWeek, uploadHomework, deleteHomework, setActiveWeek,
   getSettingValue, submitScore, updateStudyScore, getUserInfo, getGrades,
-  getHomeworkSchedule
+  getHomeworkSchedule, getHomeworkPreview
 } from '../api'
 import { openStoredFile } from '../utils/downloadFile'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -512,6 +534,12 @@ const loading = reactive({
 // 作业排期
 const showHomeworkSchedule = ref(false)
 const homeworkSchedule = ref([])
+
+// 作业在线预览
+const showHomeworkPreview = ref(false)
+const previewLoading = ref(false)
+const previewData = ref(null)
+let previewRequestId = 0
 const hwForm = reactive({
   editing: false,
   week: 1,
@@ -593,10 +621,107 @@ const currentHomework = computed(() => {
   if (!w || !weekSummaries.value.length) return null
   const ws = weekSummaries.value.find(s => s.week === w)
   if (ws && ws.homeworkFileUrl) {
-    return { title: ws.homeworkTitle, fileUrl: ws.homeworkFileUrl, fileName: ws.homeworkFileName }
+    return { title: ws.homeworkTitle, fileUrl: ws.homeworkFileUrl, fileName: ws.homeworkFileName, week: w }
   }
   return null
 })
+
+const previewHtml = computed(() => {
+  if (!previewData.value?.previewable || !previewData.value.content) return ''
+  try {
+    const clean = DOMPurify.sanitize(marked.parse(previewData.value.content, { gfm: true, breaks: true }), {
+      FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'select', 'textarea', 'link', 'meta'],
+      FORBID_ATTR: ['style', 'srcset']
+    })
+    return rewritePreviewUrls(clean)
+  } catch {
+    return '<p>Markdown 解析失败</p>'
+  }
+})
+
+/** 管理端预览也按作业 fileUrl 解析相对地址，与学生端 MarkdownViewer 保持一致。 */
+function resolvePreviewUrl(value) {
+  if (!value) return ''
+  if (/^(mailto:|tel:)/i.test(value)) return value
+  const base = previewData.value?.fileUrl || ''
+  try {
+    const url = new URL(value, base || window.location.href)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return ''
+    // 没有 fileUrl 时，相对地址不应指向管理端源站
+    if (!base && !/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(value)) return ''
+    return url.href
+  } catch {
+    return ''
+  }
+}
+
+function rewritePreviewUrls(input) {
+  if (!input || typeof DOMParser === 'undefined') return input
+  const doc = new DOMParser().parseFromString(input, 'text/html')
+  doc.querySelectorAll('a[href]').forEach(link => {
+    const href = link.getAttribute('href') || ''
+    if (!href || href.startsWith('#')) return
+    const resolved = resolvePreviewUrl(href)
+    if (!resolved) {
+      link.removeAttribute('href')
+      return
+    }
+    link.setAttribute('href', resolved)
+    link.setAttribute('target', '_blank')
+    link.setAttribute('rel', 'noopener noreferrer')
+  })
+  doc.querySelectorAll('img[src]').forEach(img => {
+    const resolved = resolvePreviewUrl(img.getAttribute('src') || '')
+    if (!resolved || !resolved.startsWith('https://')) {
+      img.remove()
+      return
+    }
+    img.setAttribute('src', resolved)
+    img.setAttribute('loading', 'lazy')
+    img.setAttribute('decoding', 'async')
+    img.setAttribute('referrerpolicy', 'no-referrer')
+  })
+  return doc.body.innerHTML
+}
+
+function isMarkdownFileName(name) {
+  return /\.(md|markdown)$/i.test(name || '')
+}
+
+async function openHomeworkPreview(activityId, week) {
+  if (!activityId || !week) return
+  const current = ++previewRequestId
+  showHomeworkPreview.value = true
+  previewLoading.value = true
+  previewData.value = null
+  try {
+    const res = await getHomeworkPreview({ activityId, week })
+    if (current !== previewRequestId || !showHomeworkPreview.value) return
+    previewData.value = res.data || {}
+  } catch (e) {
+    if (current !== previewRequestId) return
+    ElMessage.warning(e.message || '作业预览加载失败')
+    showHomeworkPreview.value = false
+  } finally {
+    if (current === previewRequestId) previewLoading.value = false
+  }
+}
+
+function invalidatePreviewRequest() {
+  previewRequestId++
+  previewLoading.value = false
+}
+
+function openCurrentHomeworkPreview() {
+  if (!currentHomework.value) return
+  openHomeworkPreview(selectedActivity.value?.id, currentHomework.value.week)
+}
+
+function downloadPreviewFile() {
+  if (!previewData.value?.fileUrl) return
+  openStoredFile(previewData.value.fileUrl, previewData.value.fileName)
+    .catch(e => ElMessage.warning(e.message))
+}
 
 const showLeaderMemberDetail = (l) => {
   leaderDetailName.value = l.userName

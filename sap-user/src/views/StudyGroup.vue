@@ -59,13 +59,20 @@
                         <div class="t-caption" v-if="status.homework.createdAt">{{ formatTime(status.homework.createdAt) }}</div>
                       </div>
                     </div>
-                    <a
-                      v-if="status.homework.fileUrl"
-                      href="#" @click.prevent="openAttachment(status.homework.fileUrl, status.homework.fileName)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="btn btn--primary btn--full btn--sm btn--pill mt-3"
-                    ><UiIcon name="file-save" :size="16" /> 下载文件</a>
+                    <div v-if="status.homework.fileUrl" class="hw-actions mt-3">
+                      <router-link
+                        v-if="canPreviewHomework(status.homework)"
+                        :to="{ name: 'HomeworkPreview', params: { activityId: status.activity.id, week: status.homework.week } }"
+                        class="btn btn--primary btn--sm btn--pill"
+                      ><UiIcon name="book-open" :size="16" /> 在线预览</router-link>
+                      <a
+                        href="#" @click.prevent="openAttachment(status.homework.fileUrl, status.homework.fileName)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn--sm btn--pill"
+                        :class="canPreviewHomework(status.homework) ? 'btn--secondary' : 'btn--primary'"
+                      ><UiIcon name="file-save" :size="16" /> 下载文件</a>
+                    </div>
                   </div>
                   <p v-else class="t-caption" style="color:var(--ink-400); padding: var(--s6) 0; text-align: center;">本周暂无学习任务</p>
                 </div>
@@ -339,14 +346,17 @@
 </template>
 
 <script setup>
-import { openStoredFile } from '@/utils/downloadFile'
-const openAttachment = (value, name) => openStoredFile(value, name).catch(e => window.alert(e.message))
 import PageHeader from '@/components/PageHeader.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import { useDialog } from '@/utils/useDialog'
+import { openStoredFile } from '@/utils/downloadFile'
+const openAttachment = (value, name) => openStoredFile(value, name).catch(e => window.alert(e.message))
+function canPreviewHomework(homework) {
+  return /\.(md|markdown)$/i.test(homework?.fileName || '')
+}
 
 const userStore = useUserStore()
 const isGuest = computed(() => {
@@ -846,6 +856,8 @@ watch(isGuest, guest => { if (!guest) loadStatus() }, { immediate: true })
 .hw-grid { gap: 2rem; }
 .hw-col + .hw-col { border-left: 1px solid #e0e5ee; padding-left: 2rem; }
 .hw-file-card { background: #f6f7fb; border-color: #dee3ef; }
+.hw-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.hw-actions > .btn { flex: 1 1 auto; justify-content: center; }
 .split__title { display: flex; align-items: center; gap: .5rem; font-size: 1rem; }
 .upload-zone { background: #f7f8fc; border-color: #bbc6dc; padding: 2rem 1.5rem; }
 .upload-zone--active { background: #edf0fc; border-color: var(--primary); }

@@ -4,11 +4,13 @@ import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.ObjectMetadata;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.region.Region;
 import com.sap.common.BusinessException;
 import com.sap.entity.Setting;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +25,7 @@ import java.util.UUID;
 /**
  * 腾讯云 COS 对象存储服务
  */
+@Slf4j
 @Service
 public class CosService {
 
@@ -345,6 +348,66 @@ public class CosService {
         if (isBlank(bucket) || isBlank(region)) return false;
         String regionName = region.startsWith("cos.") ? region.substring(4) : region;
         return h.equals((bucket + ".cos." + regionName + ".myqcloud.com").toLowerCase());
+    }
+
+    /**
+     * 读取 uploads/ 下的 Markdown 对象（作业在线预览用）。
+     * <p>只接受本站对象存储/CDN 的 HTTPS 地址和 {@code uploads/} 前缀，
+     * 不把任意 URL 变成服务端请求；调用方仍需限制文件类型和大小。</p>
+     *
+     * @return 对象原始字节
+     */
+    public byte[] readUploadObject(String url, long maxBytes) {
+        if (url == null || url.isBlank()) throw new BusinessException("文件地址为空");
+        java.net.URI uri;
+        try {
+            uri = java.net.URI.create(url.trim());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("文件地址无效");
+        }
+        if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getUserInfo() != null
+                || (uri.getPort() != -1 && uri.getPort() != 443)
+                || !isOwnedPublicHost(uri.getHost())) {
+            throw new BusinessException("文件不在本站对象存储中");
+        }
+
+        String path = uri.getPath();
+        if (path == null || !path.startsWith("/") || path.length() < 2) {
+            throw new BusinessException("文件地址无效");
+        }
+        String key = path.substring(1);
+        if (!key.startsWith("uploads/")) {
+            throw new BusinessException("仅支持预览上传目录中的文件");
+        }
+        String lower = key.toLowerCase(java.util.Locale.ROOT);
+        if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
+            throw new BusinessException("仅支持 Markdown 文件在线预览");
+        }
+        if (maxBytes <= 0) throw new BusinessException("预览大小限制无效");
+
+        COSClient cosClient = buildClient();
+        try {
+            String bucketName = getBucketName();
+            ObjectMetadata metadata = cosClient.getObjectMetadata(bucketName, key);
+            if (metadata != null && metadata.getContentLength() > maxBytes) {
+                throw new BusinessException("文件超过在线预览大小限制");
+            }
+            try (COSObject object = cosClient.getObject(bucketName, key)) {
+                try (InputStream in = object.getObjectContent()) {
+                    int limit = (int) Math.min(maxBytes, Integer.MAX_VALUE - 1L);
+                    byte[] bytes = in.readNBytes(limit + 1);
+                    if (bytes.length > maxBytes) throw new BusinessException("文件超过在线预览大小限制");
+                    return bytes;
+                }
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("[COS] 读取预览对象失败: key={}, error={}", key, e.getMessage());
+            throw new BusinessException("读取对象存储文件失败");
+        } finally {
+            cosClient.shutdown();
+        }
     }
 
     public Map<String, String> getMaskedConfig() {
