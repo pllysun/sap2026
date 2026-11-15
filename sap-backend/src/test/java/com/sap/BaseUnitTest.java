@@ -23,8 +23,8 @@ public abstract class BaseUnitTest {
                 JoinApplication.class, JoinManager.class, LogStats.class, Message.class,
                 MessageLike.class, MessageReply.class, Note.class, NoteDownload.class,
                 NoteView.class, OutstandingMember.class, Position.class, Role.class,
-                Setting.class, StudyActivity.class, StudyLeader.class, StudyMaterial.class,
-                StudyMember.class, StudyScore.class, SysLog.class, Term.class,
+                Setting.class, StudyActivity.class, StudyHomeworkDoc.class, StudyLeader.class,
+                StudyMaterial.class, StudyMember.class, StudyScore.class, SysLog.class, Term.class,
                 User.class, UserRole.class
         };
         for (Class<?> entity : entities) {

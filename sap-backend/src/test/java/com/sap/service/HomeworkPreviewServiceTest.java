@@ -1,5 +1,6 @@
 package com.sap.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.sap.BaseUnitTest;
 import com.sap.common.BusinessException;
 import com.sap.entity.StudyActivity;
@@ -131,6 +132,7 @@ class HomeworkPreviewServiceTest extends BaseUnitTest {
     void preview_scheduledHomework_studentForbidden() {
         when(studyActivityMapper.selectById(1L)).thenReturn(activity(1));
         when(studyMaterialMapper.selectOne(any())).thenReturn(homework("week2.md", LocalDateTime.now().plusDays(1)));
+        when(studyMemberMapper.selectCount(any())).thenReturn(1L);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.preview(1L, 2, 50L, false));
@@ -138,6 +140,51 @@ class HomeworkPreviewServiceTest extends BaseUnitTest {
         assertEquals(403, ex.getCode());
         assertTrue(ex.getMessage().contains("尚未发布"));
         verifyNoInteractions(cosService);
+    }
+
+    @Test
+    void preview_notJoinedAndNoHomework_returns403BeforeHomeworkLookup() {
+        when(studyActivityMapper.selectById(1L)).thenReturn(activity(1));
+        when(studyMemberMapper.selectCount(any())).thenReturn(0L);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.preview(1L, 2, 50L, false));
+
+        assertEquals(403, ex.getCode());
+        assertTrue(ex.getMessage().contains("加入学习小组"));
+        // 未入组成员一律 403，且不该触达作业查询，无法借 404/403 差异探测是否布置了作业
+        verify(studyMaterialMapper, never()).selectOne(any());
+        verifyNoInteractions(cosService);
+    }
+
+    @Test
+    void preview_futureWeekNullPublishTime_studentForbidden() {
+        StudyMaterial future = homework("week3.md", null);
+        future.setWeek(3);
+        when(studyActivityMapper.selectById(1L)).thenReturn(activity(1));
+        when(studyMaterialMapper.selectOne(any())).thenReturn(future);
+        when(studyMemberMapper.selectCount(any())).thenReturn(1L);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.preview(1L, 3, 50L, false));
+
+        assertEquals(403, ex.getCode());
+        assertTrue(ex.getMessage().contains("尚未开放"));
+        verifyNoInteractions(cosService);
+    }
+
+    @Test
+    void preview_futureWeekNullPublishTime_adminAllowed() {
+        StudyMaterial future = homework("week3.md", null);
+        future.setWeek(3);
+        when(studyActivityMapper.selectById(1L)).thenReturn(activity(1));
+        when(studyMaterialMapper.selectOne(any())).thenReturn(future);
+        when(studyHomeworkDocMapper.selectOne(any())).thenReturn(doc("# 未来周作业"));
+
+        Map<String, Object> r = service.preview(1L, 3, 50L, true);
+
+        assertEquals(true, r.get("previewable"));
+        assertEquals("# 未来周作业", r.get("content"));
     }
 
     @Test
@@ -202,6 +249,61 @@ class HomeworkPreviewServiceTest extends BaseUnitTest {
 
         assertEquals(true, r.get("previewable"));
         assertEquals("# 并发已写入", r.get("content"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void preview_afterSave_cleansOrphanRowsButNeverCurrentMaterial() {
+        basicMocks(homework("week2.md", null));
+        when(studyHomeworkDocMapper.selectOne(any())).thenReturn(null);
+        when(cosService.readUploadObject(anyString(), anyLong()))
+                .thenReturn("# 正文".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> r = service.preview(1L, 2, 50L, false);
+
+        assertEquals(true, r.get("previewable"));
+        ArgumentCaptor<LambdaQueryWrapper<StudyHomeworkDoc>> captor =
+                ArgumentCaptor.forClass(LambdaQueryWrapper.class);
+        verify(studyHomeworkDocMapper).delete(captor.capture());
+        LambdaQueryWrapper<StudyHomeworkDoc> wrapper = captor.getValue();
+        String sql = wrapper.getSqlSegment();
+        // 只删同一 activity/week 且 materialId 不等于当前作业(9)的行，当前 material 的行绝不被删
+        assertTrue(sql.contains("activity_id"));
+        assertTrue(sql.contains("week"));
+        assertTrue(sql.contains("material_id <>"));
+        assertTrue(wrapper.getParamNameValuePairs().containsValue(9L));
+    }
+
+    @Test
+    void preview_cleanupSkippedWhenHomeworkDeletedConcurrently() {
+        StudyMaterial material = homework("week2.md", null);
+        when(studyActivityMapper.selectById(1L)).thenReturn(activity(1));
+        when(studyMemberMapper.selectCount(any())).thenReturn(1L);
+        // 第二次 selectOne 是清理时重查当前作业：恰好被管理员删掉了 -> 不做任何删除
+        when(studyMaterialMapper.selectOne(any())).thenReturn(material, null);
+        when(studyHomeworkDocMapper.selectOne(any())).thenReturn(null);
+        when(cosService.readUploadObject(anyString(), anyLong()))
+                .thenReturn("# 正文".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> r = service.preview(1L, 2, 50L, false);
+
+        assertEquals(true, r.get("previewable"));
+        verify(studyMaterialMapper, times(2)).selectOne(any());
+        verify(studyHomeworkDocMapper, never()).delete(any());
+    }
+
+    @Test
+    void preview_cleanupFailure_doesNotBreakPreview() {
+        basicMocks(homework("week2.md", null));
+        when(studyHomeworkDocMapper.selectOne(any())).thenReturn(null);
+        when(cosService.readUploadObject(anyString(), anyLong()))
+                .thenReturn("# 正文".getBytes(StandardCharsets.UTF_8));
+        doThrow(new RuntimeException("db down")).when(studyHomeworkDocMapper).delete(any());
+
+        Map<String, Object> r = service.preview(1L, 2, 50L, false);
+
+        assertEquals(true, r.get("previewable"));
+        assertEquals("# 正文", r.get("content"));
     }
 
     @Test

@@ -56,6 +56,21 @@ public class HomeworkPreviewService {
         StudyActivity activity = studyActivityMapper.selectById(activityId);
         if (activity == null) throw new BusinessException(404, "学习活动不存在");
 
+        if (!admin) {
+            // 先校验活动状态和成员身份，再查作业：未入组成员对任意周期都只能拿到 403，
+            // 不能通过 404/403 差异探测某周是否布置了作业。
+            if (!Integer.valueOf(1).equals(activity.getStatus())) {
+                throw new BusinessException(403, "学习活动已关闭");
+            }
+            Long joined = studyMemberMapper.selectCount(
+                    new LambdaQueryWrapper<StudyMember>()
+                            .eq(StudyMember::getActivityId, activityId)
+                            .eq(StudyMember::getUserId, userId));
+            if (joined == null || joined == 0) {
+                throw new BusinessException(403, "请先加入学习小组");
+            }
+        }
+
         StudyMaterial homework = studyMaterialMapper.selectOne(
                 new LambdaQueryWrapper<StudyMaterial>()
                         .eq(StudyMaterial::getActivityId, activityId)
@@ -64,18 +79,13 @@ public class HomeworkPreviewService {
         if (homework == null) throw new BusinessException(404, "该周期没有布置作业");
 
         if (!admin) {
-            if (!Integer.valueOf(1).equals(activity.getStatus())) {
-                throw new BusinessException(403, "学习活动已关闭");
+            // 未来周（publishTime 可能为 null）不允许学生提前预览；管理员不受限
+            Integer currentWeek = activity.getCurrentWeek();
+            if (currentWeek != null && week > currentWeek) {
+                throw new BusinessException(403, "第" + week + "周作业尚未开放，当前进行到第" + currentWeek + "周");
             }
             if (homework.getPublishTime() != null && homework.getPublishTime().isAfter(LocalDateTime.now())) {
                 throw new BusinessException(403, "作业尚未发布");
-            }
-            Long joined = studyMemberMapper.selectCount(
-                    new LambdaQueryWrapper<StudyMember>()
-                            .eq(StudyMember::getActivityId, activityId)
-                            .eq(StudyMember::getUserId, userId));
-            if (joined == null || joined == 0) {
-                throw new BusinessException(403, "请先加入学习小组");
             }
         }
 
@@ -98,6 +108,7 @@ public class HomeworkPreviewService {
                     return result;
                 }
                 doc = saveDoc(homework, format, content, bytes.length);
+                cleanupOrphanDocs(homework.getActivityId(), homework.getWeek());
             } catch (Exception e) {
                 log.warn("[HomeworkPreview] 生成失败 activity={}, week={}, file={}, error={}",
                         activityId, week, homework.getFileName(), e.getMessage());
@@ -131,6 +142,31 @@ public class HomeworkPreviewService {
         if (materialId == null) return null;
         return studyHomeworkDocMapper.selectOne(new LambdaQueryWrapper<StudyHomeworkDoc>()
                 .eq(StudyHomeworkDoc::getMaterialId, materialId));
+    }
+
+    /**
+     * 保存缓存后做一次并发安全清理：替换作业时，还在抓取旧文件的请求可能在 {@link #evict}
+     * 之后才写入旧 materialId 的行，成为永远不会命中也不会被清理的孤儿行。
+     * 这里重新查询当前周期的作业，只删除同一 activity/week 下 materialId 不等于当前作业的行；
+     * 恰好在清理前作业又被删掉（查不到当前作业）时什么都不删，绝不误删当前 material 的行。
+     * 清理失败不影响预览主流程。
+     */
+    private void cleanupOrphanDocs(Long activityId, Integer week) {
+        try {
+            StudyMaterial current = studyMaterialMapper.selectOne(
+                    new LambdaQueryWrapper<StudyMaterial>()
+                            .eq(StudyMaterial::getActivityId, activityId)
+                            .eq(StudyMaterial::getWeek, week)
+                            .eq(StudyMaterial::getFileType, 1));
+            if (current == null) return;
+            studyHomeworkDocMapper.delete(new LambdaQueryWrapper<StudyHomeworkDoc>()
+                    .eq(StudyHomeworkDoc::getActivityId, activityId)
+                    .eq(StudyHomeworkDoc::getWeek, week)
+                    .ne(StudyHomeworkDoc::getMaterialId, current.getId()));
+        } catch (Exception e) {
+            log.warn("[HomeworkPreview] 孤儿缓存清理失败 activity={}, week={}, error={}",
+                    activityId, week, e.getMessage());
+        }
     }
 
     private StudyHomeworkDoc saveDoc(StudyMaterial homework, String format,

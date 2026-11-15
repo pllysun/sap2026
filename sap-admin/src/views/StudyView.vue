@@ -75,7 +75,7 @@
           </el-tooltip>
           <template v-if="currentHomework">
             <el-tag effect="plain" size="small">📄 {{ currentHomework.fileName || currentHomework.title }}</el-tag>
-            <el-button v-if="isMarkdownFileName(currentHomework.fileName)" text size="small" type="primary" @click="openCurrentHomeworkPreview">预览</el-button>
+            <el-button v-if="isMarkdownFileName(currentHomework.fileName, currentHomework.fileUrl)" text size="small" type="primary" @click="openCurrentHomeworkPreview">预览</el-button>
             <el-button text size="small" type="primary" @click="downloadHomework">下载</el-button>
             <el-upload action="/api/file/upload" :headers="uploadHeaders" :show-file-list="false"
               :on-success="handleHomeworkReplace" accept=".md,.txt,.pdf,.doc,.docx,.zip">
@@ -389,7 +389,7 @@
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button text size="small" type="primary" @click="editHomeworkRow(row)">编辑</el-button>
-            <el-button v-if="row.fileUrl && isMarkdownFileName(row.fileName)" text size="small" type="primary" @click="openHomeworkPreview(selectedActivity.id, row.week)">预览</el-button>
+            <el-button v-if="row.fileUrl && isMarkdownFileName(row.fileName, row.fileUrl)" text size="small" type="primary" @click="openHomeworkPreview(selectedActivity.id, row.week)">预览</el-button>
             <el-button v-if="row.fileUrl" text size="small" @click="downloadFileByUrl(row.fileUrl, row.fileName || 'homework')">下载</el-button>
             <el-button text size="small" type="danger" @click="handleScheduleDelete(row)">删除</el-button>
           </template>
@@ -684,8 +684,17 @@ function rewritePreviewUrls(input) {
   return doc.body.innerHTML
 }
 
-function isMarkdownFileName(name) {
-  return /\.(md|markdown)$/i.test(name || '')
+// 与后端 detectFormat 对齐：fileName 缺失时回退到 fileUrl 的 path 判断
+function isMarkdownFileName(name, fileUrl) {
+  let target = name
+  if (!target || !String(target).trim()) {
+    try {
+      target = new URL(fileUrl).pathname
+    } catch (e) {
+      target = ''
+    }
+  }
+  return /\.(md|markdown)$/i.test(target || '')
 }
 
 async function openHomeworkPreview(activityId, week) {
