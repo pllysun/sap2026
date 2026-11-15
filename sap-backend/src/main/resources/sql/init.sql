@@ -236,6 +236,25 @@ CREATE TABLE IF NOT EXISTS study_material (
     INDEX idx_activity_week (activity_id, week)
 ) COMMENT '学习资料上传表';
 
+-- 15.1 作业在线预览正文（Markdown 原文仍在 COS，本表只缓存正文）
+-- 升级提示：本表是纯缓存。若旧库曾用早期版本（activity_id+week 唯一键）建过同名表，
+-- CREATE TABLE IF NOT EXISTS 不会改结构；直接 DROP TABLE study_homework_doc
+-- 后重启，让 ddl-auto 按实体重建即可（缓存会按需重新生成）。
+CREATE TABLE IF NOT EXISTS study_homework_doc (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    material_id BIGINT NOT NULL COMMENT '作业题目materialId（缓存版本键）',
+    activity_id BIGINT NOT NULL COMMENT '学习活动ID',
+    week INT NOT NULL COMMENT '周期',
+    content_format VARCHAR(16) NOT NULL DEFAULT 'markdown' COMMENT '正文格式',
+    content MEDIUMTEXT NOT NULL COMMENT '作业正文',
+    source_bytes INT COMMENT '原始字节数',
+    fetched_at DATETIME COMMENT '从COS抓取时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_study_homework_doc_material (material_id),
+    KEY idx_study_homework_doc_week (activity_id, week)
+) COMMENT '作业在线预览正文';
+
 -- 16. 留言板
 CREATE TABLE IF NOT EXISTS msg_board (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

@@ -29,6 +29,7 @@ public class StudyService {
     @Autowired private SettingMapper settingMapper;
     @Autowired private PositionMapper positionMapper;
     @Autowired private CacheService cacheService;
+    @Autowired private HomeworkPreviewService homeworkPreviewService;
 
     // ============= 学习活动 =============
 
@@ -618,6 +619,8 @@ public class StudyService {
                         .eq(StudyMaterial::getWeek, week)
                         .eq(StudyMaterial::getFileType, 1)
         );
+        // 旧正文缓存一起作废，避免换文件后还预览到旧内容
+        homeworkPreviewService.evict(activityId, week);
 
         StudyMaterial material = new StudyMaterial();
         material.setActivityId(activityId);
@@ -634,6 +637,7 @@ public class StudyService {
     /**
      * 删除指定周期的作业文件
      */
+    @Transactional
     public void deleteHomework(Long activityId, Integer week) {
         studyMaterialMapper.delete(
                 new LambdaQueryWrapper<StudyMaterial>()
@@ -641,6 +645,7 @@ public class StudyService {
                         .eq(StudyMaterial::getWeek, week)
                         .eq(StudyMaterial::getFileType, 1)
         );
+        homeworkPreviewService.evict(activityId, week);
     }
 
     /**

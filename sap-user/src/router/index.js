@@ -34,6 +34,11 @@ const routes = [
         component: () => import('@/views/StudyGroup.vue')
       },
       {
+        path: 'study/homework/:activityId/:week',
+        name: 'HomeworkPreview',
+        component: () => import('@/views/study/HomeworkPreview.vue')
+      },
+      {
         path: 'activities',
         name: 'Activities',
         component: () => import('@/views/Activities.vue')

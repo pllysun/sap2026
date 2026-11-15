@@ -20,7 +20,7 @@
 
       <!-- Markdown 渲染区 -->
       <article class="note-detail__body card anim-in" style="animation-delay: 0.1s;">
-        <div class="markdown-body" v-html="renderedHtml"></div>
+        <MarkdownViewer :content="note.content" />
       </article>
     </template>
 
@@ -64,36 +64,18 @@
       <p style="text-align:center; color:#888; margin-bottom: 24px; font-size: 12px;">
         {{ note.authorName }} · {{ formatDate(note.createdAt) }}
       </p>
-      <div class="markdown-body" v-html="renderedHtml"></div>
+      <MarkdownViewer :content="note.content" />
     </div>
   </div>
 </template>
 
 <script setup>
 import UiIcon from '@/components/UiIcon.vue'
-import { ref, computed, onMounted } from 'vue'
+import MarkdownViewer from '@/components/MarkdownViewer.vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import request from '@/utils/request'
 import { downloadFile } from '@/utils/downloadFile'
-import { Marked } from 'marked'
-import DOMPurify from 'dompurify'
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github.css'
-
-// Marked 的代码 renderer 负责高亮；最终 HTML 仍统一经过 DOMPurify。
-const markdown = new Marked({
-  renderer: {
-    code({ text, lang }) {
-      const language = lang?.trim().split(/\s+/)[0]
-      const highlighted = language && hljs.getLanguage(language)
-        ? hljs.highlight(text, { language }).value
-        : hljs.highlightAuto(text).value
-      return `<pre><code class="hljs">${highlighted}</code></pre>`
-    }
-  },
-  breaks: true,
-  gfm: true
-})
 
 const route = useRoute()
 const router = useRouter()
@@ -101,11 +83,6 @@ const note = ref(null)
 const loading = ref(true)
 const errorMsg = ref('')
 const fabOpen = ref(false)
-
-const renderedHtml = computed(() => {
-  if (!note.value?.content) return ''
-  try { return DOMPurify.sanitize(markdown.parse(note.value.content), { FORBID_TAGS: ['style', 'form', 'input', 'button', 'select', 'textarea'], FORBID_ATTR: ['style'] }) } catch { return '<p>Markdown 解析失败</p>' }
-})
 
 const formatDate = (t) => {
   if (!t) return ''
@@ -198,127 +175,6 @@ onMounted(() => {
   line-height: 1.85;
   font-size: 0.9375rem;
   color: var(--ink-700);
-}
-
-/* Markdown 样式 */
-.markdown-body :deep(h1) {
-  font-size: 1.8em;
-  margin: 1em 0 0.4em;
-  padding-bottom: 0.3em;
-  border-bottom: 2px solid var(--ink-100);
-  color: var(--ink-900);
-  font-weight: 800;
-}
-.markdown-body :deep(h2) {
-  font-size: 1.5em;
-  margin: 0.8em 0 0.3em;
-  padding-bottom: 0.2em;
-  border-bottom: 1px solid var(--ink-100);
-  color: var(--ink-800);
-  font-weight: 700;
-}
-.markdown-body :deep(h3) {
-  font-size: 1.25em;
-  margin: 0.7em 0 0.3em;
-  color: var(--ink-800);
-  font-weight: 700;
-}
-.markdown-body :deep(h4) {
-  font-size: 1.1em;
-  margin: 0.6em 0 0.3em;
-  color: var(--ink-700);
-  font-weight: 600;
-}
-.markdown-body :deep(p) {
-  margin: 0.6em 0;
-}
-.markdown-body :deep(code) {
-  background: rgba(59,130,246,0.06);
-  color: #b2555b;
-  padding: 2px 7px;
-  border-radius: 5px;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.88em;
-}
-.markdown-body :deep(pre) {
-  background: #f5f7fc;
-  color: #33465f;
-  padding: 20px;
-  border-radius: 12px;
-  overflow-x: auto;
-  margin: 16px 0;
-  border: 1px solid #dce2ee;
-  line-height: 1.6;
-}
-.markdown-body :deep(pre code) {
-  background: none;
-  padding: 0;
-  color: inherit;
-  font-size: 0.85em;
-}
-.markdown-body :deep(blockquote) {
-  border-left: 4px solid var(--primary, #3b82f6);
-  padding: 12px 20px;
-  margin: 16px 0;
-  background: linear-gradient(135deg, rgba(59,130,246,0.04), rgba(20,184,166,0.04));
-  color: var(--ink-600);
-  border-radius: 0 10px 10px 0;
-  font-style: italic;
-}
-.markdown-body :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 16px 0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.markdown-body :deep(th),
-.markdown-body :deep(td) {
-  border: 1px solid var(--ink-100);
-  padding: 10px 14px;
-  text-align: left;
-}
-.markdown-body :deep(th) {
-  background: linear-gradient(180deg, var(--ink-50), rgba(0,0,0,0.02));
-  font-weight: 700;
-  color: var(--ink-700);
-}
-.markdown-body :deep(img) {
-  max-width: 100%;
-  border-radius: 10px;
-  margin: 8px 0;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-}
-.markdown-body :deep(ul),
-.markdown-body :deep(ol) {
-  padding-left: 24px;
-  margin: 10px 0;
-}
-.markdown-body :deep(li) {
-  margin: 5px 0;
-}
-.markdown-body :deep(hr) {
-  border: none;
-  border-top: 2px solid var(--ink-100);
-  margin: 24px 0;
-}
-.markdown-body :deep(a) {
-  color: var(--primary, #3b82f6);
-  text-decoration: none;
-  border-bottom: 1px dashed rgba(59,130,246,0.3);
-  transition: all 0.2s;
-}
-.markdown-body :deep(a:hover) {
-  border-bottom-style: solid;
-  border-bottom-color: var(--primary);
-}
-.markdown-body :deep(strong) {
-  font-weight: 700;
-  color: var(--ink-800);
-}
-.markdown-body :deep(em) {
-  font-style: italic;
-  color: var(--ink-600);
 }
 
 /* ========== 悬浮操作菜单 ========== */
@@ -447,20 +303,12 @@ onMounted(() => {
     font-size: 0.8rem;
     padding: 7px 14px 7px 9px;
   }
-
-  .markdown-body :deep(pre) {
-    padding: 14px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-  }
-  .markdown-body :deep(h1) { font-size: 1.5em; }
-  .markdown-body :deep(h2) { font-size: 1.3em; }
 }
 </style>
 
 <style scoped>
-.note-detail__body { min-width: 0; overflow-wrap: anywhere; }.markdown-body :deep(table) { display: block; overflow-x: auto; max-width: 100%; }.markdown-body :deep(pre) { max-width: 100%; overflow: auto; }.markdown-body :deep(img) { height: auto; }
-@media (max-width: 480px) { .note-detail__body { padding: 20px 16px; }.markdown-body :deep(pre) { padding: 15px; font-size: 0.75rem; }.markdown-body :deep(th), .markdown-body :deep(td) { padding: 10px; min-width: 110px; }.fab-menu { right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); } }
+.note-detail__body { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .note-detail__body { padding: 20px 16px; }.fab-menu { right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); } }
 </style>
 
 <style scoped>
@@ -470,12 +318,5 @@ onMounted(() => {
 .note-detail__meta > span { display: inline-flex; gap: .375rem; align-items: center; }
 .note-detail__meta :deep(svg) { width: .875rem; height: .875rem; }
 .note-detail-page .note-detail__body { padding: 2.25rem 3rem; font-size: 1rem; box-shadow: none; border-radius: 1rem; }
-.markdown-body { overflow-wrap: anywhere; }
-.markdown-body :deep(pre code) { font-size: .875rem; line-height: 1.8; }
-.markdown-body :deep(ul) { list-style: disc; }
-.markdown-body :deep(ol) { list-style: decimal; }
-.markdown-body :deep(table) { display: block; max-width: 100%; overflow-x: auto; }
-.markdown-body :deep(blockquote) { background: #f2f4fa; font-style: normal; }
-.markdown-body :deep(h2) { margin-top: 1.75em; }
 @media(max-width: 600px) { .note-detail-page .note-detail__body { padding: 1.25rem; font-size: .9375rem; }.note-detail__meta { gap: .75rem 1rem; }.fab-menu { right: 1rem; bottom: 1rem; } }
 </style>

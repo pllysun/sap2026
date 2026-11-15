@@ -52,7 +52,9 @@ public class StudyController {
     @GetMapping("/activity/{id}/detail")
     @OperationLog("查询学习活动详情")
     public Result<?> getActivityDetail(@PathVariable Long id) {
-        StpUtil.checkRoleOr("0", "1", "2", "3");
+        // 管理端页面专用：包含未来排期作业的 fileUrl，不能下发给普通成员，
+        // 否则可绕开 /homework/preview 的发布时间校验直接下载未发布文件。
+        StpUtil.checkRoleOr("0", "1", "2");
         return Result.ok(studyService.getActivityDetail(id));
     }
 

@@ -68,7 +68,7 @@ class StudyControllerTest extends BaseUnitTest {
         when(studyService.getActivityDetail(5L)).thenReturn(detail);
         Result<?> r = controller.getActivityDetail(5L);
         assertEquals(detail, r.getData());
-            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2", "3"));
+            st.verify(() -> StpUtil.checkRoleOr("0", "1", "2"));
         }
     }
 
