@@ -70,6 +70,10 @@ class DesignGalleryActivity : ComponentActivity() {
                     screen.startsWith("calendar") -> CalendarPreview(screen == "calendar-month")
                     screen == "registration-flow" -> AuthScreen(onLoggedIn = {}, onOffline = {})
                     screen.startsWith("register") -> RegistrationPreview(screen)
+                    screen.startsWith("term-trend") -> TermTrendPreview(
+                        manyTerms = screen == "term-trend-many",
+                        missingAverage = screen == "term-trend-missing",
+                    )
                     screen == "course-colors" -> ScheduleColorsPreview()
                     screen == "class-schedules" -> ClassSchedulesPreview()
                     screen == "profile-avatar" -> HomeScreen(onLoggedOut = {})

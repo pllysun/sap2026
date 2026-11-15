@@ -25,7 +25,7 @@ enum class ScoreBand(val label: String, val min: Double, val max: Double) {
 data class TermPoint(
     val term: String,
     val gpa: Double,        // 加权绩点
-    val avgScore: Double,   // 数字成绩的加权均分（无数字成绩则 0）
+    val avgScore: Double?,  // 数字成绩的加权均分
     val courses: Int,
 )
 
@@ -61,7 +61,7 @@ data class GradeStats(
 }
 
 /** 把分数字符串解析成数字；等级成绩（优秀/不及格…）返回 null。 */
-fun parseScore(score: String?): Double? = score?.trim()?.toDoubleOrNull()
+fun parseScore(score: String?): Double? = score?.trim()?.toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** 是否不及格：数字 <60，或等级文案含"不及格/不合格"。 */
 fun isFailScore(score: String?): Boolean {
@@ -70,8 +70,8 @@ fun isFailScore(score: String?): Boolean {
     return score.contains("不及格") || score.contains("不合格")
 }
 
-private fun GradeDto.creditValue(): Double = credit?.trim()?.toDoubleOrNull() ?: 0.0
-private fun GradeDto.gpValue(): Double? = gradePoint?.trim()?.toDoubleOrNull()
+private fun GradeDto.creditValue(): Double = credit?.trim()?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0
+private fun GradeDto.gpValue(): Double? = gradePoint?.trim()?.toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** 由成绩列表计算完整分析模型。 */
 fun computeGradeStats(grades: List<GradeDto>): GradeStats {
@@ -118,7 +118,7 @@ fun computeGradeStats(grades: List<GradeDto>): GradeStats {
             val termAvg = run {
                 val w = sc.filter { it.first > 0 }
                 if (w.isNotEmpty()) w.sumOf { it.first * it.second } / w.sumOf { it.first }
-                else sc.map { it.second }.average().takeIf { sc.isNotEmpty() } ?: 0.0
+                else sc.takeIf { it.isNotEmpty() }?.map { it.second }?.average()
             }
             TermPoint(term = term, gpa = termGpa, avgScore = termAvg, courses = list.size)
         }

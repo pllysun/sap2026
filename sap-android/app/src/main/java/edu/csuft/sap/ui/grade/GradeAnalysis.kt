@@ -1,9 +1,12 @@
 package edu.csuft.sap.ui.grade
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -24,14 +28,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -191,96 +196,105 @@ private fun ScoreBandCard(s: GradeStats) {
 
 @Composable
 private fun TermTrendCard(s: GradeStats) {
-    val gpaColor = MaterialTheme.colorScheme.primary
-    val avgColor = Color(0xFFFFA726) // 橙色：与主色（绩点）拉开对比
+    val gpaColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val avgColor = Color(0xFF995100)
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val hasAvg = s.terms.any { it.avgScore > 0 }
-    val density = LocalDensity.current
-    val labelPx = with(density) { 10.sp.toPx() }
-    val valuePx = with(density) { 10.sp.toPx() }
-    val dotR = with(density) { 3.5.dp.toPx() }
-    val lineW = with(density) { 2.dp.toPx() }
+    val gpa = remember(s.terms) { s.terms.map { it.gpa } }
+    val averages = remember(s.terms) { s.terms.map { it.avgScore } }
+    val termWidth = 64.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val scroll = rememberScrollState()
 
     SapCard {
         Text("学期趋势", fontSize = 15.sp, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.height(6.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LegendDot(gpaColor, "绩点")
-            if (hasAvg) {
-                Spacer(Modifier.width(14.dp))
-                LegendDot(avgColor, "均分")
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        Canvas(Modifier.fillMaxWidth().height(160.dp)) {
-            val n = s.terms.size
-            val bottomPad = labelPx + 12f
-            val topPad = valuePx + 8f
-            val chartH = size.height - bottomPad - topPad
-            val slot = if (n > 1) size.width / (n - 1) else size.width
-            fun x(i: Int) = if (n > 1) slot * i else size.width / 2f
-
-            // 横向网格线（4 等分）
-            for (g in 0..3) {
-                val y = topPad + chartH * g / 3f
-                drawLine(gridColor.copy(alpha = 0.5f), Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-            }
-
-            // 绩点折线（0..5 量程）
-            drawTrendLine(
-                values = s.terms.map { it.gpa },
-                yMin = 0f, yMax = 5f, color = gpaColor,
-                xOf = ::x, topPad = topPad, chartH = chartH, dotR = dotR, lineW = lineW,
-                valuePx = valuePx, valueFmt = { d2(it.toDouble()) }, drawValue = true,
-            )
-            // 均分折线（0..100 量程）
-            if (hasAvg) {
-                drawTrendLine(
-                    values = s.terms.map { it.avgScore },
-                    yMin = 0f, yMax = 100f, color = avgColor,
-                    xOf = ::x, topPad = topPad, chartH = chartH, dotR = dotR, lineW = lineW,
-                    valuePx = valuePx, valueFmt = { "" }, drawValue = false,
-                )
-            }
-            // x 轴学期标签（取末段，如 2023-2024-1 → "23-1"）
-            s.terms.forEachIndexed { i, t ->
-                drawTextCentered(shortTerm(t.term), x(i), topPad + chartH + labelPx + 4f, labelPx, labelColor)
+        Spacer(Modifier.height(12.dp))
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val chartWidth = maxOf(maxWidth, termWidth * s.terms.size)
+            Column {
+                TermTrendPlot("绩点", gpa, s.terms, 5, gpaColor, gridColor, labelColor, chartWidth, scroll, ::d2)
+                if (averages.any { it != null }) {
+                    Spacer(Modifier.height(12.dp))
+                    TermTrendPlot("加权均分", averages, s.terms, 100, avgColor, gridColor, labelColor, chartWidth, scroll, ::d1)
+                } else {
+                    Text(
+                        "暂无可计算均分的数字成绩",
+                        fontSize = 12.sp,
+                        color = labelColor,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
             }
         }
     }
 }
 
-/** 在 DrawScope 内画一条带数据点的折线（值会被量程归一化）。 */
-private fun DrawScope.drawTrendLine(
-    values: List<Double>,
-    yMin: Float,
-    yMax: Float,
+@Composable
+private fun TermTrendPlot(
+    label: String,
+    values: List<Double?>,
+    terms: List<TermPoint>,
+    maximum: Int,
     color: Color,
-    xOf: (Int) -> Float,
-    topPad: Float,
-    chartH: Float,
-    dotR: Float,
-    lineW: Float,
-    valuePx: Float,
-    valueFmt: (Float) -> String,
-    drawValue: Boolean,
+    gridColor: Color,
+    labelColor: Color,
+    width: Dp,
+    scroll: ScrollState,
+    format: (Double) -> String,
 ) {
-    if (values.isEmpty()) return
-    fun y(v: Double): Float {
-        val ratio = ((v - yMin) / (yMax - yMin)).toFloat().coerceIn(0f, 1f)
-        return topPad + chartH * (1f - ratio)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        LegendDot(color, label)
+        Spacer(Modifier.width(8.dp))
+        Text("满分 $maximum", fontSize = 11.sp, color = labelColor)
     }
-    val path = Path()
-    values.forEachIndexed { i, v ->
-        val px = xOf(i); val py = y(v)
-        if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
-    }
-    drawPath(path, color = color, style = Stroke(width = lineW))
-    values.forEachIndexed { i, v ->
-        val px = xOf(i); val py = y(v)
-        drawCircle(color, radius = dotR, center = Offset(px, py))
-        if (drawValue) drawTextCentered(valueFmt(v.toFloat()), px, py - dotR - 5f, valuePx, color)
+    Spacer(Modifier.height(8.dp))
+    Column(Modifier.horizontalScroll(scroll).width(width)) {
+        Row(Modifier.fillMaxWidth()) {
+            values.forEachIndexed { index, value ->
+                val number = value?.let(format) ?: "—"
+                Text(
+                    number,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (value != null) color else labelColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f).clearAndSetSemantics {
+                        contentDescription = "${terms[index].term} $label ${value?.let(format) ?: "暂无"}"
+                    },
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Canvas(Modifier.fillMaxWidth().height(62.dp)) {
+            val inset = 4.dp.toPx()
+            val height = size.height - 2 * inset
+            val slot = size.width / values.size
+            val points = values.mapIndexed { index, value ->
+                value?.let {
+                    val ratio = (it / maximum).toFloat().coerceIn(0f, 1f)
+                    Offset(slot * (index + 0.5f), inset + height * (1f - ratio))
+                }
+            }
+
+            for (i in 0..2) {
+                val y = inset + height * i / 2f
+                drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 0.5.dp.toPx())
+            }
+            points.zipWithNext().forEach { (from, to) ->
+                if (from != null && to != null) drawLine(color, from, to, strokeWidth = 2.dp.toPx())
+            }
+            points.filterNotNull().forEach { drawCircle(color, 3.dp.toPx(), it) }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            terms.forEach { term ->
+                Text(
+                    shortTerm(term.term),
+                    fontSize = 10.sp,
+                    color = labelColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
     }
 }
 

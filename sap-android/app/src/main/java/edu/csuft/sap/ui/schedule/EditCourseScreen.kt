@@ -63,6 +63,7 @@ fun EditCourseScreen(
     prefillDay: Int?,
     prefillStartNode: Int?,
     maxWeeks: Int,
+    visibleWeek: Int,
     maxNodes: Int,
     onSave: (CustomCourse) -> Unit,
     onDelete: (String) -> Unit,
@@ -81,7 +82,10 @@ fun EditCourseScreen(
     var day by remember { mutableStateOf(initial?.day ?: prefillDay ?: 1) }
     var startNode by remember { mutableStateOf(initial?.startNode ?: prefillStartNode ?: 1) }
     var endNode by remember { mutableStateOf(initial?.endNode ?: prefillEndNode ?: prefillStartNode ?: 1) }
-    var weeks by remember { mutableStateOf(initial?.weeks?.toSet() ?: prefillWeeks ?: (1..maxWeeks).toSet()) }
+    val allWeeks = remember(maxWeeks) { (1..maxWeeks).toSet() }
+    var weeks by remember {
+        mutableStateOf(initial?.weeks?.toSet()?.ifEmpty { allWeeks } ?: prefillWeeks ?: allWeeks)
+    }
     var colorIndex by remember { mutableStateOf(initial?.colorIndex ?: prefillColorIndex ?: 0) }
     var customColor by remember { mutableStateOf(initial?.customColor) }
     var showColorPicker by remember { mutableStateOf(false) }
@@ -111,20 +115,29 @@ fun EditCourseScreen(
                 if (initial == null) "添加课程" else "编辑课程",
                 fontSize = 18.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = {
-                if (name.isBlank()) {
-                    nameError = true
-                } else {
+            IconButton(enabled = weeks.isNotEmpty(), onClick = {
+                nameError = name.isBlank()
+                if (!nameError && weeks.isNotEmpty()) {
+                    val savedWeeks = if (initial?.weeks?.isEmpty() == true && weeks == allWeeks) {
+                        emptyList()
+                    } else {
+                        weeks.sorted()
+                    }
                     onSave(
                         CustomCourse(
                             id = initial?.id ?: UUID.randomUUID().toString(),
                             name = name.trim(), teacher = teacher.trim(), location = location.trim(),
                             day = day, startNode = startNode, endNode = endNode,
-                            weeks = weeks.sorted(), colorIndex = colorIndex, customColor = customColor,
+                            weeks = savedWeeks, colorIndex = colorIndex, customColor = customColor,
                         ),
                     )
                 }
-            }) { Icon(AppIcons.Check, "保存", tint = MaterialTheme.colorScheme.primary) }
+            }) {
+                Icon(
+                    AppIcons.Check, "保存",
+                    tint = if (weeks.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                )
+            }
         }
 
         Column(Modifier.padding(horizontal = 16.dp)) {
@@ -149,19 +162,27 @@ fun EditCourseScreen(
             SubLabel("结束节")
             NodeRow(endNode, nodeMax = nodeMax, minNode = startNode) { n -> if (n >= startNode) endNode = n }
 
-            SectionLabel("上课周数", "快速选择（上半 1-8 周 / 下半 10-17 周）")
+            SectionLabel("上课周数", if (weeks.isEmpty()) "未选择" else "已选 ${weeks.size} 周")
+            val visibleWeekOnly = setOf(visibleWeek)
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Chip("上半学期", weeks == firstHalf(maxWeeks)) { weeks = firstHalf(maxWeeks) }
-                Chip("下半学期", weeks == secondHalf(maxWeeks)) { weeks = secondHalf(maxWeeks) }
+                Chip("仅第 $visibleWeek 周", weeks == visibleWeekOnly) { weeks = visibleWeekOnly }
+                Chip("全选", weeks == allWeeks) { weeks = allWeeks }
+                Chip("清空", weeks.isEmpty()) { weeks = emptySet() }
                 Chip("单周", weeks == oddWeeks(maxWeeks)) { weeks = oddWeeks(maxWeeks) }
                 Chip("双周", weeks == evenWeeks(maxWeeks)) { weeks = evenWeeks(maxWeeks) }
-                Chip("全选", weeks == (1..maxWeeks).toSet()) { weeks = (1..maxWeeks).toSet() }
+                Chip("上半学期", weeks == firstHalf(maxWeeks)) { weeks = firstHalf(maxWeeks) }
+                Chip("下半学期", weeks == secondHalf(maxWeeks)) { weeks = secondHalf(maxWeeks) }
             }
-            Spacer(Modifier.height(8.dp))
-            WeekGrid(maxWeeks, weeks) { w -> weeks = if (w in weeks) weeks - w else weeks + w }
+            Text(
+                if (weeks.isEmpty()) "请至少选择一周" else "横划周次可连续勾选或取消",
+                fontSize = 12.sp,
+                color = if (weeks.isEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
+            WeekGrid(maxWeeks, weeks) { weeks = it }
 
             SectionLabel("颜色", null)
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -276,33 +297,6 @@ private fun Chip(text: String, selected: Boolean, enabled: Boolean = true, onCli
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
     ) { Text(text, fontSize = 13.sp, color = fg, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal) }
-}
-
-@Composable
-private fun WeekGrid(maxWeeks: Int, selected: Set<Int>, onToggle: (Int) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        (1..maxWeeks).chunked(6).forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { w ->
-                    val sel = w in selected
-                    Box(
-                        Modifier.weight(1f).height(40.dp)
-                            .background(
-                                if (sel) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                RoundedCornerShape(9.dp),
-                            )
-                            .clickable { onToggle(w) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("$w", fontSize = 13.sp,
-                            color = if (sel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                repeat(6 - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
 }
 
 private fun oddWeeks(max: Int): Set<Int> = (1..max).filter { it % 2 == 1 }.toSet()

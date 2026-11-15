@@ -23,6 +23,13 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            versionCode = 138, versionName = "2.7", date = "2026-11-14",
+            changes = listOf(
+                "个人课表新增周次滑选。横划可批量勾选或取消多个周次，也可一键仅选当前查看的周次，或清空后重新选择。",
+                "优化学期成绩趋势图。绩点与加权均分分开绘制，直接标注各学期数值，修复绩点被曲线遮挡的问题。学期较多时，两张图可同步横滑查看。",
+            ),
+        ),
+        ChangelogEntry(
             versionCode = 136, versionName = "2.6", date = "2026-10-20",
             changes = listOf(
                 "新增课表节次自适应，包含第 11 或第 12 节课程时自动扩展显示，普通课表保持原有排版",
