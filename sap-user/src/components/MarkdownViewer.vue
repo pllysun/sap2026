@@ -8,6 +8,7 @@ import { computed } from 'vue'
 import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
+import { createEmojiMarkdown } from '../../../shared/markdownEmoji.mjs'
 import 'highlight.js/styles/github.css'
 
 const props = defineProps({
@@ -21,6 +22,7 @@ const isPlain = computed(() => props.format === 'plain')
 
 // 与笔记详情保持同一套渲染参数，避免前台/后台/作业三处换行行为不一致。
 const markdown = new Marked({
+  ...createEmojiMarkdown(),
   renderer: {
     code({ text, lang }) {
       const language = lang?.trim().split(/\s+/)[0]
