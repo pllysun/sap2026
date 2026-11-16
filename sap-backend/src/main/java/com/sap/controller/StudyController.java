@@ -9,18 +9,23 @@ import com.sap.entity.StudyActivity;
 import com.sap.entity.StudyLeader;
 import com.sap.entity.StudyScore;
 import com.sap.service.StudyService;
+import com.sap.service.HomeworkImageService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/study")
 public class StudyController {
 
     @Autowired
     private StudyService studyService;
+    @Autowired
+    private HomeworkImageService homeworkImageService;
 
     // ---- 学习活动 ----
     @GetMapping("/activity/years")
@@ -188,8 +193,30 @@ public class StudyController {
         Object pt = params.get("publishTime");
         java.time.LocalDateTime publishTime = (pt != null && !pt.toString().isBlank())
                 ? parseDateTime(pt.toString()) : null;
-        studyService.uploadHomework(activityId, week, title, fileUrl, fileName, publishTime);
+        HomeworkImageService.LocalizeResult localized = null;
+        try {
+            localized = homeworkImageService.localizeAdminHomework(activityId, week, fileUrl, fileName);
+        } catch (Exception e) {
+            // 图片转存是增强能力，不能因为外部图床/COS 瞬时异常让管理员无法布置作业。
+            log.warn("[HomeworkImage] Localization skipped: activity={}, week={}, reason={}",
+                    activityId, week, e.toString());
+        }
+        studyService.uploadHomework(activityId, week, title,
+                localized != null && localized.fileUrl() != null ? localized.fileUrl() : fileUrl,
+                fileName, publishTime);
         return Result.ok("上传成功");
+    }
+
+    @PostMapping("/homework/images/localize")
+    @OperationLog("转存作业图片")
+    @SaCheckRole(value = {"0", "1", "2"}, mode = SaMode.OR)
+    public Result<?> localizeHomeworkImages(@RequestBody Map<String, Object> params) {
+        Object id = params.get("activityId");
+        if (id == null) throw new com.sap.common.BusinessException("activityId 不能为空");
+        Object selectedWeek = params.get("week");
+        Long activityId = Long.valueOf(id.toString());
+        Integer week = selectedWeek == null ? null : Integer.valueOf(selectedWeek.toString());
+        return Result.ok(homeworkImageService.localizeExisting(activityId, week));
     }
 
     /** 作业排期列表（管理端查看当前+未来多周的作业题目与发布状态） */

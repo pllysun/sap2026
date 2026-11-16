@@ -648,6 +648,21 @@ public class StudyService {
         homeworkPreviewService.evict(activityId, week);
     }
 
+    /** Database-only final step of an image migration. A failed cache eviction rolls back the URL update. */
+    @Transactional
+    public boolean replaceAdminHomeworkFileUrl(StudyMaterial material, String newUrl) {
+        validateFileUrl(newUrl);
+        int updated = studyMaterialMapper.update(null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<StudyMaterial>()
+                        .eq(StudyMaterial::getId, material.getId())
+                        .eq(StudyMaterial::getFileType, 1)
+                        .eq(StudyMaterial::getFileUrl, material.getFileUrl())
+                        .set(StudyMaterial::getFileUrl, newUrl));
+        if (updated != 1) return false;
+        homeworkPreviewService.evict(material.getActivityId(), material.getWeek());
+        return true;
+    }
+
     /**
      * 学生删除自己提交的作业
      */

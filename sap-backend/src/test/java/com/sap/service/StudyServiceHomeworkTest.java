@@ -69,6 +69,21 @@ class StudyServiceHomeworkTest extends BaseUnitTest {
     // ===================== uploadHomework =====================
 
     @Test
+    void replaceAdminHomeworkFileUrl_updatesOnlyAdminRowAndEvicts() {
+        StudyMaterial material = new StudyMaterial();
+        material.setId(9L);
+        material.setActivityId(1L);
+        material.setWeek(2);
+        material.setFileUrl("https://dl.csuftsap.top/uploads/old.md");
+        when(studyMaterialMapper.update(isNull(), any())).thenReturn(1);
+
+        assertTrue(service.replaceAdminHomeworkFileUrl(material,
+                "https://dl.csuftsap.top/uploads/homework/1/2/new.md"));
+        verify(studyMaterialMapper).update(isNull(), any());
+        verify(homeworkPreviewService).evict(1L, 2);
+    }
+
+    @Test
     void uploadHomework_deletesOldThenInserts_usesTitle_immediatePublish() {
         when(studyActivityMapper.selectById(1L)).thenReturn(activity(2));
         try (MockedStatic<StpUtil> st = mockStatic(StpUtil.class)) {
