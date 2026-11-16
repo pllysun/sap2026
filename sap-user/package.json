@@ -8,7 +8,8 @@
     "dev": "vite",
     "prebuild": "node scripts/compile-hero-code.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:markdown": "node --test src/utils/markdownEmoji.test.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",

@@ -488,8 +488,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
-import { marked } from 'marked'
+import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { createEmojiMarkdown } from '../../../shared/markdownEmoji.mjs'
 import {
   getStudyActivities, createStudyActivity, getStudyActivityDetail,
   getStudyCycleDetail, addStudyLeader, deleteStudyLeader,
@@ -539,6 +540,12 @@ const homeworkSchedule = ref([])
 const showHomeworkPreview = ref(false)
 const previewLoading = ref(false)
 const previewData = ref(null)
+// 与学生端 MarkdownViewer 共用 emoji 短码扩展，并保持 gfm/breaks 参数一致。
+const previewMarkdown = new Marked({
+  ...createEmojiMarkdown(),
+  breaks: true,
+  gfm: true
+})
 let previewRequestId = 0
 const hwForm = reactive({
   editing: false,
@@ -629,7 +636,7 @@ const currentHomework = computed(() => {
 const previewHtml = computed(() => {
   if (!previewData.value?.previewable || !previewData.value.content) return ''
   try {
-    const clean = DOMPurify.sanitize(marked.parse(previewData.value.content, { gfm: true, breaks: true }), {
+    const clean = DOMPurify.sanitize(previewMarkdown.parse(previewData.value.content), {
       FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'select', 'textarea', 'link', 'meta'],
       FORBID_ATTR: ['style', 'srcset']
     })
