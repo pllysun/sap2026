@@ -7,6 +7,8 @@ import com.sap.entity.StudyActivity;
 import com.sap.entity.StudyLeader;
 import com.sap.entity.StudyScore;
 import com.sap.service.StudyService;
+import com.sap.service.HomeworkImageService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -33,8 +35,15 @@ import static org.mockito.Mockito.*;
 class StudyControllerTest extends BaseUnitTest {
 
     @Mock StudyService studyService;
+    @Mock HomeworkImageService homeworkImageService;
 
     @InjectMocks StudyController controller;
+
+    @BeforeEach
+    void defaultLocalization() {
+        when(homeworkImageService.localizeAdminHomework(any(), any(), nullable(String.class), nullable(String.class)))
+                .thenReturn(new HomeworkImageService.LocalizeResult(null, 0, 0));
+    }
 
     // ===================== 查询端点 =====================
 
@@ -276,6 +285,35 @@ class StudyControllerTest extends BaseUnitTest {
     }
 
     @Test
+    void uploadHomework_localizationFailureFallsBackToOriginalUrl() {
+        when(homeworkImageService.localizeAdminHomework(any(), any(), anyString(), anyString()))
+                .thenThrow(new IllegalStateException("image host down"));
+        Map<String, Object> params = new HashMap<>();
+        params.put("activityId", "1");
+        params.put("week", "2");
+        params.put("fileUrl", "url");
+        params.put("fileName", "f.md");
+
+        controller.uploadHomework(params);
+        verify(studyService).uploadHomework(1L, 2, null, "url", "f.md", null);
+    }
+
+    @Test
+    void uploadHomework_usesLocalizedUrlWhenAvailable() {
+        when(homeworkImageService.localizeAdminHomework(any(), any(), anyString(), anyString()))
+                .thenReturn(new HomeworkImageService.LocalizeResult("https://dl.csuftsap.top/uploads/homework/1/2/new.md", 1, 0));
+        Map<String, Object> params = new HashMap<>();
+        params.put("activityId", "1");
+        params.put("week", "2");
+        params.put("fileUrl", "url");
+        params.put("fileName", "f.md");
+
+        controller.uploadHomework(params);
+        verify(studyService).uploadHomework(1L, 2, null,
+                "https://dl.csuftsap.top/uploads/homework/1/2/new.md", "f.md", null);
+    }
+
+    @Test
     void uploadHomework_nullOptionalFields_passedAsNull() {
         Map<String, Object> params = new HashMap<>();
         params.put("activityId", "1");
@@ -357,6 +395,7 @@ class StudyControllerTest extends BaseUnitTest {
             st.when(StpUtil::getLoginIdAsLong).thenReturn(50L);
             Result<?> r = controller.submitHomework(params);
             verify(studyService).submitStudentHomework(1L, 2, 50L, "我的作业", "url", "my.pdf");
+            verifyNoInteractions(homeworkImageService);
             assertEquals("提交成功", r.getData());
         }
     }

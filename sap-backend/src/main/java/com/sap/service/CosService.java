@@ -54,6 +54,10 @@ public class CosService {
      * 从数据库读取配置并构建 COSClient
      */
     private COSClient buildClient() {
+        return buildClient(false);
+    }
+
+    private COSClient buildClient(boolean boundedUpload) {
         String secretId = settingService.getValue(KEY_SECRET_ID);
         String secretKey = settingService.getValue(KEY_SECRET_KEY);
         String region = settingService.getValue(KEY_REGION);
@@ -69,6 +73,13 @@ public class CosService {
         COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
         ClientConfig config = new ClientConfig(new Region(regionName));
         config.setHttpProtocol(com.qcloud.cos.http.HttpProtocol.https);
+        if (boundedUpload) {
+            config.setConnectionTimeout(5000);
+            config.setSocketTimeout(10000);
+            config.setRequestTimeout(20000);
+            config.setRequestTimeOutEnable(true);
+            config.setMaxErrorRetry(0);
+        }
         return new COSClient(cred, config);
     }
 
@@ -271,6 +282,29 @@ public class CosService {
         String cdn = cdnHost();
         if (cdn != null) return "https://" + cdn + "/" + cosKey;
         return "https://" + bucketName + ".cos." + regionName + ".myqcloud.com/" + cosKey;
+    }
+
+    /** Store public homework assets using the configured bucket and CDN. */
+    public String putObject(byte[] bytes, String key, String contentType, String cacheControl) {
+        if (bytes == null || key == null || key.isBlank() || key.startsWith("/") || key.contains("..")) {
+            throw new IllegalArgumentException("Invalid COS object");
+        }
+        COSClient client = buildClient(true);
+        try {
+            String bucket = getBucketName();
+            String region = settingService.getValue(KEY_REGION);
+            String regionName = region.startsWith("cos.") ? region.substring(4) : region;
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(bytes.length);
+            metadata.setContentType(contentType);
+            if (cacheControl != null) metadata.setCacheControl(cacheControl);
+            client.putObject(new PutObjectRequest(bucket, key, new ByteArrayInputStream(bytes), metadata));
+            return publicUrl(key, bucket, regionName);
+        } catch (Exception e) {
+            throw new BusinessException("上传到 COS 失败: " + e.getMessage());
+        } finally {
+            client.shutdown();
+        }
     }
 
     /** 把存量(默认域名)下载 URL 重写到自定义域名；未配置或非默认域名则原样返回。供下发下载地址用，改设置即生效、无需重新发版。 */
