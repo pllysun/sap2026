@@ -84,7 +84,15 @@ jobs:
           java-version: "21"
 
       - name: 配置 Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager_bin="$(find "$sdk_root/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -n "$sdkmanager_bin"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$(dirname "$sdkmanager_bin")" >> "$GITHUB_PATH"
+          yes | "$sdkmanager_bin" --licenses >/dev/null 2>&1 || true
 
       - name: 安装 Android 构建工具
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
