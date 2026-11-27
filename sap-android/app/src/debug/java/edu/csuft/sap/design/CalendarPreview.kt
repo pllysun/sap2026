@@ -33,7 +33,7 @@ internal fun prepareModePreview(context: Context) {
 internal fun ModeSwitchPreview() {
     val context = LocalContext.current
     AppSettingsScreen(Modifier.safeDrawingPadding(), MemberState.effectiveMode,
-        onSelectMode = { MemberState.requestMode(context, it) }, onTheme = {}, onAnnouncements = {},
+        onSelectMode = { MemberState.requestMode(context, it) }, onTheme = {}, onMcpKeys = {}, onAnnouncements = {},
         onPrivacy = {}, onChangelog = {}, onAbout = {}, onLogout = {}, onBack = {})
     AcademicPrivacyGate()
 }

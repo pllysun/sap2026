@@ -72,7 +72,7 @@ import edu.csuft.sap.ui.icons.ChevronIcon
 import edu.csuft.sap.ui.icons.IconBadge
 import kotlinx.coroutines.launch
 
-private enum class ProfileRoute { NONE, PROFILE_EDIT, JW_ACCOUNTS, FEEDBACK, SETTINGS, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG, ABOUT }
+private enum class ProfileRoute { NONE, PROFILE_EDIT, JW_ACCOUNTS, FEEDBACK, SETTINGS, MCP_KEYS, THEME, ANNOUNCEMENTS, PRIVACY, CHANGELOG, ABOUT }
 
 @Composable
 fun ProfileScreen(
@@ -95,7 +95,7 @@ fun ProfileScreen(
     // 拦截系统返回键：子页逐级回退（主题/隐私/关于→设置，设置→我的），避免一按返回就退到桌面
     BackHandler(enabled = route != ProfileRoute.NONE) {
         route = when (route) {
-            ProfileRoute.THEME, ProfileRoute.ANNOUNCEMENTS, ProfileRoute.PRIVACY,
+            ProfileRoute.MCP_KEYS, ProfileRoute.THEME, ProfileRoute.ANNOUNCEMENTS, ProfileRoute.PRIVACY,
             ProfileRoute.CHANGELOG, ProfileRoute.ABOUT -> ProfileRoute.SETTINGS
             else -> ProfileRoute.NONE
         }
@@ -149,6 +149,7 @@ fun ProfileScreen(
                         MemberState.requestMode(ctx, selected)
                     },
                     onTheme = { route = ProfileRoute.THEME },
+                    onMcpKeys = { route = ProfileRoute.MCP_KEYS },
                     onAnnouncements = { route = ProfileRoute.ANNOUNCEMENTS },
                     onPrivacy = { route = ProfileRoute.PRIVACY },
                     onChangelog = { route = ProfileRoute.CHANGELOG },
@@ -156,6 +157,7 @@ fun ProfileScreen(
                     onLogout = { showLogoutConfirm = true },
                     onBack = { route = ProfileRoute.NONE },
                 )
+                ProfileRoute.MCP_KEYS -> McpKeysScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.THEME -> ThemeScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.ANNOUNCEMENTS -> AnnouncementScreen(modifier = modifier, onBack = { route = ProfileRoute.SETTINGS })
                 ProfileRoute.PRIVACY -> PrivacyScreen(

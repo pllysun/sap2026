@@ -15,6 +15,7 @@ import edu.csuft.sap.data.repository.AuthRepository
 import edu.csuft.sap.data.repository.AnnouncementRepository
 import edu.csuft.sap.data.repository.FeedbackRepository
 import edu.csuft.sap.data.repository.JwRepository
+import edu.csuft.sap.data.repository.McpKeyRepository
 import edu.csuft.sap.data.repository.ClassScheduleRepository
 import edu.csuft.sap.data.schedule.Periods
 import edu.csuft.sap.data.schedule.ScheduleStore
@@ -46,6 +47,8 @@ object Graph {
     lateinit var passwordRecoveryRepository: edu.csuft.sap.data.repository.PasswordRecoveryRepository
         private set
     lateinit var jwRepository: JwRepository
+        private set
+    lateinit var mcpKeyRepository: McpKeyRepository
         private set
     lateinit var classScheduleRepository: ClassScheduleRepository
         private set
@@ -90,6 +93,7 @@ object Graph {
         passwordRecoveryRepository = edu.csuft.sap.data.repository.PasswordRecoveryRepository(
             ApiClient.create(BuildConfig.BASE_URL, { null }), context.applicationContext)
         jwRepository = JwRepository(api)
+        mcpKeyRepository = McpKeyRepository(api)
         classScheduleRepository = ClassScheduleRepository(api, context)
         academicCalendarRepository = edu.csuft.sap.data.repository.AcademicCalendarRepository(context, probeApi)
         feedbackRepository = FeedbackRepository(api)

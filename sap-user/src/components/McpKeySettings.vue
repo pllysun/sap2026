@@ -5,7 +5,10 @@
         <h3 id="mcp-key-title">MCP 密钥管理</h3>
         <p>让你的 Agent 查询已授权的教务数据。</p>
       </div>
-      <span v-if="settings" class="mcp-key-count">{{ settings.keys.length }} / {{ settings.limit }} 把</span>
+      <div v-if="settings" class="mcp-key-actions">
+        <span class="mcp-key-count">{{ settings.keys.length }} / {{ settings.limit }} 把</span>
+        <button type="button" class="btn btn--outline" :disabled="loading || busy || deletingId !== null" @click="load">刷新</button>
+      </div>
     </div>
 
     <p v-if="loading" role="status">正在加载密钥…</p>
@@ -23,16 +26,22 @@
         </div>
       </div>
 
-      <div v-if="newKey" class="mcp-new-key" aria-labelledby="mcp-new-key-title">
-        <h4 id="mcp-new-key-title">密钥已创建</h4>
-        <p>完整密钥只在这里显示一次。复制到 Agent 客户端的 Bearer 密钥设置后，再关闭此提示。</p>
-        <label class="form-label" for="mcp-secret">完整密钥</label>
-        <div class="mcp-copy-row">
-          <input id="mcp-secret" class="input" :value="newKey.secret" readonly />
-          <button class="btn btn--primary" type="button" @click="copy(newKey.secret, '密钥')">复制密钥</button>
-          <button class="btn btn--outline" type="button" @click="newKey = null">已保存</button>
-        </div>
-      </div>
+      <Teleport to="body">
+        <dialog ref="secretDialog" class="mcp-secret-dialog" aria-labelledby="mcp-new-key-title"
+                aria-describedby="mcp-new-key-description" @cancel.prevent @close="clearSecret">
+          <template v-if="newSecret">
+            <h3 id="mcp-new-key-title">密钥已创建</h3>
+            <p id="mcp-new-key-description">完整密钥只在此弹窗显示一次。复制到 Agent 客户端的 Bearer 密钥设置后，再关闭弹窗。</p>
+            <label class="form-label" for="mcp-secret">完整密钥</label>
+            <input id="mcp-secret" class="input" :value="newSecret" spellcheck="false" readonly />
+            <p v-if="secretNotice" role="status" class="mcp-key-notice">{{ secretNotice }}</p>
+            <div class="mcp-dialog-actions">
+              <button class="btn btn--outline" type="button" @click="secretDialog.close()">已保存</button>
+              <button class="btn btn--primary" type="button" autofocus @click="copySecret">复制密钥</button>
+            </div>
+          </template>
+        </dialog>
+      </Teleport>
       <p v-if="notice" role="status" class="mcp-key-notice">{{ notice }}</p>
 
       <div v-if="settings.keys.length" class="mcp-key-list">
@@ -45,7 +54,7 @@
               <span v-for="scope in key.scopes" :key="scope" class="badge badge--primary">{{ scopeLabels[scope] }}</span>
             </div>
           </div>
-          <button class="btn btn--danger" type="button" :disabled="deletingId !== null" @click="destroy(key)">
+          <button class="btn btn--danger" type="button" :disabled="loading || busy || deletingId !== null" @click="destroy(key)">
             {{ deletingId === key.id ? '销毁中…' : '销毁' }}
           </button>
         </div>
@@ -76,7 +85,7 @@
             </label>
           </div>
         </fieldset>
-        <button class="btn btn--primary" type="submit" :disabled="busy || !!newKey || !scopes.length">
+        <button class="btn btn--primary" type="submit" :disabled="loading || busy || deletingId !== null || !!newSecret || !scopes.length">
           {{ busy ? '正在创建…' : '创建密钥' }}
         </button>
       </form>
@@ -88,7 +97,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import request from '@/utils/request'
 
 const scopeLabels = {
@@ -104,22 +113,35 @@ const settings = ref(null)
 const name = ref('')
 const credentialId = ref('')
 const scopes = ref([])
-const newKey = ref(null)
+const newSecret = ref('')
+const secretDialog = ref(null)
+const secretNotice = ref('')
 const notice = ref('')
 const error = ref('')
-const loading = ref(true)
+const loading = ref(false)
 const busy = ref(false)
 const deletingId = ref(null)
 
-onMounted(load)
+onMounted(() => {
+  load()
+  window.addEventListener('focus', load)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('focus', load)
+  secretDialog.value?.close()
+  clearSecret()
+})
 
 async function load() {
+  if (loading.value || busy.value || newSecret.value || deletingId.value !== null) return
   loading.value = true
   error.value = ''
   try {
     const { data } = await request.get('/api/mcp-keys')
     settings.value = data
-    if (data.bindings.length === 1) credentialId.value = data.bindings[0].id
+    if (!data.bindings.some(binding => binding.id === credentialId.value)) {
+      credentialId.value = data.bindings.length === 1 ? data.bindings[0].id : ''
+    }
   } catch (e) {
     error.value = e.message || '密钥加载失败'
   } finally {
@@ -138,6 +160,7 @@ function formatDate(value) {
 }
 
 async function create() {
+  if (loading.value || busy.value || newSecret.value || deletingId.value !== null) return
   busy.value = true
   error.value = ''
   notice.value = ''
@@ -146,9 +169,11 @@ async function create() {
       name: name.value, credentialId: credentialId.value, scopes: scopes.value,
     })
     settings.value.keys.unshift(data.key)
-    newKey.value = { id: data.key.id, secret: data.secret }
+    newSecret.value = data.secret
     name.value = ''
     scopes.value = []
+    await nextTick()
+    secretDialog.value?.showModal()
   } catch (e) {
     error.value = e.message || '密钥创建失败'
   } finally {
@@ -157,6 +182,7 @@ async function create() {
 }
 
 async function destroy(key) {
+  if (loading.value || busy.value || deletingId.value !== null) return
   if (!window.confirm(`销毁「${key.name}」后，使用这把密钥的 Agent 会失去访问权限。确定销毁吗？`)) return
   deletingId.value = key.id
   error.value = ''
@@ -164,12 +190,27 @@ async function destroy(key) {
   try {
     await request.delete(`/api/mcp-keys/${key.id}`)
     settings.value.keys = settings.value.keys.filter(item => item.id !== key.id)
-    if (newKey.value?.id === key.id) newKey.value = null
     notice.value = '密钥已销毁'
   } catch (e) {
     error.value = e.message || '密钥销毁失败'
   } finally {
     deletingId.value = null
+  }
+}
+
+function clearSecret() {
+  newSecret.value = ''
+  secretNotice.value = ''
+}
+
+async function copySecret() {
+  const key = newSecret.value
+  if (!key) return
+  try {
+    await navigator.clipboard.writeText(key)
+    if (newSecret.value === key) secretNotice.value = '密钥已复制'
+  } catch {
+    if (newSecret.value === key) secretNotice.value = '无法自动复制，请手动选中密钥复制'
   }
 }
 
@@ -186,14 +227,21 @@ async function copy(value, label) {
 <style scoped>
 .mcp-key-card { max-width: 760px; margin: 20px auto 0; padding: clamp(16px, 4vw, 32px); }
 .mcp-key-heading, .mcp-key-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.mcp-key-heading h3, .mcp-new-key h4 { margin: 0 0 4px; }
-.mcp-key-heading p, .mcp-key-item p, .mcp-new-key p, .mcp-key-empty, .mcp-key-count, .mcp-key-notice {
+.mcp-key-heading h3, .mcp-secret-dialog h3 { margin: 0 0 4px; }
+.mcp-key-heading p, .mcp-key-item p, .mcp-secret-dialog p, .mcp-key-empty, .mcp-key-count, .mcp-key-notice {
   color: var(--ink-600); font-size: 0.875rem;
 }
 .mcp-key-count { white-space: nowrap; }
-.mcp-endpoint, .mcp-new-key, .mcp-key-list, .mcp-key-empty, .mcp-key-form { margin-top: 18px; }
-.mcp-new-key { padding: 16px; border: 1px solid var(--border-blue); border-radius: 12px; }
-.mcp-new-key .form-label { margin-top: 12px; }
+.mcp-endpoint, .mcp-key-list, .mcp-key-empty, .mcp-key-form { margin-top: 18px; }
+.mcp-secret-dialog {
+  width: min(480px, calc(100% - 32px)); max-width: none; box-sizing: border-box;
+  margin: auto; padding: clamp(16px, 5vw, 28px); border: 1px solid var(--border-blue);
+  border-radius: 16px; color: var(--ink-900); background: white; box-shadow: var(--shadow-lg);
+}
+.mcp-secret-dialog::backdrop { background: #15365566; }
+.mcp-secret-dialog .form-label { margin-top: 16px; }
+.mcp-key-actions, .mcp-dialog-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: end; gap: 8px; }
+.mcp-dialog-actions { margin-top: 16px; }
 .mcp-copy-row, .mcp-key-scopes, .mcp-scope-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mcp-copy-row .input { flex: 1 1 240px; min-width: 0; }
 .mcp-key-item { padding: 12px 0; border-bottom: 1px solid var(--border-blue); }

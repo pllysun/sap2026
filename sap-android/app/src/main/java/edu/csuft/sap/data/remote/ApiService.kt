@@ -26,6 +26,9 @@ import edu.csuft.sap.data.remote.dto.JwStatus
 import edu.csuft.sap.data.remote.dto.LoginData
 import edu.csuft.sap.data.remote.dto.LoginRequest
 import edu.csuft.sap.data.remote.dto.MeData
+import edu.csuft.sap.data.remote.dto.McpCreateKeyRequest
+import edu.csuft.sap.data.remote.dto.McpCreatedKeyDto
+import edu.csuft.sap.data.remote.dto.McpKeySettingsDto
 import edu.csuft.sap.data.remote.dto.ScheduleData
 import edu.csuft.sap.data.remote.dto.TermDto
 import edu.csuft.sap.data.remote.dto.UpdateProfileRequest
@@ -39,10 +42,20 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /** 后端 API（对接 sap-backend 的 /api/auth 与 /api/jw） */
 interface ApiService {
+    @GET("api/mcp-keys")
+    suspend fun mcpKeySettings(): ApiResult<McpKeySettingsDto>
+
+    @POST("api/mcp-keys")
+    suspend fun createMcpKey(@Body request: McpCreateKeyRequest): ApiResult<McpCreatedKeyDto>
+
+    @DELETE("api/mcp-keys/{id}")
+    suspend fun deleteMcpKey(@Path("id") id: Long): ApiResult<Any>
+
     @GET("api/academic-calendar")
     suspend fun academicCalendar(): ApiResult<List<edu.csuft.sap.data.remote.dto.AcademicCalendarDto>>
 

@@ -73,6 +73,7 @@ fun AppSettingsScreen(
     mode: AppMode,
     onSelectMode: (AppMode) -> Unit,
     onTheme: () -> Unit,
+    onMcpKeys: () -> Unit,
     onAnnouncements: () -> Unit,
     onPrivacy: () -> Unit,
     onChangelog: () -> Unit,
@@ -137,6 +138,11 @@ fun AppSettingsScreen(
                         Switch(checked = MemberState.showGrade, onCheckedChange = { MemberState.setShowGrade(ctx, it) })
                     }
                 }
+            }
+            Text("账号与授权", style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, top = 26.dp, bottom = 10.dp))
+            Card {
+                NavRow("MCP 密钥管理", onMcpKeys, AppIcons.Key)
             }
             Text("帮助与关于", style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, top = 26.dp, bottom = 10.dp))
