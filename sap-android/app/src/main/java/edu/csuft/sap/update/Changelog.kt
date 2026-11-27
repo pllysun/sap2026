@@ -23,6 +23,14 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            versionCode = 142, versionName = "2.8", date = "2026-11-27",
+            changes = listOf(
+                "新增教务 MCP 密钥管理，可在 App 创建和销毁密钥。",
+                "密钥列表与网页端同步，完整密钥仅在创建时显示一次。",
+                "更新 App 启动图标。",
+            ),
+        ),
+        ChangelogEntry(
             versionCode = 138, versionName = "2.7", date = "2026-11-14",
             changes = listOf(
                 "个人课表新增周次滑选。横划可批量勾选或取消多个周次，也可一键仅选当前查看的周次，或清空后重新选择。",
