@@ -59,6 +59,7 @@
         <div v-if="saveError" class="error-text text-center mt-2">{{ saveError }}</div>
         <div v-if="saveSuccess" class="success-text text-center mt-2">{{ saveSuccess }}</div>
       </div>
+      <McpKeySettings />
     </template>
   </div>
 </template>
@@ -66,6 +67,7 @@
 <script setup>
 import PageHeader from '@/components/PageHeader.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import McpKeySettings from '@/components/McpKeySettings.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'

@@ -21,6 +21,7 @@
         <java.version>21</java.version>
         <sa-token.version>1.38.0</sa-token.version>
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mcp-java.version>2.2.0</mcp-java.version>
         <fastjson2.version>2.0.47</fastjson2.version>
         <knife4j.version>4.5.0</knife4j.version>
         <!-- Spring Boot 3.2.5 管理的 1.18.32 无法兼容当前 JDK 21 补丁版本。 -->
@@ -74,6 +75,12 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp-json-jackson2</artifactId>
+            <version>${mcp-java.version}</version>
         </dependency>
 
         <!-- MySQL -->
